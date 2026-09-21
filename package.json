@@ -1,0 +1,11 @@
+{
+  "name": "aura-studio-frontend",
+  "private": true,
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.js -i frontend/tailwind.input.css -o app/static/css/tailwind.css --minify",
+    "watch:css": "tailwindcss -c tailwind.config.js -i frontend/tailwind.input.css -o app/static/css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

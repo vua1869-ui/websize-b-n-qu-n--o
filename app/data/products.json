@@ -1,0 +1,5398 @@
+[
+  {
+    "id": "prod_001",
+    "name": "Áo Blazer Linen Dáng Suông Hàn Quốc Form Rộng Cao Cấp",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Blazer",
+    "gender": "unisex",
+    "price": 489000,
+    "original_price": 890000,
+    "flash_sale": true,
+    "flash_sale_price": 429000,
+    "sold_count": 2840,
+    "stock_total": 100,
+    "stock": 32,
+    "rating": 4.9,
+    "reviews_count": 860,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1548883354-7622d03aca27?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539533018447-63fcce667823?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Be / Kem",
+        "hex": "#E6DEC8"
+      },
+      {
+        "name": "Đen Classic",
+        "hex": "#212121"
+      },
+      {
+        "name": "Xám Khói",
+        "hex": "#757575"
+      }
+    ],
+    "description": "Blazer làm từ sợi Linen tự nhiên cao cấp, thoáng nhẹ, form suông hiện đại chuẩn phong cách Minimalist Hàn Quốc. Phù hợp cả đi làm công sở lẫn dạo phố cuối tuần.",
+    "material": "100% Linen dệt tự nhiên, lót lụa habutai êm ái",
+    "style": "Minimalism / Smart Casual",
+    "occasions": [
+      "cong_so",
+      "hen_ho",
+      "du_tiec",
+      "dao_pho"
+    ],
+    "tags": [
+      "blazer",
+      "ao khoac",
+      "linen",
+      "han quoc",
+      "thanh lich",
+      "cong so",
+      "sang trong",
+      "minimalism"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_002",
+    "name": "Áo Sơ Mi Lụa Dệt Satin Form Rộng Cổ V Quyến Rũ",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "nu",
+    "price": 289000,
+    "original_price": 550000,
+    "flash_sale": true,
+    "flash_sale_price": 249000,
+    "sold_count": 4120,
+    "stock_total": 120,
+    "stock": 25,
+    "rating": 4.8,
+    "reviews_count": 1240,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1578932750294-f5075e85f44a?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Ngọc Trai",
+        "hex": "#F8F9FA"
+      },
+      {
+        "name": "Xanh Baby",
+        "hex": "#A2D2FF"
+      },
+      {
+        "name": "Hồng Phấn",
+        "hex": "#FFC8DD"
+      }
+    ],
+    "description": "Chất liệu lụa Satin bóng nhẹ, rủ tự nhiên, tạo cảm giác sang trọng và tôn dáng. Thiết kế cổ V thanh thoát giúp gương mặt thon gọn hơn.",
+    "material": "Lụa Satin dệt sợi mịn cao cấp",
+    "style": "Korean Chic / Thanh lịch",
+    "occasions": [
+      "cong_so",
+      "du_tiec",
+      "hen_ho"
+    ],
+    "tags": [
+      "so mi",
+      "lua satin",
+      "ao nu",
+      "sang trong",
+      "di lam",
+      "hen ho",
+      "thanh lich"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_003",
+    "name": "Quần Tây Xếp Ly Ống Suông Wide-Leg Hack Dáng Cực Đỉnh",
+    "category": "quan_tay",
+    "category_name": "Quần Tây",
+    "gender": "unisex",
+    "price": 349000,
+    "original_price": 590000,
+    "flash_sale": true,
+    "flash_sale_price": 299000,
+    "sold_count": 5600,
+    "stock_total": 150,
+    "stock": 42,
+    "rating": 4.9,
+    "reviews_count": 2150,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen Tuyển",
+        "hex": "#1A1A1A"
+      },
+      {
+        "name": "Xám Tro",
+        "hex": "#6C757D"
+      },
+      {
+        "name": "Nâu Mocha",
+        "hex": "#4A3B32"
+      }
+    ],
+    "description": "Quần âu ống suông dáng dài, nếp gấp ly sắc nét giúp 'hack' chiều cao hiệu quả. Vải tuyết mưa dày dặn, không bai xù hay nhăn nhàu khi giặt máy.",
+    "material": "Vải Tuyết mưa nhập khẩu, co giãn nhẹ",
+    "style": "Old Money / Smart Casual",
+    "occasions": [
+      "cong_so",
+      "phong_van",
+      "du_tiec",
+      "dao_pho"
+    ],
+    "tags": [
+      "quan tay",
+      "ong suong",
+      "xep ly",
+      "quan au",
+      "hack dang",
+      "old money",
+      "cong so"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_004",
+    "name": "Đầm Lụa Maxi Hở Lưng Sang Trọng Dự Tiệc Dạ Hội Cao Cấp",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 599000,
+    "original_price": 1050000,
+    "flash_sale": false,
+    "sold_count": 1890,
+    "stock_total": 80,
+    "stock": 28,
+    "rating": 5.0,
+    "reviews_count": 640,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1566174053879-31528523f8ae?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Đỏ Rượu Vang",
+        "hex": "#722F37"
+      },
+      {
+        "name": "Đen Huyền Bí",
+        "hex": "#111111"
+      },
+      {
+        "name": "Vàng Champagne",
+        "hex": "#F7E7CE"
+      }
+    ],
+    "description": "Thiết kế đầm lụa dài dự tiệc với chi tiết khoét lưng gợi cảm vừa phải. Ôm nhẹ phần eo tôn đường cong quyến rũ, chất vải mềm óng ánh dưới ánh đèn tiệc.",
+    "material": "Lụa Mulberry cao cấp, rũ mềm mịn",
+    "style": "Evening Glam / Sang trọng",
+    "occasions": [
+      "du_tiec",
+      "dam_cuoi",
+      "hen_ho_cao_cap"
+    ],
+    "tags": [
+      "dam maxi",
+      "vay da hoi",
+      "vay tiec",
+      "lua",
+      "quy phai",
+      "dam cuoi",
+      "sang trong"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_005",
+    "name": "Áo Thun Cotton 100% Heavyweight 260GSM Form Boxy Trơn",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 189000,
+    "original_price": 380000,
+    "flash_sale": true,
+    "flash_sale_price": 149000,
+    "sold_count": 8950,
+    "stock_total": 200,
+    "stock": 64,
+    "rating": 4.8,
+    "reviews_count": 3480,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Sữa",
+        "hex": "#F5F5F5"
+      },
+      {
+        "name": "Đen Tuyền",
+        "hex": "#1A1A1A"
+      },
+      {
+        "name": "Xanh Rêu Sage",
+        "hex": "#77815C"
+      },
+      {
+        "name": "Nâu Đất",
+        "hex": "#6D4C41"
+      }
+    ],
+    "description": "Chiếc áo thun basic không thể thiếu trong tủ đồ. Định lượng 260GSM dày dặn, bo cổ dệt tổ ong dày không lo dão sau hàng trăm lần giặt. Form boxy tôn vai.",
+    "material": "100% Cotton 2 chiều chải kỹ 260GSM",
+    "style": "Streetwear / Casual",
+    "occasions": [
+      "hang_ngay",
+      "dao_pho",
+      "du_lich",
+      "di_hoc"
+    ],
+    "tags": [
+      "ao thun",
+      "t-shirt",
+      "cotton",
+      "oversize",
+      "boxy",
+      "streetwear",
+      "basic",
+      "nang dong"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_006",
+    "name": "Quần Jeans Baggy Vintage Wash Rách Gối Nhật Bản Retro",
+    "category": "quan_jeans",
+    "category_name": "Quần Jeans",
+    "gender": "unisex",
+    "price": 389000,
+    "original_price": 680000,
+    "flash_sale": true,
+    "flash_sale_price": 349000,
+    "sold_count": 3420,
+    "stock_total": 100,
+    "stock": 31,
+    "rating": 4.9,
+    "reviews_count": 1420,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1582552938357-32b906df40cb?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1604176354204-9268737828e4?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "28",
+      "29",
+      "30",
+      "31",
+      "32",
+      "34"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Vintage Wash",
+        "hex": "#4A6FA5"
+      },
+      {
+        "name": "Xanh Đậm Indigo",
+        "hex": "#1F305E"
+      },
+      {
+        "name": "Xám Khói Faded",
+        "hex": "#5A5A5A"
+      }
+    ],
+    "description": "Quần bò phong cách đường phố retro thập niên 90s. Xử lý wash màu thủ công tạo hiệu ứng sờn tự nhiên, form ống thụng thoải mái vận động.",
+    "material": "100% Denim Cotton dệt chéo 13.5oz",
+    "style": "Vintage / Streetwear",
+    "occasions": [
+      "dao_pho",
+      "di_choi",
+      "du_lich",
+      "hen_ho"
+    ],
+    "tags": [
+      "quan jeans",
+      "baggy",
+      "denim",
+      "vintage",
+      "retro",
+      "streetwear",
+      "ca tinh"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_007",
+    "name": "Áo Polo Dệt Kim Cổ Điển Cổ V Phong Cách Old Money Quý Tộc",
+    "category": "ao_thun",
+    "category_name": "Áo Polo",
+    "gender": "nam",
+    "price": 299000,
+    "original_price": 520000,
+    "flash_sale": false,
+    "sold_count": 2150,
+    "stock_total": 90,
+    "stock": 38,
+    "rating": 4.8,
+    "reviews_count": 890,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1625910513413-56834b6b63d0?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Navy",
+        "hex": "#001F3F"
+      },
+      {
+        "name": "Trắng Kem",
+        "hex": "#F4F1EA"
+      },
+      {
+        "name": "Nâu Hạt Dẻ",
+        "hex": "#5C4033"
+      }
+    ],
+    "description": "Áo polo phong cách quý ông cổ điển mang hơi thở Riviera. Dệt kim sọc nổi tinh xảo, co giãn thông thoáng và tôn cơ bắp phần bắp tay, ngực.",
+    "material": "Sợi Cotton pha Rayon dệt kim mắt lưới thoáng khí",
+    "style": "Old Money / Thanh lịch",
+    "occasions": [
+      "hen_ho",
+      "cong_so",
+      "du_lich",
+      "golf"
+    ],
+    "tags": [
+      "polo",
+      "det kim",
+      "nam tinh",
+      "old money",
+      "sang trong",
+      "thanh lich"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_008",
+    "name": "Áo Khoác Trench Coat Dáng Dài London Chuẩn Form Châu Âu",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Blazer",
+    "gender": "unisex",
+    "price": 699000,
+    "original_price": 1290000,
+    "flash_sale": false,
+    "sold_count": 940,
+    "stock_total": 50,
+    "stock": 19,
+    "rating": 5.0,
+    "reviews_count": 410,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1544923246-77307dd654cb?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544441893-675973e31985?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Kaki Camel",
+        "hex": "#C19A6B"
+      },
+      {
+        "name": "Đen Midnight",
+        "hex": "#1C1C1C"
+      }
+    ],
+    "description": "Chiếc áo khoác Trench Coat chuẩn phong cách London quý phái. Đai lưng bản to nhấn eo, cúc kép cổ điển, vải chống thấm nước nhẹ và cản gió xuất sắc.",
+    "material": "Vải Kaki tráng lớp nano kháng nước mỏng nhẹ",
+    "style": "London Classic / Sang trọng",
+    "occasions": [
+      "thu_dong",
+      "du_lich",
+      "cong_so",
+      "chup_anh"
+    ],
+    "tags": [
+      "trench coat",
+      "ao khoac dai",
+      "kaki",
+      "thu dong",
+      "thoi trang cao cap",
+      "paris"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_009",
+    "name": "Chân Váy Chữ A Xếp Ly Dài Midi Lưng Cao Giấu Bụng",
+    "category": "chan_vay",
+    "category_name": "Chân Váy",
+    "gender": "nu",
+    "price": 259000,
+    "original_price": 490000,
+    "flash_sale": false,
+    "sold_count": 3100,
+    "stock_total": 100,
+    "stock": 45,
+    "rating": 4.9,
+    "reviews_count": 1180,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1551803091-e20673f15770?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1577900232427-18219b9166a0?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Nâu Be Khói",
+        "hex": "#B7A99A"
+      },
+      {
+        "name": "Đen Cơ Bản",
+        "hex": "#1A1A1A"
+      }
+    ],
+    "description": "Chân váy xếp ly cạp cao giấu bụng cực khéo, chuyển động bay bổng nhẹ nhàng theo từng bước đi. Dễ dàng phối cùng sơ mi, blazer hoặc áo len.",
+    "material": "Vải Voan cát cao cấp 2 lớp chống lộ",
+    "style": "Vintage / Nữ tính",
+    "occasions": [
+      "cong_so",
+      "hen_ho",
+      "di_choi",
+      "di_hoc"
+    ],
+    "tags": [
+      "chan vay",
+      "xep ly",
+      "midi",
+      "nu tinh",
+      "hack eo",
+      "cong so"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_010",
+    "name": "Áo Len Cardigan Dệt Thô Vintage Cúc Sừng Hàn Quốc Ấm Áp",
+    "category": "ao_khoac",
+    "category_name": "Áo Len & Cardigan",
+    "gender": "unisex",
+    "price": 329000,
+    "original_price": 650000,
+    "flash_sale": false,
+    "sold_count": 1580,
+    "stock_total": 70,
+    "stock": 26,
+    "rating": 4.7,
+    "reviews_count": 590,
+    "location": "Đà Lạt",
+    "images": [
+      "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Kem Phối Nâu",
+        "hex": "#D2B48C"
+      },
+      {
+        "name": "Xanh Cổ Vịt",
+        "hex": "#00565B"
+      }
+    ],
+    "description": "Cardigan dệt len dày ấm, cúc sừng vintage đặc trưng phong cách ấm áp mùa thu đông Đà Lạt hay Hà Nội. Mặc khoác ngoài sơ mi hay áo thun đều hút mắt.",
+    "material": "Len dệt pha sợi cừu giữ nhiệt",
+    "style": "Cozy Retro / Hàn Quốc",
+    "occasions": [
+      "thu_dong",
+      "du_lich_da_lat",
+      "hen_ho",
+      "cafe"
+    ],
+    "tags": [
+      "cardigan",
+      "ao len",
+      "retro",
+      "da lat",
+      "mua dong",
+      "am ap",
+      "vintage"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_011",
+    "name": "Áo Hoodie Nỉ Chân Cua 380GSM Mũ 2 Lớp Đứng Form Siêu Ấm",
+    "category": "ao_khoac",
+    "category_name": "Hoodie & Sweater",
+    "gender": "unisex",
+    "price": 289000,
+    "original_price": 560000,
+    "flash_sale": true,
+    "flash_sale_price": 249000,
+    "sold_count": 4890,
+    "stock_total": 130,
+    "stock": 35,
+    "rating": 4.8,
+    "reviews_count": 1820,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539533018447-63fcce667823?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Xám Heather",
+        "hex": "#B0B0B0"
+      },
+      {
+        "name": "Đen Tuyền",
+        "hex": "#1A1A1A"
+      },
+      {
+        "name": "Tím Khói Lavender",
+        "hex": "#967BB6"
+      }
+    ],
+    "description": "Chất nỉ lót bông mềm mại siêu ấm, mũ 2 lớp phồng đứng form không bị xẹp. Thiết kế tối giản basic mang lại cảm giác thoải mái tối đa.",
+    "material": "Nỉ chân cua lót bông 380GSM",
+    "style": "Streetwear / Athleisure",
+    "occasions": [
+      "mua_dong",
+      "the_thao",
+      "o_nha",
+      "dao_pho"
+    ],
+    "tags": [
+      "hoodie",
+      "ni bong",
+      "oversize",
+      "am ap",
+      "streetwear",
+      "nang dong"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_012",
+    "name": "Đầm Hoa Nhí Cổ Vuông Tay Bồng Dáng Nàng Thơ Xinh Xắn",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 299000,
+    "original_price": 590000,
+    "flash_sale": false,
+    "sold_count": 2740,
+    "stock_total": 85,
+    "stock": 29,
+    "rating": 4.9,
+    "reviews_count": 920,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Hoa Vàng Pastel",
+        "hex": "#FFEAA7"
+      },
+      {
+        "name": "Hoa Xanh Mint",
+        "hex": "#A8E6CF"
+      }
+    ],
+    "description": "Chiếc đầm hoa ngọt ngào chuẩn concept nàng thơ mùa hè. Cổ vuông khéo léo tôn xương quai xanh, tay bồng nhẹ che khuyết điểm bắp tay to.",
+    "material": "Chiffon Hàn cao cấp có lót lụa trong",
+    "style": "Cottagecore / Dịu dàng",
+    "occasions": [
+      "di_bien",
+      "chup_anh",
+      "cafe",
+      "hen_ho"
+    ],
+    "tags": [
+      "dam hoa nhi",
+      "nang tho",
+      "di bien",
+      "mua he",
+      "tay bong",
+      "diu dang"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_013",
+    "name": "Quần Short Đũi Tơ Tằm Cạp Chun Dây Rút Mát Lịm Mùa Hè",
+    "category": "quan_tay",
+    "category_name": "Quần Short",
+    "gender": "unisex",
+    "price": 159000,
+    "original_price": 320000,
+    "flash_sale": true,
+    "flash_sale_price": 129000,
+    "sold_count": 6800,
+    "stock_total": 180,
+    "stock": 51,
+    "rating": 4.7,
+    "reviews_count": 2190,
+    "location": "Đà Nẵng",
+    "images": [
+      "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Đũi Tự Nhiên",
+        "hex": "#FAF0E6"
+      },
+      {
+        "name": "Xanh Rêu Nhạt",
+        "hex": "#8A9A5B"
+      },
+      {
+        "name": "Đen Classic",
+        "hex": "#222222"
+      }
+    ],
+    "description": "Quần short chất đũi tự nhiên mát lịm, cạp chun có dây rút tiện lợi. Thích hợp cho các chuyến du lịch biển, dã ngoại hoặc mặc thoải mái ở nhà.",
+    "material": "Đũi tơ tằm dệt thưa mát lành",
+    "style": "Summer Resort / Thoải mái",
+    "occasions": [
+      "di_bien",
+      "mua_he",
+      "du_lich",
+      "o_nha"
+    ],
+    "tags": [
+      "quan short",
+      "dui",
+      "mua he",
+      "di bien",
+      "thoang mat",
+      "resort"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_014",
+    "name": "Túi Tote Da PU Chống Thấm Đựng Vừa Laptop 14-15.6 Inch",
+    "category": "phu_kien",
+    "category_name": "Phụ Kiện",
+    "gender": "unisex",
+    "price": 219000,
+    "original_price": 450000,
+    "flash_sale": false,
+    "sold_count": 3900,
+    "stock_total": 110,
+    "stock": 42,
+    "rating": 4.9,
+    "reviews_count": 1450,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "Freesize (38 x 30 x 10 cm)"
+    ],
+    "colors": [
+      {
+        "name": "Nâu Bò Vintage",
+        "hex": "#8B4513"
+      },
+      {
+        "name": "Đen Huyền",
+        "hex": "#1A1A1A"
+      }
+    ],
+    "description": "Chiếc túi tote da tối giản chứa trọn cả thế giới đi làm của bạn: đựng vừa laptop 14 inch, tài liệu A4, bình nước và đồ dùng cá nhân. Da PU mềm chống nước.",
+    "material": "Da PU cao cấp chống trầy xước",
+    "style": "Minimalism / Công sở",
+    "occasions": [
+      "cong_so",
+      "di_hoc",
+      "di_lam",
+      "cafe"
+    ],
+    "tags": [
+      "tui tote",
+      "tui da",
+      "cong so",
+      "laptop",
+      "phu kien",
+      "minimalism"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_015",
+    "name": "Kính Mát Gọng Vuông Retro Unisex UV400 Chống Lóa Cực Ngầu",
+    "category": "phu_kien",
+    "category_name": "Phụ Kiện",
+    "gender": "unisex",
+    "price": 99000,
+    "original_price": 290000,
+    "flash_sale": true,
+    "flash_sale_price": 79000,
+    "sold_count": 12400,
+    "stock_total": 300,
+    "stock": 85,
+    "rating": 4.8,
+    "reviews_count": 4820,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1511499767150-a48a237f0083?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1624222247344-550fb60583dc?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "Freesize"
+    ],
+    "colors": [
+      {
+        "name": "Gọng Đen Mắt Khói",
+        "hex": "#111111"
+      },
+      {
+        "name": "Gọng Đồi Mồi",
+        "hex": "#582F0E"
+      }
+    ],
+    "description": "Mắt kính chống tia UV400 bảo vệ mắt tuyệt đối dưới ánh nắng chói chang. Thiết kế gọng vuông thời thượng điểm xuyết cho mọi outfit thêm phần cuốn hút.",
+    "material": "Tròng Polycabonate chống lóa + gọng Acetate bóng bẩy",
+    "style": "Chic / Retro",
+    "occasions": [
+      "di_bien",
+      "dao_pho",
+      "lai_xe",
+      "chup_anh"
+    ],
+    "tags": [
+      "kinh mat",
+      "kinh ram",
+      "uv400",
+      "phu kien",
+      "retro",
+      "du lich"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_016",
+    "name": "Áo Sơ Mi Oxford Kẻ Sọc Xanh Dệt Vân Chống Nhăn Nam Tính",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "nam",
+    "price": 279000,
+    "original_price": 540000,
+    "flash_sale": false,
+    "sold_count": 3200,
+    "stock_total": 95,
+    "stock": 36,
+    "rating": 4.9,
+    "reviews_count": 1150,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1578932750294-f5075e85f44a?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1598032895397-b9472444bf93?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Sọc Xanh Dương Nhạt",
+        "hex": "#89CFF0"
+      },
+      {
+        "name": "Sọc Xám Tro",
+        "hex": "#A9A9A9"
+      }
+    ],
+    "description": "Chất vải Oxford dệt vân kinh điển, giữ form cổ áo đứng lịch sự. Họa tiết kẻ sọc thanh mảnh tạo cảm giác vóc dáng cao ráo và đĩnh đạc.",
+    "material": "100% Cotton Oxford chải kỹ",
+    "style": "Preppy / Thanh lịch",
+    "occasions": [
+      "cong_so",
+      "phong_van",
+      "gap_doi_tac",
+      "hen_ho"
+    ],
+    "tags": [
+      "so mi oxford",
+      "soc xanh",
+      "nam tinh",
+      "cong so",
+      "lich lam",
+      "phong van"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_017",
+    "name": "Thắt Lưng Da Bò Ý Nguyên Tấm Khóa Kim Mạ Vàng Sang Trọng",
+    "category": "phu_kien",
+    "category_name": "Phụ Kiện",
+    "gender": "unisex",
+    "price": 189000,
+    "original_price": 390000,
+    "flash_sale": false,
+    "sold_count": 2890,
+    "stock_total": 90,
+    "stock": 47,
+    "rating": 5.0,
+    "reviews_count": 970,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1624222247344-550fb60583dc?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1511499767150-a48a237f0083?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "Chiều dài 105cm (Có thể bấm thêm lỗ)"
+    ],
+    "colors": [
+      {
+        "name": "Đen Khóa Bạc",
+        "hex": "#1A1A1A"
+      },
+      {
+        "name": "Nâu Đậm Khóa Vàng Đồng",
+        "hex": "#4A2E18"
+      }
+    ],
+    "description": "Da bò nguyên tấm dẻo dai càng dùng càng bóng đẹp. Mặt khóa kim loại mạ tĩnh điện sáng bóng không lo rỉ sét, điểm nhấn sang trọng cho quần âu và đầm váy.",
+    "material": "100% Da bò thật dập vân mịn",
+    "style": "Classic Luxury",
+    "occasions": [
+      "cong_so",
+      "du_tiec",
+      "hang_ngay"
+    ],
+    "tags": [
+      "that lung",
+      "day nit",
+      "da bo",
+      "phu kien",
+      "sang trong",
+      "cong so"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_018",
+    "name": "Set Đồ Bộ Đi Biển Hawaii Lá Nhiệt Đới Lụa Mát Check-in Cực Chất",
+    "category": "set_do",
+    "category_name": "Set Đồ Du Lịch",
+    "gender": "nam",
+    "price": 319000,
+    "original_price": 650000,
+    "flash_sale": true,
+    "flash_sale_price": 279000,
+    "sold_count": 2400,
+    "stock_total": 75,
+    "stock": 24,
+    "rating": 4.8,
+    "reviews_count": 780,
+    "location": "Đà Nẵng",
+    "images": [
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1523381294911-8d3cead13475?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Họa Tiết Xanh Rừng Nhiệt Đới",
+        "hex": "#2D5A27"
+      }
+    ],
+    "description": "Bao gồm 1 áo sơ mi cộc tay hawaii và 1 quần short cùng họa tiết. Vải lụa cát siêu nhẹ, bay bổng, tạo những khung hình check-in du lịch cực chất.",
+    "material": "Lụa tơ tằm nhân tạo siêu mát",
+    "style": "Tropical Beach / Năng động",
+    "occasions": [
+      "di_bien",
+      "du_lich",
+      "nghi_duong"
+    ],
+    "tags": [
+      "set do bien",
+      "so mi hawaii",
+      "di bien",
+      "mua he",
+      "tropical",
+      "du lich"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_019",
+    "name": "Áo Polo Pique Nam Cổ Bẻ Form Regular Thoáng Khí Thấm Hút Tốt",
+    "category": "ao_thun",
+    "category_name": "Áo Polo",
+    "gender": "nam",
+    "price": 249000,
+    "original_price": 450000,
+    "flash_sale": false,
+    "sold_count": 2310,
+    "stock_total": 150,
+    "stock": 74,
+    "rating": 4.8,
+    "reviews_count": 720,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1625910513413-56834b6b63d0?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Ngà",
+        "hex": "#F2EFE6"
+      },
+      {
+        "name": "Xanh Navy",
+        "hex": "#1F2A44"
+      },
+      {
+        "name": "Xám Tiêu",
+        "hex": "#8A8D91"
+      },
+      {
+        "name": "Đỏ Đô",
+        "hex": "#7A1F2B"
+      }
+    ],
+    "description": "Polo dệt pique dày vừa, cổ bẻ đứng form, không xù lông sau nhiều lần giặt. Mặc đi làm hay đi chơi cuối tuần đều lịch sự.",
+    "material": "Cotton pique 220GSM co giãn 4 chiều",
+    "style": "Smart Casual / Lịch lãm",
+    "occasions": [
+      "cong_so",
+      "di_lam",
+      "hang_ngay",
+      "golf"
+    ],
+    "tags": [
+      "polo",
+      "ao polo nam",
+      "pique",
+      "nam tinh",
+      "cong so",
+      "lich su",
+      "basic"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_020",
+    "name": "Áo Thun Baby Tee Ôm Body Nữ Cotton Gân Tay Ngắn Hack Dáng",
+    "category": "ao_thun",
+    "category_name": "Áo Thun",
+    "gender": "nu",
+    "price": 149000,
+    "original_price": 290000,
+    "flash_sale": false,
+    "sold_count": 3680,
+    "stock_total": 180,
+    "stock": 95,
+    "rating": 4.7,
+    "reviews_count": 1240,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Kem",
+        "hex": "#F4F0E6"
+      },
+      {
+        "name": "Đen",
+        "hex": "#1C1C1C"
+      },
+      {
+        "name": "Hồng Pastel",
+        "hex": "#F4C2C2"
+      },
+      {
+        "name": "Xanh Mint",
+        "hex": "#B7E4D3"
+      }
+    ],
+    "description": "Dáng ôm nhẹ, ngắn ngang eo giúp chân trông dài hơn. Chất gân mềm co giãn, phối cùng quần cạp cao hoặc chân váy đều xinh.",
+    "material": "Cotton gân co giãn 4 chiều",
+    "style": "Y2K / Nữ tính",
+    "occasions": [
+      "hang_ngay",
+      "di_choi",
+      "cafe",
+      "di_hoc"
+    ],
+    "tags": [
+      "baby tee",
+      "ao thun nu",
+      "om body",
+      "hack dang",
+      "y2k",
+      "cotton gan",
+      "basic"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_021",
+    "name": "Áo Thun Tay Dài Cổ Tròn Basic Unisex Cotton Compact 240GSM Mặc Layer",
+    "category": "ao_thun",
+    "category_name": "Áo Thun",
+    "gender": "unisex",
+    "price": 219000,
+    "original_price": 420000,
+    "flash_sale": false,
+    "sold_count": 1760,
+    "stock_total": 140,
+    "stock": 58,
+    "rating": 4.7,
+    "reviews_count": 530,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#1E1E1E"
+      },
+      {
+        "name": "Trắng Sữa",
+        "hex": "#F5F1E8"
+      },
+      {
+        "name": "Xám Ghi",
+        "hex": "#9AA0A6"
+      },
+      {
+        "name": "Xanh Rêu",
+        "hex": "#5B6B4A"
+      }
+    ],
+    "description": "Áo tay dài dày dặn, cổ bo chắc chắn, mặc riêng hay lót trong áo khoác đều gọn. Lựa chọn quen thuộc cho những ngày se lạnh.",
+    "material": "Cotton compact 240GSM",
+    "style": "Basic / Layering",
+    "occasions": [
+      "thu_dong",
+      "hang_ngay",
+      "di_hoc",
+      "dao_pho"
+    ],
+    "tags": [
+      "ao thun tay dai",
+      "basic",
+      "layering",
+      "cotton compact",
+      "unisex",
+      "thu dong"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_022",
+    "name": "Áo Thun Graphic In Hình Retro Oversize Form Rộng Local Brand",
+    "category": "ao_thun",
+    "category_name": "Áo Thun",
+    "gender": "unisex",
+    "price": 229000,
+    "original_price": 450000,
+    "flash_sale": false,
+    "sold_count": 2940,
+    "stock_total": 120,
+    "stock": 47,
+    "rating": 4.8,
+    "reviews_count": 980,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen Washed",
+        "hex": "#2A2A2E"
+      },
+      {
+        "name": "Trắng Kem",
+        "hex": "#F1ECE0"
+      },
+      {
+        "name": "Xám Khói",
+        "hex": "#7C7F85"
+      }
+    ],
+    "description": "Hình in retro sắc nét, không bong tróc, form rộng thả vai kiểu streetwear. Kết hợp jeans baggy là đủ một set.",
+    "material": "Cotton 100% 250GSM, in lụa",
+    "style": "Streetwear / Retro",
+    "occasions": [
+      "dao_pho",
+      "di_choi",
+      "cafe",
+      "hang_ngay"
+    ],
+    "tags": [
+      "graphic tee",
+      "oversize",
+      "streetwear",
+      "local brand",
+      "retro",
+      "in hinh"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_023",
+    "name": "Áo Thun Sọc Ngang Phong Cách Pháp Breton Cổ Tròn Thanh Lịch",
+    "category": "ao_thun",
+    "category_name": "Áo Thun",
+    "gender": "nu",
+    "price": 199000,
+    "original_price": 380000,
+    "flash_sale": false,
+    "sold_count": 1420,
+    "stock_total": 110,
+    "stock": 52,
+    "rating": 4.7,
+    "reviews_count": 460,
+    "location": "Đà Nẵng",
+    "images": [
+      "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1625910513413-56834b6b63d0?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Sọc Xanh Navy",
+        "hex": "#1F2A44"
+      },
+      {
+        "name": "Sọc Đỏ",
+        "hex": "#B23A3A"
+      }
+    ],
+    "description": "Sọc ngang kinh điển kiểu Breton, mặc với quần jeans hay chân váy đều mang cảm giác Paris nhẹ nhàng.",
+    "material": "Cotton dệt kim mềm",
+    "style": "Parisian / Thanh lịch",
+    "occasions": [
+      "hang_ngay",
+      "di_choi",
+      "du_lich",
+      "cafe"
+    ],
+    "tags": [
+      "soc ngang",
+      "breton",
+      "phong cach phap",
+      "ao thun soc",
+      "tham nhap",
+      "thanh lich"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_024",
+    "name": "Áo Ba Lỗ Thể Thao Nam Dệt Lưới Thoát Khí Tập Gym Chạy Bộ",
+    "category": "ao_thun",
+    "category_name": "Áo Ba Lỗ",
+    "gender": "nam",
+    "price": 129000,
+    "original_price": 250000,
+    "flash_sale": false,
+    "sold_count": 3210,
+    "stock_total": 200,
+    "stock": 121,
+    "rating": 4.6,
+    "reviews_count": 1010,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#1B1B1B"
+      },
+      {
+        "name": "Xám Melange",
+        "hex": "#A5A8AD"
+      },
+      {
+        "name": "Xanh Than",
+        "hex": "#26364F"
+      }
+    ],
+    "description": "Vải lưới thoát khí, nhanh khô, không bí mồ hôi khi vận động mạnh. Đường may phẳng không cộm vai.",
+    "material": "Poly thun lạnh dệt lưới",
+    "style": "Athleisure / Năng động",
+    "occasions": [
+      "the_thao",
+      "hang_ngay"
+    ],
+    "tags": [
+      "ao ba lo",
+      "gym",
+      "chay bo",
+      "tap luyen",
+      "the thao",
+      "thoat khi"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_025",
+    "name": "Áo Sơ Mi Linen Tay Ngắn Nam Cổ Tàu Form Rộng Thoáng Mát",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "nam",
+    "price": 269000,
+    "original_price": 490000,
+    "flash_sale": false,
+    "sold_count": 2050,
+    "stock_total": 130,
+    "stock": 63,
+    "rating": 4.8,
+    "reviews_count": 640,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1589310243389-96a5483213a8?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1563630423918-b58f07336ac9?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Ngà",
+        "hex": "#F2EFE6"
+      },
+      {
+        "name": "Be Cát",
+        "hex": "#D8C7A8"
+      },
+      {
+        "name": "Xanh Xám",
+        "hex": "#8FA3AD"
+      }
+    ],
+    "description": "Linen thoáng nhẹ, hơi nhăn tự nhiên rất đúng chất mùa hè. Cổ tàu gọn gàng, mặc ngoài quần short hay quần tây đều hợp.",
+    "material": "Linen pha cotton",
+    "style": "Minimalism / Thoải mái",
+    "occasions": [
+      "cong_so",
+      "mua_he",
+      "du_lich",
+      "di_choi"
+    ],
+    "tags": [
+      "so mi linen",
+      "co tau",
+      "nam",
+      "mua he",
+      "thoang mat",
+      "han quoc"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_026",
+    "name": "Áo Sơ Mi Trắng Công Sở Nữ Cổ Đức Chống Nhăn Tay Dài",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "nu",
+    "price": 259000,
+    "original_price": 480000,
+    "flash_sale": false,
+    "sold_count": 3890,
+    "stock_total": 160,
+    "stock": 88,
+    "rating": 4.9,
+    "reviews_count": 1360,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1578932750294-f5075e85f44a?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Tinh",
+        "hex": "#FAFAFA"
+      },
+      {
+        "name": "Xanh Baby",
+        "hex": "#BFD7EA"
+      }
+    ],
+    "description": "Sơ mi trắng chuẩn công sở, ít nhăn, đứng form cả ngày dài. Món cơ bản nên có trong tủ đồ đi làm.",
+    "material": "Cotton lụa chống nhăn",
+    "style": "Office / Thanh lịch",
+    "occasions": [
+      "cong_so",
+      "phong_van",
+      "di_lam"
+    ],
+    "tags": [
+      "so mi trang",
+      "cong so",
+      "nu",
+      "chong nhan",
+      "phong van",
+      "co duc"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_027",
+    "name": "Áo Sơ Mi Denim Tay Dài Unisex Form Rộng Phối Layer Vintage",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "unisex",
+    "price": 329000,
+    "original_price": 620000,
+    "flash_sale": false,
+    "sold_count": 1180,
+    "stock_total": 100,
+    "stock": 41,
+    "rating": 4.7,
+    "reviews_count": 390,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1589310243389-96a5483213a8?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1563630423918-b58f07336ac9?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Denim Nhạt",
+        "hex": "#9DB4CE"
+      },
+      {
+        "name": "Xanh Denim Đậm",
+        "hex": "#41577A"
+      }
+    ],
+    "description": "Denim mềm, mặc như áo khoác mỏng hoặc cài kín đều được. Phối cùng áo thun trắng bên trong rất gọn.",
+    "material": "Denim cotton 6oz",
+    "style": "Vintage / Casual",
+    "occasions": [
+      "dao_pho",
+      "di_choi",
+      "cafe",
+      "hen_ho"
+    ],
+    "tags": [
+      "so mi denim",
+      "jean",
+      "layer",
+      "unisex",
+      "vintage",
+      "oversize"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_028",
+    "name": "Áo Sơ Mi Croptop Nữ Cổ Sen Tay Bồng Dáng Nàng Thơ",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "nu",
+    "price": 239000,
+    "original_price": 450000,
+    "flash_sale": false,
+    "sold_count": 1670,
+    "stock_total": 90,
+    "stock": 36,
+    "rating": 4.8,
+    "reviews_count": 570,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1598033129183-c4f50c736f10?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1578932750294-f5075e85f44a?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1598032895397-b9472444bf93?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Kem",
+        "hex": "#F4F0E6"
+      },
+      {
+        "name": "Hồng Phấn",
+        "hex": "#F0C9CF"
+      },
+      {
+        "name": "Xanh Mint",
+        "hex": "#B7E4D3"
+      }
+    ],
+    "description": "Cổ sen nhỏ xinh, tay bồng nhẹ, dáng crop ngắn ngang eo. Hợp đi cà phê, hẹn hò và chụp ảnh.",
+    "material": "Voan cotton hai lớp",
+    "style": "Cottagecore / Dịu dàng",
+    "occasions": [
+      "hen_ho",
+      "cafe",
+      "di_choi",
+      "chup_anh"
+    ],
+    "tags": [
+      "so mi crop",
+      "co sen",
+      "tay bong",
+      "nu tinh",
+      "nang tho",
+      "dieu dang"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_029",
+    "name": "Áo Sơ Mi Caro Flannel Nam Nữ Dày Dặn Mặc Khoác Ngoài",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "unisex",
+    "price": 289000,
+    "original_price": 560000,
+    "flash_sale": false,
+    "sold_count": 1340,
+    "stock_total": 110,
+    "stock": 49,
+    "rating": 4.7,
+    "reviews_count": 420,
+    "location": "Đà Lạt",
+    "images": [
+      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1563630423918-b58f07336ac9?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Caro Đỏ Đen",
+        "hex": "#8B2A2A"
+      },
+      {
+        "name": "Caro Xanh Rêu",
+        "hex": "#4A5A3E"
+      },
+      {
+        "name": "Caro Xám",
+        "hex": "#6E7378"
+      }
+    ],
+    "description": "Vải flannel mềm ấm, mặc khoác ngoài áo thun là đủ cho buổi tối se lạnh. Họa tiết caro không kén dáng người.",
+    "material": "Cotton flannel 200GSM",
+    "style": "Lumberjack / Cozy Retro",
+    "occasions": [
+      "thu_dong",
+      "dao_pho",
+      "du_lich_da_lat",
+      "cafe"
+    ],
+    "tags": [
+      "so mi caro",
+      "flannel",
+      "khoac ngoai",
+      "thu dong",
+      "da lat",
+      "unisex"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_030",
+    "name": "Áo Khoác Bomber Dù Hai Lớp Unisex Chống Gió Nhẹ Form Regular",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác Bomber",
+    "gender": "unisex",
+    "price": 399000,
+    "original_price": 790000,
+    "flash_sale": false,
+    "sold_count": 2260,
+    "stock_total": 110,
+    "stock": 44,
+    "rating": 4.8,
+    "reviews_count": 780,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1544923246-77307dd654cb?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544441893-675973e31985?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#1E1E1E"
+      },
+      {
+        "name": "Xanh Rêu",
+        "hex": "#4E5A41"
+      },
+      {
+        "name": "Xanh Navy",
+        "hex": "#1F2A44"
+      }
+    ],
+    "description": "Bo cổ tay và gấu chắc chắn, khóa kéo trơn tru. Chắn gió nhẹ, hợp đi phố hoặc chạy xe buổi tối.",
+    "material": "Dù nylon 2 lớp, lót lưới",
+    "style": "Streetwear / Casual",
+    "occasions": [
+      "dao_pho",
+      "thu_dong",
+      "di_choi",
+      "lai_xe"
+    ],
+    "tags": [
+      "bomber",
+      "ao khoac du",
+      "chong gio",
+      "unisex",
+      "streetwear"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_031",
+    "name": "Áo Khoác Jean Denim Wash Form Boxy Unisex Phong Cách Vintage",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác Jean",
+    "gender": "unisex",
+    "price": 449000,
+    "original_price": 850000,
+    "flash_sale": false,
+    "sold_count": 1510,
+    "stock_total": 90,
+    "stock": 29,
+    "rating": 4.8,
+    "reviews_count": 510,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1548883354-7622d03aca27?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539533018447-63fcce667823?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Denim Nhạt",
+        "hex": "#9DB4CE"
+      },
+      {
+        "name": "Xanh Denim Đậm",
+        "hex": "#41577A"
+      },
+      {
+        "name": "Đen Washed",
+        "hex": "#2B2B30"
+      }
+    ],
+    "description": "Denim dày dặn wash mềm, form boxy hơi ngắn giúp tôn dáng. Khoác ngoài áo thun hoặc váy đều hợp.",
+    "material": "Denim cotton 10oz",
+    "style": "Vintage / Streetwear",
+    "occasions": [
+      "dao_pho",
+      "di_choi",
+      "cafe",
+      "du_lich"
+    ],
+    "tags": [
+      "ao khoac jean",
+      "denim",
+      "boxy",
+      "vintage",
+      "unisex",
+      "jean jacket"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_032",
+    "name": "Áo Blazer Nữ Dáng Dài Vai Độn Sang Trọng Công Sở Hàn Quốc",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Blazer",
+    "gender": "nu",
+    "price": 459000,
+    "original_price": 890000,
+    "flash_sale": false,
+    "sold_count": 1230,
+    "stock_total": 80,
+    "stock": 31,
+    "rating": 4.9,
+    "reviews_count": 420,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1548883354-7622d03aca27?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544441893-675973e31985?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#1C1C1C"
+      },
+      {
+        "name": "Kem",
+        "hex": "#E9E0CC"
+      },
+      {
+        "name": "Xám Ghi",
+        "hex": "#8E9196"
+      }
+    ],
+    "description": "Vai độn nhẹ, form dài qua hông tạo dáng đứng và chuyên nghiệp. Mặc với quần tây hay chân váy bút chì đều sang.",
+    "material": "Tuyết mưa dày, lót satin",
+    "style": "Office Chic / Sang trọng",
+    "occasions": [
+      "cong_so",
+      "phong_van",
+      "gap_doi_tac",
+      "du_tiec"
+    ],
+    "tags": [
+      "blazer nu",
+      "vai don",
+      "cong so",
+      "sang trong",
+      "ao khoac dai",
+      "old money"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_033",
+    "name": "Áo Cardigan Len Mỏng Nữ Cổ V Cúc Ngọc Trai Mặc Ngoài Điều Hòa",
+    "category": "ao_khoac",
+    "category_name": "Áo Len & Cardigan",
+    "gender": "nu",
+    "price": 299000,
+    "original_price": 590000,
+    "flash_sale": false,
+    "sold_count": 1890,
+    "stock_total": 100,
+    "stock": 46,
+    "rating": 4.8,
+    "reviews_count": 640,
+    "location": "Đà Lạt",
+    "images": [
+      "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Kem",
+        "hex": "#EFE6D2"
+      },
+      {
+        "name": "Hồng Nâu",
+        "hex": "#C9A79B"
+      },
+      {
+        "name": "Xanh Bơ",
+        "hex": "#C8D5A8"
+      }
+    ],
+    "description": "Len mềm, không ngứa, cúc ngọc trai nữ tính. Khoác nhẹ khi vào phòng máy lạnh hoặc những chiều se lạnh.",
+    "material": "Len acrylic pha cotton",
+    "style": "Soft Girl / Nữ tính",
+    "occasions": [
+      "thu_dong",
+      "hen_ho",
+      "cafe",
+      "du_lich_da_lat"
+    ],
+    "tags": [
+      "cardigan",
+      "len",
+      "nu tinh",
+      "am ap",
+      "co v",
+      "thu dong"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_034",
+    "name": "Áo Hoodie Zip Nỉ Bông Unisex Mũ Hai Lớp Khóa Kéo Dày Dặn",
+    "category": "ao_khoac",
+    "category_name": "Hoodie & Sweater",
+    "gender": "unisex",
+    "price": 349000,
+    "original_price": 650000,
+    "flash_sale": false,
+    "sold_count": 3120,
+    "stock_total": 140,
+    "stock": 66,
+    "rating": 4.8,
+    "reviews_count": 1150,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Xám Heather",
+        "hex": "#A7A9AD"
+      },
+      {
+        "name": "Đen",
+        "hex": "#1D1D1D"
+      },
+      {
+        "name": "Xanh Navy",
+        "hex": "#1F2A44"
+      },
+      {
+        "name": "Kem",
+        "hex": "#EDE4D0"
+      }
+    ],
+    "description": "Nỉ bông êm, mũ hai lớp giữ form, khóa kéo kim loại bền. Mặc đi học, đi tập hay dạo phố đều ấm.",
+    "material": "Nỉ bông cotton 350GSM",
+    "style": "Streetwear / Athleisure",
+    "occasions": [
+      "mua_dong",
+      "thu_dong",
+      "the_thao",
+      "dao_pho"
+    ],
+    "tags": [
+      "hoodie",
+      "hoodie zip",
+      "ni bong",
+      "am ap",
+      "unisex",
+      "streetwear"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_035",
+    "name": "Áo Khoác Gió Chống Nước Nam Nữ Nhẹ Gấp Gọn Đi Mưa Du Lịch",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác Gió",
+    "gender": "unisex",
+    "price": 329000,
+    "original_price": 650000,
+    "flash_sale": false,
+    "sold_count": 1740,
+    "stock_total": 100,
+    "stock": 52,
+    "rating": 4.7,
+    "reviews_count": 560,
+    "location": "Đà Nẵng",
+    "images": [
+      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544923246-77307dd654cb?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539533018447-63fcce667823?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#1E1E1E"
+      },
+      {
+        "name": "Cam Cháy",
+        "hex": "#C8632B"
+      },
+      {
+        "name": "Xanh Than",
+        "hex": "#26364F"
+      }
+    ],
+    "description": "Chống nước nhẹ, gấp gọn vào túi mini, hợp mang theo khi đi du lịch hoặc những ngày mưa bất chợt.",
+    "material": "Dù chống nước phủ PU",
+    "style": "Outdoor / Gorpcore",
+    "occasions": [
+      "du_lich",
+      "di_choi",
+      "dao_pho",
+      "the_thao"
+    ],
+    "tags": [
+      "ao khoac gio",
+      "chong nuoc",
+      "di mua",
+      "du lich",
+      "gap gon",
+      "outdoor"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_036",
+    "name": "Quần Short Kaki Nam Form Regular Dài Trên Gối Túi Chéo Mùa Hè",
+    "category": "quan_tay",
+    "category_name": "Quần Short",
+    "gender": "nam",
+    "price": 229000,
+    "original_price": 420000,
+    "flash_sale": false,
+    "sold_count": 2870,
+    "stock_total": 170,
+    "stock": 96,
+    "rating": 4.7,
+    "reviews_count": 890,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Be",
+        "hex": "#D6C6A5"
+      },
+      {
+        "name": "Xanh Rêu",
+        "hex": "#5A6849"
+      },
+      {
+        "name": "Đen",
+        "hex": "#1E1E1E"
+      },
+      {
+        "name": "Xám",
+        "hex": "#8B8F94"
+      }
+    ],
+    "description": "Kaki mềm, co giãn nhẹ, độ dài trên gối gọn gàng. Túi chéo sâu đựng vừa điện thoại, hợp đi biển và dạo phố.",
+    "material": "Kaki cotton co giãn",
+    "style": "Casual / Năng động",
+    "occasions": [
+      "mua_he",
+      "di_choi",
+      "du_lich",
+      "di_bien"
+    ],
+    "tags": [
+      "quan short",
+      "kaki",
+      "nam",
+      "mua he",
+      "di bien",
+      "thoang mat"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_037",
+    "name": "Quần Tây Nam Slim-Fit Ống Đứng Vải Tuyết Mưa Co Giãn Công Sở",
+    "category": "quan_tay",
+    "category_name": "Quần Tây",
+    "gender": "nam",
+    "price": 359000,
+    "original_price": 690000,
+    "flash_sale": false,
+    "sold_count": 2140,
+    "stock_total": 130,
+    "stock": 57,
+    "rating": 4.8,
+    "reviews_count": 700,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#1C1C1C"
+      },
+      {
+        "name": "Xám Đậm",
+        "hex": "#4A4D52"
+      },
+      {
+        "name": "Xanh Navy",
+        "hex": "#1F2A44"
+      }
+    ],
+    "description": "Ống đứng gọn, ít nhăn, co giãn thoải mái khi ngồi lâu. Phối sơ mi và blazer là đủ đi làm hay gặp đối tác.",
+    "material": "Tuyết mưa co giãn 4 chiều",
+    "style": "Office / Lịch lãm",
+    "occasions": [
+      "cong_so",
+      "phong_van",
+      "gap_doi_tac",
+      "du_tiec"
+    ],
+    "tags": [
+      "quan tay nam",
+      "slim fit",
+      "tuyet mua",
+      "cong so",
+      "ong dung",
+      "lich lam"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_038",
+    "name": "Quần Culottes Ống Rộng Nữ Cạp Cao Vải Linen Mát Hack Dáng",
+    "category": "quan_tay",
+    "category_name": "Quần Culottes",
+    "gender": "nu",
+    "price": 269000,
+    "original_price": 510000,
+    "flash_sale": false,
+    "sold_count": 2260,
+    "stock_total": 120,
+    "stock": 61,
+    "rating": 4.8,
+    "reviews_count": 750,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Be",
+        "hex": "#D8C9AA"
+      },
+      {
+        "name": "Trắng Kem",
+        "hex": "#F3EEDF"
+      },
+      {
+        "name": "Xanh Rêu Nhạt",
+        "hex": "#9CAE8A"
+      }
+    ],
+    "description": "Ống rộng thoáng mát, cạp cao che bụng, dài quá gối vừa phải. Phối áo thun hoặc sơ mi đều thanh lịch.",
+    "material": "Linen pha rayon",
+    "style": "Minimalism / Thoải mái",
+    "occasions": [
+      "cong_so",
+      "di_choi",
+      "du_lich",
+      "mua_he"
+    ],
+    "tags": [
+      "culottes",
+      "ong rong",
+      "cap cao",
+      "linen",
+      "nu",
+      "hack dang"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_039",
+    "name": "Quần Jogger Nỉ Dáng Thể Thao Bo Gấu Unisex Cạp Dây Rút",
+    "category": "quan_tay",
+    "category_name": "Quần Jogger",
+    "gender": "unisex",
+    "price": 259000,
+    "original_price": 480000,
+    "flash_sale": false,
+    "sold_count": 2980,
+    "stock_total": 150,
+    "stock": 83,
+    "rating": 4.7,
+    "reviews_count": 960,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Xám Melange",
+        "hex": "#A3A6AB"
+      },
+      {
+        "name": "Đen",
+        "hex": "#1E1E1E"
+      },
+      {
+        "name": "Xanh Navy",
+        "hex": "#1F2A44"
+      }
+    ],
+    "description": "Nỉ mềm không xù, bo gấu gọn, có túi khóa kéo. Mặc ở nhà, đi tập hay đi dạo đều thoải mái.",
+    "material": "Nỉ da cá 300GSM",
+    "style": "Athleisure / Casual",
+    "occasions": [
+      "the_thao",
+      "o_nha",
+      "hang_ngay",
+      "dao_pho"
+    ],
+    "tags": [
+      "jogger",
+      "ni",
+      "the thao",
+      "o nha",
+      "unisex",
+      "athleisure"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_040",
+    "name": "Quần Jeans Nam Slim Fit Co Giãn Wash Nhẹ Basic Dễ Phối Đồ",
+    "category": "quan_jeans",
+    "category_name": "Quần Jeans",
+    "gender": "nam",
+    "price": 349000,
+    "original_price": 650000,
+    "flash_sale": false,
+    "sold_count": 3350,
+    "stock_total": 140,
+    "stock": 68,
+    "rating": 4.8,
+    "reviews_count": 1210,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1582552938357-32b906df40cb?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1604176354204-9268737828e4?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "29",
+      "30",
+      "31",
+      "32",
+      "33",
+      "34"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Wash Nhạt",
+        "hex": "#8FA6C2"
+      },
+      {
+        "name": "Xanh Đậm Indigo",
+        "hex": "#2F4468"
+      },
+      {
+        "name": "Đen Wash",
+        "hex": "#2B2B30"
+      }
+    ],
+    "description": "Denim co giãn nhẹ, wash sạch, form slim vừa người không bó. Món jeans nam cơ bản mặc quanh năm.",
+    "material": "Denim cotton co giãn 12oz",
+    "style": "Basic / Casual",
+    "occasions": [
+      "hang_ngay",
+      "di_choi",
+      "dao_pho",
+      "di_lam"
+    ],
+    "tags": [
+      "jeans nam",
+      "slim fit",
+      "co gian",
+      "basic",
+      "denim"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_041",
+    "name": "Quần Jeans Ống Loe Nữ Cạp Cao Retro 70s Hack Chân Dài",
+    "category": "quan_jeans",
+    "category_name": "Quần Jeans",
+    "gender": "nu",
+    "price": 379000,
+    "original_price": 720000,
+    "flash_sale": false,
+    "sold_count": 2010,
+    "stock_total": 100,
+    "stock": 38,
+    "rating": 4.8,
+    "reviews_count": 690,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1582552938357-32b906df40cb?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1565084888279-aca607ecce0c?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "26",
+      "27",
+      "28",
+      "29",
+      "30"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Vintage",
+        "hex": "#7F9BBD"
+      },
+      {
+        "name": "Xanh Đậm",
+        "hex": "#2F4468"
+      }
+    ],
+    "description": "Ống loe nhẹ, cạp cao ôm eo, kéo dài đôi chân. Đi cùng áo baby tee hoặc croptop cực hợp.",
+    "material": "Denim co giãn 11oz",
+    "style": "Retro / Chic",
+    "occasions": [
+      "di_choi",
+      "hen_ho",
+      "cafe",
+      "chup_anh"
+    ],
+    "tags": [
+      "jeans nu",
+      "ong loe",
+      "cap cao",
+      "retro",
+      "70s",
+      "hack chan"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_042",
+    "name": "Quần Jeans Ống Suông Rộng Unisex Wash Sạch Form Đứng Wide-Leg",
+    "category": "quan_jeans",
+    "category_name": "Quần Jeans",
+    "gender": "unisex",
+    "price": 399000,
+    "original_price": 760000,
+    "flash_sale": false,
+    "sold_count": 2540,
+    "stock_total": 120,
+    "stock": 55,
+    "rating": 4.9,
+    "reviews_count": 880,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1582552938357-32b906df40cb?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1604176354204-9268737828e4?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1584370848010-d7fe6bc767ec?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "28",
+      "29",
+      "30",
+      "31",
+      "32",
+      "34"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Wash Sạch",
+        "hex": "#88A0BF"
+      },
+      {
+        "name": "Xám Khói",
+        "hex": "#7B7F86"
+      },
+      {
+        "name": "Đen",
+        "hex": "#202024"
+      }
+    ],
+    "description": "Ống suông rộng buông rủ, đứng form không bị ôm đùi. Dễ phối từ áo thun oversize đến sơ mi.",
+    "material": "Denim dày 12oz",
+    "style": "Streetwear / Minimalism",
+    "occasions": [
+      "dao_pho",
+      "di_hoc",
+      "di_choi",
+      "hang_ngay"
+    ],
+    "tags": [
+      "jeans ong suong",
+      "ong rong",
+      "unisex",
+      "wide leg",
+      "wash"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_043",
+    "name": "Quần Short Jeans Nữ Lưng Cao Rách Nhẹ Cá Tính Mùa Hè",
+    "category": "quan_jeans",
+    "category_name": "Quần Jeans",
+    "gender": "nu",
+    "price": 229000,
+    "original_price": 440000,
+    "flash_sale": false,
+    "sold_count": 2380,
+    "stock_total": 110,
+    "stock": 60,
+    "rating": 4.7,
+    "reviews_count": 800,
+    "location": "Đà Nẵng",
+    "images": [
+      "https://images.unsplash.com/photo-1582552938357-32b906df40cb?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1565084888279-aca607ecce0c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "26",
+      "27",
+      "28",
+      "29",
+      "30"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Nhạt",
+        "hex": "#9DB4CE"
+      },
+      {
+        "name": "Đen Wash",
+        "hex": "#2B2B30"
+      }
+    ],
+    "description": "Lưng cao, gấu tua rua nhẹ, độ dài vừa phải. Mặc đi biển hoặc dạo phố mùa nóng rất thoải mái.",
+    "material": "Denim cotton mỏng 8oz",
+    "style": "Summer / Cá tính",
+    "occasions": [
+      "mua_he",
+      "di_bien",
+      "di_choi"
+    ],
+    "tags": [
+      "short jeans",
+      "quan ngan",
+      "rach nhe",
+      "mua he",
+      "ca tinh",
+      "nu"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_044",
+    "name": "Chân Váy Xếp Ly Ngắn Có Quần Trong Nữ Phong Cách Tennis Học Đường",
+    "category": "chan_vay",
+    "category_name": "Chân Váy",
+    "gender": "nu",
+    "price": 199000,
+    "original_price": 390000,
+    "flash_sale": false,
+    "sold_count": 2790,
+    "stock_total": 130,
+    "stock": 72,
+    "rating": 4.8,
+    "reviews_count": 930,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1582142306909-195724d33ffc?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1508427953056-b00b8d78ebf5?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng",
+        "hex": "#F7F7F5"
+      },
+      {
+        "name": "Đen",
+        "hex": "#1E1E1E"
+      },
+      {
+        "name": "Xanh Navy",
+        "hex": "#1F2A44"
+      }
+    ],
+    "description": "Xếp ly đều, có quần trong an toàn khi vận động. Hợp đi học, đi chơi và chụp ảnh phong cách preppy.",
+    "material": "Kaki mềm, lót quần trong",
+    "style": "Preppy / Trẻ trung",
+    "occasions": [
+      "di_hoc",
+      "di_choi",
+      "the_thao",
+      "cafe"
+    ],
+    "tags": [
+      "chan vay xep ly",
+      "tennis skirt",
+      "quan trong",
+      "nu",
+      "tre trung",
+      "hoc duong"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_045",
+    "name": "Chân Váy Bút Chì Công Sở Nữ Lưng Cao Xẻ Sau Ôm Nhẹ",
+    "category": "chan_vay",
+    "category_name": "Chân Váy",
+    "gender": "nu",
+    "price": 249000,
+    "original_price": 470000,
+    "flash_sale": false,
+    "sold_count": 1920,
+    "stock_total": 100,
+    "stock": 49,
+    "rating": 4.8,
+    "reviews_count": 610,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1551803091-e20673f15770?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1577900232427-18219b9166a0?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#1C1C1C"
+      },
+      {
+        "name": "Xám",
+        "hex": "#8B8E93"
+      },
+      {
+        "name": "Be",
+        "hex": "#D6C8AA"
+      }
+    ],
+    "description": "Lưng cao tôn eo, xẻ sau dễ di chuyển, chất vải đứng form. Phối cùng sơ mi trắng là chuẩn công sở.",
+    "material": "Tuyết mưa co giãn",
+    "style": "Office / Thanh lịch",
+    "occasions": [
+      "cong_so",
+      "phong_van",
+      "gap_doi_tac"
+    ],
+    "tags": [
+      "chan vay but chi",
+      "cong so",
+      "lung cao",
+      "xe sau",
+      "nu",
+      "lich su"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_046",
+    "name": "Chân Váy Jean Chữ A Dài Qua Gối Nút Bấm Phong Cách Vintage",
+    "category": "chan_vay",
+    "category_name": "Chân Váy",
+    "gender": "nu",
+    "price": 289000,
+    "original_price": 540000,
+    "flash_sale": false,
+    "sold_count": 1460,
+    "stock_total": 90,
+    "stock": 40,
+    "rating": 4.7,
+    "reviews_count": 480,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1508427953056-b00b8d78ebf5?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1582142306909-195724d33ffc?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Denim Nhạt",
+        "hex": "#9DB4CE"
+      },
+      {
+        "name": "Xanh Đậm",
+        "hex": "#41577A"
+      }
+    ],
+    "description": "Denim mềm, hàng nút bấm phía trước tạo điểm nhấn, dài qua gối dễ vận động. Hợp áo thun hoặc sơ mi crop.",
+    "material": "Denim cotton 9oz",
+    "style": "Vintage / Casual",
+    "occasions": [
+      "dao_pho",
+      "di_choi",
+      "cafe",
+      "du_lich"
+    ],
+    "tags": [
+      "chan vay jean",
+      "chu a",
+      "denim",
+      "nut bam",
+      "nu",
+      "vintage"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_047",
+    "name": "Chân Váy Midi Xòe Voan Hai Lớp Bay Bổng Dáng Nàng Thơ",
+    "category": "chan_vay",
+    "category_name": "Chân Váy",
+    "gender": "nu",
+    "price": 299000,
+    "original_price": 560000,
+    "flash_sale": false,
+    "sold_count": 1650,
+    "stock_total": 90,
+    "stock": 35,
+    "rating": 4.9,
+    "reviews_count": 590,
+    "location": "Đà Lạt",
+    "images": [
+      "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1577900232427-18219b9166a0?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1551803091-e20673f15770?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Kem",
+        "hex": "#EFE6D2"
+      },
+      {
+        "name": "Xanh Pastel",
+        "hex": "#BBD3E6"
+      },
+      {
+        "name": "Hồng Phấn",
+        "hex": "#F0C9CF"
+      }
+    ],
+    "description": "Voan hai lớp bay nhẹ, cạp chun co giãn thoải mái. Đi cà phê hay chụp ảnh đều mềm mại.",
+    "material": "Voan lụa hai lớp",
+    "style": "Cottagecore / Dịu dàng",
+    "occasions": [
+      "hen_ho",
+      "chup_anh",
+      "cafe",
+      "du_lich"
+    ],
+    "tags": [
+      "chan vay midi",
+      "voan",
+      "xoe",
+      "nang tho",
+      "dieu dang",
+      "nu"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_048",
+    "name": "Đầm Sơ Mi Dáng Dài Thắt Eo Nữ Cotton Lụa Thanh Lịch Công Sở",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 359000,
+    "original_price": 680000,
+    "flash_sale": false,
+    "sold_count": 2080,
+    "stock_total": 110,
+    "stock": 47,
+    "rating": 4.8,
+    "reviews_count": 720,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Baby",
+        "hex": "#BFD7EA"
+      },
+      {
+        "name": "Trắng",
+        "hex": "#F7F7F5"
+      },
+      {
+        "name": "Be",
+        "hex": "#D8C9AA"
+      }
+    ],
+    "description": "Dáng sơ mi dài có dây thắt eo, mặc đi làm hay đi chơi đều chỉn chu. Chất vải mát, ít nhăn.",
+    "material": "Cotton lụa mềm",
+    "style": "Minimalism / Công sở",
+    "occasions": [
+      "cong_so",
+      "cafe",
+      "di_choi",
+      "du_lich"
+    ],
+    "tags": [
+      "dam so mi",
+      "that eo",
+      "cong so",
+      "nu",
+      "midi",
+      "thanh lich"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_049",
+    "name": "Đầm Body Ôm Cổ Vuông Tay Phồng Dự Tiệc Nữ Thun Gân Tôn Dáng",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 329000,
+    "original_price": 620000,
+    "flash_sale": false,
+    "sold_count": 2530,
+    "stock_total": 100,
+    "stock": 44,
+    "rating": 4.8,
+    "reviews_count": 860,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1566174053879-31528523f8ae?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#1C1C1C"
+      },
+      {
+        "name": "Đỏ Đô",
+        "hex": "#7A1F2B"
+      },
+      {
+        "name": "Xanh Cobalt",
+        "hex": "#2F4B9B"
+      }
+    ],
+    "description": "Ôm vừa vặn, cổ vuông khoe xương quai xanh, tay phồng nhẹ nữ tính. Hợp dự tiệc và hẹn hò buổi tối.",
+    "material": "Thun gân dày co giãn",
+    "style": "Evening / Quyến rũ",
+    "occasions": [
+      "du_tiec",
+      "hen_ho"
+    ],
+    "tags": [
+      "dam om",
+      "co vuong",
+      "du tiec",
+      "hen ho",
+      "nu",
+      "tay phong"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_050",
+    "name": "Đầm Maxi Hoa Nhí Hai Dây Đi Biển Nghỉ Dưỡng Bồng Bềnh",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 349000,
+    "original_price": 650000,
+    "flash_sale": false,
+    "sold_count": 3460,
+    "stock_total": 130,
+    "stock": 58,
+    "rating": 4.9,
+    "reviews_count": 1280,
+    "location": "Đà Nẵng",
+    "images": [
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Hoa Vàng",
+        "hex": "#E8C86A"
+      },
+      {
+        "name": "Hoa Xanh Biển",
+        "hex": "#6FA8C9"
+      },
+      {
+        "name": "Hoa Đỏ",
+        "hex": "#C0524A"
+      }
+    ],
+    "description": "Váy dài hai dây bồng bềnh, chất voan thoáng nhẹ, rất hợp đi biển và chụp ảnh nghỉ dưỡng.",
+    "material": "Voan hoa hai lớp",
+    "style": "Summer Resort / Thoải mái",
+    "occasions": [
+      "di_bien",
+      "nghi_duong",
+      "du_lich",
+      "chup_anh"
+    ],
+    "tags": [
+      "dam maxi",
+      "hoa nhi",
+      "hai day",
+      "di bien",
+      "nghi duong",
+      "resort"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_051",
+    "name": "Đầm Xòe Tay Bồng Cổ Bèo Dáng Ngắn Ngọt Ngào Chụp Ảnh",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 379000,
+    "original_price": 720000,
+    "flash_sale": false,
+    "sold_count": 1580,
+    "stock_total": 80,
+    "stock": 33,
+    "rating": 4.8,
+    "reviews_count": 520,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng",
+        "hex": "#F7F7F5"
+      },
+      {
+        "name": "Hồng",
+        "hex": "#F2B9C6"
+      },
+      {
+        "name": "Xanh Pastel",
+        "hex": "#BBD3E6"
+      }
+    ],
+    "description": "Cổ bèo, tay bồng, chân váy xòe nhẹ mang lại vẻ ngọt ngào. Chụp ảnh hay đi hẹn hò đều nổi bật.",
+    "material": "Cotton lụa, lót voan",
+    "style": "Soft Girl / Ngọt ngào",
+    "occasions": [
+      "hen_ho",
+      "chup_anh",
+      "cafe",
+      "dam_cuoi"
+    ],
+    "tags": [
+      "dam xoe",
+      "tay bong",
+      "co beo",
+      "cong chua",
+      "nu tinh",
+      "chup anh"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_052",
+    "name": "Đầm Lụa Satin Cúp Ngực Dáng Dài Dạ Hội Nữ Sang Trọng",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 549000,
+    "original_price": 1090000,
+    "flash_sale": false,
+    "sold_count": 970,
+    "stock_total": 60,
+    "stock": 23,
+    "rating": 4.9,
+    "reviews_count": 330,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1566174053879-31528523f8ae?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Emerald",
+        "hex": "#1F6B58"
+      },
+      {
+        "name": "Đỏ Rượu",
+        "hex": "#6E1E2C"
+      },
+      {
+        "name": "Đen",
+        "hex": "#1C1C1C"
+      }
+    ],
+    "description": "Satin rủ mềm, cúp ngực tôn vai, dáng dài quét nhẹ. Dành cho tiệc cưới và những dịp cần thật sang.",
+    "material": "Satin lụa cao cấp, lót lụa",
+    "style": "Evening Glam / Sang trọng",
+    "occasions": [
+      "du_tiec",
+      "dam_cuoi",
+      "hen_ho_cao_cap"
+    ],
+    "tags": [
+      "dam da hoi",
+      "lua satin",
+      "cup nguc",
+      "dam dai",
+      "du tiec",
+      "sang trong"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_053",
+    "name": "Váy Yếm Denim Nữ Dáng Chữ A Ngắn Phối Áo Thun Trẻ Trung",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 289000,
+    "original_price": 540000,
+    "flash_sale": false,
+    "sold_count": 1830,
+    "stock_total": 100,
+    "stock": 4,
+    "rating": 4.7,
+    "reviews_count": 610,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Denim Nhạt",
+        "hex": "#9DB4CE"
+      },
+      {
+        "name": "Xanh Đậm",
+        "hex": "#41577A"
+      }
+    ],
+    "description": "Váy yếm chữ A phối áo thun hoặc sơ mi bên trong là thành set. Túi trước tiện dụng, dây yếm chỉnh được.",
+    "material": "Denim cotton mềm 8oz",
+    "style": "Casual / Trẻ trung",
+    "occasions": [
+      "di_choi",
+      "di_hoc",
+      "cafe",
+      "hang_ngay"
+    ],
+    "tags": [
+      "vay yem",
+      "denim",
+      "chu a",
+      "tre trung",
+      "hoc duong",
+      "nu"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_054",
+    "name": "Set Áo Sơ Mi Cộc Tay Quần Short Linen Nam Đồng Bộ Đi Biển",
+    "category": "set_do",
+    "category_name": "Set Đồ Du Lịch",
+    "gender": "nam",
+    "price": 349000,
+    "original_price": 680000,
+    "flash_sale": false,
+    "sold_count": 1310,
+    "stock_total": 90,
+    "stock": 39,
+    "rating": 4.8,
+    "reviews_count": 440,
+    "location": "Đà Nẵng",
+    "images": [
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1523381294911-8d3cead13475?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Ngà",
+        "hex": "#F2EFE6"
+      },
+      {
+        "name": "Xanh Biển Nhạt",
+        "hex": "#A9C7D9"
+      }
+    ],
+    "description": "Bộ đồng bộ áo sơ mi cộc tay và quần short chất linen thoáng mát. Mặc đi biển hoặc du lịch, không cần nghĩ phối gì.",
+    "material": "Linen pha cotton",
+    "style": "Summer Resort / Thoải mái",
+    "occasions": [
+      "di_bien",
+      "mua_he",
+      "du_lich",
+      "nghi_duong"
+    ],
+    "tags": [
+      "set do nam",
+      "so mi linen",
+      "quan short",
+      "di bien",
+      "mua he",
+      "do dong bo"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_055",
+    "name": "Set Bộ Thun Lạnh Mặc Nhà Nữ Áo Croptop Quần Short Mềm Mát",
+    "category": "set_do",
+    "category_name": "Bộ Mặc Nhà",
+    "gender": "nu",
+    "price": 219000,
+    "original_price": 420000,
+    "flash_sale": false,
+    "sold_count": 2760,
+    "stock_total": 140,
+    "stock": 81,
+    "rating": 4.8,
+    "reviews_count": 980,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1523381294911-8d3cead13475?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Hồng Phấn",
+        "hex": "#F0C9CF"
+      },
+      {
+        "name": "Xám",
+        "hex": "#A5A8AD"
+      },
+      {
+        "name": "Xanh Mint",
+        "hex": "#B7E4D3"
+      }
+    ],
+    "description": "Thun lạnh mềm mát, cạp chun không hằn bụng. Mặc ở nhà, đi ngủ hoặc chạy ra ngoài mua đồ đều thoải mái.",
+    "material": "Thun lạnh co giãn 4 chiều",
+    "style": "Loungewear / Thoải mái",
+    "occasions": [
+      "o_nha",
+      "hang_ngay"
+    ],
+    "tags": [
+      "bo do nu",
+      "mac nha",
+      "thun lanh",
+      "croptop",
+      "quan short",
+      "thoai mai"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_056",
+    "name": "Set Bộ Nỉ Thể Thao Nam Nữ Áo Hoodie Quần Jogger Đồng Bộ",
+    "category": "set_do",
+    "category_name": "Set Đồ Thể Thao",
+    "gender": "unisex",
+    "price": 499000,
+    "original_price": 980000,
+    "flash_sale": false,
+    "sold_count": 2190,
+    "stock_total": 100,
+    "stock": 42,
+    "rating": 4.8,
+    "reviews_count": 740,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1523381294911-8d3cead13475?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Xám Melange",
+        "hex": "#A3A6AB"
+      },
+      {
+        "name": "Đen",
+        "hex": "#1E1E1E"
+      },
+      {
+        "name": "Xanh Navy",
+        "hex": "#1F2A44"
+      }
+    ],
+    "description": "Bộ đôi hoodie và jogger cùng chất nỉ, mặc đồng bộ nhìn gọn và ấm. Mặc đi tập, đi học hay dạo phố buổi tối.",
+    "material": "Nỉ bông cotton 320GSM",
+    "style": "Athleisure / Streetwear",
+    "occasions": [
+      "mua_dong",
+      "thu_dong",
+      "the_thao",
+      "dao_pho"
+    ],
+    "tags": [
+      "bo ni",
+      "set hoodie jogger",
+      "unisex",
+      "the thao",
+      "thu dong",
+      "dong bo"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_057",
+    "name": "Kính Mát Phi Công Gọng Kim Loại Chống UV400 Unisex Đi Biển Lái Xe",
+    "category": "phu_kien",
+    "category_name": "Kính Mát",
+    "gender": "unisex",
+    "price": 129000,
+    "original_price": 320000,
+    "flash_sale": false,
+    "sold_count": 5310,
+    "stock_total": 220,
+    "stock": 132,
+    "rating": 4.7,
+    "reviews_count": 1980,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1511499767150-a48a237f0083?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "Freesize"
+    ],
+    "colors": [
+      {
+        "name": "Gọng Vàng Mắt Xanh Lá",
+        "hex": "#B89B4A"
+      },
+      {
+        "name": "Gọng Bạc Mắt Xám",
+        "hex": "#B8BABF"
+      }
+    ],
+    "description": "Gọng kim loại nhẹ, tròng chống chói UV400. Lái xe, đi biển hay chụp ảnh ngoài trời đều hợp.",
+    "material": "Gọng hợp kim, tròng polarized",
+    "style": "Classic / Cá tính",
+    "occasions": [
+      "di_bien",
+      "lai_xe",
+      "dao_pho",
+      "chup_anh"
+    ],
+    "tags": [
+      "kinh mat",
+      "phi cong",
+      "uv400",
+      "unisex",
+      "phu kien",
+      "di bien"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_058",
+    "name": "Túi Đeo Chéo Mini Da PU Khóa Kim Loại Nữ Sang Trọng Đi Tiệc",
+    "category": "phu_kien",
+    "category_name": "Túi Xách",
+    "gender": "nu",
+    "price": 189000,
+    "original_price": 390000,
+    "flash_sale": false,
+    "sold_count": 2620,
+    "stock_total": 130,
+    "stock": 62,
+    "rating": 4.8,
+    "reviews_count": 870,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1624222247344-550fb60583dc?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "Freesize (22 x 14 x 7 cm)"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#1C1C1C"
+      },
+      {
+        "name": "Kem",
+        "hex": "#EDE4D0"
+      },
+      {
+        "name": "Nâu Bò",
+        "hex": "#7B4A2E"
+      }
+    ],
+    "description": "Nhỏ gọn vừa điện thoại, ví và son. Dây đeo chỉnh được, khóa kim loại sang trọng.",
+    "material": "Da PU cao cấp chống thấm",
+    "style": "Chic / Nữ tính",
+    "occasions": [
+      "hen_ho",
+      "cafe",
+      "di_choi",
+      "du_tiec"
+    ],
+    "tags": [
+      "tui deo cheo",
+      "mini bag",
+      "da pu",
+      "nu",
+      "phu kien",
+      "sang trong"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_059",
+    "name": "Thắt Lưng Da Bò Nữ Bản Nhỏ Khóa Tròn Kim Loại Phối Đầm Quần Tây",
+    "category": "phu_kien",
+    "category_name": "Thắt Lưng",
+    "gender": "nu",
+    "price": 169000,
+    "original_price": 340000,
+    "flash_sale": false,
+    "sold_count": 1450,
+    "stock_total": 100,
+    "stock": 55,
+    "rating": 4.8,
+    "reviews_count": 470,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1624222247344-550fb60583dc?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "Chiều dài 100cm (Có thể bấm thêm lỗ)"
+    ],
+    "colors": [
+      {
+        "name": "Đen Khóa Vàng",
+        "hex": "#1D1D1D"
+      },
+      {
+        "name": "Nâu Khóa Bạc",
+        "hex": "#6B4529"
+      }
+    ],
+    "description": "Bản nhỏ thanh mảnh, khóa tròn tinh tế, nhấn eo cho đầm hoặc quần tây. Da bò thật, càng dùng càng mềm.",
+    "material": "Da bò thật nguyên tấm",
+    "style": "Classic / Thanh lịch",
+    "occasions": [
+      "cong_so",
+      "hen_ho",
+      "hang_ngay"
+    ],
+    "tags": [
+      "that lung nu",
+      "da bo",
+      "khoa tron",
+      "nhan eo",
+      "phu kien",
+      "thanh lich"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_060",
+    "name": "Túi Tote Canvas Dày Thêu Chữ Có Khóa Kéo Đi Học Đi Làm",
+    "category": "phu_kien",
+    "category_name": "Túi Xách",
+    "gender": "unisex",
+    "price": 159000,
+    "original_price": 320000,
+    "flash_sale": false,
+    "sold_count": 3940,
+    "stock_total": 180,
+    "stock": 97,
+    "rating": 4.7,
+    "reviews_count": 1320,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1624222247344-550fb60583dc?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1511499767150-a48a237f0083?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "Freesize (38 x 33 x 10 cm)"
+    ],
+    "colors": [
+      {
+        "name": "Be",
+        "hex": "#D9CBAE"
+      },
+      {
+        "name": "Đen",
+        "hex": "#1E1E1E"
+      },
+      {
+        "name": "Xanh Navy",
+        "hex": "#1F2A44"
+      }
+    ],
+    "description": "Canvas dày dặn, quai đeo vai êm, có ngăn khóa kéo bên trong. Đựng vừa laptop 14 inch và sổ tay.",
+    "material": "Canvas cotton 12oz",
+    "style": "Minimalism / Casual",
+    "occasions": [
+      "di_hoc",
+      "di_lam",
+      "cafe",
+      "hang_ngay"
+    ],
+    "tags": [
+      "tui tote",
+      "canvas",
+      "di hoc",
+      "di lam",
+      "laptop",
+      "phu kien"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_061",
+    "name": "Áo Polo Dệt Kim Cổ Điển Vintage Retro Knit Polo Form Suông",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 295000,
+    "original_price": 450000,
+    "flash_sale": true,
+    "flash_sale_price": 259000,
+    "sold_count": 1820,
+    "stock_total": 90,
+    "stock": 35,
+    "rating": 4.9,
+    "reviews_count": 540,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1622445268023-e18e88e2c05a?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Cốm Vintage",
+        "hex": "#708238"
+      },
+      {
+        "name": "Trắng Kem",
+        "hex": "#F4F1EA"
+      },
+      {
+        "name": "Nâu Đất Retro",
+        "hex": "#6F4E37"
+      }
+    ],
+    "description": "Áo polo dệt kim sợi cotton gai thoáng mát, cổ bẻ thanh lịch mang hơi thở hoài niệm thập niên 70. Thích hợp đi làm, đi cà phê và hẹn hò cuối tuần.",
+    "material": "100% Sợi Cotton Dệt Kim Mềm Thoáng Khí",
+    "style": "Retro / Vintage Preppy",
+    "occasions": [
+      "cong_so",
+      "hen_ho",
+      "dao_pho",
+      "cafe",
+      "di_choi"
+    ],
+    "tags": [
+      "polo",
+      "det kim",
+      "vintage",
+      "retro",
+      "ao thun",
+      "han quoc",
+      "nam",
+      "nu"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_062",
+    "name": "Áo Sơ Mi Cuban Họa Tiết Nhiệt Đới Cổ Mở Đi Biển Nghỉ Dưỡng",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "unisex",
+    "price": 269000,
+    "original_price": 420000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 2150,
+    "stock_total": 110,
+    "stock": 42,
+    "rating": 4.8,
+    "reviews_count": 670,
+    "location": "Đà Nẵng",
+    "images": [
+      "https://images.unsplash.com/photo-1607345366928-199ea26cfe3e?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1603252109303-2751441dd157?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1578932750294-f5075e85f44a?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Họa Tiết Rừng Nhiệt Đới",
+        "hex": "#2D5A27"
+      },
+      {
+        "name": "Trắng Kem Họa Tiết Lá",
+        "hex": "#EAE6DF"
+      }
+    ],
+    "description": "Sơ mi cổ Cuban phóng khoáng chất vải Rayon mát rượi, thấm hút mồ hôi tốt. Món đồ không thể thiếu cho những chuyến du lịch biển và dạo phố mùa hè.",
+    "material": "100% Rayon Lụa Tự Nhiên Rủ Mềm",
+    "style": "Resort / Vacation Wear",
+    "occasions": [
+      "di_bien",
+      "du_lich",
+      "mua_he",
+      "nghi_duong",
+      "dao_pho"
+    ],
+    "tags": [
+      "so mi cuban",
+      "hoa tiet",
+      "di bien",
+      "mua he",
+      "resort",
+      "du lich",
+      "mat me"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_063",
+    "name": "Áo Blazer Croptop Tay Lửng Phong Cách Parisienne Thanh Lịch",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "nu",
+    "price": 429000,
+    "original_price": 680000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 1340,
+    "stock_total": 80,
+    "stock": 28,
+    "rating": 4.9,
+    "reviews_count": 420,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1485968579580-b6d095142e6e?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1548883354-7622d03aca27?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Đen Huyền Bí",
+        "hex": "#1A1A1A"
+      },
+      {
+        "name": "Trắng Sữa",
+        "hex": "#FAF9F6"
+      },
+      {
+        "name": "Nâu Cà Phê",
+        "hex": "#4A3B32"
+      }
+    ],
+    "description": "Blazer dáng lửng croptop tôn vòng eo thon gọn, đệm vai nhẹ tạo phom đứng quý phái. Dễ dàng phối cùng quần cạp cao hoặc chân váy chữ A.",
+    "material": "Tuyết Mưa Hàn Quốc Dày Dặn Lót Lụa",
+    "style": "French Chic / Smart Casual",
+    "occasions": [
+      "cong_so",
+      "hen_ho",
+      "du_tiec",
+      "dao_pho"
+    ],
+    "tags": [
+      "blazer",
+      "croptop",
+      "ao khoac",
+      "kieu phap",
+      "sang trong",
+      "thanh lich",
+      "nu"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_064",
+    "name": "Áo Khoác Măng Tô Trench Coat Dáng Dài Thắt Đai Cổ Điển",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 689000,
+    "original_price": 1150000,
+    "flash_sale": true,
+    "flash_sale_price": 599000,
+    "sold_count": 980,
+    "stock_total": 60,
+    "stock": 19,
+    "rating": 5.0,
+    "reviews_count": 310,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1539533018447-63fcce667823?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544441893-675973e31985?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1520975661595-6453be3f7070?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Be Khói Classic",
+        "hex": "#D2B48C"
+      },
+      {
+        "name": "Đen Than",
+        "hex": "#2B2B2B"
+      }
+    ],
+    "description": "Trench coat phom dài chuẩn Hàn Quốc với đai eo bản lớn, cản gió giữ ấm cực tốt cho mùa thu đông hay những chuyến du lịch Đà Lạt, Sapa.",
+    "material": "Vải Kaki Dệt Chéo Chống Gió Nhẹ, Lót Lụa",
+    "style": "Korean Chic / Classic",
+    "occasions": [
+      "thu_dong",
+      "mua_dong",
+      "du_lich_da_lat",
+      "cong_so",
+      "du_tiec"
+    ],
+    "tags": [
+      "trench coat",
+      "mang to",
+      "ao khoac dai",
+      "thu dong",
+      "han quoc",
+      "am ap"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_065",
+    "name": "Áo Khoác Da Lộn Suede Bomber Phong Cách Retro Vintage",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "nam",
+    "price": 549000,
+    "original_price": 890000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 1670,
+    "stock_total": 75,
+    "stock": 22,
+    "rating": 4.8,
+    "reviews_count": 490,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1543076447-215ad9ba6923?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1551028719-00167b16eac5?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Nâu Bò Cổ Điển",
+        "hex": "#8B5A2B"
+      },
+      {
+        "name": "Xám Rêu",
+        "hex": "#4A5D4E"
+      }
+    ],
+    "description": "Bomber da lộn dập gân bo cổ tay và gấu áo, phom rộng nam tính bụi bặm. Phối hoàn hảo cùng áo thun trắng và quần jeans rách gối.",
+    "material": "Da Lộn Nhân Tạo Cao Cấp Chống Trầy Xước",
+    "style": "Retro Biker / Street Casual",
+    "occasions": [
+      "dao_pho",
+      "hen_ho",
+      "di_choi",
+      "thu_dong"
+    ],
+    "tags": [
+      "bomber",
+      "da lon",
+      "ao khoac nam",
+      "retro",
+      "vintage",
+      "bui bam",
+      "streetwear"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_066",
+    "name": "Áo Hoodie Nỉ Bông Heavyweight 380GSM Form Rộng Streetwear",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 349000,
+    "original_price": 550000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 3890,
+    "stock_total": 130,
+    "stock": 45,
+    "rating": 4.9,
+    "reviews_count": 1120,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Xám Tiêu Melange",
+        "hex": "#9E9E9E"
+      },
+      {
+        "name": "Đen Basic",
+        "hex": "#1C1C1C"
+      },
+      {
+        "name": "Xanh Rêu Đậm",
+        "hex": "#2E473B"
+      }
+    ],
+    "description": "Áo hoodie định lượng vải 380GSM dày dặn, mũ 2 lớp đứng phom, túi kangaroo tiện dụng. Lựa chọn số một cho phong cách đường phố trẻ trung.",
+    "material": "Chân Cua Nỉ Bông 100% Cotton 380GSM",
+    "style": "Streetwear / Oversized",
+    "occasions": [
+      "dao_pho",
+      "di_hoc",
+      "thu_dong",
+      "hang_ngay"
+    ],
+    "tags": [
+      "hoodie",
+      "ni bong",
+      "streetwear",
+      "oversize",
+      "unisex",
+      "ao am",
+      "nang dong"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_067",
+    "name": "Áo Cardigan Len Dệt Kẻ Quả Trám Preppy Style Hàn Quốc",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "nu",
+    "price": 359000,
+    "original_price": 580000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 1420,
+    "stock_total": 70,
+    "stock": 25,
+    "rating": 4.9,
+    "reviews_count": 480,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1512436991641-6745cdb1723f?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Phối Trắng Xanh Navy",
+        "hex": "#1B2A4A"
+      },
+      {
+        "name": "Phối Nâu Be Vintage",
+        "hex": "#8B6E55"
+      }
+    ],
+    "description": "Cardigan len dệt họa tiết quả trám thanh lịch học đường phong cách nữ sinh Hàn Quốc. Chất len xù nhẹ không ngứa, cúc ngọc trai sang trọng.",
+    "material": "Len Cashmere Pha Cotton Dệt Dày",
+    "style": "Preppy / Vintage Chic",
+    "occasions": [
+      "hen_ho",
+      "di_hoc",
+      "thu_dong",
+      "cafe",
+      "dao_pho"
+    ],
+    "tags": [
+      "cardigan",
+      "len",
+      "preppy",
+      "qua tram",
+      "han quoc",
+      "nu tinh",
+      "vintage"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_068",
+    "name": "Áo Thun Gân Ôm Body Cổ Vuông Thanh Lịch Ribbed Slim Top",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "nu",
+    "price": 189000,
+    "original_price": 320000,
+    "flash_sale": true,
+    "flash_sale_price": 169000,
+    "sold_count": 5120,
+    "stock_total": 150,
+    "stock": 58,
+    "rating": 4.8,
+    "reviews_count": 1390,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1509967419530-da38b4704bc6?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1581655353564-df123a1eb820?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Tinh Khôi",
+        "hex": "#FFFFFF"
+      },
+      {
+        "name": "Đen Tối Giản",
+        "hex": "#111111"
+      },
+      {
+        "name": "Xanh Cốm Pastel",
+        "hex": "#B4D4B0"
+      }
+    ],
+    "description": "Áo thun gân tăm cổ vuông khoe xương quai xanh quyến rũ, co giãn 4 chiều ôm trọn đường cong cơ thể mà vẫn thoải mái tuyệt đối.",
+    "material": "Thun Gân Cotton Spandex Co Giãn Cao Cấp",
+    "style": "Minimalism / Y2K Basic",
+    "occasions": [
+      "hen_ho",
+      "dao_pho",
+      "hang_ngay",
+      "cafe"
+    ],
+    "tags": [
+      "ao thun nu",
+      "co vuong",
+      "om body",
+      "thun gan",
+      "sexy",
+      "ton dang",
+      "basic"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_069",
+    "name": "Quần Dù Ống Rộng Parachute Baggy Rút Dây Phong Cách Y2K",
+    "category": "quan_tay",
+    "category_name": "Quần Tây & Short",
+    "gender": "unisex",
+    "price": 329000,
+    "original_price": 520000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 2740,
+    "stock_total": 95,
+    "stock": 31,
+    "rating": 4.9,
+    "reviews_count": 780,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1552902865-b72c031ac5ea?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Xám Bạc",
+        "hex": "#A8A9AD"
+      },
+      {
+        "name": "Đen Khói",
+        "hex": "#222222"
+      },
+      {
+        "name": "Xanh Rêu Safari",
+        "hex": "#4F5D48"
+      }
+    ],
+    "description": "Quần dù ống thụng parachute hot trend Y2K, cạp chun có dây rút linh hoạt điều chỉnh ống suông hoặc túm bo gấu cực chất.",
+    "material": "Vải Dù Gió Chống Nước Nhẹ, Siêu Nhẹ & Thoáng",
+    "style": "Y2K / Streetwear Techwear",
+    "occasions": [
+      "dao_pho",
+      "di_choi",
+      "the_thao",
+      "hang_ngay"
+    ],
+    "tags": [
+      "quan du",
+      "parachute",
+      "y2k",
+      "ong rong",
+      "baggy",
+      "streetwear",
+      "unisex"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_070",
+    "name": "Quần Túi Hộp Đa Năng Cargo Pants Kaki Dày Dặn Streetwear",
+    "category": "quan_tay",
+    "category_name": "Quần Tây & Short",
+    "gender": "unisex",
+    "price": 369000,
+    "original_price": 580000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 2180,
+    "stock_total": 85,
+    "stock": 29,
+    "rating": 4.8,
+    "reviews_count": 640,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1516257984-b1b4d707412e?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Rêu Quân Đội",
+        "hex": "#3B4D3C"
+      },
+      {
+        "name": "Đen Nhám",
+        "hex": "#1E1E1E"
+      },
+      {
+        "name": "Be Cát Khô",
+        "hex": "#C2B280"
+      }
+    ],
+    "description": "Quần cargo đa ngăn túi hộp cá tính, vải kaki cotton đứng form bền màu, chuẩn phong cách streetwear bụi bặm cho cả nam và nữ.",
+    "material": "100% Kaki Cotton Dệt Chéo Dày Dặn",
+    "style": "Utilitarian / Streetwear",
+    "occasions": [
+      "dao_pho",
+      "di_choi",
+      "du_lich",
+      "hang_ngay"
+    ],
+    "tags": [
+      "cargo pants",
+      "tui hop",
+      "kaki",
+      "streetwear",
+      "quan nam",
+      "unisex",
+      "ca tinh"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_071",
+    "name": "Quần Jeans Ống Loe Retro Cạp Cao Hack Dáng Vintage 90s",
+    "category": "quan_jeans",
+    "category_name": "Quần Jeans",
+    "gender": "nu",
+    "price": 389000,
+    "original_price": 620000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 3150,
+    "stock_total": 90,
+    "stock": 33,
+    "rating": 4.9,
+    "reviews_count": 920,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1604176354204-9268737828e4?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1582552938357-32b906df40cb?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1542272604-787c3835535d?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "26",
+      "27",
+      "28",
+      "29",
+      "30"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Denim Vintage",
+        "hex": "#3E5F8A"
+      },
+      {
+        "name": "Xanh Nhạt Mài Sáng",
+        "hex": "#7CA1C9"
+      }
+    ],
+    "description": "Quần jean ống loe nhẹ từ đầu gối kết hợp cạp cao ôm eo giúp kéo dài đôi chân tối đa, mang lại diện mạo sành điệu như thập niên 90.",
+    "material": "Denim Cotton 98% Pha Spandex Co Giãn 2%",
+    "style": "Retro 90s / Flare Jeans",
+    "occasions": [
+      "hen_ho",
+      "dao_pho",
+      "di_choi",
+      "cafe"
+    ],
+    "tags": [
+      "jean ong loe",
+      "cap cao",
+      "hack dang",
+      "quan jean nu",
+      "retro",
+      "90s",
+      "denim"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_072",
+    "name": "Quần Âu Xếp Ly Đôi Sartorial Ống Suông Sang Trọng Đẳng Cấp",
+    "category": "quan_tay",
+    "category_name": "Quần Tây & Short",
+    "gender": "nam",
+    "price": 429000,
+    "original_price": 690000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 1450,
+    "stock_total": 75,
+    "stock": 24,
+    "rating": 4.9,
+    "reviews_count": 430,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1506629082955-511b1aa562c8?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "29",
+      "30",
+      "31",
+      "32",
+      "34"
+    ],
+    "colors": [
+      {
+        "name": "Xám Than Chì",
+        "hex": "#3E3E3E"
+      },
+      {
+        "name": "Xanh Navy Lịch Lãm",
+        "hex": "#1A2536"
+      },
+      {
+        "name": "Nâu Mocha",
+        "hex": "#5C4A3E"
+      }
+    ],
+    "description": "Quần âu xếp ly đôi theo kỹ thuật may Sartorial Ý, cạp cao kèm tab chỉnh eo không cần thắt lưng, tôn vóc dáng quý ông thành đạt.",
+    "material": "Wool Blend Pha Viscose Rủ Êm Chống Nhăn",
+    "style": "Sartorial / Classic Menswear",
+    "occasions": [
+      "cong_so",
+      "du_tiec",
+      "phong_van",
+      "di_lam"
+    ],
+    "tags": [
+      "quan au",
+      "sartorial",
+      "xep ly",
+      "quan tay nam",
+      "quy ong",
+      "lich lam",
+      "cao cap"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_073",
+    "name": "Quần Short Kaki Xếp Ly Bermuda Năng Động Mùa Hè Thoải Mái",
+    "category": "quan_tay",
+    "category_name": "Quần Tây & Short",
+    "gender": "nam",
+    "price": 239000,
+    "original_price": 390000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 2890,
+    "stock_total": 100,
+    "stock": 41,
+    "rating": 4.8,
+    "reviews_count": 710,
+    "location": "Đà Nẵng",
+    "images": [
+      "https://images.unsplash.com/photo-1591195853828-11db59a44f6b?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1517445312882-bc9910d016b7?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "29",
+      "30",
+      "31",
+      "32"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Kem",
+        "hex": "#F0EDE5"
+      },
+      {
+        "name": "Be Cát",
+        "hex": "#D1C7BD"
+      },
+      {
+        "name": "Xanh Rêu Nhạt",
+        "hex": "#7A8B7B"
+      }
+    ],
+    "description": "Short Bermuda dài chạm gối xếp ly thanh lịch, dễ phối cùng áo thun polo hoặc sơ mi đũi cho những buổi cà phê dạo biển.",
+    "material": "Kaki Cotton Thoáng Mát Chống Hầm Bí",
+    "style": "Summer Casual / Resort",
+    "occasions": [
+      "di_bien",
+      "dao_pho",
+      "cafe",
+      "mua_he",
+      "du_lich"
+    ],
+    "tags": [
+      "short kaki",
+      "bermuda",
+      "quan short",
+      "mua he",
+      "di bien",
+      "nam",
+      "nang dong"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_074",
+    "name": "Chân Váy Xếp Ly Nhuyễn Midi Ánh Kim Sang Trọng Dạ Tiệc",
+    "category": "chan_vay",
+    "category_name": "Chân Váy",
+    "gender": "nu",
+    "price": 319000,
+    "original_price": 520000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 1820,
+    "stock_total": 70,
+    "stock": 26,
+    "rating": 4.9,
+    "reviews_count": 510,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1582142306909-195724d33ffc?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1577900232427-18219b9166a0?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Ánh Bạc Champagne",
+        "hex": "#D9D0C1"
+      },
+      {
+        "name": "Đen Lấp Lánh",
+        "hex": "#1F1F24"
+      }
+    ],
+    "description": "Chân váy midi dập ly nhuyễn vạt xòe bồng bềnh, sợi dệt phủ ánh kim nhẹ nhàng bắt sáng lộng lẫy dưới ánh đèn tiệc.",
+    "material": "Vải Voan Nhũ Cao Cấp Kèm Lớp Lót Lụa Dày",
+    "style": "Glamour / Feminine Chic",
+    "occasions": [
+      "du_tiec",
+      "hen_ho",
+      "dam_cuoi",
+      "cong_so"
+    ],
+    "tags": [
+      "chan vay",
+      "midi",
+      "xep ly",
+      "anh kim",
+      "da tiec",
+      "du tiec",
+      "sang chanh",
+      "nu"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_075",
+    "name": "Chân Váy Chữ A Kaki Túi Nắp Phong Cách Safari Năng Động",
+    "category": "chan_vay",
+    "category_name": "Chân Váy",
+    "gender": "nu",
+    "price": 249000,
+    "original_price": 390000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 3210,
+    "stock_total": 110,
+    "stock": 38,
+    "rating": 4.8,
+    "reviews_count": 890,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1551803091-e20673f15770?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1508427953056-b00b8d78ebf5?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1577900232427-18219b9166a0?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1582142306909-195724d33ffc?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Nâu Safari",
+        "hex": "#8C6D4F"
+      },
+      {
+        "name": "Xanh Rêu",
+        "hex": "#435240"
+      },
+      {
+        "name": "Be Sáng",
+        "hex": "#E8DEC8"
+      }
+    ],
+    "description": "Chân váy chữ A ngắn năng động với hàng cúc gỗ và túi nắp hai bên, có quần bảo hộ bên trong giúp nàng tự tin vận động cả ngày.",
+    "material": "Kaki Cotton Co Giãn Nhẹ Có Quần Bảo Hộ",
+    "style": "Safari Casual / Youthful",
+    "occasions": [
+      "dao_pho",
+      "di_hoc",
+      "di_choi",
+      "cafe"
+    ],
+    "tags": [
+      "chan vay chu a",
+      "kaki",
+      "safari",
+      "tui nap",
+      "nang dong",
+      "tre trung",
+      "nu"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_076",
+    "name": "Chân Váy Jean Denim Dáng Dài Xẻ Tà Trước Retro Hàn Quốc",
+    "category": "chan_vay",
+    "category_name": "Chân Váy",
+    "gender": "nu",
+    "price": 339000,
+    "original_price": 550000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 2450,
+    "stock_total": 85,
+    "stock": 30,
+    "rating": 4.9,
+    "reviews_count": 730,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1508427953056-b00b8d78ebf5?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1551803091-e20673f15770?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1582142306909-195724d33ffc?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Xanh Denim Wash Cổ Điển",
+        "hex": "#4A6B82"
+      },
+      {
+        "name": "Đen Khói Wash",
+        "hex": "#2F3136"
+      }
+    ],
+    "description": "Chân váy jean dài cạp cao tôn eo, chi tiết xẻ tà trước tinh tế giúp bước đi nhẹ nhàng thanh thoát và khoe đôi chân thon thả.",
+    "material": "Denim 100% Cotton Không Bai Nhão",
+    "style": "Korean Vintage / Casual Chic",
+    "occasions": [
+      "dao_pho",
+      "hen_ho",
+      "cafe",
+      "di_hoc",
+      "di_choi"
+    ],
+    "tags": [
+      "chan vay jean",
+      "denim",
+      "xe ta",
+      "dang dai",
+      "han quoc",
+      "retro",
+      "ton dang"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_077",
+    "name": "Váy Hoa Nhí Vintage Cổ Tim Tay Phồng Mùa Hè Dịu Dàng",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 369000,
+    "original_price": 590000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 3670,
+    "stock_total": 100,
+    "stock": 36,
+    "rating": 4.9,
+    "reviews_count": 1080,
+    "location": "Đà Nẵng",
+    "images": [
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Hoa Vàng Nền Kem",
+        "hex": "#F7E8A4"
+      },
+      {
+        "name": "Hoa Xanh Baby",
+        "hex": "#C6DEF1"
+      }
+    ],
+    "description": "Váy đầm hoa nhí tiểu thư cổ tim sâu nhẹ nhàng, tay bồng che khuyết điểm bắp tay, thắt eo cao tôn dáng tuyệt đối cho mùa hè rạng rỡ.",
+    "material": "Voan Tơ Hàn Cao Cấp Lót Lụa Mát",
+    "style": "Cottagecore / French Romantic",
+    "occasions": [
+      "hen_ho",
+      "di_bien",
+      "du_lich",
+      "cafe",
+      "dao_pho"
+    ],
+    "tags": [
+      "vay hoa nhi",
+      "dam hoa",
+      "co tim",
+      "tay phong",
+      "dieu da",
+      "mua he",
+      "du lich"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_078",
+    "name": "Đầm Dạ Hội Lụa Satin Cổ Yếm Hở Lưng Quyến Rũ Sang Trọng",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 489000,
+    "original_price": 850000,
+    "flash_sale": true,
+    "flash_sale_price": 439000,
+    "sold_count": 1280,
+    "stock_total": 50,
+    "stock": 17,
+    "rating": 5.0,
+    "reviews_count": 390,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1566174053879-31528523f8ae?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1502716119720-b23a93e5fe1b?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Đỏ Rượu Vang Burgundy",
+        "hex": "#66101F"
+      },
+      {
+        "name": "Đen Huyền Bí",
+        "hex": "#111111"
+      },
+      {
+        "name": "Xanh Ngọc Lục Bảo",
+        "hex": "#0F4C3A"
+      }
+    ],
+    "description": "Đầm dạ hội dáng ôm đuôi cá cổ yếm vắt chéo lưng trần gợi cảm, chất lụa satin óng ả sang chảnh giúp nàng trở thành tâm điểm của mọi bữa tiệc.",
+    "material": "100% Lụa Satin Cao Cấp Dày Mịn Không Lộ Viền",
+    "style": "Glamour / Red Carpet",
+    "occasions": [
+      "du_tiec",
+      "dam_cuoi",
+      "hen_ho_cao_cap"
+    ],
+    "tags": [
+      "dam da hoi",
+      "lua satin",
+      "co yem",
+      "ho lung",
+      "quyen ru",
+      "du tiec",
+      "sang trong"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_079",
+    "name": "Váy Polo Thể Thao Dáng Chữ A Năng Động Trẻ Trung Tennis Chic",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 299000,
+    "original_price": 480000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 2100,
+    "stock_total": 90,
+    "stock": 34,
+    "rating": 4.8,
+    "reviews_count": 620,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Viền Xanh Navy",
+        "hex": "#F8F9FA"
+      },
+      {
+        "name": "Xanh Pastel",
+        "hex": "#A2D2FF"
+      }
+    ],
+    "description": "Váy liền cổ bẻ polo dáng xòe chữ A xếp ly chân váy phong cách thể thao quý tộc Tennis Chic, năng động trẻ trung và rất tôn chân.",
+    "material": "Cotton Cá Sấu Gai 4 Chiều Thoáng Mồ Hôi",
+    "style": "Sporty Chic / Tenniscore",
+    "occasions": [
+      "dao_pho",
+      "the_thao",
+      "di_choi",
+      "di_hoc",
+      "cafe"
+    ],
+    "tags": [
+      "vay polo",
+      "the thao",
+      "tennis",
+      "chu a",
+      "tre trung",
+      "nang dong",
+      "nu"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_080",
+    "name": "Đầm Sơ Mi Thắt Nơ Eo Vải Linen Thoáng Mát Đi Làm Đi Chơi",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 389000,
+    "original_price": 620000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 2730,
+    "stock_total": 85,
+    "stock": 32,
+    "rating": 4.9,
+    "reviews_count": 790,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Ngà Tự Nhiên",
+        "hex": "#F4F1EA"
+      },
+      {
+        "name": "Xanh Rêu Nhạt",
+        "hex": "#8A9A86"
+      },
+      {
+        "name": "Vàng Mù Tạt",
+        "hex": "#D4AF37"
+      }
+    ],
+    "description": "Đầm sơ mi tay gập kèm thắt lưng vải rời, hàng cúc xà cừ tinh tế. Thiết kế thanh lịch chuẩn văn phòng nhưng vẫn thoải mái tuyệt đối cho ngày dạo phố.",
+    "material": "100% Linen Bột Dệt Tự Nhiên Thoáng Nhẹ",
+    "style": "Minimalism / Smart Casual",
+    "occasions": [
+      "cong_so",
+      "hen_ho",
+      "dao_pho",
+      "di_bien"
+    ],
+    "tags": [
+      "dam so mi",
+      "linen",
+      "that eo",
+      "thanh lich",
+      "cong so",
+      "mat me",
+      "nu"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_081",
+    "name": "Set Áo Blazer Croptop & Chân Váy Xếp Ly Đồng Bộ Preppy",
+    "category": "set_do",
+    "category_name": "Set Đồ",
+    "gender": "nu",
+    "price": 569000,
+    "original_price": 890000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 1840,
+    "stock_total": 70,
+    "stock": 26,
+    "rating": 4.9,
+    "reviews_count": 560,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1625910513413-56834b6b63d0?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Xám Ghi Học Đường",
+        "hex": "#7D8285"
+      },
+      {
+        "name": "Nâu Be Trầm",
+        "hex": "#735C4A"
+      }
+    ],
+    "description": "Set trang phục gồm áo blazer lửng và chân váy tennis xếp ly đồng điệu, giúp bạn hoàn thiện vẻ ngoài sang xịn mà không cần đau đầu phối đồ.",
+    "material": "Tuyết Mưa Dày Dặn Đứng Dáng",
+    "style": "Preppy Chic / Korean Trendy",
+    "occasions": [
+      "hen_ho",
+      "di_hoc",
+      "dao_pho",
+      "du_tiec"
+    ],
+    "tags": [
+      "set do",
+      "blazer",
+      "chan vay",
+      "preppy",
+      "set bo nu",
+      "sang chanh",
+      "dong bo"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_082",
+    "name": "Set Áo Polo & Quần Short Dệt Kim Phong Cách Nghỉ Dưỡng Resort",
+    "category": "set_do",
+    "category_name": "Set Đồ",
+    "gender": "unisex",
+    "price": 499000,
+    "original_price": 790000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 1420,
+    "stock_total": 75,
+    "stock": 29,
+    "rating": 4.9,
+    "reviews_count": 410,
+    "location": "Đà Nẵng",
+    "images": [
+      "https://images.unsplash.com/photo-1625910513413-56834b6b63d0?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Kem Tối Giản",
+        "hex": "#F0EDE5"
+      },
+      {
+        "name": "Xanh Biển Pastel",
+        "hex": "#89C2D9"
+      }
+    ],
+    "description": "Set đồ đôi nam nữ gồm áo polo dệt kim thoáng khí phối cùng short đồng chất liệu, mang lại phong thái thư giãn đậm chất du thuyền nghỉ dưỡng.",
+    "material": "Sợi Cotton Dệt Kim Mềm Xốp",
+    "style": "Resort Luxe / Old Money",
+    "occasions": [
+      "di_bien",
+      "du_lich",
+      "nghi_duong",
+      "cafe",
+      "dao_pho"
+    ],
+    "tags": [
+      "set do",
+      "polo",
+      "short",
+      "det kim",
+      "resort",
+      "old money",
+      "unisex",
+      "du lich"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_083",
+    "name": "Set Áo Dạ Tweed Cổ Tròn & Chân Váy Chữ A Tiểu Thư Cao Cấp",
+    "category": "set_do",
+    "category_name": "Set Đồ",
+    "gender": "nu",
+    "price": 689000,
+    "original_price": 1100000,
+    "flash_sale": true,
+    "flash_sale_price": 619000,
+    "sold_count": 1650,
+    "stock_total": 60,
+    "stock": 19,
+    "rating": 5.0,
+    "reviews_count": 520,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1625910513413-56834b6b63d0?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Kem Chỉ Kim Tuyến",
+        "hex": "#FAF6EE"
+      },
+      {
+        "name": "Hồng Phấn Tiểu Thư",
+        "hex": "#F7D6D0"
+      },
+      {
+        "name": "Đen Dạ Kim Sa",
+        "hex": "#212121"
+      }
+    ],
+    "description": "Set đồ dạ tweed dệt sợi nổi phối cúc kim loại vàng sang trọng, chuẩn phong cách quý cô tiểu thư danh giá đi tiệc hay gặp đối tác.",
+    "material": "Dạ Tweed Dệt Nổi Cao Cấp Lót Lụa Habutai",
+    "style": "Old Money / Luxury Chic",
+    "occasions": [
+      "du_tiec",
+      "cong_so",
+      "hen_ho_cao_cap",
+      "dam_cuoi"
+    ],
+    "tags": [
+      "set tweed",
+      "da tweed",
+      "tieu thu",
+      "sang chanh",
+      "set bo nu",
+      "du tiec",
+      "cao cap"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_084",
+    "name": "Set Bộ Nỉ Thể Thao Hoodie Zip & Quần Jogger Athleisure",
+    "category": "set_do",
+    "category_name": "Set Đồ",
+    "gender": "unisex",
+    "price": 529000,
+    "original_price": 850000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 2980,
+    "stock_total": 95,
+    "stock": 37,
+    "rating": 4.9,
+    "reviews_count": 890,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1554412933-514a83d2f3c8?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1625910513413-56834b6b63d0?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL",
+      "XXL"
+    ],
+    "colors": [
+      {
+        "name": "Xám Khói Melange",
+        "hex": "#8A8D91"
+      },
+      {
+        "name": "Đen Carbon",
+        "hex": "#1A1A1D"
+      },
+      {
+        "name": "Xanh Rêu Đậm",
+        "hex": "#3A4D39"
+      }
+    ],
+    "description": "Set bộ nỉ bông gồm áo khoác hoodie khóa kéo hai chiều và quần jogger bo gấu, ấm áp, thoải mái cho cả tập luyện, sân bay và dạo phố.",
+    "material": "Nỉ Bông Cotton 350GSM Ấm Áp Dày Dặn",
+    "style": "Athleisure / Street Casual",
+    "occasions": [
+      "the_thao",
+      "dao_pho",
+      "thu_dong",
+      "hang_ngay"
+    ],
+    "tags": [
+      "set ni",
+      "hoodie zip",
+      "jogger",
+      "athleisure",
+      "the thao",
+      "unisex",
+      "am ap"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_085",
+    "name": "Mũ Len Beanie Dệt Kim Sợi Dày Ulzzang Hàn Quốc Giữ Ấm",
+    "category": "phu_kien",
+    "category_name": "Phụ Kiện",
+    "gender": "unisex",
+    "price": 129000,
+    "original_price": 200000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 4890,
+    "stock_total": 120,
+    "stock": 52,
+    "rating": 4.9,
+    "reviews_count": 1420,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544923246-77307dd654cb?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "Free Size"
+    ],
+    "colors": [
+      {
+        "name": "Đen Classic",
+        "hex": "#1C1C1C"
+      },
+      {
+        "name": "Xám Tiêu",
+        "hex": "#7B7B7B"
+      },
+      {
+        "name": "Be Sữa",
+        "hex": "#EAE3D2"
+      },
+      {
+        "name": "Cam Đất Retro",
+        "hex": "#C85A32"
+      }
+    ],
+    "description": "Mũ beanie len dệt gân nổi phong cách đường phố Hàn Quốc, co giãn êm ái, giữ ấm đầu và là điểm nhấn cực ngầu cho outfit mùa lạnh.",
+    "material": "Len Acrylic Dệt Kim Sợi Dày Mềm Mại",
+    "style": "Streetwear / Korean Winter",
+    "occasions": [
+      "thu_dong",
+      "du_lich_da_lat",
+      "dao_pho",
+      "di_choi"
+    ],
+    "tags": [
+      "mu len",
+      "beanie",
+      "phu kien",
+      "thu dong",
+      "ulzzang",
+      "am ap",
+      "unisex"
+    ],
+    "is_hot": true,
+    "is_new": false
+  },
+  {
+    "id": "prod_086",
+    "name": "Kính Râm Phi Công Aviator Gọng Kim Loại Cao Cấp Chống UV400",
+    "category": "phu_kien",
+    "category_name": "Phụ Kiện",
+    "gender": "unisex",
+    "price": 219000,
+    "original_price": 350000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 3120,
+    "stock_total": 80,
+    "stock": 35,
+    "rating": 4.9,
+    "reviews_count": 820,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1511499767150-a48a237f0083?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544923246-77307dd654cb?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "Free Size"
+    ],
+    "colors": [
+      {
+        "name": "Tròng Đen Gọng Bạc",
+        "hex": "#2B2B2B"
+      },
+      {
+        "name": "Tròng Nâu Trà Gọng Vàng",
+        "hex": "#7B5B3E"
+      }
+    ],
+    "description": "Kính mát phi công dáng giọt nước huyền thoại, tròng kính phân cực chống chói và chặn 100% tia cực tím UV400, nâng tầm phong thái tự tin.",
+    "material": "Hợp Kim Titan Siêu Nhẹ & Tròng Kính Polarized",
+    "style": "Classic Luxury / Timeless",
+    "occasions": [
+      "di_bien",
+      "du_lich",
+      "dao_pho",
+      "mua_he"
+    ],
+    "tags": [
+      "kinh ram",
+      "aviator",
+      "phi cong",
+      "chong uv",
+      "phu kien",
+      "sang trong",
+      "thoi trang"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_087",
+    "name": "Thắt Lưng Da Bò Ý Khóa Khối Vuông Tối Giản Cao Cấp",
+    "category": "phu_kien",
+    "category_name": "Phụ Kiện",
+    "gender": "unisex",
+    "price": 249000,
+    "original_price": 400000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 2740,
+    "stock_total": 90,
+    "stock": 39,
+    "rating": 4.8,
+    "reviews_count": 690,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1624222247344-550fb60583dc?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544923246-77307dd654cb?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "105cm",
+      "115cm",
+      "125cm"
+    ],
+    "colors": [
+      {
+        "name": "Đen Da Mịn Mặt Khóa Bạc",
+        "hex": "#1A1A1A"
+      },
+      {
+        "name": "Nâu Bò Mặt Khóa Đồng",
+        "hex": "#6B4423"
+      }
+    ],
+    "description": "Thắt lưng da bò lớp 1 dẻo dai nguyên tấm, mặt khóa khối kim loại đúc nguyên khối chống gỉ sét. Món phụ kiện không thể thiếu cho quần âu và jeans.",
+    "material": "100% Da Bò Thật Nguyên Tấm Mặt Khóa Hợp Kim",
+    "style": "Minimalism / Formal",
+    "occasions": [
+      "cong_so",
+      "du_tiec",
+      "phong_van",
+      "di_lam"
+    ],
+    "tags": [
+      "that lung",
+      "day nit",
+      "da bo",
+      "phu kien",
+      "cong so",
+      "lich su",
+      "unisex"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_088",
+    "name": "Khăn Choàng Len Lông Cừu Dệt Kẻ Phối Màu Thanh Lịch Mùa Đông",
+    "category": "phu_kien",
+    "category_name": "Phụ Kiện",
+    "gender": "unisex",
+    "price": 199000,
+    "original_price": 320000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 1980,
+    "stock_total": 75,
+    "stock": 28,
+    "rating": 4.9,
+    "reviews_count": 480,
+    "location": "Hà Nội",
+    "images": [
+      "https://images.unsplash.com/photo-1520975661595-6453be3f7070?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544923246-77307dd654cb?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "Free Size (200x70cm)"
+    ],
+    "colors": [
+      {
+        "name": "Kẻ Caro Be Nâu Cổ Điển",
+        "hex": "#8C6A4F"
+      },
+      {
+        "name": "Kẻ Caro Xám Khói",
+        "hex": "#6C757D"
+      }
+    ],
+    "description": "Khăn quàng cổ bản rộng 200x70cm dệt từ sợi len mềm mịn không xù lông, viền tua rua thủ công tinh tế. Vừa giữ ấm tuyệt đối vừa làm khăn choàng vai sang trọng.",
+    "material": "Len Cashmere Tổng Hợp Siêu Mềm Mịn",
+    "style": "British Chic / Cozy Winter",
+    "occasions": [
+      "thu_dong",
+      "du_lich_da_lat",
+      "hen_ho",
+      "dao_pho"
+    ],
+    "tags": [
+      "khan choang",
+      "khan len",
+      "mua dong",
+      "caro",
+      "cashmere",
+      "am ap",
+      "phu kien"
+    ],
+    "is_hot": false,
+    "is_new": true
+  },
+  {
+    "id": "prod_089",
+    "name": "Giày Sneaker Retro Cổ Thấp Da Trắng Đế Bằng Vintage 80s",
+    "category": "phu_kien",
+    "category_name": "Phụ Kiện",
+    "gender": "unisex",
+    "price": 459000,
+    "original_price": 750000,
+    "flash_sale": true,
+    "flash_sale_price": 399000,
+    "sold_count": 3890,
+    "stock_total": 80,
+    "stock": 31,
+    "rating": 4.9,
+    "reviews_count": 1050,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544923246-77307dd654cb?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "36",
+      "37",
+      "38",
+      "39",
+      "40",
+      "41",
+      "42",
+      "43"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Kem Đế Gôm Vintage",
+        "hex": "#F4F1EA"
+      },
+      {
+        "name": "Trắng Phối Xanh Lá Retro",
+        "hex": "#2E7D32"
+      }
+    ],
+    "description": "Giày thể thao da mềm đế cao su nguyên khối chống trơn trượt, lót đệm êm ái thoáng khí. Thiết kế tối giản 'cân' mọi set đồ từ quần tây đến váy đầm.",
+    "material": "Da Microfiber Cao Cấp & Đế Cao Su Tự Nhiên",
+    "style": "Retro Sneaker / Minimal Casual",
+    "occasions": [
+      "dao_pho",
+      "di_hoc",
+      "di_choi",
+      "hang_ngay",
+      "du_lich"
+    ],
+    "tags": [
+      "giay sneaker",
+      "giay the thao",
+      "da trang",
+      "vintage",
+      "retro",
+      "em chan",
+      "unisex"
+    ],
+    "is_hot": true,
+    "is_new": true
+  },
+  {
+    "id": "prod_090",
+    "name": "Túi Xách Da Kẹp Nách Baguette Quai Ngắn Kiểu Pháp Sang Chảnh",
+    "category": "phu_kien",
+    "category_name": "Phụ Kiện",
+    "gender": "nu",
+    "price": 339000,
+    "original_price": 550000,
+    "flash_sale": false,
+    "flash_sale_price": null,
+    "sold_count": 2840,
+    "stock_total": 85,
+    "stock": 33,
+    "rating": 4.9,
+    "reviews_count": 760,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1584917865442-de89df76afd3?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1544923246-77307dd654cb?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=800&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?q=80&w=800&auto=format&fit=crop"
+    ],
+    "sizes": [
+      "Free Size (24x14x6cm)"
+    ],
+    "colors": [
+      {
+        "name": "Trắng Sữa Vân Trơn",
+        "hex": "#F8F6F0"
+      },
+      {
+        "name": "Đen Classic Dập Khóa Vàng",
+        "hex": "#1C1C1C"
+      },
+      {
+        "name": "Nâu Đất Vintage",
+        "hex": "#6F4E37"
+      }
+    ],
+    "description": "Túi kẹp nách dáng bánh mì Baguette kinh điển kiểu Pháp, khóa kéo kim loại trơn tru, ngăn trong lót nhung chứa vừa điện thoại và son phấn.",
+    "material": "Da PU Cao Cấp Mềm Mịn Chống Thấm Nước",
+    "style": "French Chic / Y2K Glam",
+    "occasions": [
+      "hen_ho",
+      "du_tiec",
+      "dao_pho",
+      "cafe"
+    ],
+    "tags": [
+      "tui xach",
+      "tui kep nach",
+      "baguette",
+      "kieu phap",
+      "sang chanh",
+      "nu",
+      "phu kien"
+    ],
+    "is_hot": true,
+    "is_new": true
+  }
+]

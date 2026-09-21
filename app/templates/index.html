@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ app_name }} • Thời trang tích hợp AI Stylist</title>
+  <meta name="description" content="{{ app_name }} - mua sắm thời trang, AI Stylist tư vấn phối đồ, tính size chuẩn theo số đo, Flash Sale mỗi ngày." />
+  <link rel="stylesheet" href="/static/css/tailwind.css" />
+  <link rel="stylesheet" href="/static/css/custom.css" />
+</head>
+<body class="flex min-h-screen flex-col font-sans"
+      data-free-ship="{{ free_ship_threshold }}" data-ship-fee="{{ shipping_fee }}" data-combo="{{ combo_percent }}">
+
+  <!-- 1. THANH TIỆN ÍCH -->
+  <div class="hidden bg-zinc-900 px-4 py-1.5 text-[11px] text-zinc-300 sm:block">
+    <div class="mx-auto flex max-w-7xl items-center justify-between sm:px-6 lg:px-8">
+      <span>🚚 Miễn phí vận chuyển đơn từ <strong class="text-white">{{ free_ship_threshold|vnd }}</strong> &nbsp;•&nbsp; 🔄 Đổi trả trong 15 ngày</span>
+      <div class="flex items-center gap-4 font-medium">
+        <button data-action="open-chat" class="flex items-center gap-1.5 hover:text-white">
+          <span class="h-2 w-2 rounded-full bg-emerald-400"></span> Stylist AI 24/7
+        </button>
+        <button data-action="open-live" class="flex items-center gap-1.5 text-rose-300 hover:text-rose-200">
+          <span class="h-2 w-2 animate-pulse rounded-full bg-rose-500"></span> Phòng Live AI
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. HEADER -->
+  <header class="sticky top-0 z-40 bg-brand-600 text-white shadow-md">
+    <div class="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
+      <div class="flex items-center gap-3 sm:gap-6">
+        <a href="/" class="group flex flex-shrink-0 items-center gap-2" aria-label="{{ app_name }} - Trang chủ">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-white font-serif text-xl font-bold text-brand-600 shadow transition group-hover:scale-105">A</div>
+          <div class="hidden flex-col leading-none sm:flex">
+            <span class="font-serif text-2xl font-bold tracking-tight">AURA</span>
+            <span class="mt-0.5 text-[9px] font-semibold uppercase tracking-[.25em] text-brand-100">Studio</span>
+          </div>
+        </a>
+
+        <form id="search-form" role="search" class="relative min-w-0 max-w-2xl flex-1" autocomplete="off">
+          <div class="flex items-center rounded-lg bg-white p-1 shadow-lg">
+            <label for="search-input" class="sr-only">Tìm kiếm sản phẩm</label>
+            <input id="search-input" type="search" maxlength="100"
+                   placeholder="Tìm 'áo đi biển', 'blazer form rộng', 'váy dạ hội'..."
+                   class="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-zinc-900 outline-none placeholder:text-zinc-400" />
+            <button type="submit" class="btn btn-primary !rounded-md !px-4 !py-2">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <span class="hidden sm:inline">Tìm</span>
+            </button>
+          </div>
+          <div class="no-scrollbar mt-1 hidden gap-3 overflow-x-auto text-[11px] font-medium text-brand-100 sm:flex" id="hot-keywords">
+            <button type="button" data-action="hot-search" data-q="blazer" class="hover:text-white">Blazer</button>
+            <button type="button" data-action="hot-search" data-q="quần ống suông" class="hover:text-white">Quần ống suông</button>
+            <button type="button" data-action="hot-search" data-q="sơ mi lụa" class="hover:text-white">Sơ mi lụa</button>
+            <button type="button" data-action="hot-search" data-q="đầm dạ tiệc" class="hover:text-white">Đầm dạ tiệc</button>
+            <button type="button" data-action="hot-search" data-q="áo thun" class="hover:text-white">Áo thun boxy</button>
+          </div>
+        </form>
+
+        <div class="flex flex-shrink-0 items-center gap-1 sm:gap-3">
+          <button data-action="open-chat" class="hidden items-center gap-2 rounded-xl border border-white/20 bg-zinc-950/80 px-3.5 py-2 text-xs font-bold shadow-lg transition hover:bg-zinc-950 md:flex">
+            <span class="text-sm">✨</span>
+            <span class="text-left leading-none"><span class="block text-[10px] text-violet-300">TRỢ LÝ</span><span class="mt-0.5 block">Stylist AI</span></span>
+          </button>
+          <button data-action="show-wishlist" class="relative p-2" aria-label="Sản phẩm yêu thích">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+            <span class="wishlist-badge absolute right-0 top-0 hidden h-4 min-w-4 items-center justify-center rounded-full bg-white px-1 text-[10px] font-black text-brand-600">0</span>
+          </button>
+          <button data-action="open-cart" class="relative p-2" aria-label="Giỏ hàng">
+            <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+            <span class="cart-badge absolute -right-0.5 top-0 hidden h-5 min-w-5 items-center justify-center rounded-full border-2 border-brand-600 bg-white px-1 text-[10px] font-black text-brand-600">0</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-b border-zinc-200 bg-white px-4 py-2 text-zinc-800">
+      <div class="mx-auto flex max-w-7xl items-center justify-around gap-2 sm:px-6 lg:px-8 text-[11px] font-bold sm:justify-between sm:text-xs">
+        <span class="flex items-center gap-1.5 text-brand-700">✓ Cam kết chất lượng</span>
+        <span class="flex items-center gap-1.5 text-emerald-700">🚚 Freeship đơn từ {{ free_ship_threshold|vnd }}</span>
+        <span class="hidden items-center gap-1.5 text-blue-700 sm:flex">🔄 Đổi trả 15 ngày</span>
+        <span class="flex items-center gap-1.5 text-violet-700">🤖 Stylist AI tư vấn 24/7</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 3. LỐI TẮT & DANH MỤC -->
+  <section class="mx-auto mt-4 w-full max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Danh mục nhanh">
+    <div class="surface p-4">
+      <div id="quick-nav" class="grid grid-cols-5 gap-3 text-center sm:grid-cols-8 lg:grid-cols-10">
+        <button data-action="set-category" data-cat="flash_sale" class="group flex flex-col items-center">
+          <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-xl transition group-hover:scale-105 group-hover:bg-brand-600">🔥</span>
+          <span class="mt-1.5 text-[11px] font-bold text-zinc-800 group-hover:text-brand-600">Flash Sale</span>
+        </button>
+        <button data-action="scroll-to" data-target="vouchers-section" class="group flex flex-col items-center">
+          <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-xl transition group-hover:scale-105 group-hover:bg-amber-500">🎟️</span>
+          <span class="mt-1.5 text-[11px] font-bold text-zinc-800">Mã giảm giá</span>
+        </button>
+        <button data-action="scroll-to" data-target="lookbook-section" class="group flex flex-col items-center">
+          <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-100 text-xl transition group-hover:scale-105 group-hover:bg-rose-500">🎬</span>
+          <span class="mt-1.5 text-[11px] font-bold text-zinc-800">Lookbook</span>
+        </button>
+        <button data-action="open-live" class="group flex flex-col items-center">
+          <span class="live-pulsing flex h-12 w-12 items-center justify-center rounded-2xl bg-red-100 text-xl transition group-hover:scale-105">🔴</span>
+          <span class="mt-1.5 text-[11px] font-bold text-red-600">AI Live</span>
+        </button>
+        <button data-action="open-outfit" class="group flex flex-col items-center">
+          <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-xl transition group-hover:scale-105 group-hover:bg-violet-600">✨</span>
+          <span class="mt-1.5 text-[11px] font-bold text-zinc-800">AI Phối đồ</span>
+        </button>
+        <button data-action="open-size" class="group flex flex-col items-center">
+          <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-100 text-xl transition group-hover:scale-105 group-hover:bg-blue-600">📏</span>
+          <span class="mt-1.5 text-[11px] font-bold text-zinc-800">Tính size AI</span>
+        </button>
+        <!-- Danh mục thật được nạp từ /api/categories -->
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. FLASH SALE -->
+  <section id="flash-section" class="mx-auto mt-5 w-full max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Flash Sale">
+    <div class="surface p-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-100 pb-3">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-1.5">
+            <span class="flame-anim text-xl">🔥</span>
+            <h2 class="text-lg font-black uppercase tracking-tight text-brand-600 sm:text-xl">Flash Sale</h2>
+          </div>
+          <div class="flex items-center gap-1 text-xs font-bold" role="timer" aria-label="Thời gian còn lại của khung Flash Sale">
+            <span id="fs-hours" class="rounded bg-zinc-900 px-2 py-1 text-white">--</span><span>:</span>
+            <span id="fs-mins" class="rounded bg-zinc-900 px-2 py-1 text-white">--</span><span>:</span>
+            <span id="fs-secs" class="rounded bg-zinc-900 px-2 py-1 text-white">--</span>
+          </div>
+        </div>
+        <button data-action="set-category" data-cat="flash_sale" class="flex items-center gap-1 text-xs font-bold text-brand-600 hover:underline">Xem tất cả ›</button>
+      </div>
+      <div id="flash-sale-carousel" class="no-scrollbar mt-4 flex gap-3 overflow-x-auto pb-2">
+        <div class="skeleton h-64 w-44 flex-shrink-0 rounded-xl"></div><div class="skeleton h-64 w-44 flex-shrink-0 rounded-xl"></div><div class="skeleton h-64 w-44 flex-shrink-0 rounded-xl"></div><div class="skeleton h-64 w-44 flex-shrink-0 rounded-xl"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. LOOKBOOK VIDEO -->
+  <section id="lookbook-section" class="mx-auto mt-5 w-full max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Lookbook video">
+    <div class="rounded-2xl border border-zinc-800 bg-gradient-to-r from-zinc-950 to-zinc-900 p-5 text-white shadow-xl">
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800 pb-4">
+        <div class="flex items-center gap-2.5">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-600 text-sm shadow-md">🎬</div>
+          <div>
+            <h2 class="text-base font-black tracking-tight sm:text-lg">AURA LOOKBOOK • Video &amp; review thực tế</h2>
+            <p class="text-xs text-zinc-400">Xem người mẫu mặc đồ thực tế, bấm vào túi vàng để mua ngay.</p>
+          </div>
+        </div>
+        <button data-action="open-live" class="btn !rounded-xl bg-rose-600 text-white hover:bg-rose-700">
+          <span class="h-2 w-2 animate-ping rounded-full bg-white"></span> Vào phòng AI Live
+        </button>
+      </div>
+      <div id="video-grid" class="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4"></div>
+    </div>
+  </section>
+
+  <!-- 6. VOUCHER -->
+  <section id="vouchers-section" class="mx-auto mt-5 w-full max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Kho voucher">
+    <div class="surface p-4">
+      <div class="mb-3 flex items-center justify-between border-b border-zinc-100 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">🎟️</span>
+          <h2 class="text-sm font-extrabold uppercase text-zinc-900 sm:text-base">Kho voucher ưu đãi</h2>
+        </div>
+        <span class="text-xs text-zinc-400">Lưu mã, dùng khi thanh toán</span>
+      </div>
+      <div id="vouchers-list" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"></div>
+    </div>
+  </section>
+
+  <!-- 7. DANH SÁCH SẢN PHẨM -->
+  <main id="catalog" class="mx-auto mb-16 mt-5 w-full max-w-7xl flex-1 scroll-mt-32 px-4 sm:px-6 lg:px-8">
+    <div class="rounded-t-2xl border-x border-t border-zinc-200 bg-white p-3 shadow-sm">
+      <div class="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+        <div id="category-tabs" class="no-scrollbar flex items-center gap-1 overflow-x-auto border-b border-zinc-100 pb-2 md:border-b-0 md:pb-0" role="tablist"></div>
+        <div class="no-scrollbar flex items-center gap-2 overflow-x-auto">
+          <span class="hidden text-xs font-semibold text-zinc-400 sm:inline">Sắp xếp:</span>
+          <button data-action="set-sort" data-sort="popular" class="sort-btn btn btn-sm">Phổ biến</button>
+          <button data-action="set-sort" data-sort="top_sales" class="sort-btn btn btn-sm">Bán chạy</button>
+          <button data-action="set-sort" data-sort="price_asc" class="sort-btn btn btn-sm">Giá tăng</button>
+          <button data-action="set-sort" data-sort="price_desc" class="sort-btn btn btn-sm">Giá giảm</button>
+        </div>
+      </div>
+      <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-3 text-xs">
+        <label class="flex items-center gap-1.5 text-zinc-500">Dành cho
+          <select id="filter-gender" class="rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-xs font-semibold text-zinc-700 outline-none focus:border-brand-500">
+            <option value="all">Tất cả</option><option value="nam">Nam</option><option value="nu">Nữ</option>
+          </select>
+        </label>
+        <label class="flex items-center gap-1.5 text-zinc-500">Giá
+          <select id="filter-price" class="rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-xs font-semibold text-zinc-700 outline-none focus:border-brand-500">
+            <option value="">Tất cả</option><option value="0-200000">Dưới 200K</option><option value="200000-400000">200K – 400K</option><option value="400000-">Trên 400K</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="rounded-b-2xl border-x border-b border-zinc-200 bg-white p-4 shadow-sm">
+      <div class="flex items-center justify-between pb-4 text-xs text-zinc-500">
+        <span id="products-count" aria-live="polite">Đang tải sản phẩm...</span>
+        <button data-action="reset-filters" class="font-bold text-brand-600 hover:underline">Xóa bộ lọc</button>
+      </div>
+      <div id="products-grid" class="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"></div>
+    </div>
+  </main>
+
+  <!-- 8. NÚT NỔI -->
+  <div class="fixed bottom-5 right-4 z-30 flex flex-col items-end gap-3 sm:right-6">
+    <button data-action="open-live" class="flex items-center gap-2 rounded-full border-2 border-white bg-rose-600 px-3.5 py-2.5 text-xs font-black text-white shadow-2xl transition hover:scale-105 hover:bg-rose-700">
+      <span class="h-2.5 w-2.5 animate-ping rounded-full bg-white"></span> Live AI
+    </button>
+    <button data-action="toggle-chat" class="flex items-center gap-2 rounded-full border border-violet-500 bg-zinc-950 px-4 py-3 text-xs font-bold text-white shadow-2xl transition hover:scale-105 hover:bg-zinc-900">
+      <span class="text-base">✨</span> Trợ lý Stylist AI
+    </button>
+  </div>
+
+  <!-- ================= MODALS & DRAWERS ================= -->
+
+  <!-- Phòng Live AI -->
+  <div id="live-modal" class="modal hidden" data-modal role="dialog" aria-modal="true" aria-label="Phòng Live AI">
+    <div class="relative flex aspect-[9/16] max-h-[92vh] w-full max-w-sm flex-col justify-between overflow-hidden rounded-3xl border border-zinc-800 bg-black p-4 text-white shadow-2xl">
+      <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=800&auto=format&fit=crop" alt="" class="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-60" />
+      <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/30"></div>
+
+      <div class="relative z-10 flex items-center justify-between text-xs">
+        <div class="flex items-center gap-2 rounded-full bg-black/40 px-2.5 py-1.5 backdrop-blur">
+          <div class="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600">✨</div>
+          <div><span class="block font-bold leading-none">{{ app_name }}</span><span class="text-[9px] font-bold text-emerald-400">Host AI đang trực tuyến</span></div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="flex items-center gap-1 rounded-full bg-rose-600 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider"><span class="h-1.5 w-1.5 animate-ping rounded-full bg-white"></span>Live demo</span>
+          <button data-action="close-modal" data-target="live-modal" class="flex h-7 w-7 items-center justify-center rounded-full bg-black/60" aria-label="Đóng">✕</button>
+        </div>
+      </div>
+
+      <div class="relative z-10 flex flex-1 flex-col justify-end overflow-hidden pb-3">
+        <div id="live-comments" class="no-scrollbar max-h-48 space-y-2 overflow-y-auto pr-1" aria-live="polite"></div>
+      </div>
+      <div id="live-pinned" class="relative z-10 mb-3 hidden"></div>
+      <form id="live-form" class="relative z-10 flex items-center gap-2" autocomplete="off">
+        <label for="live-input" class="sr-only">Hỏi Host AI</label>
+        <input id="live-input" type="text" maxlength="300" placeholder="Hỏi Host AI (size, màu, voucher)..."
+               class="min-w-0 flex-1 rounded-full border border-zinc-700 bg-black/60 px-3.5 py-2 text-xs text-white outline-none backdrop-blur focus:border-rose-500" />
+        <button type="submit" class="rounded-full bg-rose-600 px-3 py-2 text-xs font-bold hover:bg-rose-700">Gửi</button>
+        <button type="button" data-action="live-heart" class="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-sm hover:scale-110" aria-label="Thả tim">❤️</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Video lookbook -->
+  <div id="video-modal" class="modal hidden" data-modal role="dialog" aria-modal="true" aria-label="Video lookbook">
+    <div id="video-body" class="w-full max-w-sm"></div>
+  </div>
+
+  <!-- Chat AI -->
+  <div id="chat-drawer" class="drawer hidden" data-modal role="dialog" aria-modal="true" aria-label="Trợ lý Stylist AI">
+    <div class="drawer-panel">
+      <div class="flex items-center justify-between bg-gradient-to-r from-violet-700 to-indigo-800 px-5 py-4 text-white">
+        <div class="flex items-center gap-2.5">
+          <div class="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-sm shadow">✨</div>
+          <div>
+            <h2 class="flex items-center gap-1.5 text-sm font-bold">AURA Stylist AI <span class="h-2 w-2 rounded-full bg-emerald-400"></span></h2>
+            <p class="text-[10px] text-violet-200">Tư vấn chọn đồ, phối set, chọn size</p>
+          </div>
+        </div>
+        <button data-action="close-modal" data-target="chat-drawer" class="p-1 text-white/80 hover:text-white" aria-label="Đóng">✕</button>
+      </div>
+      <div id="chat-context" class="hidden px-4 pt-3"></div>
+      <div id="chat-suggestions" class="no-scrollbar flex gap-2 overflow-x-auto border-b border-zinc-100 bg-zinc-50 px-4 py-2"></div>
+      <div id="chat-messages" class="flex-1 space-y-3 overflow-y-auto bg-[#FCFCFD] p-4" aria-live="polite"></div>
+      <form id="chat-form" class="border-t border-zinc-200 bg-white p-3.5" autocomplete="off">
+        <div class="flex items-center gap-2">
+          <label for="chat-input" class="sr-only">Nhập câu hỏi</label>
+          <input id="chat-input" type="text" maxlength="1000" placeholder="Hỏi Stylist AI (đi phỏng vấn mặc gì?)..."
+                 class="min-w-0 flex-1 rounded-xl bg-zinc-100 px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-violet-200" />
+          <button id="chat-send" type="submit" class="btn btn-ai">Gửi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Giỏ hàng -->
+  <div id="cart-drawer" class="drawer hidden" data-modal role="dialog" aria-modal="true" aria-label="Giỏ hàng">
+    <div class="drawer-panel">
+      <div class="flex items-center justify-between border-b border-zinc-100 bg-brand-50/60 px-5 py-4">
+        <h2 class="flex items-center gap-2 text-sm font-extrabold text-zinc-900">🛍️ Giỏ hàng <span id="cart-count-label" class="text-xs font-semibold text-zinc-500"></span></h2>
+        <button data-action="close-modal" data-target="cart-drawer" class="icon-btn" aria-label="Đóng">✕</button>
+      </div>
+      <div id="cart-freeship" class="hidden border-b border-zinc-100 px-4 py-2.5 text-[11px]"></div>
+      <div id="cart-lines" class="flex-1 overflow-y-auto p-4"></div>
+      <div class="space-y-2 border-t border-zinc-100 bg-zinc-50 p-4">
+        <div id="cart-summary" class="space-y-1.5 text-xs"></div>
+        <p id="cart-error" class="hidden rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-700"></p>
+        <button id="cart-checkout" data-action="checkout" class="btn btn-primary w-full !py-3 uppercase tracking-wider">Tiến hành đặt hàng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Xem nhanh sản phẩm -->
+  <div id="quickview-modal" class="modal hidden" data-modal role="dialog" aria-modal="true" aria-label="Chi tiết sản phẩm">
+    <div class="modal-panel max-w-3xl">
+      <button data-action="close-modal" data-target="quickview-modal" class="icon-btn absolute right-4 top-4 z-20" aria-label="Đóng">✕</button>
+      <div id="qv-body"></div>
+    </div>
+  </div>
+
+  <!-- Tính size AI -->
+  <div id="size-modal" class="modal hidden" data-modal role="dialog" aria-modal="true" aria-label="AI tính size">
+    <div class="modal-panel max-w-md p-6">
+      <div class="flex items-center justify-between border-b border-zinc-100 pb-3">
+        <h2 class="flex items-center gap-2 text-base font-bold">📏 AI tính size thông minh</h2>
+        <button data-action="close-modal" data-target="size-modal" class="icon-btn" aria-label="Đóng">✕</button>
+      </div>
+      <div id="size-product" class="mt-3 hidden"></div>
+      <form id="size-form" class="mt-4 space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div><label class="field-label" for="size-height">Chiều cao (cm)</label>
+            <input id="size-height" type="number" inputmode="numeric" min="100" max="230" value="165" required class="field" /></div>
+          <div><label class="field-label" for="size-weight">Cân nặng (kg)</label>
+            <input id="size-weight" type="number" inputmode="numeric" min="25" max="200" value="55" required class="field" /></div>
+        </div>
+        <div><label class="field-label" for="size-gender">Giới tính</label>
+          <select id="size-gender" class="field"><option value="unisex">Không muốn nói / Unisex</option><option value="nu">Nữ</option><option value="nam">Nam</option></select></div>
+        <fieldset>
+          <legend class="field-label">Sở thích form dáng</legend>
+          <div class="grid grid-cols-3 gap-2 text-center text-[11px]">
+            <label class="cursor-pointer rounded-xl border p-2 font-semibold transition hover:border-violet-400 has-[:checked]:border-violet-600 has-[:checked]:bg-violet-50">
+              <input class="sr-only" type="radio" name="fit" value="slim" />Ôm sát</label>
+            <label class="cursor-pointer rounded-xl border p-2 font-semibold transition hover:border-violet-400 has-[:checked]:border-violet-600 has-[:checked]:bg-violet-50">
+              <input class="sr-only" type="radio" name="fit" value="regular" checked />Vừa vặn</label>
+            <label class="cursor-pointer rounded-xl border p-2 font-semibold transition hover:border-violet-400 has-[:checked]:border-violet-600 has-[:checked]:bg-violet-50">
+              <input class="sr-only" type="radio" name="fit" value="oversize" />Rộng rãi</label>
+          </div>
+        </fieldset>
+        <p id="size-error" class="hidden rounded-lg bg-red-50 px-3 py-2 font-semibold text-red-700"></p>
+        <button id="size-submit" type="submit" class="btn btn-ai w-full !py-2.5 uppercase">Phân tích size</button>
+      </form>
+      <div id="size-result" class="mt-4 hidden"></div>
+    </div>
+  </div>
+
+  <!-- AI phối đồ -->
+  <div id="outfit-modal" class="modal hidden" data-modal role="dialog" aria-modal="true" aria-label="AI phối đồ">
+    <div class="modal-panel max-w-2xl"><div id="outfit-body"></div></div>
+  </div>
+
+  <!-- Thanh toán -->
+  <div id="checkout-modal" class="modal hidden" data-modal role="dialog" aria-modal="true" aria-label="Thanh toán">
+    <div class="modal-panel max-w-lg p-6">
+      <div class="flex items-center justify-between border-b border-zinc-100 pb-3">
+        <h2 class="text-base font-bold">Thanh toán</h2>
+        <button data-action="close-modal" data-target="checkout-modal" class="icon-btn" aria-label="Đóng">✕</button>
+      </div>
+      <form id="checkout-form" class="mt-4 space-y-3 text-xs" novalidate>
+        <div><label class="field-label" for="co-name">Tên người nhận *</label>
+          <input id="co-name" type="text" required minlength="2" maxlength="80" autocomplete="name" placeholder="Nguyễn Văn A" class="field" /></div>
+        <div><label class="field-label" for="co-phone">Số điện thoại *</label>
+          <input id="co-phone" type="tel" required inputmode="tel" autocomplete="tel" placeholder="0987 654 321" class="field" /></div>
+        <div><label class="field-label" for="co-address">Địa chỉ nhận hàng *</label>
+          <input id="co-address" type="text" required minlength="8" maxlength="250" autocomplete="street-address" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành" class="field" /></div>
+        <div><label class="field-label" for="co-note">Ghi chú (tùy chọn)</label>
+          <input id="co-note" type="text" maxlength="300" placeholder="Giao giờ hành chính..." class="field" /></div>
+
+        <div>
+          <label class="field-label" for="co-voucher">Mã giảm giá</label>
+          <div class="flex gap-2">
+            <input id="co-voucher" type="text" maxlength="30" placeholder="Nhập mã" class="field flex-1 font-bold uppercase" />
+            <button type="button" data-action="apply-voucher" class="btn btn-soft">Áp dụng</button>
+          </div>
+          <div id="co-saved-vouchers" class="mt-1.5 flex flex-wrap gap-1.5"></div>
+          <p id="co-voucher-msg" class="mt-1 hidden font-semibold"></p>
+        </div>
+
+        <fieldset>
+          <legend class="field-label">Hình thức thanh toán</legend>
+          <div class="space-y-1.5">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border p-2.5 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50">
+              <input type="radio" name="payment" value="cod" checked class="accent-brand-600" /><span>Thanh toán khi nhận hàng (COD)</span></label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border p-2.5 has-[:checked]:border-brand-500 has-[:checked]:bg-brand-50">
+              <input type="radio" name="payment" value="qr_transfer" class="accent-brand-600" /><span>Chuyển khoản ngân hàng / ví điện tử</span></label>
+          </div>
+        </fieldset>
+
+        <div id="co-summary" class="space-y-1.5 rounded-xl bg-zinc-50 p-3"></div>
+        <p id="co-error" class="hidden rounded-lg bg-red-50 px-3 py-2 font-semibold text-red-700" role="alert"></p>
+        <button id="co-submit" type="submit" class="btn btn-primary w-full !py-3 uppercase tracking-wider">Đặt hàng</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Đặt hàng thành công -->
+  <div id="success-modal" class="modal hidden" data-modal role="dialog" aria-modal="true" aria-label="Đặt hàng thành công">
+    <div id="success-body" class="modal-panel max-w-md"></div>
+  </div>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="mt-auto border-t border-zinc-200 bg-white py-10 text-xs text-zinc-600">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-2 gap-6 md:grid-cols-4">
+        <div>
+          <h3 class="mb-3 font-bold uppercase text-zinc-900">Chính sách</h3>
+          <ul class="space-y-1.5 text-zinc-500">
+            <li>Phí vận chuyển: {{ shipping_fee|vnd }}</li>
+            <li>Miễn phí ship đơn từ {{ free_ship_threshold|vnd }}</li>
+            <li>Đổi trả trong 15 ngày</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="mb-3 font-bold uppercase text-zinc-900">Về {{ app_name }}</h3>
+          <ul class="space-y-1.5 text-zinc-500">
+            <li>Thời trang thanh lịch, dễ phối</li>
+            <li>Stylist AI hỗ trợ 24/7</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="mb-3 font-bold uppercase text-zinc-900">Thanh toán</h3>
+          <div class="flex flex-wrap gap-2 text-[10px] font-bold text-zinc-600">
+            <span class="rounded border bg-zinc-50 p-1.5">COD</span>
+            <span class="rounded border bg-zinc-50 p-1.5">Chuyển khoản</span>
+          </div>
+        </div>
+        <div>
+          <h3 class="mb-3 font-bold uppercase text-zinc-900">Tính năng AI</h3>
+          <ul class="space-y-1.5">
+            <li><button data-action="open-chat" class="font-bold text-violet-700 hover:underline">Trợ lý Stylist AI</button></li>
+            <li><button data-action="open-size" class="hover:underline">AI tính size theo số đo</button></li>
+            <li><button data-action="open-outfit" class="hover:underline">AI phối đồ giảm {{ combo_percent }}%</button></li>
+            <li><button data-action="open-live" class="font-bold text-rose-600 hover:underline">Phòng Live AI</button></li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-8 border-t border-zinc-100 pt-6 text-center text-[11px] text-zinc-400">&copy; 2026 {{ app_name }}. Thời trang tích hợp AI.</div>
+    </div>
+  </footer>
+
+  <div id="toast-root" class="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex flex-col items-center gap-2 px-4" aria-live="polite"></div>
+
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/ai_stylist.js"></script>
+</body>
+</html>

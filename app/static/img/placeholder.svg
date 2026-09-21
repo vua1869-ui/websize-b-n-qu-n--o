@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Ảnh sản phẩm">
+  <rect width="400" height="400" fill="#f4f4f5"/>
+  <g fill="none" stroke="#a1a1aa" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" transform="translate(110 100)">
+    <path d="M60 10 L10 45 L35 75 L50 62 V180 H130 V62 L145 75 L170 45 L120 10 C112 30 68 30 60 10 Z"/>
+  </g>
+  <text x="200" y="345" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#a1a1aa">AURA STUDIO</text>
+</svg>
