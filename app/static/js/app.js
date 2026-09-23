@@ -112,6 +112,8 @@ const App = {
     wishlist: U.store.get('aura_wishlist', []),
     filters: { category: 'all', gender: 'all', sort: 'popular', search: '', min: null, max: null, wishlist: false },
     flash: { endsAt: 0, skew: 0, items: [], reloading: false },
+    trends: [],
+    trendingProducts: [],
     qv: { product: null, size: null, color: null, qty: 1 },
     quote: null, quoteError: '', voucher: '',
   },
@@ -121,7 +123,7 @@ const App = {
     this.bindEvents();
     this.updateBadges();
     this.renderSortButtons();
-    await Promise.all([this.loadCategories(), this.loadProducts(), this.loadFlash(), this.loadVouchers(), this.loadVideos()]);
+    await Promise.all([this.loadCategories(), this.loadProducts(), this.loadTrending(), this.loadFlash(), this.loadVouchers(), this.loadVideos()]);
     this.sanitizeCart();
     this.refreshCart();
   },
@@ -449,11 +451,173 @@ const App = {
     Modal.open('video-modal');
   },
 
+  /* ---------- Trending (AI Fashion Trend Detection & Recommendation) ---------- */
+  async loadTrending(forceRefresh = false) {
+    const chipsEl = U.$('#trend-chips');
+    const prodsGrid = U.$('#trending-products-grid');
+    if (!chipsEl || !prodsGrid) return;
+
+    try {
+      // Thu thập sở thích ẩn danh từ localStorage cho Personalization
+      const behavior = U.store.get('aura_user_behavior', { viewed_cats: {}, liked_styles: {}, searches: [] }) || {};
+      const viewedCats = (behavior && behavior.viewed_cats) || {};
+      const likedStyles = (behavior && behavior.liked_styles) || {};
+      const topCats = Object.entries(viewedCats)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(x => x[0])
+        .join(',');
+      const topStyles = Object.entries(likedStyles)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(x => x[0])
+        .join(',');
+
+      const trendsUrl = '/api/trends?limit=10';
+      const prodsUrl = `/api/trending-products?limit=8${topCats ? `&user_cats=${encodeURIComponent(topCats)}` : ''}${topStyles ? `&user_styles=${encodeURIComponent(topStyles)}` : ''}`;
+
+      const [trends, trendingData] = await Promise.all([
+        U.api(trendsUrl),
+        U.api(prodsUrl),
+      ]);
+
+      this.state.trends = trends || [];
+      this.state.trendingProducts = trendingData || [];
+
+      if (trendingData && trendingData.length) {
+        this.cache(trendingData.map(item => item.product));
+      }
+
+      this.renderTrending();
+    } catch (err) {
+      console.warn('[Trending] Lỗi khi nạp xu hướng:', err);
+      if (chipsEl) chipsEl.innerHTML = '<span class="text-xs text-zinc-400">Xu hướng tạm thời chưa cập nhật.</span>';
+      if (prodsGrid) prodsGrid.innerHTML = '';
+    }
+  },
+
+  renderTrending() {
+    const chipsEl = U.$('#trend-chips');
+    const prodsGrid = U.$('#trending-products-grid');
+    const badgeEl = U.$('#trend-data-badge');
+    const timeEl = U.$('#trend-updated-at');
+    const trends = this.state.trends || [];
+    const trendingProds = this.state.trendingProducts || [];
+
+    if (!trends.length && !trendingProds.length) {
+      const section = U.$('#trending-section');
+      if (section) section.classList.add('hidden');
+      return;
+    }
+
+    // Hiển thị nguồn dữ liệu minh bạch
+    const firstTrend = trends[0];
+    if (firstTrend && badgeEl) {
+      if (firstTrend.source === 'google_trends') {
+        badgeEl.textContent = 'Google Trends VN';
+        badgeEl.className = 'rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200';
+      } else if (firstTrend.source === 'cached') {
+        badgeEl.textContent = 'Dữ liệu xu hướng AURA';
+        badgeEl.className = 'rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200';
+      } else {
+        badgeEl.textContent = 'Demo Trends';
+        badgeEl.className = 'rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200';
+      }
+    }
+
+    if (firstTrend && timeEl) {
+      timeEl.textContent = `Cập nhật lúc ${firstTrend.updated_at ? firstTrend.updated_at.substring(11, 16) : 'hôm nay'}`;
+    }
+
+    // Render Trend Chips
+    if (chipsEl && trends.length) {
+      chipsEl.innerHTML = trends.map(t => {
+        const isRising = t.status === 'rising';
+        const growthBadge = isRising
+          ? `<span class="text-rose-600 font-extrabold text-[11px]">↑ +${t.growth_rate}%</span>`
+          : (t.status === 'declining' ? `<span class="text-zinc-400 font-semibold text-[11px]">↓ ${t.growth_rate}%</span>` : `<span class="text-amber-600 font-semibold text-[11px]">→ ổn định</span>`);
+        return `
+          <button type="button" data-action="click-trend" data-kw="${U.esc(t.keyword)}"
+                  class="group flex flex-shrink-0 items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-bold text-zinc-800 shadow-sm transition hover:border-amber-400 hover:bg-amber-50/50 hover:shadow">
+            <span>🔥</span>
+            <span>${U.esc(t.keyword)}</span>
+            ${growthBadge}
+          </button>`;
+      }).join('');
+    }
+
+    // Render Trending Products
+    if (prodsGrid && trendingProds.length) {
+      prodsGrid.innerHTML = trendingProds.map(item => this.trendingCard(item)).join('');
+    }
+  },
+
+  trendingCard(item) {
+    const p = item.product;
+    const rank = item.rank;
+    const isTop1 = rank === 1;
+    const out = !p.in_stock || p.stock <= 0;
+    const sold = p.sold_count >= 1000 ? (p.sold_count / 1000).toFixed(1) + 'k' : p.sold_count;
+
+    const rankBadge = isTop1
+      ? `<span class="badge badge-top-trend animate-pulse">🔥 #1 TREND</span>`
+      : `<span class="badge badge-hot-trend">🔥 TOP ${rank} TREND</span>`;
+
+    return `
+    <article class="product-card group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:shadow-lg hover:border-amber-400/60" data-id="${U.esc(p.id)}">
+      <div class="cursor-pointer" data-action="quickview" data-id="${U.esc(p.id)}">
+        <div class="relative aspect-square w-full overflow-hidden bg-zinc-100">
+          ${U.img(p.images[0], p.name, 'h-full w-full object-cover transition duration-300 group-hover:scale-105')}
+          <div class="absolute left-2 top-2 flex flex-col gap-1 items-start">
+            ${rankBadge}
+            <span class="rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-bold text-white backdrop-blur-xs">Score ${Math.round(item.final_score)}</span>
+          </div>
+          ${p.discount_percent > 0 ? `<span class="badge badge-sale absolute right-2 top-2">-${p.discount_percent}%</span>` : ''}
+        </div>
+        <div class="p-3">
+          <div class="mb-1 flex items-center justify-between text-[11px] text-zinc-400">
+            <span>${U.esc(p.category_name)}</span>
+            <span class="text-emerald-700 font-semibold">Còn ${p.stock}</span>
+          </div>
+          <h3 class="line-clamp-2 text-xs font-bold text-zinc-800 transition group-hover:text-brand-600 sm:text-sm" title="${U.esc(p.name)}">${U.esc(p.name)}</h3>
+          
+          <div class="mt-1.5 flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+            <span class="text-amber-500">⚡</span>
+            <span class="truncate">${U.esc(item.reason)}</span>
+          </div>
+
+          <div class="mt-2.5">
+            <div class="flex items-baseline gap-1.5">
+              <span class="text-sm font-extrabold leading-none text-brand-600 sm:text-base">${U.vnd(p.final_price)}</span>
+              ${p.discount_percent > 0 ? `<span class="text-[10px] text-zinc-400 line-through">${U.vnd(p.original_price)}</span>` : ''}
+            </div>
+            <div class="mt-2 flex items-center justify-between border-t border-zinc-100 pt-1.5 text-[11px] text-zinc-500">
+              <span><span class="text-amber-400">★</span> <b class="text-zinc-700">${p.rating}</b> • Đã bán ${sold}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-1.5 px-2.5 pb-2.5">
+        <button data-action="consult" data-id="${U.esc(p.id)}" class="btn btn-ai-soft btn-sm flex-1" title="Tư vấn phối đồ cùng AI">✨ AI Stylist</button>
+        <button data-action="quickview" data-id="${U.esc(p.id)}" ${out ? 'disabled' : ''} class="btn btn-primary btn-sm">Mua</button>
+      </div>
+    </article>`;
+  },
+
   /* ---------- Xem nhanh sản phẩm ---------- */
   openQuickView(id, from) {
     const p = this.state.catalog[id];
     if (!p) return;
     if (from) Modal.close(from);
+
+    // Ghi nhận hành vi xem sản phẩm ẩn danh
+    try {
+      const beh = U.store.get('aura_user_behavior', { viewed_cats: {}, liked_styles: {}, searches: [] });
+      if (p.category) beh.viewed_cats[p.category] = (beh.viewed_cats[p.category] || 0) + 1;
+      if (p.style) beh.liked_styles[p.style] = (beh.liked_styles[p.style] || 0) + 1;
+      U.store.set('aura_user_behavior', beh);
+    } catch { /* ignore */ }
+
     const multi = p.sizes.length > 1;
     this.state.qv = { product: p, size: multi ? null : p.sizes[0], color: p.colors[0].name, qty: 1, currentImgIdx: 0 };
     const out = !p.in_stock;
@@ -980,6 +1144,27 @@ Object.assign(Actions, {
   video: d => App.openVideo(d.id),
   'open-live': () => Live.open(),
   'live-heart': () => Live.heart(),
+  'click-trend': d => {
+    const kw = d.kw;
+    if (!kw) return;
+    const input = U.$('#search-input');
+    if (input) input.value = kw;
+    App.state.filters.search = kw;
+    App.loadProducts();
+    const catalog = U.$('#catalog');
+    if (catalog) catalog.scrollIntoView({ behavior: 'smooth' });
+    U.toast(`Đang lọc sản phẩm theo xu hướng: ${kw}`);
+  },
+  'refresh-trends': async () => {
+    try {
+      U.toast('Đang làm mới dữ liệu xu hướng...');
+      await U.api('/api/trends/refresh', { method: 'POST' });
+      await App.loadTrending(true);
+      U.toast('Đã cập nhật xu hướng mới nhất!', 'ok');
+    } catch (e) {
+      U.toast('Không thể làm mới: ' + e.message, 'error');
+    }
+  },
 });
 document.addEventListener('change', e => { // đổi size/màu ngay trong giỏ
   const t = e.target;

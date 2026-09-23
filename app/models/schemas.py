@@ -265,3 +265,44 @@ class OrderResponse(BaseModel):
     payment_method: str
     created_at: str
     message: str
+
+
+# ==========================================
+# AI Trend Detection & Recommendation
+# ==========================================
+class TrendItem(BaseModel):
+    keyword: str
+    score: float
+    growth_rate: float
+    search_interest: float
+    category: Optional[str] = None
+    status: Literal["rising", "stable", "declining"]
+    source: str  # "google_trends" | "cached" | "demo"
+    updated_at: str
+
+
+class TrendingProduct(BaseModel):
+    product: Product
+    trend_keyword: str
+    trend_score: float
+    match_score: float
+    final_score: float
+    reason: str
+    rank: int = 1
+
+
+class TrendDebugResponse(BaseModel):
+    last_update: str
+    source: str
+    cache_status: str
+    total_trends: int
+    total_trending_products: int
+    cache_age_seconds: float
+
+
+class TrendRefreshResponse(BaseModel):
+    success: bool
+    source: str
+    trends_count: int
+    products_count: int
+    updated_at: str

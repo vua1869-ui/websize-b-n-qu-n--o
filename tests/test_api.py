@@ -14,7 +14,7 @@ def test_home_page_renders(client):
 def test_flash_sale_filter_returns_items(client):
     """Lỗi cũ: giao diện gửi category=flash_sale khiến kết quả rỗng."""
     r = client.get("/api/products", params={"category": "flash_sale", "flash_sale_only": "true"})
-    assert r.status_code == 200 and len(r.json()) == 9
+    assert r.status_code == 200 and len(r.json()) == len(product_service.get_flash_sale_products())
     assert all(p["flash_sale"] for p in r.json())
 
 
@@ -222,6 +222,42 @@ def test_chat_scenarios_pull_extra_products_from_catalog(client):
     assert "prod_018" in ids and len(ids) == len(set(ids)) <= 4
     assert set(ids) - curated
 
+def test_season_trend_mid_season_shows_hot_products(client, monkeypatch):
+    import datetime as dt
+    from app.services import season_service as mod
+
+    class FakeDate(dt.date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 9, 23)  # giữa mùa Thu Đông, còn nhiều ngày mới hết mùa
+
+    monkeypatch.setattr(mod, "dt", type("M", (), {"date": FakeDate, "timedelta": dt.timedelta}))
+    r = _chat(client, "mùa này có gì hot")
+    assert r["recommended_products"]
+    assert "Thu Đông" in r["reply"] and "xả" not in r["reply"].lower()
+
+
+def test_season_trend_switches_to_clearance_near_season_end(client, monkeypatch):
+    import datetime as dt
+    from app.services import season_service as mod
+
+    class FakeDate(dt.date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 1, 25)  # còn 6 ngày là hết mùa Thu Đông
+
+    monkeypatch.setattr(mod, "dt", type("M", (), {"date": FakeDate, "timedelta": dt.timedelta}))
+    r = _chat(client, "mùa này có gì hot")
+    assert r["recommended_products"]
+    assert "xả" in r["reply"].lower() and "%" in r["reply"]
+
+
+def test_clearance_keyword_works_regardless_of_date(client):
+    r = _chat(client, "shop nên làm gì để xả hàng cuối mùa")
+    assert r["recommended_products"]
+    assert "đề xuất giảm" in r["reply"]
+    ids = [p["id"] for p in r["recommended_products"]]
+    assert len(ids) == len(set(ids))
 
 def test_chat_free_text_respects_gender(client):
     r = _chat(client, "quần jeans nam")

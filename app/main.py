@@ -16,12 +16,14 @@ from app.models.schemas import (
     Category, ChatRequest, ChatResponse, FlashSaleResponse, LiveCommentRequest,
     LiveCommentResponse, OrderCreateRequest, OrderResponse, OutfitRequest, OutfitResponse,
     Product, QuoteRequest, QuoteResponse, SizeRecommendRequest, SizeRecommendResponse,
+    TrendDebugResponse, TrendItem, TrendingProduct, TrendRefreshResponse,
     VideoItem, Voucher, VoucherCheckRequest, VoucherCheckResponse,
 )
 from app.services.ai_service import ai_service
 from app.services.order_service import OrderError, order_service
 from app.services.outfit_service import outfit_service
 from app.services.product_service import flash_sale_window, product_service
+from app.services.trend_service import trend_service
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -101,6 +103,7 @@ def home_page(request: Request):
         "shipping_fee": settings.SHIPPING_FEE,
         "free_ship_threshold": settings.FREE_SHIPPING_THRESHOLD,
         "combo_percent": settings.COMBO_DISCOUNT_PERCENT,
+        "version": settings.VERSION,
     })
 
 
@@ -201,6 +204,48 @@ def semantic_search(q: str = Query(..., min_length=1, max_length=100), limit: in
           dependencies=[Depends(ai_rate_limit)])
 def handle_live_comment(body: LiveCommentRequest):
     return ai_service.live_reply(body.user_name, body.comment)
+
+
+# ==========================================
+# AI Trend Detection & Recommendation
+# ==========================================
+@app.get("/api/trends", response_model=List[TrendItem])
+def get_trends(limit: Optional[int] = Query(None, ge=1, le=50)):
+    """Lấy danh sách các xu hướng thời trang đang tăng trưởng."""
+    return trend_service.get_trends(limit=limit)
+
+
+@app.get("/api/trending-products", response_model=List[TrendingProduct])
+def get_trending_products(
+    limit: int = Query(settings.TREND_PRODUCT_LIMIT, ge=1, le=30),
+    gender: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    user_cats: Optional[str] = Query(None, description="Danh mục ưa thích (phân cách bằng dấu phẩy)"),
+    user_styles: Optional[str] = Query(None, description="Phong cách ưa thích (phân cách bằng dấu phẩy)"),
+):
+    """Lấy danh sách sản phẩm bắt trend được đề xuất, hỗ trợ cá nhân hóa ẩn danh."""
+    cats = [c.strip() for c in user_cats.split(",") if c.strip()] if user_cats else None
+    styles = [s.strip() for s in user_styles.split(",") if s.strip()] if user_styles else None
+    return trend_service.get_trending_products(
+        limit=limit,
+        gender=gender,
+        category=category,
+        user_categories=cats,
+        user_styles=styles,
+    )
+
+
+@app.post("/api/trends/refresh", response_model=TrendRefreshResponse)
+def refresh_trends(force: bool = Query(True)):
+    """Endpoint nội bộ: thu thập dữ liệu mới, phân tích, chấm điểm và cập nhật cache."""
+    res = trend_service.refresh_trends(force=force)
+    return TrendRefreshResponse(**res)
+
+
+@app.get("/api/trends/debug", response_model=TrendDebugResponse)
+def debug_trends():
+    """Endpoint debug: thông tin chẩn đoán kỹ thuật về cache, nguồn dữ liệu và số lượng."""
+    return trend_service.get_debug_info()
 
 
 # ==========================================

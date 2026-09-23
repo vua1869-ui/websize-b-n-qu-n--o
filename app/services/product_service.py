@@ -5,7 +5,7 @@ import time
 from typing import Dict, List, Optional, Tuple
 
 from app.models.schemas import Category, Product, VideoItem, Voucher
-from app.services.text_utils import has_word, normalize, tokens
+from app.services.text_utils import has_any, has_word, normalize, tokens
 
 DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "products.json")
 
@@ -186,6 +186,16 @@ class ProductService:
         toks = [t for t in tokens(query) if t not in STOPWORDS]
         if not q:
             return self._products[:limit]
+
+        # Ưu tiên các sản phẩm đang bắt trend nếu người dùng tìm "trend", "xu hướng", "đang hot"
+        if has_any(q, ["trend", "hot trend", "xu huong", "dang hot", "thinh hanh"]):
+            try:
+                from app.services.trend_service import trend_service
+                trending_prods = [tp.product for tp in trend_service.get_trending_products(limit=limit)]
+                if trending_prods:
+                    return trending_prods
+            except Exception:
+                pass
 
         wanted_occasions = {
             occ for occ, kws in OCCASION_SYNONYMS.items()

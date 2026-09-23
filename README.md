@@ -52,14 +52,73 @@ Copy một khối có sẵn, đặt `id` mới liên tiếp (`prod_061`, ...) r�
 Chat AI (bộ luật nội bộ) tự đưa sản phẩm mới vào các kịch bản (đi làm, dạ tiệc, đi biển, hẹn hò, thu đông,
 streetwear) theo `occasions`/`tags`; bảng ánh xạ nằm ở `SCENARIO_OCCASIONS` trong `app/services/ai_service.py`.
 
+## Tính năng mới: AI Fashion Trend Detection & Recommendation (Phát hiện xu hướng thời trang)
+
+Hệ thống tự động phát hiện các xu hướng thời trang đang tăng trưởng quan tâm tại thị trường Việt Nam, chấm điểm xu hướng, đối soát thông minh với kho hàng `products.json`, và hiển thị nổi bật tại mục **🔥 TRENDING HÔM NAY** trên trang chủ.
+
+### 1. Luồng hoạt động (Architecture Flow)
+```text
+Nguồn dữ liệu (Google Trends VN / Cache / Demo)
+        ↓
+Trend Collector & Keyword Normalization (bỏ dấu tiếng Việt, từ đồng nghĩa)
+        ↓
+Trend Analyzer (tính Growth Rate % & phân loại: rising, stable, declining)
+        ↓
+Trend Score (60% Tăng trưởng + 25% Tìm kiếm + 15% Sức bán tại shop)
+        ↓
+Product Matching (50% Từ khóa + 20% Danh mục + 15% Tag + 10% Style + 5% Đánh giá)
+        ↓
+Lọc hàng tồn kho (BẮT BUỘC: stock > 0, loại bỏ hoàn toàn đồ hết hàng)
+        ↓
+Xếp hạng gợi ý (Final Score = 70% Trend Score + 30% Product Match Score)
+        ↓
+Cá nhân hóa ẩn danh (Personalized = 70% Global Trend + 30% Sở thích người dùng)
+        ↓
+Giao diện AURA Studio ("🔥 TRENDING HÔM NAY" + Tích hợp AI Stylist + Tìm kiếm)
+```
+
+### 2. Nguồn dữ liệu & Cơ chế Fallback đa tầng
+- **Google Trends thật** (qua `pytrends`): Lấy dữ liệu tìm kiếm tại Việt Nam (`geo='VN'`, múi giờ `Asia/Ho_Chi_Minh`, `timeframe='today 1-m'`).
+- **Cache dữ liệu** (`app/data/trends.json`): Lưu kết quả và lịch sử biến động trend theo thời gian, TTL mặc định 6 giờ kèm khóa đồng bộ `threading.Lock` chống nghẽn khi nhiều người truy cập cùng lúc.
+- **Demo / Fallback**: Nếu mạng gián đoạn hoặc API ngoài bị lỗi, hệ thống tự động chuyển sang dữ liệu chuẩn mực được chọn lọc sẵn mà không làm sập ứng dụng.
+- **Minh bạch xuất xứ**: Giao diện và API luôn hiển thị rõ ràng nhãn nguồn: `google_trends`, `cached`, hoặc `demo`.
+
+### 3. Các API Endpoints
+| Phương thức | Endpoint | Mô tả |
+|---|---|---|
+| `GET` | `/api/trends?limit=10` | Danh sách xu hướng đang tăng trưởng |
+| `GET` | `/api/trending-products?limit=8&gender=...&category=...` | Danh sách sản phẩm bắt trend được đề xuất |
+| `POST` | `/api/trends/refresh?force=true` | Làm mới dữ liệu, tính điểm và cập nhật cache |
+| `GET` | `/api/trends/debug` | Thông tin chẩn đoán kỹ thuật (tuổi cache, nguồn dữ liệu) |
+
+### 4. Cấu hình Trend trong `.env`
+```env
+TREND_ENABLED=true
+TREND_COUNTRY=VN
+TREND_CACHE_TTL=21600
+TREND_LIMIT=10
+TREND_PRODUCT_LIMIT=8
+TREND_SOURCE=auto               # auto | google_trends | demo
+TREND_REFRESH_TIMEOUT=12.0
+TREND_RISING_THRESHOLD=20.0     # > 20% -> rising
+TREND_DECLINING_THRESHOLD=-20.0 # < -20% -> declining
+```
+
+### 5. Cách bổ sung từ khóa xu hướng
+Mở file `app/services/trend_service.py`:
+- Thêm từ khóa vào danh sách `SEED_KEYWORDS`.
+- (Tùy chọn) Thêm ánh xạ từ đồng nghĩa, phong cách và danh mục vào từ điển `TREND_TAXONOMY`.
+
 ## Kiểm thử
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -r requirements.txt
 python -m pytest tests -q
 ```
 
-39 test bao phủ: giá do server tính, chống gian lận giá/số lượng/combo, tồn kho, voucher, tính size, phối đồ, chat (kể cả Ollama giả).
+Hơn 54 bài test tự động bao phủ:
+- Toàn bộ tính năng bán hàng cốt lõi (giá server tính, chống gian lận, tồn kho, voucher, tính size, phối đồ, chat AI, đơn hàng).
+- **12 bài test chuyên sâu cho AI Fashion Trend Detection**: chuẩn hóa điểm 0-100, nhận diện xu hướng tăng/giảm, matching sản phẩm chính xác, lọc hàng hết kho (`stock <= 0`), fallback khi nguồn lỗi, cache TTL, cá nhân hóa, API endpoints và tích hợp AI Stylist.
 
 ## Cấu trúc
 

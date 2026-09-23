@@ -32,6 +32,27 @@ body.modal-open { overflow: hidden; }
 .product-card { transition: transform .2s, box-shadow .2s, border-color .2s; border: 1px solid #f4f4f5; }
 .product-card:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(0,0,0,.08); border-color: #D9480F; }
 
+/* Badges cho Trending */
+.badge-top-trend {
+  background: linear-gradient(135deg, #FF4500, #FF8C00);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(255, 69, 0, 0.4);
+  letter-spacing: 0.3px;
+}
+.badge-hot-trend {
+  background: linear-gradient(135deg, #D9480F, #F76707);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(217, 72, 15, 0.3);
+}
+
 /* Live */
 @keyframes live-pulse { 0% { box-shadow: 0 0 0 0 rgba(225,29,72,.6); } 70% { box-shadow: 0 0 0 8px rgba(225,29,72,0); } 100% { box-shadow: 0 0 0 0 rgba(225,29,72,0); } }
 .live-pulsing { animation: live-pulse 1.5s infinite; }

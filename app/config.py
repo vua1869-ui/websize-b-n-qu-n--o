@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     )
 
     APP_NAME: str = "AURA STUDIO"
-    VERSION: str = "2.0.0"
+    VERSION: str = "2.1.0"
     HOST: str = "127.0.0.1"
     PORT: int = 8000
     DEBUG: bool = True
@@ -40,6 +40,18 @@ class Settings(BaseSettings):
 
     # Giới hạn số request AI / phút / IP
     AI_RATE_LIMIT_PER_MIN: int = 30
+
+    # ---- AI Trend Detection ----
+    TREND_ENABLED: bool = True
+    TREND_COUNTRY: str = "VN"
+    TREND_TIMEZONE: int = 420  # Asia/Ho_Chi_Minh (UTC+7, 420 phút)
+    TREND_CACHE_TTL: int = 21600  # 6 giờ (giây)
+    TREND_LIMIT: int = 10
+    TREND_PRODUCT_LIMIT: int = 8
+    TREND_SOURCE: str = "auto"  # auto | google_trends | demo
+    TREND_REFRESH_TIMEOUT: float = 12.0
+    TREND_RISING_THRESHOLD: float = 20.0
+    TREND_DECLINING_THRESHOLD: float = -20.0
 
 
 settings = Settings()

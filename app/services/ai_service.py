@@ -12,6 +12,9 @@ from app.models.schemas import (
 from app.services.outfit_service import SLOT_OF, outfit_service
 from app.services.product_service import product_service
 from app.services.text_utils import has_any, has_word, normalize
+from app.services.season_service import (CLEARANCE_WINDOW_DAYS, clearance_candidates, current_season,
+                                          hot_this_season, suggested_discount)
+from app.services.trend_service import trend_service
 
 ID_TOKEN_RE = re.compile(r"\[\[\s*(prod_\d{3})\s*\]\]")
 BARE_ID_RE = re.compile(r"\(?\b(prod_\d{3})\b\)?")
@@ -132,6 +135,20 @@ SCENARIO_OCCASIONS: Dict[str, Set[str]] = {
 SCENARIO_TAGS: Dict[str, Set[str]] = {"streetwear": {"streetwear"}}
 SCENARIO_ANCHORS = 2  # số món "kinh điển" (đã chọn tay ở picks) luôn giữ lại; các món còn lại lấy tự động
 
+# Hỏi xu hướng thời trang hiện nay -> lấy dữ liệu thật từ trend_service (AI Trend Detection)
+FASHION_TREND_KW = [
+    "xu huong", "trend", "hot trend", "trend gi", "thoi trang hot",
+    "xu huong thoi trang", "phong cach hot", "dang hot", "co trend gi",
+    "xu huong hien nay", "trend hien nay", "dang thinh hanh", "thinh hanh",
+]
+# Hỏi xu hướng theo mùa / xả hàng -> đồ hot trong mùa hoặc dọn kho
+SEASON_TREND_KW = ["mua nay", "he nay mac gi", "thu nay mac gi", "dong nay mac gi", "xuan nay mac gi",
+                   "dau mua", "vao mua"]
+# Hỏi thẳng cách xả hàng / dọn kho -> luôn trả lời bằng dữ liệu tồn kho thật, không phụ thuộc ngày demo
+CLEARANCE_KW = ["xa hang", "xa kho", "thanh ly", "don kho", "giai phong hang ton",
+                "ban het hang", "het hang nhanh", "chuan bi mua dong", "chuan bi mua he",
+                "sap het mua", "cuoi mua", "giam gia het mua"]
+
 POLICY_KW = ["ship", "van chuyen", "giao hang", "doi tra", "hoan tra", "bao lau", "thanh toan",
              "cod", "voucher", "ma giam", "giam gia", "khuyen mai"]
 GREETING_KW = ["xin chao", "chao", "hello", "hi", "alo"]
@@ -150,6 +167,24 @@ class AIService:
         if engine not in ("auto", "gemini", "ollama", "rules"):
             engine = "auto"
         context = product_service.get_by_id(request.context_product_id)
+
+        # Xu hướng thời trang / mùa / xả hàng: trả lời dựa trên dữ liệu thật (trend_service / tồn kho)
+        t_season = normalize(user_msg)
+        if has_any(t_season, FASHION_TREND_KW):
+            reply, ids = self._fashion_trend_reply(guess_gender(t_season))
+            return ChatResponse(reply=reply, engine_used="AURA Stylist (Trend Detection)",
+                                recommended_products=product_service.get_by_ids(ids)[:4],
+                                quick_suggestions=DEFAULT_SUGGESTIONS)
+        if has_any(t_season, CLEARANCE_KW):
+            reply, ids = self._clearance_reply(guess_gender(t_season))
+            return ChatResponse(reply=reply, engine_used="AURA Stylist (bộ luật nội bộ)",
+                                recommended_products=product_service.get_by_ids(ids)[:4],
+                                quick_suggestions=DEFAULT_SUGGESTIONS)
+        if has_any(t_season, SEASON_TREND_KW):
+            reply, ids = self._season_trend_reply(guess_gender(t_season))
+            return ChatResponse(reply=reply, engine_used="AURA Stylist (bộ luật nội bộ)",
+                                recommended_products=product_service.get_by_ids(ids)[:4],
+                                quick_suggestions=DEFAULT_SUGGESTIONS)
 
         order: List[str] = []
         if engine in ("auto", "gemini") and settings.GEMINI_API_KEY:
@@ -302,7 +337,14 @@ class AIService:
                         [p.id for p in picks])
             return (f"Hiện chưa có món nào dưới {money(budget)}. Bạn thử nâng ngân sách một chút, "
                     "hoặc xem mục **Flash Sale** để có giá tốt nhất nhé!", [])
-
+        # 2b) Xu hướng thời trang (AI Trend Detection) / theo mùa / xả hàng
+        if has_any(t, FASHION_TREND_KW):
+            return self._fashion_trend_reply(gender)
+        if has_any(t, CLEARANCE_KW):
+            return self._clearance_reply(gender)
+        if has_any(t, SEASON_TREND_KW):
+            return self._season_trend_reply(gender)
+        
         # 3) Chính sách / voucher / vận chuyển
         if has_any(t, POLICY_KW):
             vouchers = "; ".join(f"**{v.code}** ({v.discount_display})" for v in product_service.get_vouchers())
@@ -407,6 +449,79 @@ class AIService:
                 chosen.add(pid)
         return picks
 
+    @staticmethod
+    def _fashion_trend_reply(gender: str) -> Tuple[str, List[str]]:
+        """Gợi ý xu hướng thời trang lấy trực tiếp từ hệ thống AI Trend Detection."""
+        trends = trend_service.get_trends(limit=5)
+        rising = [t for t in trends if t.status == "rising"]
+        top_trends = rising[:4] if rising else trends[:4]
+
+        trending_items = trend_service.get_trending_products(limit=8, gender=gender)
+        picks = [tp.product for tp in trending_items][:4]
+
+        trend_labels = ", ".join(f"**{t.keyword}** (+{t.growth_rate}%)" for t in top_trends)
+        src = trends[0].source if trends else "demo"
+        src_desc = (
+            "Google Trends"
+            if src == "google_trends"
+            else ("dữ liệu xu hướng AURA" if src == "cached" else "hệ thống theo dõi xu hướng thời trang")
+        )
+
+        lines = [
+            f"{i}. **{short_name(p)}** — {money(p.final_price)} ({tp.reason.split('•')[-1].strip() if '•' in tp.reason else tp.reason})"
+            for i, (p, tp) in enumerate(zip(picks, trending_items[:len(picks)]), 1)
+        ]
+
+        reply = (
+            f"🔥 **Xu hướng thời trang đang nổi bật hôm nay (theo {src_desc}):**\n\n"
+            f"Hiện AURA đang ghi nhận các phong cách được quan tâm và tăng trưởng mạnh như: {trend_labels}.\n\n"
+            f"Dưới đây là các sản phẩm bắt trend và đang sẵn hàng trong kho dành cho bạn:\n\n"
+            + "\n".join(lines)
+            + "\n\nBạn muốn mình tư vấn phối đồ chi tiết hơn theo phong cách nào trên đây?"
+        )
+        return reply, [p.id for p in picks]
+
+    @staticmethod
+    def _season_trend_reply(gender: str) -> Tuple[str, List[str]]:
+        """Giữa mùa: đồ hot nhất mùa hiện tại. Gần hết mùa: chuyển sang gợi ý xả hàng luôn,
+        vì lúc này việc đẩy hàng tồn quan trọng hơn quảng bá thêm đồ cùng loại."""
+        info = current_season()
+        if info.is_ending_soon:
+            return AIService._clearance_reply(gender, info=info)
+
+        picks = [p for p in hot_this_season(limit=12)
+                 if gender == "unisex" or p.gender in (gender, "unisex")][:4]
+        if not picks:
+            return (f"{info.collection['emoji']} Mùa {info.collection['label']} đang bắt đầu, "
+                    "sản phẩm cho mùa này sẽ sớm được cập nhật, bạn ghé lại sau nhé!", [])
+        lines = "\n".join(f"{i}. **{short_name(p)}** — đã bán {p.sold_count} · "
+                          f"⭐{p.rating} ({money(p.final_price)})"
+                          for i, p in enumerate(picks, 1))
+        return (f"{info.collection['emoji']} **Xu hướng mùa {info.collection['label']} đang hot nhất "
+                f"(còn khoảng {info.days_left} ngày nữa hết mùa):**\n\n{lines}",
+                [p.id for p in picks])
+
+    @staticmethod
+    def _clearance_reply(gender: str, info=None) -> Tuple[str, List[str]]:
+        """Gợi ý xả hàng: đồ đúng mùa hiện tại, tồn kho nhiều mà bán chậm, kèm mức giảm đề xuất."""
+        info = info or current_season()
+        picks = [p for p in clearance_candidates(limit=12)
+                 if gender == "unisex" or p.gender in (gender, "unisex")][:4]
+        if not picks:
+            return (f"{info.collection['emoji']} Hàng mùa {info.collection['label']} hiện đang bán khá đều, "
+                    "chưa có món nào tồn kho đáng lo để phải xả gấp.", [])
+        lines = []
+        for i, p in enumerate(picks, 1):
+            sell_through = 1 - (p.stock / p.stock_total) if p.stock_total else 1
+            disc = suggested_discount(p, sell_through)
+            lines.append(f"{i}. **{short_name(p)}** — còn tồn {p.stock}/{p.stock_total}, "
+                         f"mới bán {round(sell_through * 100)}% ⇒ đề xuất giảm thêm **{disc}%** để đẩy hàng")
+        when = (f"còn khoảng {info.days_left} ngày nữa hết mùa {info.collection['label']}"
+                if info.is_ending_soon else f"đang giữa mùa {info.collection['label']}")
+        return (f"📦 **Gợi ý xả hàng tồn ({when}, chuẩn bị đón mùa {info.next_collection['label']}):**\n\n"
+                + "\n".join(lines) +
+                f"\n\n💡 Có thể đẩy nhanh bằng flash sale, mua 2 giảm thêm, hoặc mix vào set đồ combo.",
+                [p.id for p in picks])
     @staticmethod
     def _match_scenario(t: str) -> Optional[Dict]:
         best, best_score = None, 0
