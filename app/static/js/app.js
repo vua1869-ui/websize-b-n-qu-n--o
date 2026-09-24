@@ -123,6 +123,7 @@ const App = {
     this.bindEvents();
     this.updateBadges();
     this.renderSortButtons();
+    this.setupScrollAnimations();
     await Promise.all([this.loadCategories(), this.loadProducts(), this.loadTrending(), this.loadFlash(), this.loadVouchers(), this.loadVideos()]);
     this.sanitizeCart();
     this.refreshCart();
@@ -1040,6 +1041,34 @@ const App = {
     </div>`;
     Modal.open('success-modal');
   },
+
+  /** Thiết lập hiệu ứng fade-in khi section vào viewport */
+  setupScrollAnimations() {
+    // Tôn trọng cài đặt giảm chuyển động của hệ thống
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
+    const sections = document.querySelectorAll('.section-fade-in');
+    if (!sections.length) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          // Hủy quan sát sau khi đã animate một lần (tối ưu hiệu suất)
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.1, // Kích hoạt khi 10% section visible
+      rootMargin: '0px 0px -100px 0px' // Kích hoạt немного trước khi hoàn toàn vào viewport
+    });
+
+    sections.forEach(section => {
+      observer.observe(section);
+    });
+  }
 };
 
 /* ===================== Phòng Live AI ===================== */

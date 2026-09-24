@@ -74,3 +74,32 @@ body.modal-open { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* ===== SECTION FADE-IN ON SCROLL ===== */
+.section-fade-in {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+/* Trạng thái visible được thêm bởi JS khi section vào viewport */
+.section-fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Tùy chọn: Hiệu ứng staggered cho con éléments (làm cho nội dung xuất hiện tuần tự) */
+.section-fade-in.visible > * {
+  transition-delay: 50ms;
+}
+
+/* Tôn trọng cài đặt giảm chuyển động của hệ thống */
+@media (prefers-reduced-motion: reduce) {
+  .section-fade-in {
+    transition: none !important;
+  }
+  .section-fade-in.visible {
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+  }
+}
