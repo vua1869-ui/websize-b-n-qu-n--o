@@ -1,7 +1,7 @@
 import re
-from typing import List, Optional, Dict, Literal
+from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, computed_field, field_validator
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
 
 # ==========================================
@@ -306,3 +306,149 @@ class TrendRefreshResponse(BaseModel):
     trends_count: int
     products_count: int
     updated_at: str
+
+
+# ==========================================
+# Người dùng & Xác thực (Authentication & Users)
+# ==========================================
+class User(BaseModel):
+    id: str
+    name: str = ""
+    full_name: Optional[str] = None
+    username: str
+    email: str
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    role: Literal["admin", "user"] = "user"
+    status: Literal["active", "disabled"] = "active"
+    is_active: bool = True
+    avatar: Optional[str] = None
+    created_at: str = ""
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync_fields(cls, data):
+        if isinstance(data, dict):
+            if "full_name" in data and not data.get("name"):
+                data["name"] = data["full_name"]
+            elif "name" in data and not data.get("full_name"):
+                data["full_name"] = data["name"]
+            if "is_active" not in data and "status" in data:
+                data["is_active"] = data["status"] == "active"
+            elif "status" not in data and "is_active" in data:
+                data["status"] = "active" if data["is_active"] else "disabled"
+        return data
+
+
+class UserRegisterRequest(BaseModel):
+    name: Optional[str] = None
+    full_name: Optional[str] = None
+    email: str
+    username: str
+    password: str = Field(min_length=6, max_length=100)
+    confirm_password: Optional[str] = None
+    phone: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync_fields(cls, data):
+        if isinstance(data, dict):
+            if "full_name" in data and not data.get("name"):
+                data["name"] = data["full_name"]
+            elif "name" in data and not data.get("full_name"):
+                data["full_name"] = data["name"]
+            if "confirm_password" not in data and "password" in data:
+                data["confirm_password"] = data["password"]
+        return data
+
+    @field_validator("email")
+    @classmethod
+    def _email_format(cls, v: str) -> str:
+        if "@" not in v or "." not in v.split("@")[-1]:
+            raise ValueError("Email không đúng định dạng")
+        return v.lower().strip()
+
+
+class UserLoginRequest(BaseModel):
+    username_or_email: Optional[str] = None
+    username: Optional[str] = None
+    password: str = Field(min_length=1, max_length=100)
+    remember_me: bool = False
+
+    @model_validator(mode="before")
+    @classmethod
+    def _compat(cls, data):
+        if isinstance(data, dict):
+            if "username" in data and not data.get("username_or_email"):
+                data["username_or_email"] = data["username"]
+            elif "username_or_email" in data and not data.get("username"):
+                data["username"] = data["username_or_email"]
+        return data
+
+
+class UserProfileUpdateRequest(BaseModel):
+    name: Optional[str] = None
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    avatar: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync(cls, data):
+        if isinstance(data, dict):
+            if "full_name" in data and not data.get("name"):
+                data["name"] = data["full_name"]
+            elif "name" in data and not data.get("full_name"):
+                data["full_name"] = data["name"]
+        return data
+
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str = Field(min_length=1)
+    new_password: str = Field(min_length=6, max_length=100)
+    confirm_password: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync(cls, data):
+        if isinstance(data, dict) and "confirm_password" not in data:
+            data["confirm_password"] = data.get("new_password")
+        return data
+
+
+class AuthResponse(BaseModel):
+    success: bool = True
+    message: str = "Thành công"
+    user: Optional[User] = None
+    token: Optional[str] = None
+
+
+class AdminProductPayload(BaseModel):
+    name: Optional[str] = None
+    category: Optional[str] = None
+    category_name: Optional[str] = None
+    gender: str = "unisex"
+    price: Optional[int] = None
+    original_price: Optional[int] = None
+    flash_sale: bool = False
+    is_flash_sale: bool = False
+    flash_sale_price: Optional[int] = None
+    stock: int = 50
+    stock_total: int = 100
+    rating: float = 4.8
+    reviews_count: int = 0
+    location: str = "TP. Hồ Chí Minh"
+    image: Optional[str] = None
+    images: Optional[List[str]] = None
+    sizes: Optional[List[str]] = None
+    colors: Optional[List[Any]] = None
+    description: Optional[str] = None
+    material: Optional[str] = None
+    style: Optional[str] = None
+    occasion: Optional[str] = None
+    occasions: Optional[List[str]] = None
+    tags: Optional[List[str]] = None
+    is_hot: bool = False
+    is_new: bool = False

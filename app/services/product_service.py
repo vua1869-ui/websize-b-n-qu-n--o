@@ -314,5 +314,145 @@ class ProductService:
             ))
         return out
 
+    # ---------- Quản trị Admin (CRUD) ----------
+    def _save_products_to_disk(self):
+        raw_keys = [
+            "id", "name", "category", "category_name", "gender", "price", "original_price",
+            "flash_sale", "flash_sale_price", "sold_count", "stock_total", "stock", "rating",
+            "reviews_count", "location", "images", "sizes", "colors", "description", "material",
+            "style", "occasions", "tags", "is_hot", "is_new"
+        ]
+        out = []
+        for p in self._products:
+            d = p.model_dump()
+            rec = {k: d[k] for k in raw_keys if k in d}
+            if not rec.get("flash_sale"):
+                rec.pop("flash_sale_price", None)
+            out.append(rec)
+        with open(DATA_PATH, "w", encoding="utf-8") as f:
+            json.dump(out, f, ensure_ascii=False, indent=2)
+
+    def create_product(self, data: dict) -> Product:
+        with self._lock:
+            existing_nums = []
+            for p in self._products:
+                if p.id.startswith("prod_"):
+                    try:
+                        existing_nums.append(int(p.id.split("_")[1]))
+                    except ValueError:
+                        pass
+            next_num = (max(existing_nums) + 1) if existing_nums else 1
+            data["id"] = f"prod_{next_num:03d}"
+
+            if not data.get("category_name"):
+                data["category_name"] = CATEGORY_META.get(data.get("category"), ("Sản phẩm", ""))[0]
+
+            if not data.get("images") and data.get("image"):
+                data["images"] = [data["image"]]
+            elif not data.get("images"):
+                data["images"] = ["https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"]
+
+            if not data.get("sizes"):
+                data["sizes"] = ["S", "M", "L", "XL"]
+
+            if not data.get("colors"):
+                data["colors"] = [{"name": "Tiêu chuẩn", "hex": "#27272a"}]
+
+            if not data.get("material"):
+                data["material"] = "Cotton & Linen thoáng khí cao cấp"
+
+            if not data.get("style"):
+                data["style"] = "Hiện đại"
+
+            if not data.get("description"):
+                data["description"] = data.get("name", "Sản phẩm thời trang cao cấp AURA Studio")
+
+            if not data.get("original_price"):
+                data["original_price"] = data.get("price", 0)
+
+            if not data.get("stock_total"):
+                data["stock_total"] = max(100, data.get("stock", 50))
+
+            if "is_flash_sale" in data and "flash_sale" not in data:
+                data["flash_sale"] = bool(data["is_flash_sale"])
+
+            if "rating" not in data or data["rating"] is None:
+                data["rating"] = 5.0
+
+            if "reviews_count" not in data or data["reviews_count"] is None:
+                data["reviews_count"] = 0
+
+            if "location" not in data or data["location"] is None:
+                data["location"] = "TP. Hồ Chí Minh"
+
+            if "sold_count" not in data or data["sold_count"] is None:
+                data["sold_count"] = 0
+
+            if "occasions" not in data or not data["occasions"]:
+                data["occasions"] = [data["occasion"]] if data.get("occasion") else []
+
+            if "tags" not in data or not data["tags"]:
+                data["tags"] = []
+
+            new_prod = Product(**data)
+            self._products.append(new_prod)
+            self._by_id[new_prod.id] = new_prod
+
+            parts = [new_prod.name, new_prod.description, new_prod.style, new_prod.material, new_prod.category_name,
+                     CATEGORY_META.get(new_prod.category, ("",))[0], " ".join(new_prod.tags),
+                     " ".join(new_prod.occasions)]
+            self._words[new_prod.id] = sorted(set(normalize(" ".join(parts)).split()))
+
+            self._save_products_to_disk()
+            return new_prod
+
+    def update_product(self, product_id: str, data: dict) -> Product:
+        with self._lock:
+            p = self._by_id.get(product_id)
+            if not p:
+                raise ValueError(f"Không tìm thấy sản phẩm với mã '{product_id}'")
+
+            merged = p.model_dump()
+            for k, v in data.items():
+                if v is not None:
+                    merged[k] = v
+
+            merged["id"] = product_id
+            if "is_flash_sale" in data:
+                merged["flash_sale"] = bool(data["is_flash_sale"])
+            if "image" in data and data["image"]:
+                merged["images"] = [data["image"]]
+            if "occasion" in data and data["occasion"]:
+                merged["occasions"] = [data["occasion"]]
+
+            if not merged.get("category_name"):
+                merged["category_name"] = CATEGORY_META.get(merged.get("category", p.category), (p.category_name, ""))[0]
+
+            updated_prod = Product(**merged)
+
+            for i, item in enumerate(self._products):
+                if item.id == product_id:
+                    self._products[i] = updated_prod
+                    break
+            self._by_id[product_id] = updated_prod
+
+            parts = [updated_prod.name, updated_prod.description, updated_prod.style, updated_prod.material,
+                     updated_prod.category_name, CATEGORY_META.get(updated_prod.category, ("",))[0],
+                     " ".join(updated_prod.tags), " ".join(updated_prod.occasions)]
+            self._words[product_id] = sorted(set(normalize(" ".join(parts)).split()))
+
+            self._save_products_to_disk()
+            return updated_prod
+
+    def delete_product(self, product_id: str) -> bool:
+        with self._lock:
+            if product_id not in self._by_id:
+                return False
+            self._products = [p for p in self._products if p.id != product_id]
+            self._by_id.pop(product_id, None)
+            self._words.pop(product_id, None)
+            self._save_products_to_disk()
+            return True
+
 
 product_service = ProductService()

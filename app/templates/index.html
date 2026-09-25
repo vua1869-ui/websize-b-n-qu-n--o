@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{{ app_name }} • Thời trang tích hợp AI Stylist</title>
-  <meta name="description" content="{{ app_name }} - mua sắm thời trang, AI Stylist tư vấn phối đồ, tính size chuẩn theo số đo, Flash Sale mỗi ngày." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/css/tailwind.css" />
   <link rel="stylesheet" href="/static/css/custom.css?v={{ version }}" />
 </head>
@@ -22,6 +24,12 @@
         <button data-action="open-live" class="flex items-center gap-1.5 text-rose-300 hover:text-rose-200">
           <span class="h-2 w-2 animate-pulse rounded-full bg-rose-500"></span> Phòng Live AI
         </button>
+        <span class="h-3 w-px bg-zinc-700"></span>
+        <div id="topbar-auth" class="flex items-center gap-2 text-zinc-300">
+          <a href="/login" class="hover:text-white">Đăng nhập</a>
+          <span class="text-zinc-600">•</span>
+          <a href="/register" class="hover:text-white">Đăng ký</a>
+        </div>
       </div>
     </div>
   </div>
@@ -58,7 +66,7 @@
           </div>
         </form>
 
-        <div class="flex flex-shrink-0 items-center gap-1 sm:gap-3">
+        <div class="flex flex-shrink-0 items-center gap-1 sm:gap-2.5">
           <button data-action="open-chat" class="hidden items-center gap-2 rounded-xl border border-white/20 bg-zinc-950/80 px-3.5 py-2 text-xs font-bold shadow-lg transition hover:bg-zinc-950 md:flex">
             <span class="text-sm">✨</span>
             <span class="text-left leading-none"><span class="block text-[10px] text-violet-300">TRỢ LÝ</span><span class="mt-0.5 block">Stylist AI</span></span>
@@ -71,6 +79,14 @@
             <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
             <span class="cart-badge absolute -right-0.5 top-0 hidden h-5 min-w-5 items-center justify-center rounded-full border-2 border-brand-600 bg-white px-1 text-[10px] font-black text-brand-600">0</span>
           </button>
+
+          <!-- Auth Header Element -->
+          <div id="header-auth-container" class="relative">
+            <a href="/login" class="flex items-center gap-1.5 rounded-xl border border-white/30 bg-white/10 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-white/20">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              <span class="hidden sm:inline">Tài khoản</span>
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -465,6 +481,8 @@
           <ul class="space-y-1.5 text-zinc-500">
             <li>Thời trang thanh lịch, dễ phối</li>
             <li>Stylist AI hỗ trợ 24/7</li>
+            <li><a href="/login" class="hover:underline hover:text-zinc-800">Đăng nhập tài khoản</a></li>
+            <li><a href="/admin" class="hover:underline text-brand-600 font-bold">Khu vực Quản trị Admin</a></li>
           </ul>
         </div>
         <div>

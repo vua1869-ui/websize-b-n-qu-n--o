@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full bg-[#FBFBFA]">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tài khoản cá nhân • AURA Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/tailwind.css" />
+  <link rel="stylesheet" href="/static/css/custom.css?v={{ version }}" />
+</head>
+<body class="min-h-full bg-[#FBFBFA] text-stone-900 font-sans antialiased selection:bg-brand-600 selection:text-white">
+
+  <!-- Header Đơn Giản -->
+  <header class="sticky top-0 z-30 border-b border-stone-200 bg-white/95 backdrop-blur">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
+      <div class="flex items-center gap-4">
+        <a href="/" class="group flex items-center gap-3">
+          <div class="flex flex-col leading-none">
+            <span class="font-serif text-2xl font-bold tracking-tight text-stone-900">AURA</span>
+            <span class="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.3em] text-brand-600">Studio</span>
+          </div>
+        </a>
+        <span class="hidden h-5 w-px bg-stone-200 sm:block"></span>
+        <span class="hidden text-xs uppercase tracking-widest text-stone-400 font-medium sm:block">Tài khoản</span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        {% if user.role == 'admin' %}
+        <a href="/admin" class="flex items-center gap-1.5 rounded-md border border-stone-200 bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-stone-800">
+          <svg class="h-3.5 w-3.5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
+          <span>Quản trị Admin</span>
+        </a>
+        {% endif %}
+        <a href="/" class="rounded-md border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 shadow-xs transition hover:bg-stone-50">
+          Về Cửa hàng
+        </a>
+        <button id="logout-btn" class="flex items-center gap-1.5 rounded-md border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 transition hover:bg-stone-50 hover:text-rose-600">
+          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+          <span>Đăng xuất</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Nội Dung Chính -->
+  <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      
+      <!-- Cột Trái: Thông tin tổng quan -->
+      <div class="space-y-6 lg:col-span-1">
+        <div class="rounded-lg border border-stone-200 bg-white p-6 shadow-xs">
+          <div class="flex flex-col items-center text-center">
+            {% set parts = (user.full_name or user.name or user.username).split() %}
+            {% set initials = (parts[0][:1] + parts[-1][:1]) if parts|length > 1 else parts[0][:2] %}
+            <div class="h-20 w-20 min-h-[5rem] min-w-[5rem] shrink-0 aspect-square rounded-full flex items-center justify-center bg-stone-900 text-stone-100 font-bold text-2xl uppercase tracking-wider shadow-xs border border-stone-200">
+              {{ initials | upper }}
+            </div>
+            <h3 class="mt-4 text-lg font-bold text-stone-900">{{ user.full_name or user.name }}</h3>
+            <p class="text-xs font-mono text-stone-400">@{{ user.username }}</p>
+            
+            <div class="mt-3 flex flex-wrap items-center justify-center gap-2">
+              {% if user.role == 'admin' %}
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1 text-[11px] font-semibold text-stone-800 border border-stone-300">
+                <svg class="h-3 w-3 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+                Quản trị viên
+              </span>
+              {% else %}
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1 text-[11px] font-medium text-stone-600 border border-stone-200">
+                <svg class="h-3 w-3 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                Thành viên
+              </span>
+              {% endif %}
+
+              {% if user.is_active %}
+              <span class="inline-flex items-center rounded-full bg-stone-50 px-2.5 py-0.5 text-[10px] font-medium text-stone-600 border border-stone-200">
+                Hoạt động
+              </span>
+              {% else %}
+              <span class="inline-flex items-center rounded-full bg-stone-100 px-2.5 py-0.5 text-[10px] font-medium text-stone-400">
+                Tạm khóa
+              </span>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="mt-6 border-t border-stone-100 pt-5 space-y-3 text-xs">
+            <div class="flex items-center justify-between py-1">
+              <span class="text-stone-400 uppercase tracking-wider text-[10px] font-semibold">Email</span>
+              <span class="font-medium text-stone-800">{{ user.email }}</span>
+            </div>
+            <div class="flex items-center justify-between py-1">
+              <span class="text-stone-400 uppercase tracking-wider text-[10px] font-semibold">Số điện thoại</span>
+              <span class="font-medium text-stone-800">{{ user.phone or "Chưa cập nhật" }}</span>
+            </div>
+            <div class="flex items-center justify-between py-1">
+              <span class="text-stone-400 uppercase tracking-wider text-[10px] font-semibold">Ngày tham gia</span>
+              <span class="font-mono text-stone-600">{{ user.created_at[:10] }}</span>
+            </div>
+          </div>
+
+          {% if user.role == 'admin' %}
+          <div class="mt-6 rounded-md border border-stone-200 bg-[#FAF9F6] p-4">
+            <h4 class="text-xs font-semibold text-stone-900 uppercase tracking-wider flex items-center gap-2">
+              <svg class="h-3.5 w-3.5 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
+              <span>Bảng điều khiển Quản trị</span>
+            </h4>
+            <p class="mt-1.5 text-xs text-stone-500 leading-relaxed">
+              Bạn có toàn quyền quản lý danh mục 500 sản phẩm, đơn hàng, người dùng và xu hướng AI.
+            </p>
+            <a href="/admin" class="mt-3 flex w-full items-center justify-center rounded-md bg-stone-900 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white shadow-xs transition hover:bg-stone-800">
+              Đến Bảng Điều Khiển Admin &rarr;
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Cột Phải: Cập nhật thông tin & Lịch sử đơn hàng -->
+      <div class="space-y-6 lg:col-span-2">
+        
+        <!-- Tab chuyển đổi -->
+        <div class="flex border-b border-stone-200 gap-1">
+          <button id="tab-orders-btn" class="border-b-2 border-stone-900 px-4 py-3 text-xs uppercase tracking-wider font-semibold text-stone-900 flex items-center gap-2 transition">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25c-.669 0-1.188-.578-1.119-1.243l1.263-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+            <span>Đơn hàng của tôi</span>
+          </button>
+          <button id="tab-profile-btn" class="border-b-2 border-transparent px-4 py-3 text-xs uppercase tracking-wider font-medium text-stone-400 hover:text-stone-800 flex items-center gap-2 transition">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+            <span>Thông tin cá nhân</span>
+          </button>
+          <button id="tab-password-btn" class="border-b-2 border-transparent px-4 py-3 text-xs uppercase tracking-wider font-medium text-stone-400 hover:text-stone-800 flex items-center gap-2 transition">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
+            <span>Đổi mật khẩu</span>
+          </button>
+        </div>
+
+        <!-- 1. Danh sách đơn hàng -->
+        <div id="tab-orders" class="space-y-4">
+          <div class="rounded-lg border border-stone-200 bg-white p-6 sm:p-8 shadow-xs">
+            <div class="flex items-center justify-between border-b border-stone-100 pb-4 mb-6">
+              <h4 class="text-base font-bold tracking-tight text-stone-900">Lịch sử đơn hàng</h4>
+              <span class="text-xs text-stone-400">Tất cả giao dịch của bạn</span>
+            </div>
+            <div id="orders-list-container" class="space-y-4">
+              <div class="text-center py-12 text-stone-400 text-xs">
+                <svg class="mx-auto h-7 w-7 animate-spin text-stone-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <p class="mt-3">Đang nạp lịch sử đơn hàng...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Form cập nhật thông tin cá nhân -->
+        <div id="tab-profile" class="hidden rounded-lg border border-stone-200 bg-white p-6 sm:p-8 shadow-xs">
+          <div class="border-b border-stone-100 pb-4 mb-6">
+            <h4 class="text-base font-bold tracking-tight text-stone-900">Chỉnh sửa thông tin</h4>
+            <p class="text-xs text-stone-400 mt-1">Cập nhật họ tên, số điện thoại và địa chỉ giao nhận mặc định</p>
+          </div>
+          
+          <div id="profile-msg" class="hidden mb-5 rounded-md p-3 text-xs font-medium border"></div>
+
+          <form id="profile-form" class="space-y-5">
+            <div>
+              <label for="edit_full_name" class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Họ và tên</label>
+              <input id="edit_full_name" type="text" value="{{ user.full_name }}" required
+                     class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2.5 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900" />
+            </div>
+
+            <div>
+              <label for="edit_phone" class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Số điện thoại</label>
+              <input id="edit_phone" type="tel" value="{{ user.phone or '' }}" placeholder="0912345678"
+                     class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2.5 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900 placeholder:text-stone-400" />
+            </div>
+
+            <div>
+              <label for="edit_address" class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Địa chỉ giao hàng mặc định</label>
+              <textarea id="edit_address" rows="3" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố..."
+                        class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2.5 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900 placeholder:text-stone-400">{{ user.address or '' }}</textarea>
+            </div>
+
+            <div class="pt-2">
+              <button type="submit" id="save-profile-btn" class="rounded-md bg-brand-600 px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-white shadow-xs hover:bg-brand-700 transition">
+                Lưu thay đổi
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- 3. Form đổi mật khẩu -->
+        <div id="tab-password" class="hidden rounded-lg border border-stone-200 bg-white p-6 sm:p-8 shadow-xs">
+          <div class="border-b border-stone-100 pb-4 mb-6">
+            <h4 class="text-base font-bold tracking-tight text-stone-900">Đổi mật khẩu</h4>
+            <p class="text-xs text-stone-400 mt-1">Đảm bảo an toàn tài khoản bằng mật khẩu có độ phức tạp cao</p>
+          </div>
+          
+          <div id="password-msg" class="hidden mb-5 rounded-md p-3 text-xs font-medium border"></div>
+
+          <form id="password-form" class="space-y-5">
+            <div>
+              <label for="old_password" class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Mật khẩu hiện tại</label>
+              <input id="old_password" type="password" required placeholder="••••••••"
+                     class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2.5 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900 placeholder:text-stone-400" />
+            </div>
+
+            <div>
+              <label for="new_password" class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Mật khẩu mới (tối thiểu 6 ký tự)</label>
+              <input id="new_password" type="password" required minlength="6" placeholder="••••••••"
+                     class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2.5 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900 placeholder:text-stone-400" />
+            </div>
+
+            <div>
+              <label for="confirm_new_password" class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Xác nhận mật khẩu mới</label>
+              <input id="confirm_new_password" type="password" required minlength="6" placeholder="••••••••"
+                     class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2.5 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900 placeholder:text-stone-400" />
+            </div>
+
+            <div class="pt-2">
+              <button type="submit" id="save-pw-btn" class="rounded-md bg-stone-900 px-6 py-2.5 text-xs font-semibold uppercase tracking-wider text-white shadow-xs hover:bg-stone-800 transition">
+                Cập nhật mật khẩu
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Tab switching
+    const tabOrdersBtn = document.getElementById("tab-orders-btn");
+    const tabProfileBtn = document.getElementById("tab-profile-btn");
+    const tabPasswordBtn = document.getElementById("tab-password-btn");
+    const tabOrders = document.getElementById("tab-orders");
+    const tabProfile = document.getElementById("tab-profile");
+    const tabPassword = document.getElementById("tab-password");
+
+    const activeClasses = "border-b-2 border-stone-900 px-4 py-3 text-xs uppercase tracking-wider font-semibold text-stone-900 flex items-center gap-2 transition";
+    const inactiveClasses = "border-b-2 border-transparent px-4 py-3 text-xs uppercase tracking-wider font-medium text-stone-400 hover:text-stone-800 flex items-center gap-2 transition";
+
+    function setTab(activeTab) {
+      [tabOrdersBtn, tabProfileBtn, tabPasswordBtn].forEach(b => {
+        b.className = inactiveClasses;
+      });
+      [tabOrders, tabProfile, tabPassword].forEach(t => t.classList.add("hidden"));
+
+      if (activeTab === "orders") {
+        tabOrdersBtn.className = activeClasses;
+        tabOrders.classList.remove("hidden");
+      } else if (activeTab === "profile") {
+        tabProfileBtn.className = activeClasses;
+        tabProfile.classList.remove("hidden");
+      } else {
+        tabPasswordBtn.className = activeClasses;
+        tabPassword.classList.remove("hidden");
+      }
+    }
+
+    tabOrdersBtn.addEventListener("click", () => setTab("orders"));
+    tabProfileBtn.addEventListener("click", () => setTab("profile"));
+    tabPasswordBtn.addEventListener("click", () => setTab("password"));
+
+    // Logout
+    document.getElementById("logout-btn").addEventListener("click", async () => {
+      try {
+        await fetch("/api/auth/logout", { method: "POST" });
+        localStorage.removeItem("aura_token");
+        localStorage.removeItem("aura_user");
+        window.location.href = "/login";
+      } catch (err) {
+        window.location.href = "/login";
+      }
+    });
+
+    // Load User Orders
+    async function loadOrders() {
+      const container = document.getElementById("orders-list-container");
+      try {
+        const res = await fetch("/api/auth/orders");
+        if (!res.ok) throw new Error();
+        const orders = await res.json();
+
+        if (!orders || orders.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-12">
+              <svg class="mx-auto h-12 w-12 text-stone-300 stroke-[1.25]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25c-.669 0-1.188-.578-1.119-1.243l1.263-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+              </svg>
+              <p class="mt-4 text-base font-medium text-stone-900">Bạn chưa có đơn hàng nào</p>
+              <p class="text-xs text-stone-500 mt-1 max-w-sm mx-auto">Khám phá hơn 500 mẫu thời trang thiết kế cao cấp và trải nghiệm mua sắm cùng AURA.</p>
+              <a href="/" class="mt-5 inline-flex items-center rounded-md bg-brand-600 px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white shadow-xs hover:bg-brand-700 transition">
+                Khám phá bộ sưu tập
+              </a>
+            </div>
+          `;
+          return;
+        }
+
+        const statusMap = {
+          pending_payment: { label: "Chờ thanh toán", bg: "bg-stone-100 text-stone-700 border-stone-300" },
+          confirmed: { label: "Đã xác nhận", bg: "bg-stone-100 text-stone-800 border-stone-300" },
+          shipping: { label: "Đang giao hàng", bg: "bg-brand-50 text-brand-700 border-brand-200" },
+          completed: { label: "Hoàn tất", bg: "bg-emerald-50 text-emerald-800 border-emerald-200" },
+          cancelled: { label: "Đã hủy", bg: "bg-stone-50 text-stone-400 border-stone-200" }
+        };
+
+        container.innerHTML = orders.map(o => {
+          const st = statusMap[o.status] || { label: o.status, bg: "bg-stone-100 text-stone-700 border-stone-200" };
+          const lines = o.quote?.lines || [];
+          const totalStr = (o.quote?.total || 0).toLocaleString("vi-VN") + "đ";
+
+          return `
+            <div class="rounded-lg border border-stone-200 p-4 transition hover:border-stone-400 hover:shadow-xs bg-[#FAF9F6]/40">
+              <div class="flex flex-wrap items-center justify-between gap-2 border-b border-stone-100 pb-3">
+                <div class="flex items-center gap-2">
+                  <span class="font-mono text-xs font-semibold text-stone-900 tracking-wider">${o.order_id}</span>
+                  <span class="inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-medium border ${st.bg}">${st.label}</span>
+                </div>
+                <span class="font-mono text-[11px] text-stone-400">${o.created_at || ""}</span>
+              </div>
+              <div class="py-3 text-xs space-y-2">
+                ${lines.map(l => `
+                  <div class="flex items-center justify-between">
+                    <span class="text-stone-700 font-medium">${l.name} <span class="text-stone-400">(${l.color}, ${l.size}) × ${l.quantity}</span></span>
+                    <span class="font-semibold text-stone-900">${(l.line_total || 0).toLocaleString("vi-VN")}đ</span>
+                  </div>
+                `).join("")}
+              </div>
+              <div class="flex items-center justify-between border-t border-stone-100 pt-3 text-xs">
+                <span class="text-stone-500">Hình thức: <strong class="text-stone-700 font-medium">${o.payment_method === 'cod' ? 'COD (Tiền mặt)' : 'Chuyển khoản QR'}</strong></span>
+                <span class="text-sm font-bold text-brand-600">Tổng cộng: ${totalStr}</span>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+      } catch (err) {
+        container.innerHTML = `
+          <div class="text-center py-8 text-xs text-rose-600">
+            Không thể tải đơn hàng lúc này. Vui lòng tải lại trang.
+          </div>
+        `;
+      }
+    }
+
+    loadOrders();
+
+    // Profile form submit
+    document.getElementById("profile-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("profile-msg");
+      msg.classList.add("hidden");
+
+      const fullName = document.getElementById("edit_full_name").value.trim();
+      const phone = document.getElementById("edit_phone").value.trim();
+      const address = document.getElementById("edit_address").value.trim();
+
+      try {
+        const res = await fetch("/api/auth/profile", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ full_name: fullName, phone: phone || null, address: address || null })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          msg.textContent = data.detail || "Cập nhật thất bại";
+          msg.className = "mb-5 rounded-md p-3 text-xs font-medium border bg-rose-50 text-rose-700 border-rose-200";
+        } else {
+          msg.textContent = "Đã lưu thay đổi thông tin cá nhân thành công!";
+          msg.className = "mb-5 rounded-md p-3 text-xs font-medium border bg-emerald-50 text-emerald-800 border-emerald-200";
+          setTimeout(() => location.reload(), 1000);
+        }
+      } catch (err) {
+        msg.textContent = "Lỗi kết nối máy chủ";
+        msg.className = "mb-5 rounded-md p-3 text-xs font-medium border bg-rose-50 text-rose-700 border-rose-200";
+      }
+    });
+
+    // Password form submit
+    document.getElementById("password-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById("password-msg");
+      msg.classList.add("hidden");
+
+      const oldPassword = document.getElementById("old_password").value;
+      const newPassword = document.getElementById("new_password").value;
+      const confirmNew = document.getElementById("confirm_new_password").value;
+
+      if (newPassword !== confirmNew) {
+        msg.textContent = "Mật khẩu mới không khớp!";
+        msg.className = "mb-5 rounded-md p-3 text-xs font-medium border bg-rose-50 text-rose-700 border-rose-200";
+        return;
+      }
+
+      try {
+        const res = await fetch("/api/auth/change-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          msg.textContent = data.detail || "Đổi mật khẩu thất bại";
+          msg.className = "mb-5 rounded-md p-3 text-xs font-medium border bg-rose-50 text-rose-700 border-rose-200";
+        } else {
+          msg.textContent = "Đổi mật khẩu thành công!";
+          msg.className = "mb-5 rounded-md p-3 text-xs font-medium border bg-emerald-50 text-emerald-800 border-emerald-200";
+          document.getElementById("password-form").reset();
+        }
+      } catch (err) {
+        msg.textContent = "Lỗi kết nối máy chủ";
+        msg.className = "mb-5 rounded-md p-3 text-xs font-medium border bg-rose-50 text-rose-700 border-rose-200";
+      }
+    });
+  </script>
+</body>
+</html>

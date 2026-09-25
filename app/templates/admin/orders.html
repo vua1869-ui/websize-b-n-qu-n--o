@@ -1,0 +1,286 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Quản lý đơn hàng{% endblock %}
+{% block header_title %}Quản lý & Điều phối đơn hàng{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Status Tabs & Filter -->
+  <div class="flex flex-col gap-4 rounded-lg border border-stone-200 bg-white p-4 shadow-xs">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <!-- Search Input -->
+      <div class="relative min-w-[260px] flex-1 max-w-md">
+        <input id="order-search" type="search" placeholder="Tìm theo mã đơn AURA, tên khách hoặc SĐT..."
+               class="w-full rounded-md border border-stone-200 bg-[#FAF9F6] pl-9 pr-4 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900 placeholder:text-stone-400" />
+        <svg class="absolute left-3 top-2.5 h-4 w-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+      </div>
+
+      <!-- Quick status pills -->
+      <div id="status-pills" class="flex flex-wrap items-center gap-1.5 text-xs font-medium">
+        <button data-status="all" class="status-btn active rounded-md bg-stone-900 px-3 py-1.5 text-white shadow-xs transition">Tất cả</button>
+        <button data-status="pending_payment" class="status-btn rounded-md border border-stone-200 bg-white px-3 py-1.5 text-stone-600 hover:bg-stone-50 transition">Chờ TT</button>
+        <button data-status="confirmed" class="status-btn rounded-md border border-stone-200 bg-white px-3 py-1.5 text-stone-600 hover:bg-stone-50 transition">Đã xác nhận</button>
+        <button data-status="shipping" class="status-btn rounded-md border border-stone-200 bg-white px-3 py-1.5 text-stone-600 hover:bg-stone-50 transition">Đang giao</button>
+        <button data-status="completed" class="status-btn rounded-md border border-stone-200 bg-white px-3 py-1.5 text-stone-600 hover:bg-stone-50 transition">Hoàn tất</button>
+        <button data-status="cancelled" class="status-btn rounded-md border border-stone-200 bg-white px-3 py-1.5 text-stone-600 hover:bg-stone-50 transition">Đã hủy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="rounded-lg border border-stone-200 bg-white shadow-xs overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-[#FAF9F6] border-b border-stone-200 text-stone-400 uppercase tracking-wider text-[10px]">
+          <tr>
+            <th class="py-3 px-4 font-semibold">Mã đơn hàng</th>
+            <th class="py-3 px-4 font-semibold">Thời gian</th>
+            <th class="py-3 px-4 font-semibold">Khách hàng</th>
+            <th class="py-3 px-4 font-semibold">Số SP</th>
+            <th class="py-3 px-4 font-semibold">Tổng tiền</th>
+            <th class="py-3 px-4 font-semibold">Phương thức</th>
+            <th class="py-3 px-4 font-semibold">Trạng thái</th>
+            <th class="py-3 px-4 font-semibold text-right">Chi tiết</th>
+          </tr>
+        </thead>
+        <tbody id="orders-tbody" class="divide-y divide-stone-100 text-stone-800">
+          <tr>
+            <td colspan="8" class="py-12 text-center text-stone-400">Đang tải danh sách đơn hàng...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL CHI TIẾT ĐƠN HÀNG -->
+<div id="order-detail-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 p-4 backdrop-blur-xs hidden overflow-y-auto">
+  <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 sm:p-8 shadow-xl border border-stone-200">
+    <div class="flex items-center justify-between border-b border-stone-100 pb-3">
+      <div>
+        <h3 id="modal-order-id" class="font-mono text-base font-bold text-stone-900">Chi tiết đơn hàng</h3>
+        <p id="modal-order-date" class="text-[11px] font-mono text-stone-400 mt-0.5"></p>
+      </div>
+      <button id="close-order-modal" class="text-stone-400 hover:text-stone-600 transition" aria-label="Đóng">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div class="mt-5 space-y-4">
+      <!-- Khách hàng & Giao hàng -->
+      <div class="rounded-md border border-stone-200 bg-[#FAF9F6] p-4 text-xs space-y-1.5">
+        <p class="font-semibold text-stone-900 text-sm" id="detail-customer-name"></p>
+        <p class="text-stone-600">SĐT: <span id="detail-customer-phone" class="font-medium text-stone-900"></span></p>
+        <p class="text-stone-600">Địa chỉ: <span id="detail-customer-address" class="text-stone-800"></span></p>
+        <p class="text-stone-500">Ghi chú: <span id="detail-customer-note" class="italic text-stone-700"></span></p>
+      </div>
+
+      <!-- Danh sách món hàng -->
+      <div>
+        <h4 class="text-xs uppercase tracking-wider font-semibold text-stone-500 mb-2">Sản phẩm trong đơn</h4>
+        <div id="detail-items-list" class="divide-y divide-stone-100 rounded-md border border-stone-200 p-3 space-y-2 bg-white"></div>
+      </div>
+
+      <!-- Tổng kết tài chính -->
+      <div class="rounded-md border border-stone-200 bg-[#FAF9F6] p-4 text-xs space-y-2">
+        <div class="flex justify-between text-stone-600">
+          <span>Tạm tính hàng:</span>
+          <span id="detail-subtotal" class="font-medium text-stone-900"></span>
+        </div>
+        <div class="flex justify-between text-stone-600">
+          <span>Giảm giá Combo:</span>
+          <span id="detail-combo-discount" class="text-brand-600 font-medium"></span>
+        </div>
+        <div class="flex justify-between text-stone-600">
+          <span>Voucher giảm:</span>
+          <span id="detail-voucher-discount" class="text-brand-600 font-medium"></span>
+        </div>
+        <div class="flex justify-between text-stone-600">
+          <span>Phí vận chuyển:</span>
+          <span id="detail-shipping" class="text-stone-900 font-medium"></span>
+        </div>
+        <div class="flex justify-between border-t border-stone-200 pt-2 text-sm font-bold text-stone-900">
+          <span>Tổng thanh toán:</span>
+          <span id="detail-total" class="text-brand-600"></span>
+        </div>
+      </div>
+
+      <!-- Đổi trạng thái đơn hàng (Neutral Boutique Styling, NO AMBER BOX) -->
+      <div class="rounded-md border border-stone-200 bg-[#FAF9F6] p-4">
+        <label class="block text-xs uppercase tracking-wider font-semibold text-stone-700 mb-2">Cập nhật trạng thái đơn hàng:</label>
+        <div class="flex gap-2">
+          <select id="update-status-select" class="flex-1 rounded-md border border-stone-200 bg-white px-3 py-2 text-xs font-medium text-stone-800 outline-none transition focus:border-stone-900">
+            <option value="pending_payment">Chờ thanh toán (pending_payment)</option>
+            <option value="confirmed">Đã xác nhận (confirmed)</option>
+            <option value="shipping">Đang giao hàng (shipping)</option>
+            <option value="completed">Đã giao thành công (completed)</option>
+            <option value="cancelled">Đã hủy đơn (cancelled)</option>
+          </select>
+          <button id="save-order-status-btn" class="rounded-md bg-stone-900 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white shadow-xs hover:bg-stone-800 transition">
+            Lưu trạng thái
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let currentOrders = [];
+  let activeStatus = "all";
+  let activeOrder = null;
+
+  const tbody = document.getElementById("orders-tbody");
+  const searchInput = document.getElementById("order-search");
+  const modal = document.getElementById("order-detail-modal");
+
+  const statusMap = {
+    pending_payment: { label: "Chờ thanh toán", bg: "bg-stone-100 text-stone-700 border-stone-300" },
+    confirmed: { label: "Đã xác nhận", bg: "bg-stone-100 text-stone-800 border-stone-300" },
+    shipping: { label: "Đang giao", bg: "bg-brand-50 text-brand-700 border-brand-200" },
+    completed: { label: "Hoàn tất", bg: "bg-emerald-50 text-emerald-800 border-emerald-200" },
+    cancelled: { label: "Đã hủy", bg: "bg-stone-50 text-stone-400 border-stone-200" }
+  };
+
+  async function loadOrders() {
+    tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-stone-400">Đang nạp danh sách đơn hàng...</td></tr>`;
+
+    let url = `/api/admin/orders?limit=100`;
+    if (activeStatus !== "all") url += `&status=${encodeURIComponent(activeStatus)}`;
+    const q = searchInput.value.trim();
+    if (q) url += `&search=${encodeURIComponent(q)}`;
+
+    try {
+      const res = await fetch(url);
+      currentOrders = await res.json();
+
+      if (!currentOrders || currentOrders.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-stone-400">Không tìm thấy đơn hàng nào phù hợp</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = currentOrders.map(o => {
+        const st = statusMap[o.status] || { label: o.status, bg: "bg-stone-100 text-stone-700 border-stone-200" };
+        const lines = o.quote?.lines || [];
+        const itemCount = lines.reduce((sum, l) => sum + (l.quantity || 1), 0);
+        const total = (o.quote?.total || 0).toLocaleString("vi-VN") + "đ";
+
+        return `
+          <tr class="hover:bg-[#FAF9F6]/60 transition">
+            <td class="py-3 px-4 font-mono font-semibold text-stone-900">${o.order_id}</td>
+            <td class="py-3 px-4 text-stone-500 font-mono text-[11px]">${o.created_at || ""}</td>
+            <td class="py-3 px-4">
+              <p class="font-semibold text-stone-900">${o.customer?.name || "N/A"}</p>
+              <p class="text-[10px] text-stone-400 font-mono">${o.customer?.phone || ""}</p>
+            </td>
+            <td class="py-3 px-4 font-medium text-stone-700">${itemCount} sp</td>
+            <td class="py-3 px-4 font-semibold text-brand-600">${total}</td>
+            <td class="py-3 px-4 text-stone-500">${o.payment_method === 'cod' ? 'COD' : 'Chuyển khoản'}</td>
+            <td class="py-3 px-4">
+              <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium border ${st.bg}">${st.label}</span>
+            </td>
+            <td class="py-3 px-4 text-right">
+              <button onclick="viewOrder('${o.order_id}')" class="rounded-md border border-stone-200 bg-white px-2.5 py-1 text-[11px] font-medium text-stone-700 hover:bg-stone-50 shadow-xs transition">
+                Chi tiết
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+
+    } catch (e) {
+      tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-rose-600">Lỗi tải dữ liệu đơn hàng</td></tr>`;
+    }
+  }
+
+  // Filter Status Buttons
+  document.querySelectorAll(".status-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".status-btn").forEach(b => {
+        b.className = "status-btn rounded-md border border-stone-200 bg-white px-3 py-1.5 text-stone-600 hover:bg-stone-50 transition";
+      });
+      btn.className = "status-btn active rounded-md bg-stone-900 px-3 py-1.5 text-white shadow-xs transition";
+      activeStatus = btn.dataset.status;
+      loadOrders();
+    });
+  });
+
+  // Search debouncing
+  let searchTimer;
+  searchInput.addEventListener("input", () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(loadOrders, 300);
+  });
+
+  // View Order Detail
+  window.viewOrder = function(orderId) {
+    const o = currentOrders.find(x => x.order_id === orderId);
+    if (!o) return;
+    activeOrder = o;
+
+    document.getElementById("modal-order-id").textContent = `Đơn hàng: ${o.order_id}`;
+    document.getElementById("modal-order-date").textContent = `Đặt lúc: ${o.created_at || ""}`;
+    document.getElementById("detail-customer-name").textContent = o.customer?.name || "N/A";
+    document.getElementById("detail-customer-phone").textContent = o.customer?.phone || "N/A";
+    document.getElementById("detail-customer-address").textContent = o.customer?.address || "N/A";
+    document.getElementById("detail-customer-note").textContent = o.customer?.note || "Không có";
+
+    const lines = o.quote?.lines || [];
+    document.getElementById("detail-items-list").innerHTML = lines.map(l => `
+      <div class="flex items-center justify-between py-2">
+        <div>
+          <p class="font-semibold text-stone-900">${l.name}</p>
+          <p class="text-[10px] text-stone-400">Size: ${l.size} | Màu: ${l.color} | SL: ×${l.quantity}</p>
+        </div>
+        <p class="font-semibold text-stone-900">${(l.line_total || 0).toLocaleString("vi-VN")}đ</p>
+      </div>
+    `).join("");
+
+    const q = o.quote || {};
+    document.getElementById("detail-subtotal").textContent = (q.subtotal || 0).toLocaleString("vi-VN") + "đ";
+    document.getElementById("detail-combo-discount").textContent = q.combo_discount ? `-${q.combo_discount.toLocaleString("vi-VN")}đ` : "0đ";
+    document.getElementById("detail-voucher-discount").textContent = q.voucher_discount ? `-${q.voucher_discount.toLocaleString("vi-VN")}đ (${q.voucher_code || ''})` : "0đ";
+    document.getElementById("detail-shipping").textContent = (q.shipping_fee || 0).toLocaleString("vi-VN") + "đ";
+    document.getElementById("detail-total").textContent = (q.total || 0).toLocaleString("vi-VN") + "đ";
+
+    document.getElementById("update-status-select").value = o.status;
+    modal.classList.remove("hidden");
+  };
+
+  document.getElementById("close-order-modal").addEventListener("click", () => {
+    modal.classList.add("hidden");
+  });
+
+  // Update Status
+  document.getElementById("save-order-status-btn").addEventListener("click", async () => {
+    if (!activeOrder) return;
+    const newStatus = document.getElementById("update-status-select").value;
+
+    try {
+      const res = await fetch(`/api/admin/orders/${activeOrder.order_id}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.detail || "Không thể cập nhật trạng thái đơn hàng", "error");
+        return;
+      }
+
+      showToast(`Đã chuyển trạng thái đơn hàng sang "${statusMap[newStatus]?.label || newStatus}" thành công!`);
+      modal.classList.add("hidden");
+      loadOrders();
+    } catch (err) {
+      showToast("Lỗi kết nối máy chủ", "error");
+    }
+  });
+
+  loadOrders();
+</script>
+{% endblock %}

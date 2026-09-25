@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full bg-[#FBFBFA]">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Bảng Điều Khiển{% endblock %} • AURA Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/tailwind.css" />
+  <link rel="stylesheet" href="/static/css/custom.css?v={{ version }}" />
+</head>
+<body class="min-h-full font-sans antialiased text-stone-900 bg-[#FBFBFA] selection:bg-brand-600 selection:text-white flex flex-col">
+
+  <!-- TOP HEADER & THANH CÔNG CỤ ĐIỀU HÀNH ADMIN -->
+  <header class="sticky top-0 z-40 border-b border-stone-200 bg-white shadow-xs">
+    <!-- Hàng trên: Brand & Thao tác chung -->
+    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center gap-4">
+        <a href="/admin" class="flex items-center gap-2.5">
+          <div class="flex h-8 w-8 items-center justify-center rounded-md bg-brand-600 font-serif text-base font-bold text-white shadow-xs">A</div>
+          <div class="flex flex-col leading-none">
+            <span class="font-serif text-base font-bold tracking-tight text-stone-900">AURA Admin</span>
+            <span class="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.25em] text-brand-600">Management</span>
+          </div>
+        </a>
+        <span class="hidden h-5 w-px bg-stone-200 sm:block"></span>
+        <div class="hidden items-center gap-2 rounded-full bg-stone-100 px-3 py-1 text-[11px] font-medium text-stone-600 sm:flex border border-stone-200">
+          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+          <span>AI Stylist Online</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2.5 sm:gap-3">
+        <a href="/profile" class="rounded-md border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50 transition shadow-xs">
+          Tài khoản: <strong class="text-stone-900">@{{ user.username }}</strong>
+        </a>
+
+        <a href="/" target="_blank" class="rounded-md border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:bg-stone-50 transition shadow-xs">
+          Storefront ↗
+        </a>
+
+        <button id="admin-logout-btn" class="flex items-center gap-1.5 rounded-md border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-500 hover:text-rose-600 hover:bg-stone-50 transition shadow-xs" title="Đăng xuất">
+          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+          <span class="hidden sm:inline">Đăng xuất</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Hàng dưới: THANH CÔNG CỤ QUẢN TRỊ NGANG (Horizontal Toolbar) -->
+    <div class="border-t border-stone-200/80 bg-[#FAF9F6]">
+      <div class="mx-auto flex max-w-7xl items-center gap-1 sm:gap-1.5 px-4 sm:px-6 lg:px-8 py-1.5 overflow-x-auto no-scrollbar">
+        <a href="/admin" class="admin-toolbar-item {% if current_page == 'dashboard' %}active{% endif %}">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
+          <span>Tổng quan (Dashboard)</span>
+        </a>
+
+        <a href="/admin/products" class="admin-toolbar-item {% if current_page == 'products' %}active{% endif %}">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25c-.669 0-1.188-.578-1.119-1.243l1.263-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+          <span>Sản phẩm</span>
+          <span class="rounded-full bg-stone-200/80 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-stone-700">500</span>
+        </a>
+
+        <a href="/admin/orders" class="admin-toolbar-item {% if current_page == 'orders' %}active{% endif %}">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+          <span>Đơn hàng</span>
+        </a>
+
+        <a href="/admin/users" class="admin-toolbar-item {% if current_page == 'users' %}active{% endif %}">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
+          <span>Người dùng</span>
+        </a>
+
+        <a href="/admin/trending" class="admin-toolbar-item {% if current_page == 'trending' %}active{% endif %}">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
+          <span>Xu hướng AI</span>
+          <span class="rounded-full bg-stone-200/80 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-stone-700">Live</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- NỘI DUNG CHÍNH (Full Width, Không còn bị sidebar che khuất) -->
+  <main class="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">{% block header_title %}Tổng quan hệ thống{% endblock %}</h1>
+    </div>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Toast Notification Root -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Scripts -->
+  <script>
+    // Admin Logout
+    document.getElementById("admin-logout-btn").addEventListener("click", async () => {
+      try {
+        await fetch("/api/auth/logout", { method: "POST" });
+        localStorage.removeItem("aura_token");
+        localStorage.removeItem("aura_user");
+        window.location.href = "/login";
+      } catch (err) {
+        window.location.href = "/login";
+      }
+    });
+
+    // Helper: Toast Notification
+    window.showToast = function(message, type = "success") {
+      const container = document.getElementById("toast-container");
+      const el = document.createElement("div");
+      const isSuccess = type === "success";
+      el.className = `pointer-events-auto flex items-center gap-2 rounded-md px-4 py-3 text-xs font-semibold text-white shadow-md transition-all duration-300 transform translate-y-4 opacity-0 ${
+        isSuccess ? "bg-stone-900" : "bg-rose-600"
+      }`;
+      el.innerHTML = `
+        <span>${isSuccess ? "✓" : "✕"}</span>
+        <span>${message}</span>
+      `;
+      container.appendChild(el);
+      requestAnimationFrame(() => {
+        el.classList.remove("translate-y-4", "opacity-0");
+      });
+      setTimeout(() => {
+        el.classList.add("translate-y-4", "opacity-0");
+        setTimeout(() => el.remove(), 300);
+      }, 3500);
+    };
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

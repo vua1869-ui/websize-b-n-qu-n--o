@@ -123,9 +123,84 @@ const App = {
     this.bindEvents();
     this.updateBadges();
     this.renderSortButtons();
+    this.initAuth();
     await Promise.all([this.loadCategories(), this.loadProducts(), this.loadTrending(), this.loadFlash(), this.loadVouchers(), this.loadVideos()]);
     this.sanitizeCart();
     this.refreshCart();
+  },
+
+  async initAuth() {
+    try {
+      const user = await U.api('/api/auth/me');
+      if (user && user.id) {
+        this.renderAuth(user);
+      }
+    } catch {
+      // chưa đăng nhập
+    }
+  },
+
+  renderAuth(user) {
+    const headerAuth = U.$('#header-auth-container');
+    if (headerAuth) {
+      headerAuth.innerHTML = `
+        <div class="relative" id="user-menu-wrapper">
+          <button id="user-menu-btn" class="flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-white shadow-xs transition hover:bg-white/20">
+            <div class="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-bold text-stone-900">
+              ${(user.full_name || user.username)[0].toUpperCase()}
+            </div>
+            <span class="hidden max-w-[100px] truncate sm:inline">${U.esc(user.full_name || user.username)}</span>
+            <svg class="h-3 w-3 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+          </button>
+          <div id="user-dropdown-menu" class="absolute right-0 top-full mt-1.5 w-52 rounded-md border border-stone-200 bg-white py-1 text-stone-800 shadow-lg hidden z-50">
+            <div class="border-b border-stone-100 px-3.5 py-2.5">
+              <p class="truncate text-xs font-semibold text-stone-900">${U.esc(user.full_name || user.name || user.username)}</p>
+              <p class="truncate text-[10px] font-mono text-stone-400 mt-0.5">@${U.esc(user.username)} • ${user.role === 'admin' ? '<span class="text-stone-900 font-semibold">Admin</span>' : 'Thành viên'}</p>
+            </div>
+            ${user.role === 'admin' ? `
+              <a href="/admin" class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-stone-900 hover:bg-[#FAF9F6] transition">
+                <svg class="h-3.5 w-3.5 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
+                <span>Quản trị Admin</span>
+              </a>
+            ` : ''}
+            <a href="/profile" class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-stone-700 hover:bg-[#FAF9F6] transition">
+              <svg class="h-3.5 w-3.5 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+              <span>Tài khoản của tôi</span>
+            </a>
+            <button data-action="auth-logout" class="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-xs font-medium text-stone-500 hover:text-rose-600 hover:bg-[#FAF9F6] border-t border-stone-100 transition">
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+              <span>Đăng xuất</span>
+            </button>
+          </div>
+        </div>
+      `;
+
+      const btn = U.$('#user-menu-btn');
+      const dropdown = U.$('#user-dropdown-menu');
+      if (btn && dropdown) {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          dropdown.classList.toggle('hidden');
+        });
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('#user-menu-wrapper')) {
+            dropdown.classList.add('hidden');
+          }
+        });
+      }
+    }
+
+    const topAuth = U.$('#topbar-auth');
+    if (topAuth) {
+      topAuth.innerHTML = `
+        <span class="text-zinc-300">Xin chào, <strong class="text-white">${U.esc(user.full_name || user.username)}</strong></span>
+        ${user.role === 'admin' ? '<span class="text-zinc-600">•</span><a href="/admin" class="font-bold text-amber-400 hover:underline">Quản trị</a>' : ''}
+        <span class="text-zinc-600">•</span>
+        <a href="/profile" class="hover:text-white">Tài khoản</a>
+        <span class="text-zinc-600">•</span>
+        <button data-action="auth-logout" class="hover:text-rose-300">Đăng xuất</button>
+      `;
+    }
   },
 
   bindEvents() {
@@ -1163,6 +1238,17 @@ Object.assign(Actions, {
       U.toast('Đã cập nhật xu hướng mới nhất!', 'ok');
     } catch (e) {
       U.toast('Không thể làm mới: ' + e.message, 'error');
+    }
+  },
+  'auth-logout': async () => {
+    try {
+      await U.api('/api/auth/logout', { method: 'POST' });
+      localStorage.removeItem('aura_token');
+      localStorage.removeItem('aura_user');
+      U.toast('Đã đăng xuất thành công!');
+      setTimeout(() => location.reload(), 400);
+    } catch {
+      location.reload();
     }
   },
 });

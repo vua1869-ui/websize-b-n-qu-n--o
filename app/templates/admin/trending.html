@@ -1,0 +1,121 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Xu hướng Thời trang AI{% endblock %}
+{% block header_title %}Hệ thống AI Phát hiện & Đề xuất Xu hướng (Trend Detection){% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- Action banner -->
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-stone-200 bg-white p-5 shadow-xs">
+    <div>
+      <h3 class="text-base font-bold text-stone-900">Quét & Dự đoán Thị hiếu AI</h3>
+      <p class="text-xs text-stone-500 mt-1">
+        Hệ thống tự động chấm điểm xu hướng thời trang theo mùa và gắn tag thông minh cho 500 sản phẩm.
+      </p>
+    </div>
+
+    <button id="refresh-trends-btn" class="flex items-center justify-center gap-2 rounded-md bg-brand-600 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white shadow-xs transition hover:bg-brand-700">
+      <svg id="refresh-icon" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+      <span id="refresh-text">Quét & Làm mới Trend</span>
+    </button>
+  </div>
+
+  <!-- Trends Grid -->
+  <div id="trends-grid" class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div class="col-span-full text-center py-12 text-stone-400 text-xs">
+      Đang tải dữ liệu xu hướng thời trang...
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const grid = document.getElementById("trends-grid");
+  const refreshBtn = document.getElementById("refresh-trends-btn");
+  const refreshIcon = document.getElementById("refresh-icon");
+  const refreshText = document.getElementById("refresh-text");
+
+  async function loadTrending() {
+    grid.innerHTML = `<div class="col-span-full text-center py-12 text-stone-400 text-xs">Đang tải dữ liệu xu hướng thời trang...</div>`;
+    try {
+      const res = await fetch("/api/admin/trending");
+      const trends = await res.json();
+
+      if (!trends || trends.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-stone-400 text-xs">Chưa có xu hướng nào được ghi nhận</div>`;
+        return;
+      }
+
+      grid.innerHTML = trends.map(t => {
+        const keywords = t.keywords || [];
+        const growth = t.growth_rate || "+15%";
+
+        return `
+          <div class="rounded-lg border border-stone-200 bg-white p-5 shadow-xs transition hover:border-stone-400 hover:shadow-xs flex flex-col justify-between">
+            <div>
+              <div class="flex items-start justify-between gap-2">
+                <div>
+                  <span class="inline-flex rounded-full bg-stone-100 px-2.5 py-0.5 text-[10px] font-semibold text-stone-700 border border-stone-200 uppercase tracking-wider">
+                    ${t.category || "Fashion"}
+                  </span>
+                  <h4 class="mt-2.5 text-base font-bold text-stone-900">${t.name}</h4>
+                  <p class="text-xs text-stone-500 mt-1 leading-relaxed">${t.description || "Xu hướng đang thịnh hành mùa này"}</p>
+                </div>
+                <div class="flex flex-col items-end shrink-0">
+                  <span class="rounded-md bg-stone-900 px-2.5 py-1 text-xs font-mono font-bold text-stone-100">${t.score || 85}</span>
+                  <span class="mt-1 font-mono text-[10px] font-semibold text-brand-600">${growth}</span>
+                </div>
+              </div>
+
+              <!-- Tags / Keywords -->
+              <div class="mt-4 flex flex-wrap gap-1.5">
+                ${keywords.map(k => `
+                  <span class="rounded-md bg-[#FAF9F6] border border-stone-200 px-2 py-0.5 text-[10px] font-mono text-stone-600">#${k}</span>
+                `).join("")}
+              </div>
+            </div>
+
+            <div class="mt-5 border-t border-stone-100 pt-3 flex items-center justify-between text-xs text-stone-500">
+              <span>Độ tin cậy AI: <strong class="text-stone-800">${t.confidence || "Cao"}</strong></span>
+              <a href="/admin/products?search=${encodeURIComponent(t.name)}" class="font-semibold text-brand-600 hover:text-brand-700 transition">
+                Lọc SP &rarr;
+              </a>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+    } catch (e) {
+      grid.innerHTML = `<div class="col-span-full text-center py-12 text-rose-600 text-xs">Lỗi tải dữ liệu xu hướng</div>`;
+    }
+  }
+
+  refreshBtn.addEventListener("click", async () => {
+    refreshBtn.disabled = true;
+    refreshIcon.classList.add("animate-spin");
+    refreshText.textContent = "AI đang phân tích xu hướng...";
+
+    try {
+      const res = await fetch("/api/admin/trending/refresh", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.detail || "Không thể làm mới xu hướng", "error");
+      } else {
+        showToast("Đã quét và làm mới xu hướng AI thành công!");
+        loadTrending();
+      }
+    } catch (e) {
+      showToast("Lỗi kết nối máy chủ", "error");
+    } finally {
+      refreshBtn.disabled = false;
+      refreshIcon.classList.remove("animate-spin");
+      refreshText.textContent = "Quét & Làm mới Trend";
+    }
+  });
+
+  loadTrending();
+</script>
+{% endblock %}

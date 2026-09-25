@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full bg-[#FBFBFA]">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>403 - Quyền truy cập bị từ chối • AURA Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/tailwind.css" />
+  <link rel="stylesheet" href="/static/css/custom.css?v={{ version }}" />
+</head>
+<body class="flex min-h-full flex-col justify-center py-16 sm:px-6 lg:px-8 bg-[#FBFBFA] text-stone-900 font-sans antialiased selection:bg-brand-600 selection:text-white">
+  <div class="sm:mx-auto sm:w-full sm:max-w-md text-center px-4">
+    
+    <!-- Logo -->
+    <div class="flex justify-center mb-6">
+      <a href="/" class="inline-flex flex-col items-center">
+        <span class="font-serif text-3xl font-bold tracking-tight text-stone-900">AURA</span>
+        <span class="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.3em] text-brand-600">Studio</span>
+      </a>
+    </div>
+
+    <!-- Error Badge & Title -->
+    <div class="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3.5 py-1 text-[11px] font-semibold text-stone-700 mb-4 border border-stone-200 uppercase tracking-wider">
+      <span>Mã lỗi 403 • Quyền truy cập bị từ chối</span>
+    </div>
+
+    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">
+      Quyền truy cập bị từ chối
+    </h1>
+    
+    <p class="mt-2 text-xs sm:text-sm text-stone-500 leading-relaxed max-w-sm mx-auto">
+      Khu vực quản trị AURA Studio chỉ dành riêng cho tài khoản có vai trò <strong>Quản trị viên (Admin)</strong>.
+    </p>
+
+    {% if user %}
+    <div class="mt-6 rounded-lg border border-stone-200 bg-white p-4 text-xs shadow-xs text-left">
+      <div class="flex items-center justify-between py-1">
+        <span class="text-stone-400 uppercase tracking-wider text-[10px] font-semibold">Tài khoản</span>
+        <span class="font-medium text-stone-800">@{{ user.username }} ({{ user.full_name or user.name }})</span>
+      </div>
+      <div class="flex items-center justify-between py-1 border-t border-stone-100 mt-1 pt-1">
+        <span class="text-stone-400 uppercase tracking-wider text-[10px] font-semibold">Vai trò hiện tại</span>
+        <span class="inline-flex rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-medium text-stone-700 uppercase tracking-wider">{{ user.role }}</span>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="mt-8 flex flex-col gap-2.5 sm:flex-row sm:justify-center">
+      <a href="/" class="inline-flex items-center justify-center rounded-md border border-stone-200 bg-white px-5 py-2.5 text-xs font-medium text-stone-700 shadow-xs transition hover:bg-stone-50">
+        <svg class="mr-2 h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+        Quay lại trang chủ
+      </a>
+      <button id="switch-admin-btn" class="inline-flex items-center justify-center rounded-md bg-stone-900 px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white shadow-xs transition hover:bg-stone-800">
+        <svg class="mr-2 h-3.5 w-3.5 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z"/></svg>
+        Đăng nhập tài khoản Admin
+      </button>
+    </div>
+
+    <div class="mt-10 border-t border-stone-200 pt-6">
+      <p class="text-[11px] text-stone-400">
+        Tài khoản Demo Admin mặc định: <code class="rounded bg-stone-100 border border-stone-200 px-1.5 py-0.5 font-mono text-stone-700">admin / admin123</code>
+      </p>
+    </div>
+
+  </div>
+
+  <script>
+    document.getElementById("switch-admin-btn").addEventListener("click", async () => {
+      try {
+        await fetch("/api/auth/logout", { method: "POST" });
+        localStorage.removeItem("aura_token");
+        localStorage.removeItem("aura_user");
+        window.location.href = "/login?redirect=/admin";
+      } catch (err) {
+        window.location.href = "/login?redirect=/admin";
+      }
+    });
+  </script>
+</body>
+</html>

@@ -211,5 +211,176 @@ class OrderService:
         with open(self.orders_path, "r", encoding="utf-8") as f:
             return sum(1 for line in f if line.strip())
 
+    # ---------- Quản lý đơn hàng Admin ----------
+    def get_orders(self, status: Optional[str] = None, search: Optional[str] = None,
+                   limit: int = 50, offset: int = 0) -> List[dict]:
+        self._ensure_demo_orders()
+        if not os.path.exists(self.orders_path):
+            return []
+
+        orders = []
+        with open(self.orders_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        orders.append(json.loads(line))
+                    except Exception:
+                        continue
+
+        # Mới nhất lên đầu
+        orders.reverse()
+
+        if status and status != "all":
+            orders = [o for o in orders if o.get("status") == status]
+
+        if search and search.strip():
+            s = search.strip().lower()
+            orders = [
+                o for o in orders
+                if s in o.get("order_id", "").lower()
+                or s in o.get("customer", {}).get("name", "").lower()
+                or s in o.get("customer", {}).get("phone", "").lower()
+            ]
+
+        return orders[offset: offset + limit]
+
+    def get_order_by_id(self, order_id: str) -> Optional[dict]:
+        self._ensure_demo_orders()
+        if not os.path.exists(self.orders_path):
+            return None
+        with open(self.orders_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        o = json.loads(line)
+                        if o.get("order_id") == order_id:
+                            return o
+                    except Exception:
+                        continue
+        return None
+
+    def update_order_status(self, order_id: str, new_status: str) -> Optional[dict]:
+        with self._lock:
+            if not os.path.exists(self.orders_path):
+                return None
+            records = []
+            target = None
+            with open(self.orders_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        try:
+                            rec = json.loads(line)
+                            if rec.get("order_id") == order_id:
+                                old_status = rec.get("status")
+                                rec["status"] = new_status
+                                target = rec
+                                # Nếu hủy đơn -> hoàn kho
+                                if new_status == "cancelled" and old_status != "cancelled":
+                                    needed = {l["product_id"]: l["quantity"] for l in rec["quote"]["lines"]}
+                                    product_service.release_stock(needed)
+                            records.append(rec)
+                        except Exception:
+                            continue
+
+            if target:
+                with open(self.orders_path, "w", encoding="utf-8") as f:
+                    for r in records:
+                        f.write(json.dumps(r, ensure_ascii=False) + "\n")
+            return target
+
+    def get_admin_stats(self) -> dict:
+        self._ensure_demo_orders()
+        total_orders = 0
+        total_revenue = 0
+        status_counts = {"pending": 0, "confirmed": 0, "completed": 0, "cancelled": 0}
+
+        if os.path.exists(self.orders_path):
+            with open(self.orders_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        try:
+                            rec = json.loads(line)
+                            total_orders += 1
+                            st = rec.get("status", "pending")
+                            status_counts[st] = status_counts.get(st, 0) + 1
+                            if st != "cancelled":
+                                total_revenue += rec.get("quote", {}).get("total", 0)
+                        except Exception:
+                            continue
+
+        return {
+            "total_orders": total_orders,
+            "total_revenue": total_revenue,
+            "status_counts": status_counts,
+        }
+
+    def _ensure_demo_orders(self):
+        """Khởi tạo các đơn hàng demo ban đầu nếu chưa có file đơn hàng."""
+        if os.path.exists(self.orders_path) and os.path.getsize(self.orders_path) > 0:
+            return
+
+        demo_customers = [
+            ("Lê Thị Thảo", "0912345678", "45 Lê Lợi, Quận 1, TP. Hồ Chí Minh", "Gọi trước khi giao", "cod", "completed", "prod_001", "M", "Be / Kem"),
+            ("Nguyễn Văn Hùng", "0981234567", "120 Cầu Giấy, Hà Nội", "Giao giờ hành chính", "qr_transfer", "completed", "prod_002", "S", "Trắng Ngọc Trai"),
+            ("Trần Minh Tuấn", "0908765432", "88 Nguyễn Thị Minh Khai, Đà Nẵng", "Để hàng ở bảo vệ", "cod", "confirmed", "prod_003", "L", "Đen Tuyển"),
+            ("Phạm Hồng Nhung", "0976543210", "15 Hai Bà Trưng, Hoàn Kiếm, Hà Nội", "", "cod", "completed", "prod_004", "M", "Đỏ Rượu Vang"),
+            ("Đặng Tiến Anh", "0965432109", "36 Trần Hưng Đạo, Quận 5, TP. Hồ Chí Minh", "Giao buổi chiều", "qr_transfer", "confirmed", "prod_005", "XL", "Trắng Basic"),
+            ("Vũ Bích Ngọc", "0943210987", "72 Bạch Đằng, Hải Châu, Đà Nẵng", "", "cod", "pending_payment", "prod_006", "30", "Xanh Vintage Wash"),
+            ("Đỗ Gia Bảo", "0932109876", "29 Nguyễn Trãi, Thanh Xuân, Hà Nội", "Cho xem hàng", "cod", "completed", "prod_008", "M", "Nâu Chocolate"),
+            ("Ngô Phương Linh", "0921098765", "105 Cách Mạng Tháng 8, Quận 3, TP. Hồ Chí Minh", "", "qr_transfer", "completed", "prod_009", "M", "Đen Tuyền"),
+            ("Hoàng Quốc Việt", "0918765432", "214 Phố Huế, Hai Bà Trưng, Hà Nội", "Hàng dễ vỡ", "cod", "confirmed", "prod_010", "L", "Xám Xi Măng"),
+            ("Trịnh Thu Trang", "0987654322", "58 Nguyễn Văn Linh, Đà Nẵng", "Gọi trước 15 phút", "cod", "cancelled", "prod_012", "S", "Xanh Rêu Pastel"),
+            ("Bùi Thanh Tùng", "0971234568", "19 Quang Trung, Hà Đông, Hà Nội", "", "qr_transfer", "completed", "prod_091", "L", "Đen Washed"),
+            ("Mai Phương Thảo", "0962345679", "33 Hai Bà Trưng, Quận 1, TP. Hồ Chí Minh", "Giao gấp sáng mai", "cod", "confirmed", "prod_096", "M", "Hồng Baby"),
+        ]
+
+        now = datetime.datetime.now()
+        os.makedirs(os.path.dirname(self.orders_path), exist_ok=True)
+        with open(self.orders_path, "w", encoding="utf-8") as f:
+            for idx, (name, phone, addr, note, method, st, pid, sz, col) in enumerate(demo_customers, 1):
+                p = product_service.get_by_id(pid)
+                if not p:
+                    continue
+                p_price = p.final_price
+                sub = p_price
+                fee = 0 if sub >= settings.FREE_SHIPPING_THRESHOLD else settings.SHIPPING_FEE
+                tot = sub + fee
+                order_time = (now - datetime.timedelta(days=idx // 2, hours=idx * 2)).strftime("%d/%m/%Y %H:%M")
+                order_id = f"AURA-{now.strftime('%y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+
+                rec = {
+                    "order_id": order_id,
+                    "status": st,
+                    "created_at": order_time,
+                    "customer": {"name": name, "phone": phone, "address": addr, "note": note},
+                    "payment_method": method,
+                    "quote": {
+                        "lines": [{
+                            "product_id": p.id,
+                            "name": p.name,
+                            "image": p.images[0] if p.images else "",
+                            "size": sz,
+                            "color": col,
+                            "quantity": 1,
+                            "unit_price": p_price,
+                            "line_total": p_price,
+                            "combo": False
+                        }],
+                        "subtotal": sub,
+                        "combo_discount": 0,
+                        "voucher_code": None,
+                        "voucher_discount": 0,
+                        "voucher_message": None,
+                        "shipping_fee": fee,
+                        "shipping_discount": 0,
+                        "total": tot
+                    }
+                }
+                f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
 
 order_service = OrderService()
