@@ -157,3 +157,26 @@ npm run build:css        # hoặc: npm run watch:css
 - **Ảnh/video là dữ liệu mẫu** (Unsplash). Ảnh lỗi sẽ tự hiện ảnh thay thế. Điền `video_url` trong `product_service.get_videos()` để phát video thật.
 - Phần "Live AI" là mô phỏng (host AI trả lời bình luận), không phải livestream thật.
 - Các chính sách hiển thị (đổi trả 15 ngày, cam kết chất lượng) là nội dung mẫu, hãy chỉnh cho đúng chính sách của bạn.
+
+## Địa giới hành chính 2 cấp (Áp dụng từ 1/7/2025)
+
+Theo **Nghị quyết 202/2025/QH15** của Quốc hội thông qua ngày 12/6/2025, từ ngày **1/7/2025** Việt Nam chính thức bãi bỏ cấp trung gian Quận/Huyện, cả nước tổ chức lại thành **34 Tỉnh/Thành phố** với mô hình hành chính 2 cấp:
+- **Cấp 1:** Tỉnh / Thành phố trực thuộc Trung ương (34 đơn vị).
+- **Cấp 2:** Xã / Phường / Đặc khu trực thuộc Tỉnh/Thành phố.
+
+### 1. Nguồn dữ liệu & Cơ chế hoạt động
+- Dữ liệu chuẩn được trích xuất từ thư viện chính thức [`vietnam-provinces`](https://github.com/sunshine-tech/VietnamProvinces) (dữ liệu Tổng cục Thống kê sau đợt sáp nhập hành chính).
+- File dữ liệu tĩnh lưu tại `app/data/vn_locations.json`, được nạp và cache trực tiếp vào bộ nhớ server khi khởi động (không phụ thuộc kết nối mạng lúc runtime).
+- API endpoint: `GET /api/locations` cung cấp toàn bộ danh mục cho dropdown phía frontend.
+- Quy trình thanh toán tự động xác thực nghiêm ngặt phía server: `ward_code` bắt buộc phải thuộc đúng `province_code` đã chọn (trả lỗi HTTP 422 rõ ràng nếu không khớp), lưu địa chỉ đầy đủ dạng chuỗi hiển thị chuẩn vào đơn hàng.
+
+### 2. Cách cập nhật / Xuất lại dữ liệu
+Nếu trong tương lai Nhà nước có đợt điều chỉnh, sáp nhập hoặc chia tách địa giới hành chính mới:
+```bash
+# 1. Cập nhật thư viện dữ liệu lên phiên bản mới nhất
+pip install --upgrade vietnam-provinces
+
+# 2. Chạy script xuất dữ liệu ra file tĩnh
+python scripts/export_locations.py
+```
+Script sẽ tự động đồng bộ lại toàn bộ mã code, tên gọi chuẩn của Tỉnh/Thành phố và Xã/Phường vào file `app/data/vn_locations.json`.

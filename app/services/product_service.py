@@ -4,7 +4,7 @@ import threading
 import time
 from typing import Dict, List, Optional, Tuple
 
-from app.models.schemas import Category, Product, VideoItem, Voucher
+from app.models.schemas import Category, Product, ProductVariant, VideoItem, Voucher
 from app.services.text_utils import has_any, has_word, normalize, tokens
 
 DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "products.json")
@@ -60,6 +60,8 @@ AVAILABLE_VOUCHERS = [
             max_discount=100000, min_order=199000, badge="Live AI", expire_in="Trong tháng này"),
     Voucher(code="AURA10", title="Khách mới trải nghiệm AI Stylist", kind="percent", value=10,
             max_discount=50000, min_order=150000, badge="Khách mới", expire_in="30 ngày"),
+    Voucher(code="STAYWITHUS", title="Quà tặng giữ chân khách hàng - Giảm 5%", kind="percent", value=5,
+            max_discount=100000, min_order=100000, badge="Tri ân 5%", expire_in="Hôm nay"),
 ]
 
 VN_UTC_OFFSET_MS = 7 * 3600 * 1000
@@ -88,6 +90,28 @@ class ProductService:
             data = json.load(f)
         self._products = [Product(**item) for item in data]
         self._by_id = {p.id: p for p in self._products}
+        
+        # Đồng bộ ma trận biến thể tồn kho (Màu x Size) từ CSDL SQLite
+        try:
+            from app.db.database import db_service
+            db_service.reset_stock()
+            for p in self._products:
+                v_rows = db_service.get_product_variants(p.id)
+                if v_rows:
+                    p.variants = [ProductVariant(**v) for v in v_rows]
+                else:
+                    p.variants = [
+                        ProductVariant(color=c.name, color_hex=c.hex, size=s, stock=p.stock)
+                        for c in p.colors for s in p.sizes
+                    ]
+        except Exception as e:
+            # Fallback nếu CSDL đang khởi tạo
+            for p in self._products:
+                p.variants = [
+                    ProductVariant(color=c.name, color_hex=c.hex, size=s, stock=p.stock)
+                    for c in p.colors for s in p.sizes
+                ]
+
         for p in self._products:
             parts = [p.name, p.description, p.style, p.material, p.category_name,
                      CATEGORY_META.get(p.category, ("",))[0], " ".join(p.tags),

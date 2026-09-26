@@ -29,7 +29,7 @@
       <div class="flex items-center gap-3">
         {% if user.role == 'admin' %}
         <a href="/admin" class="flex items-center gap-1.5 rounded-md border border-stone-200 bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-stone-800">
-          <svg class="h-3.5 w-3.5 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
+          <svg class="h-4 w-4 shrink-0 text-brand-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
           <span>Quản trị Admin</span>
         </a>
         {% endif %}
@@ -37,7 +37,7 @@
           Về Cửa hàng
         </a>
         <button id="logout-btn" class="flex items-center gap-1.5 rounded-md border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 transition hover:bg-stone-50 hover:text-rose-600">
-          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
           <span>Đăng xuất</span>
         </button>
       </div>
@@ -54,7 +54,7 @@
           <div class="flex flex-col items-center text-center">
             {% set parts = (user.full_name or user.name or user.username).split() %}
             {% set initials = (parts[0][:1] + parts[-1][:1]) if parts|length > 1 else parts[0][:2] %}
-            <div class="h-20 w-20 min-h-[5rem] min-w-[5rem] shrink-0 aspect-square rounded-full flex items-center justify-center bg-stone-900 text-stone-100 font-bold text-2xl uppercase tracking-wider shadow-xs border border-stone-200">
+            <div class="user-avatar-initials h-20 w-20 shrink-0 rounded-full flex items-center justify-center bg-stone-900 text-stone-100 font-bold text-2xl uppercase tracking-wider border border-stone-200 shadow-sm" style="width: 80px; height: 80px; min-width: 80px; min-height: 80px; filter: none; -webkit-filter: none;">
               {{ initials | upper }}
             </div>
             <h3 class="mt-4 text-lg font-bold text-stone-900">{{ user.full_name or user.name }}</h3>
@@ -63,12 +63,12 @@
             <div class="mt-3 flex flex-wrap items-center justify-center gap-2">
               {% if user.role == 'admin' %}
               <span class="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1 text-[11px] font-semibold text-stone-800 border border-stone-300">
-                <svg class="h-3 w-3 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+                <svg class="h-3.5 w-3.5 shrink-0 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
                 Quản trị viên
               </span>
               {% else %}
               <span class="inline-flex items-center gap-1.5 rounded-full bg-stone-100 px-3 py-1 text-[11px] font-medium text-stone-600 border border-stone-200">
-                <svg class="h-3 w-3 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+                <svg class="h-3.5 w-3.5 shrink-0 text-stone-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
                 Thành viên
               </span>
               {% endif %}
@@ -100,10 +100,31 @@
             </div>
           </div>
 
+          <!-- Giai đoạn 3: Thẻ thành viên VIP mini -->
+          <div class="mt-6 rounded-xl border border-amber-200/80 bg-gradient-to-br from-amber-500/10 via-amber-50/50 to-orange-500/10 p-4 shadow-xs relative overflow-hidden">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-bold uppercase tracking-wider text-amber-900 flex items-center gap-1.5">
+                <span>💎</span> AURA VIP CLUB
+              </span>
+              <span id="mini-tier-badge" class="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 border border-amber-300">
+                🥈 Hạng Bạc
+              </span>
+            </div>
+            <div class="mt-3 flex items-baseline justify-between">
+              <div>
+                <p class="text-[10px] uppercase font-semibold text-stone-400">Điểm thưởng</p>
+                <p class="text-lg font-black text-amber-900"><span id="mini-points-balance">0</span> <span class="text-xs font-semibold text-amber-700">điểm</span></p>
+              </div>
+              <button onclick="setTab('loyalty')" class="text-[11px] font-bold text-amber-800 hover:text-amber-950 underline transition">
+                Xem chi tiết &rarr;
+              </button>
+            </div>
+          </div>
+
           {% if user.role == 'admin' %}
           <div class="mt-6 rounded-md border border-stone-200 bg-[#FAF9F6] p-4">
             <h4 class="text-xs font-semibold text-stone-900 uppercase tracking-wider flex items-center gap-2">
-              <svg class="h-3.5 w-3.5 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
+              <svg class="h-5 w-5 shrink-0 text-brand-600 max-w-[20px] max-h-[20px]" style="width: 20px; height: 20px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
               <span>Bảng điều khiển Quản trị</span>
             </h4>
             <p class="mt-1.5 text-xs text-stone-500 leading-relaxed">
@@ -121,16 +142,20 @@
       <div class="space-y-6 lg:col-span-2">
         
         <!-- Tab chuyển đổi -->
-        <div class="flex border-b border-stone-200 gap-1">
-          <button id="tab-orders-btn" class="border-b-2 border-stone-900 px-4 py-3 text-xs uppercase tracking-wider font-semibold text-stone-900 flex items-center gap-2 transition">
+        <div class="flex border-b border-stone-200 gap-1 overflow-x-auto no-scrollbar">
+          <button id="tab-orders-btn" class="border-b-2 border-stone-900 px-4 py-3 text-xs uppercase tracking-wider font-semibold text-stone-900 flex items-center gap-2 transition shrink-0">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25c-.669 0-1.188-.578-1.119-1.243l1.263-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
             <span>Đơn hàng của tôi</span>
           </button>
-          <button id="tab-profile-btn" class="border-b-2 border-transparent px-4 py-3 text-xs uppercase tracking-wider font-medium text-stone-400 hover:text-stone-800 flex items-center gap-2 transition">
+          <button id="tab-loyalty-btn" class="border-b-2 border-transparent px-4 py-3 text-xs uppercase tracking-wider font-medium text-stone-400 hover:text-stone-800 flex items-center gap-2 transition shrink-0">
+            <span>💎</span>
+            <span>Hội viên AURA Club</span>
+          </button>
+          <button id="tab-profile-btn" class="border-b-2 border-transparent px-4 py-3 text-xs uppercase tracking-wider font-medium text-stone-400 hover:text-stone-800 flex items-center gap-2 transition shrink-0">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
             <span>Thông tin cá nhân</span>
           </button>
-          <button id="tab-password-btn" class="border-b-2 border-transparent px-4 py-3 text-xs uppercase tracking-wider font-medium text-stone-400 hover:text-stone-800 flex items-center gap-2 transition">
+          <button id="tab-password-btn" class="border-b-2 border-transparent px-4 py-3 text-xs uppercase tracking-wider font-medium text-stone-400 hover:text-stone-800 flex items-center gap-2 transition shrink-0">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
             <span>Đổi mật khẩu</span>
           </button>
@@ -224,6 +249,114 @@
           </form>
         </div>
 
+        <!-- 4. Giai đoạn 3: Hội viên AURA Club & Thẻ VIP -->
+        <div id="tab-loyalty" class="hidden space-y-6">
+          <!-- Thẻ VIP Card phong cách kim loại Metal Card -->
+          <div class="relative overflow-hidden rounded-2xl bg-gradient-to-tr from-stone-900 via-stone-800 to-amber-950 p-6 sm:p-8 text-white shadow-xl border border-amber-500/30">
+            <!-- Hiệu ứng bóng sáng ánh kim (Glass overlay) -->
+            <div class="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-amber-400/10 blur-3xl pointer-events-none"></div>
+            <div class="absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-amber-600/10 blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10 flex flex-col justify-between h-52 sm:h-56">
+              <!-- Hàng trên: Logo & Chip -->
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <div class="flex h-7 w-7 items-center justify-center rounded-md bg-amber-400/20 text-amber-300 font-serif font-black text-sm border border-amber-400/40">A</div>
+                    <span class="font-serif tracking-widest text-xs uppercase font-extrabold text-amber-200">AURA VIP CLUB</span>
+                  </div>
+                  <p class="text-[10px] text-stone-400 font-mono tracking-wider mt-1">EXCLUSIVE PRIVILEGES</p>
+                </div>
+                <div class="text-right">
+                  <span id="card-tier-badge" class="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 px-3 py-1 text-xs font-black text-amber-300 border border-amber-400/40 shadow-xs uppercase tracking-wider">
+                    🥇 Hạng Vàng
+                  </span>
+                </div>
+              </div>
+
+              <!-- Chip thẻ EMV giả lập -->
+              <div class="my-auto">
+                <div class="h-8 w-11 rounded-md bg-gradient-to-br from-amber-200 via-amber-400 to-yellow-600 shadow-inner border border-amber-300 flex items-center justify-center opacity-85">
+                  <div class="h-5 w-8 border border-amber-800/40 rounded-sm"></div>
+                </div>
+              </div>
+
+              <!-- Hàng dưới: Điểm số & Tên chủ thẻ -->
+              <div class="flex items-end justify-between border-t border-white/10 pt-4">
+                <div>
+                  <p class="text-[10px] uppercase tracking-wider text-amber-200/70 font-medium">Chủ thẻ thành viên</p>
+                  <p id="card-user-name" class="font-bold text-sm sm:text-base tracking-wider uppercase text-white mt-0.5">{{ user.full_name or user.name }}</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-[10px] uppercase tracking-wider text-amber-200/70 font-medium">Điểm khả dụng</p>
+                  <p class="text-lg sm:text-xl font-black text-amber-300"><span id="card-points-val">0</span> <span class="text-xs font-medium text-amber-200">pts</span></p>
+                  <p class="text-[10px] text-stone-400">(Tương đương <span id="card-money-val">0đ</span>)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Thanh tiến trình thăng hạng -->
+          <div class="rounded-xl border border-stone-200 bg-white p-6 shadow-xs">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="text-sm font-bold text-stone-900 flex items-center gap-2">
+                  <span>📈</span> Tiến trình thăng hạng
+                </h4>
+                <p class="text-xs text-stone-500 mt-1" id="tier-progress-desc">Đang tải tiến trình...</p>
+              </div>
+              <span id="tier-progress-percent" class="text-base font-black text-brand-600">0%</span>
+            </div>
+            <div class="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-stone-100">
+              <div id="tier-progress-bar" class="h-full rounded-full bg-gradient-to-r from-brand-500 to-amber-500 transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <div class="mt-3 flex justify-between text-[11px] font-mono text-stone-400">
+              <span id="tier-current-tag">🥈 Bạc (0đ)</span>
+              <span id="tier-next-tag">🥇 Vàng (5.000.000đ)</span>
+            </div>
+          </div>
+
+          <!-- Danh sách đặc quyền hội viên VIP -->
+          <div class="rounded-xl border border-stone-200 bg-white p-6 shadow-xs">
+            <h4 class="text-sm font-bold text-stone-900 mb-4 flex items-center gap-2">
+              <span>✨</span> Đặc quyền hạng thẻ của bạn
+            </h4>
+            <div id="loyalty-benefits-list" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <!-- Benefits render dynamically -->
+            </div>
+          </div>
+
+          <!-- Lịch sử giao dịch điểm -->
+          <div class="rounded-xl border border-stone-200 bg-white p-6 shadow-xs">
+            <div class="flex items-center justify-between border-b border-stone-100 pb-4 mb-4">
+              <div>
+                <h4 class="text-sm font-bold text-stone-900">Lịch sử biến động điểm</h4>
+                <p class="text-xs text-stone-400 mt-0.5">Chi tiết các lần cộng, trừ và sử dụng điểm thưởng</p>
+              </div>
+              <button onclick="simulateLoyaltyBonus()" class="rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-900 hover:bg-amber-100 transition shadow-xs">
+                🎁 Nhận điểm sự kiện (+50)
+              </button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-stone-200 text-stone-400 uppercase tracking-wider text-[10px]">
+                    <th class="py-2.5 px-3">Thời gian</th>
+                    <th class="py-2.5 px-3">Hoạt động</th>
+                    <th class="py-2.5 px-3 text-right">Biến động</th>
+                    <th class="py-2.5 px-3 text-right">Số dư sau</th>
+                  </tr>
+                </thead>
+                <tbody id="loyalty-history-tbody">
+                  <tr>
+                    <td colspan="4" class="py-8 text-center text-stone-400">Đang tải lịch sử điểm...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </main>
@@ -231,24 +364,30 @@
   <script>
     // Tab switching
     const tabOrdersBtn = document.getElementById("tab-orders-btn");
+    const tabLoyaltyBtn = document.getElementById("tab-loyalty-btn");
     const tabProfileBtn = document.getElementById("tab-profile-btn");
     const tabPasswordBtn = document.getElementById("tab-password-btn");
     const tabOrders = document.getElementById("tab-orders");
+    const tabLoyalty = document.getElementById("tab-loyalty");
     const tabProfile = document.getElementById("tab-profile");
     const tabPassword = document.getElementById("tab-password");
 
-    const activeClasses = "border-b-2 border-stone-900 px-4 py-3 text-xs uppercase tracking-wider font-semibold text-stone-900 flex items-center gap-2 transition";
-    const inactiveClasses = "border-b-2 border-transparent px-4 py-3 text-xs uppercase tracking-wider font-medium text-stone-400 hover:text-stone-800 flex items-center gap-2 transition";
+    const activeClasses = "border-b-2 border-stone-900 px-4 py-3 text-xs uppercase tracking-wider font-semibold text-stone-900 flex items-center gap-2 transition shrink-0";
+    const inactiveClasses = "border-b-2 border-transparent px-4 py-3 text-xs uppercase tracking-wider font-medium text-stone-400 hover:text-stone-800 flex items-center gap-2 transition shrink-0";
 
     function setTab(activeTab) {
-      [tabOrdersBtn, tabProfileBtn, tabPasswordBtn].forEach(b => {
+      [tabOrdersBtn, tabLoyaltyBtn, tabProfileBtn, tabPasswordBtn].forEach(b => {
         b.className = inactiveClasses;
       });
-      [tabOrders, tabProfile, tabPassword].forEach(t => t.classList.add("hidden"));
+      [tabOrders, tabLoyalty, tabProfile, tabPassword].forEach(t => t.classList.add("hidden"));
 
       if (activeTab === "orders") {
         tabOrdersBtn.className = activeClasses;
         tabOrders.classList.remove("hidden");
+      } else if (activeTab === "loyalty") {
+        tabLoyaltyBtn.className = activeClasses;
+        tabLoyalty.classList.remove("hidden");
+        loadLoyalty();
       } else if (activeTab === "profile") {
         tabProfileBtn.className = activeClasses;
         tabProfile.classList.remove("hidden");
@@ -259,6 +398,7 @@
     }
 
     tabOrdersBtn.addEventListener("click", () => setTab("orders"));
+    tabLoyaltyBtn.addEventListener("click", () => setTab("loyalty"));
     tabProfileBtn.addEventListener("click", () => setTab("profile"));
     tabPasswordBtn.addEventListener("click", () => setTab("password"));
 
@@ -310,9 +450,11 @@
           const st = statusMap[o.status] || { label: o.status, bg: "bg-stone-100 text-stone-700 border-stone-200" };
           const lines = o.quote?.lines || [];
           const totalStr = (o.quote?.total || 0).toLocaleString("vi-VN") + "đ";
+          const trackingCode = o.tracking_code || `GHN-VN-${o.order_id.slice(-6)}`;
+          const carrier = o.carrier || "Giao Hàng Nhanh (GHN Express)";
 
           return `
-            <div class="rounded-lg border border-stone-200 p-4 transition hover:border-stone-400 hover:shadow-xs bg-[#FAF9F6]/40">
+            <div class="rounded-lg border border-stone-200 p-4 transition hover:border-stone-400 hover:shadow-xs bg-[#FAF9F6]/40 space-y-3">
               <div class="flex flex-wrap items-center justify-between gap-2 border-b border-stone-100 pb-3">
                 <div class="flex items-center gap-2">
                   <span class="font-mono text-xs font-semibold text-stone-900 tracking-wider">${o.order_id}</span>
@@ -320,7 +462,9 @@
                 </div>
                 <span class="font-mono text-[11px] text-stone-400">${o.created_at || ""}</span>
               </div>
-              <div class="py-3 text-xs space-y-2">
+              
+              <!-- Chi tiết các món hàng -->
+              <div class="py-1 text-xs space-y-2">
                 ${lines.map(l => `
                   <div class="flex items-center justify-between">
                     <span class="text-stone-700 font-medium">${l.name} <span class="text-stone-400">(${l.color}, ${l.size}) × ${l.quantity}</span></span>
@@ -328,7 +472,24 @@
                   </div>
                 `).join("")}
               </div>
-              <div class="flex items-center justify-between border-t border-stone-100 pt-3 text-xs">
+
+              <!-- Thông tin vận đơn & Đơn vị vận chuyển -->
+              <div class="flex flex-wrap items-center justify-between gap-2 rounded-md bg-stone-100/70 p-2.5 text-[11px] text-stone-600">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-sm">🚚</span>
+                  <span>Vận đơn: <strong class="font-mono text-brand-600 font-bold">${trackingCode}</strong> (${carrier})</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <button type="button" onclick="viewOrderTracking('${o.order_id}')" class="inline-flex items-center gap-1 rounded bg-white px-2.5 py-1 text-[11px] font-semibold text-stone-800 border border-stone-300 hover:bg-stone-50 transition shadow-2xs">
+                    <span>📍</span> Theo dõi bưu tá
+                  </button>
+                  <button type="button" onclick="viewOrderInvoice('${o.order_id}')" class="inline-flex items-center gap-1 rounded bg-white px-2.5 py-1 text-[11px] font-semibold text-stone-800 border border-stone-300 hover:bg-stone-50 transition shadow-2xs">
+                    <span>🧾</span> Hóa đơn điện tử
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between border-t border-stone-100 pt-2 text-xs">
                 <span class="text-stone-500">Hình thức: <strong class="text-stone-700 font-medium">${o.payment_method === 'cod' ? 'COD (Tiền mặt)' : 'Chuyển khoản QR'}</strong></span>
                 <span class="text-sm font-bold text-brand-600">Tổng cộng: ${totalStr}</span>
               </div>
@@ -414,6 +575,306 @@
         msg.className = "mb-5 rounded-md p-3 text-xs font-medium border bg-rose-50 text-rose-700 border-rose-200";
       }
     });
+
+    // ================= GIAI ĐOẠN 2: TRACKING & INVOICE MODALS =================
+    async function viewOrderTracking(orderId) {
+      const modal = document.getElementById("profile-tracking-modal");
+      modal.classList.remove("hidden");
+      const codeEl = document.getElementById("tr-code");
+      const listEl = document.getElementById("tr-timeline-list");
+      codeEl.textContent = "Đang tải...";
+      listEl.innerHTML = '<div class="py-6 text-center text-xs text-stone-400">Đang đồng bộ hành trình bưu cục...</div>';
+
+      try {
+        const res = await fetch(`/api/orders/track/${encodeURIComponent(orderId)}`);
+        if (!res.ok) throw new Error("Không thể tìm thấy thông tin vận đơn");
+        const data = await res.json();
+
+        codeEl.textContent = data.tracking_code;
+        document.getElementById("tr-carrier").textContent = data.carrier;
+        document.getElementById("tr-est-date").textContent = data.estimated_delivery;
+        document.getElementById("tr-cust-name").textContent = data.customer_name;
+        document.getElementById("tr-cust-addr").textContent = data.customer_address;
+        
+        const badge = document.getElementById("tr-status-badge");
+        badge.textContent = data.shipping_status_label;
+        if (data.shipping_status === 'delivered') {
+          badge.className = 'rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+        } else {
+          badge.className = 'rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300';
+        }
+
+        if (data.timeline) {
+          listEl.innerHTML = data.timeline.map(st => {
+            const isDone = st.status === 'completed';
+            const isCurr = st.status === 'current';
+            const nodeIcon = isDone ? '✓' : isCurr ? '●' : '○';
+            return `
+              <div class="timeline-step ${st.status}">
+                <div class="timeline-node font-bold">${nodeIcon}</div>
+                <div class="space-y-0.5">
+                  <div class="flex items-baseline justify-between gap-2">
+                    <h4 class="text-xs font-bold ${isDone ? 'text-zinc-900' : isCurr ? 'text-brand-600' : 'text-zinc-400'}">${st.title}</h4>
+                    <span class="text-[10px] font-mono text-zinc-400 whitespace-nowrap">${st.time}</span>
+                  </div>
+                  <p class="text-[11px] ${isDone || isCurr ? 'text-zinc-600' : 'text-zinc-400'}">${st.description}</p>
+                  <p class="text-[10px] text-zinc-400 font-medium">📍 ${st.location}</p>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        listEl.innerHTML = `<div class="py-6 text-center text-xs text-rose-600">${err.message}</div>`;
+      }
+    }
+
+    async function viewOrderInvoice(orderId) {
+      const modal = document.getElementById("profile-invoice-modal");
+      modal.classList.remove("hidden");
+      try {
+        const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}/invoice`);
+        if (!res.ok) throw new Error("Không thể tải hóa đơn");
+        const inv = await res.json();
+
+        document.getElementById("inv-number").textContent = inv.invoice_number;
+        document.getElementById("inv-date").textContent = inv.issued_at;
+        document.getElementById("inv-buyer-name").textContent = inv.buyer.name;
+        document.getElementById("inv-buyer-phone").textContent = inv.buyer.phone;
+        document.getElementById("inv-buyer-addr").textContent = inv.buyer.address;
+        document.getElementById("inv-carrier").textContent = inv.carrier;
+        document.getElementById("inv-tracking").textContent = inv.tracking_code;
+        document.getElementById("inv-pay-method").textContent = inv.payment_method;
+        document.getElementById("inv-pay-status").textContent = inv.payment_status;
+
+        const vnd = n => Number(n).toLocaleString("vi-VN") + "đ";
+        document.getElementById("inv-subtotal").textContent = vnd(inv.subtotal);
+        document.getElementById("inv-ship-fee").textContent = vnd(inv.shipping_fee);
+        document.getElementById("inv-discount").textContent = `-${vnd(inv.discount_amount)}`;
+        document.getElementById("inv-vat").textContent = `${vnd(inv.vat_amount)} (${inv.vat_rate}%)`;
+        document.getElementById("inv-total").textContent = vnd(inv.total_amount);
+
+        const itemsBody = document.getElementById("inv-items-body");
+        itemsBody.innerHTML = (inv.items || []).map((it, idx) => `
+          <tr class="hover:bg-zinc-50 border-b border-zinc-100">
+            <td class="py-2 px-2 text-center text-zinc-500 font-mono">${idx + 1}</td>
+            <td class="py-2 px-2 font-semibold text-zinc-900">${it.name}</td>
+            <td class="py-2 px-2 text-center text-zinc-600">${it.color} / ${it.size}</td>
+            <td class="py-2 px-2 text-center font-bold text-zinc-900">${it.quantity}</td>
+            <td class="py-2 px-2 text-right font-mono text-zinc-700">${vnd(it.unit_price)}</td>
+            <td class="py-2 px-2 text-right font-mono font-bold text-zinc-900">${vnd(it.line_total)}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function closeProfileModal(modalId) {
+      document.getElementById(modalId).classList.add("hidden");
+    }
+
+    // ================= GIAI ĐOẠN 3: AURA CLUB LOYALTY =================
+    async function loadLoyalty() {
+      try {
+        const [resStatus, resHist] = await Promise.all([
+          fetch("/api/loyalty/status"),
+          fetch("/api/loyalty/history")
+        ]);
+        if (!resStatus.ok || !resHist.ok) return;
+        const status = await resStatus.json();
+        const hist = await resHist.json();
+
+        // 1. Sidebar mini card
+        const miniTierBadge = document.getElementById("mini-tier-badge");
+        const miniPoints = document.getElementById("mini-points-balance");
+        if (miniTierBadge) miniTierBadge.textContent = status.tier_badge;
+        if (miniPoints) miniPoints.textContent = status.points_balance.toLocaleString("vi-VN");
+
+        // 2. VIP metal card
+        const cardTier = document.getElementById("card-tier-badge");
+        const cardUser = document.getElementById("card-user-name");
+        const cardPoints = document.getElementById("card-points-val");
+        const cardMoney = document.getElementById("card-money-val");
+        if (cardTier) cardTier.textContent = status.tier_badge;
+        if (cardUser && status.user_name) cardUser.textContent = status.user_name;
+        if (cardPoints) cardPoints.textContent = status.points_balance.toLocaleString("vi-VN");
+        if (cardMoney) cardMoney.textContent = status.points_value_vnd.toLocaleString("vi-VN") + "đ";
+
+        // 3. Progress bar
+        const progPercent = document.getElementById("tier-progress-percent");
+        const progBar = document.getElementById("tier-progress-bar");
+        const progDesc = document.getElementById("tier-progress-desc");
+        const currentTag = document.getElementById("tier-current-tag");
+        const nextTag = document.getElementById("tier-next-tag");
+
+        if (progPercent) progPercent.textContent = `${status.progress_percent}%`;
+        if (progBar) progBar.style.width = `${status.progress_percent}%`;
+
+        if (status.next_tier) {
+          if (progDesc) {
+            progDesc.textContent = `Bạn đã tích lũy ${status.total_spent.toLocaleString('vi-VN')}đ. Cần chi tiêu thêm ${status.next_tier_spent_needed.toLocaleString('vi-VN')}đ để nâng hạng ${status.next_tier_name}!`;
+          }
+          if (currentTag) currentTag.textContent = `${status.tier_badge} (${status.total_spent.toLocaleString('vi-VN')}đ)`;
+          if (nextTag) nextTag.textContent = `Mục tiêu ${status.next_tier_name} (${status.tier === 'Silver' ? '5.000.000đ' : '15.000.000đ'})`;
+        } else {
+          if (progDesc) progDesc.textContent = `Chúc mừng bạn đã đạt thứ hạng cao nhất: ${status.tier_badge}! Toàn bộ đặc quyền VIP trọn đời đã được kích hoạt.`;
+          if (currentTag) currentTag.textContent = `${status.tier_badge} VIP`;
+          if (nextTag) nextTag.textContent = `Đạt mốc tối đa 100%`;
+        }
+
+        // 4. Benefits
+        const benefitsContainer = document.getElementById("loyalty-benefits-list");
+        if (benefitsContainer && status.benefits) {
+          benefitsContainer.innerHTML = status.benefits.map(b => `
+            <div class="flex items-start gap-2.5 rounded-lg border border-stone-100 bg-[#FAF9F6] p-3 text-xs">
+              <span class="text-emerald-600 font-bold text-sm">✓</span>
+              <span class="font-medium text-stone-700">${b}</span>
+            </div>
+          `).join('');
+        }
+
+        // 5. History table
+        const tbody = document.getElementById("loyalty-history-tbody");
+        if (tbody) {
+          const list = hist.transactions || [];
+          if (list.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-stone-400">Chưa có giao dịch tích/tiêu điểm nào</td></tr>`;
+          } else {
+            tbody.innerHTML = list.map(tx => {
+              const isPlus = tx.points > 0;
+              const ptsStr = isPlus ? `+${tx.points}` : `${tx.points}`;
+              const ptsColor = isPlus ? "text-emerald-600 font-bold" : "text-rose-600 font-bold";
+              return `
+                <tr class="border-b border-stone-100 hover:bg-[#FAF9F6] transition">
+                  <td class="py-2.5 px-3 font-mono text-[11px] text-stone-500">${tx.created_at}</td>
+                  <td class="py-2.5 px-3 font-medium text-stone-800">${tx.description}</td>
+                  <td class="py-2.5 px-3 text-right font-mono ${ptsColor}">${ptsStr}</td>
+                  <td class="py-2.5 px-3 text-right font-mono font-semibold text-stone-700">${tx.balance_after}</td>
+                </tr>
+              `;
+            }).join('');
+          }
+        }
+      } catch (err) {
+        console.error("Lỗi tải thông tin Loyalty:", err);
+      }
+    }
+
+    async function simulateLoyaltyBonus() {
+      try {
+        const res = await fetch("/api/loyalty/simulate-earn?points=50", { method: "POST" });
+        if (!res.ok) throw new Error("Không thể nhận điểm lúc này");
+        const data = await res.json();
+        alert(`Chúc mừng! Bạn đã nhận thành công ${data.points_added} điểm thưởng AURA Club.`);
+        loadLoyalty();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    // Tự động khởi tạo dữ liệu đơn hàng và loyalty khi mở trang
+    loadOrders();
+    loadLoyalty();
   </script>
+
+  <!-- Modal Tracking tại trang Profile -->
+  <div id="profile-tracking-modal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="modal-panel max-w-xl w-full bg-white rounded-xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-stone-100 pb-3">
+        <h3 class="text-sm font-bold text-stone-900 uppercase flex items-center gap-1.5">
+          <span>🚚</span> Hành trình vận đơn GHN / GHTK
+        </h3>
+        <button onclick="closeProfileModal('profile-tracking-modal')" class="p-1 text-stone-400 hover:text-stone-800">✕</button>
+      </div>
+
+      <div class="rounded-lg bg-stone-50 border border-stone-200 p-3 text-xs space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span>Vận đơn: <strong id="tr-code" class="font-mono text-brand-600 font-bold">--</strong></span>
+          <span id="tr-status-badge" class="rounded-full px-2 py-0.5 text-[10px] font-bold">--</span>
+        </div>
+        <p class="text-stone-500">Đơn vị: <strong id="tr-carrier" class="text-stone-800">--</strong> • Dự kiến giao: <strong id="tr-est-date" class="text-stone-800">--</strong></p>
+        <p class="text-stone-500">Người nhận: <span id="tr-cust-name" class="font-medium text-stone-800">--</span></p>
+        <p class="text-stone-500">Địa chỉ phát: <span id="tr-cust-addr" class="font-medium text-stone-800">--</span></p>
+      </div>
+
+      <div>
+        <h4 class="text-xs font-bold uppercase text-stone-700 mb-3">📍 Chi tiết các mốc bưu cục</h4>
+        <div id="tr-timeline-list" class="timeline-stepper ml-1"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Hóa đơn điện tử tại trang Profile -->
+  <div id="profile-invoice-modal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+    <div class="modal-panel max-w-2xl w-full bg-white rounded-xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-stone-100 pb-3 no-print">
+        <h3 class="text-sm font-bold text-stone-900 flex items-center gap-1.5">
+          <span>🧾</span> Hóa đơn bán hàng điện tử (E-Invoice)
+        </h3>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="window.print()" class="rounded-md bg-stone-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-stone-800 transition">
+            🖨️ In hóa đơn
+          </button>
+          <button onclick="closeProfileModal('profile-invoice-modal')" class="p-1 text-stone-400 hover:text-stone-800">✕</button>
+        </div>
+      </div>
+
+      <div id="invoice-printable" class="text-xs space-y-4">
+        <div class="flex items-start justify-between border-b border-stone-200 pb-3">
+          <div>
+            <h2 class="text-base font-bold text-stone-900">AURA STUDIO VIỆT NAM</h2>
+            <p class="text-[11px] text-stone-500">MST: 0317894562 • Hotline: 1900 8866</p>
+            <p class="text-[11px] text-stone-500">186 Hai Bà Trưng, P. Đa Kao, Quận 1, TP.HCM</p>
+          </div>
+          <div class="text-right">
+            <span class="stamp-seal">ĐÃ PHÁT HÀNH ĐIỆN TỬ</span>
+            <p class="text-[11px] text-stone-400 mt-1">Mã hóa đơn: <strong id="inv-number" class="text-brand-600 font-mono">--</strong></p>
+            <p class="text-[11px] text-stone-400">Ngày phát hành: <span id="inv-date">--</span></p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 bg-stone-50 p-2.5 rounded border border-stone-100">
+          <div>
+            <p class="font-bold text-stone-900 uppercase text-[10px]">Người mua hàng:</p>
+            <p id="inv-buyer-name" class="font-semibold text-stone-800">--</p>
+            <p id="inv-buyer-phone" class="text-stone-600">--</p>
+            <p id="inv-buyer-addr" class="text-stone-600">--</p>
+          </div>
+          <div>
+            <p class="font-bold text-stone-900 uppercase text-[10px]">Vận chuyển & Thanh toán:</p>
+            <p>Vận đơn: <strong id="inv-tracking" class="font-mono text-brand-600">--</strong></p>
+            <p id="inv-carrier" class="text-stone-600">--</p>
+            <p>Hình thức: <span id="inv-pay-method" class="text-stone-600">--</span></p>
+            <p>Trạng thái: <strong id="inv-pay-status" class="text-emerald-700">--</strong></p>
+          </div>
+        </div>
+
+        <table class="w-full text-xs border-collapse">
+          <thead>
+            <tr class="bg-stone-100 font-bold border-b border-stone-200">
+              <th class="py-1.5 px-2 text-center w-10">STT</th>
+              <th class="py-1.5 px-2 text-left">Sản phẩm</th>
+              <th class="py-1.5 px-2 text-center">Phân loại</th>
+              <th class="py-1.5 px-2 text-center w-12">SL</th>
+              <th class="py-1.5 px-2 text-right">Đơn giá</th>
+              <th class="py-1.5 px-2 text-right">Thành tiền</th>
+            </tr>
+          </thead>
+          <tbody id="inv-items-body"></tbody>
+        </table>
+
+        <div class="flex justify-end border-t border-stone-200 pt-2 text-xs">
+          <div class="w-60 space-y-1">
+            <div class="flex justify-between text-stone-600"><span>Tiền hàng:</span><span id="inv-subtotal">--</span></div>
+            <div class="flex justify-between text-stone-600"><span>Phí ship:</span><span id="inv-ship-fee">--</span></div>
+            <div class="flex justify-between text-emerald-600"><span>Giảm giá:</span><span id="inv-discount">--</span></div>
+            <div class="flex justify-between text-stone-400 text-[11px]"><span>VAT (8%):</span><span id="inv-vat">--</span></div>
+            <div class="flex justify-between border-t border-stone-200 pt-1 font-bold text-sm text-brand-600"><span>Tổng cộng:</span><span id="inv-total">--</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

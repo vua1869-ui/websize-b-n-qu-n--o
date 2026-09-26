@@ -161,6 +161,23 @@ class UserService:
             json.dump(self._users, f, ensure_ascii=False, indent=2)
 
     def to_user_model(self, u_dict: dict) -> User:
+        points = u_dict.get("points_balance", 0)
+        spent = u_dict.get("total_spent", 0)
+        tier = u_dict.get("tier", "Silver")
+        try:
+            from app.db.database import get_db_connection
+            conn = get_db_connection()
+            try:
+                row = conn.execute("SELECT points_balance, total_spent, tier FROM users WHERE id = ?;", (u_dict["id"],)).fetchone()
+                if row:
+                    points = row["points_balance"] or points
+                    spent = row["total_spent"] or spent
+                    tier = row["tier"] or tier
+            finally:
+                conn.close()
+        except Exception:
+            pass
+
         return User(
             id=u_dict["id"],
             name=u_dict.get("name", u_dict.get("full_name", "")),
@@ -173,6 +190,9 @@ class UserService:
             status=u_dict.get("status", "active"),
             is_active=(u_dict.get("status") != "disabled"),
             avatar=u_dict.get("avatar"),
+            points_balance=points,
+            total_spent=spent,
+            tier=tier,
             created_at=u_dict.get("created_at", ""),
         )
 

@@ -22,9 +22,12 @@ const U = {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), timeout);
     try {
+      const headers = body ? { 'Content-Type': 'application/json' } : {};
+      const token = localStorage.getItem('aura_token');
+      if (token) headers['Authorization'] = `Bearer ${token}`;
       const res = await fetch(url, {
         method, signal: ctrl.signal,
-        headers: body ? { 'Content-Type': 'application/json' } : {},
+        headers,
         body: body ? JSON.stringify(body) : undefined,
       });
       let data = null;
@@ -116,6 +119,10 @@ const App = {
     trendingProducts: [],
     qv: { product: null, size: null, color: null, qty: 1 },
     quote: null, quoteError: '', voucher: '',
+    usePoints: 0,
+    loyalty: null,
+    locations: null,
+    _pollTimer: null,
   },
   _seq: { products: 0, quote: 0 },
 
@@ -124,9 +131,11 @@ const App = {
     this.updateBadges();
     this.renderSortButtons();
     this.initAuth();
-    await Promise.all([this.loadCategories(), this.loadProducts(), this.loadTrending(), this.loadFlash(), this.loadVouchers(), this.loadVideos()]);
+    await Promise.all([this.loadCategories(), this.loadLocations(), this.loadProducts(), this.loadTrending(), this.loadFlash(), this.loadVouchers(), this.loadVideos()]);
     this.sanitizeCart();
     this.refreshCart();
+    ExitIntentUI.init();
+    OmnichannelUI.init();
   },
 
   async initAuth() {
@@ -146,11 +155,11 @@ const App = {
       headerAuth.innerHTML = `
         <div class="relative" id="user-menu-wrapper">
           <button id="user-menu-btn" class="flex items-center gap-2 rounded-md border border-white/20 bg-white/10 px-2.5 sm:px-3 py-1.5 text-xs font-medium text-white shadow-xs transition hover:bg-white/20">
-            <div class="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] font-bold text-stone-900">
+            <div class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-[10px] font-bold text-stone-900">
               ${(user.full_name || user.username)[0].toUpperCase()}
             </div>
             <span class="hidden max-w-[100px] truncate sm:inline">${U.esc(user.full_name || user.username)}</span>
-            <svg class="h-3 w-3 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
+            <svg class="h-3.5 w-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
           </button>
           <div id="user-dropdown-menu" class="absolute right-0 top-full mt-1.5 w-52 rounded-md border border-stone-200 bg-white py-1 text-stone-800 shadow-lg hidden z-50">
             <div class="border-b border-stone-100 px-3.5 py-2.5">
@@ -159,16 +168,16 @@ const App = {
             </div>
             ${user.role === 'admin' ? `
               <a href="/admin" class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-stone-900 hover:bg-[#FAF9F6] transition">
-                <svg class="h-3.5 w-3.5 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
+                <svg class="h-4 w-4 shrink-0 text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
                 <span>Quản trị Admin</span>
               </a>
             ` : ''}
             <a href="/profile" class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-stone-700 hover:bg-[#FAF9F6] transition">
-              <svg class="h-3.5 w-3.5 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
+              <svg class="h-4 w-4 shrink-0 text-stone-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
               <span>Tài khoản của tôi</span>
             </a>
             <button data-action="auth-logout" class="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-xs font-medium text-stone-500 hover:text-rose-600 hover:bg-[#FAF9F6] border-t border-stone-100 transition">
-              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
+              <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
               <span>Đăng xuất</span>
             </button>
           </div>
@@ -680,7 +689,8 @@ const App = {
   },
 
   /* ---------- Xem nhanh sản phẩm ---------- */
-  openQuickView(id, from) {
+  /* ---------- Xem nhanh sản phẩm ---------- */
+  async openQuickView(id, from) {
     const p = this.state.catalog[id];
     if (!p) return;
     if (from) Modal.close(from);
@@ -693,9 +703,18 @@ const App = {
       U.store.set('aura_user_behavior', beh);
     } catch { /* ignore */ }
 
-    const multi = p.sizes.length > 1;
-    this.state.qv = { product: p, size: multi ? null : p.sizes[0], color: p.colors[0].name, qty: 1, currentImgIdx: 0 };
-    const out = !p.in_stock;
+    // Nạp ma trận biến thể Màu x Size nếu chưa có
+    if (!p.variants || !p.variants.length) {
+      try {
+        const variants = await U.api(`/api/products/${encodeURIComponent(p.id)}/variants`);
+        if (variants && variants.length) p.variants = variants;
+      } catch { /* fallback */ }
+    }
+
+    const defaultColor = (p.colors && p.colors[0] && p.colors[0].name) || '';
+    this.state.qv = { product: p, size: null, color: defaultColor, qty: 1, currentImgIdx: 0 };
+    const out = !p.in_stock || p.stock <= 0;
+
     U.$('#qv-body').innerHTML = `
     <div class="grid grid-cols-1 gap-6 p-5 sm:p-6 md:grid-cols-2">
       <div class="space-y-3">
@@ -732,7 +751,7 @@ const App = {
           <p class="mt-1.5 text-xs text-zinc-500"><b>Chất liệu:</b> ${U.esc(p.material)}</p>
 
           <div class="mt-4">
-            <div class="mb-1.5 text-xs font-semibold text-zinc-700">Màu sắc: <span id="qv-color-label" class="font-bold text-brand-600">${U.esc(p.colors[0].name)}</span></div>
+            <div class="mb-1.5 text-xs font-semibold text-zinc-700">Màu sắc: <span id="qv-color-label" class="font-bold text-brand-600">${U.esc(defaultColor)}</span></div>
             <div class="flex flex-wrap gap-2" id="qv-colors">
               ${p.colors.map((c, i) => `<button data-action="qv-color" data-color="${U.esc(c.name)}" title="${U.esc(c.name)}" aria-label="${U.esc(c.name)}" aria-pressed="${i === 0}"
                 class="h-7 w-7 rounded-full border-2 transition ${i === 0 ? 'border-brand-600 ring-2 ring-brand-200' : 'border-zinc-200'}" style="background-color:${U.esc(c.hex)}"></button>`).join('')}
@@ -741,33 +760,121 @@ const App = {
 
           <div class="mt-4">
             <div class="mb-1.5 flex items-center justify-between">
-              <span class="text-xs font-semibold text-zinc-700">Kích cỡ: <span id="qv-size-label" class="font-bold text-brand-600">${multi ? '' : U.esc(p.sizes[0])}</span></span>
-              <button data-action="open-size" data-product-id="${p.id}" class="text-xs font-bold text-violet-700 hover:underline">✨ AI gợi ý size chuẩn</button>
+              <span class="text-xs font-semibold text-zinc-700">Kích cỡ: <span id="qv-size-label" class="font-bold text-brand-600"></span></span>
+              <div class="flex items-center gap-2">
+                <button type="button" data-action="open-size-chart" data-product-id="${p.id}" class="text-xs font-bold text-brand-600 hover:underline flex items-center gap-1">📐 Bảng số đo</button>
+                <span class="text-zinc-300">•</span>
+                <button type="button" data-action="open-size" data-product-id="${p.id}" class="text-xs font-bold text-violet-700 hover:underline flex items-center gap-1">✨ AI tính size</button>
+              </div>
             </div>
             <div class="flex flex-wrap gap-2" id="qv-sizes">
-              ${p.sizes.map(s => `<button data-action="qv-size" data-size="${U.esc(s)}" aria-pressed="${!multi}"
-                class="rounded border px-3 py-1 text-xs font-semibold transition ${!multi ? 'border-brand-600 bg-brand-600 text-white' : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400'}">${U.esc(s)}</button>`).join('')}
+              <!-- Render động theo màu được chọn -->
             </div>
             <p id="qv-size-hint" class="mt-1.5 hidden text-xs font-semibold text-red-600">Vui lòng chọn size trước khi thêm vào giỏ.</p>
           </div>
         </div>
 
         <div class="mt-6 space-y-2 border-t border-zinc-100 pt-4">
-          <p class="text-xs ${p.stock <= 10 ? 'font-semibold text-red-600' : 'text-zinc-500'}">${out ? 'Sản phẩm đã hết hàng' : p.stock <= 10 ? `Chỉ còn ${p.stock} sản phẩm!` : `Còn ${p.stock} sản phẩm`}</p>
+          <div id="qv-stock-status" class="text-xs font-medium"></div>
           <div class="flex gap-2">
             <div class="flex items-center overflow-hidden rounded-lg border border-zinc-200 bg-zinc-50">
               <button data-action="qv-qty" data-delta="-1" class="px-3 py-1.5 font-bold text-zinc-600 hover:bg-zinc-100" aria-label="Giảm">−</button>
               <span id="qv-qty" class="min-w-6 text-center text-xs font-bold">1</span>
               <button data-action="qv-qty" data-delta="1" class="px-3 py-1.5 font-bold text-zinc-600 hover:bg-zinc-100" aria-label="Tăng">+</button>
             </div>
-            <button data-action="qv-add" ${out ? 'disabled' : ''} class="btn btn-soft flex-1">🛒 Thêm vào giỏ</button>
-            <button data-action="qv-buy" ${out ? 'disabled' : ''} class="btn btn-primary flex-1">Mua ngay</button>
+            <button id="qv-btn-add" data-action="qv-add" ${out ? 'disabled' : ''} class="btn btn-soft flex-1">🛒 Thêm vào giỏ</button>
+            <button id="qv-btn-buy" data-action="qv-buy" ${out ? 'disabled' : ''} class="btn btn-primary flex-1">Mua ngay</button>
           </div>
           <button data-action="open-outfit" data-product-id="${p.id}" class="btn btn-ai-soft w-full">✨ AI phối trọn bộ cùng món này (giảm ${CFG.combo}%)</button>
         </div>
       </div>
+    </div>
+    
+    <!-- Khu vực Đánh giá & Bằng chứng Xã hội (Phase 2) -->
+    <div class="border-t border-zinc-200 bg-zinc-50/70 p-5 sm:p-6" id="qv-reviews-container">
+      <div class="py-6 text-center text-xs text-zinc-400">Đang nạp đánh giá từ người mua...</div>
     </div>`;
+
+    this.qvRenderSizesForColor(defaultColor);
     Modal.open('quickview-modal');
+    this.loadProductReviews(p.id);
+  },
+
+  qvRenderSizesForColor(colorName) {
+    const qv = this.state.qv;
+    const p = qv.product;
+    if (!p) return;
+
+    const sizesContainer = U.$('#qv-sizes');
+    if (!sizesContainer) return;
+
+    const variants = p.variants || [];
+    const sizes = p.sizes || [];
+
+    let availableSizes = [];
+    const sizeData = sizes.map(s => {
+      const v = variants.find(x => x.color === colorName && x.size === s);
+      const stock = v ? v.stock : p.stock;
+      const isSoldOut = stock <= 0;
+      if (!isSoldOut) availableSizes.push({ size: s, stock });
+      return { size: s, stock, isSoldOut };
+    });
+
+    if (!qv.size || sizeData.some(d => d.size === qv.size && d.isSoldOut)) {
+      qv.size = availableSizes.length > 0 ? availableSizes[0].size : null;
+    }
+
+    sizesContainer.innerHTML = sizeData.map(d => {
+      const isSelected = qv.size === d.size && !d.isSoldOut;
+      if (d.isSoldOut) {
+        return `<button type="button" disabled title="Phân loại ${U.esc(colorName)} - Size ${U.esc(d.size)} đã hết hàng"
+          class="btn-size-disabled rounded border px-3 py-1 text-xs font-semibold select-none">${U.esc(d.size)} (Hết)</button>`;
+      }
+      return `<button type="button" data-action="qv-size" data-size="${U.esc(d.size)}" data-stock="${d.stock}" aria-pressed="${isSelected}"
+        class="rounded border px-3 py-1 text-xs font-semibold transition ${isSelected ? 'border-brand-600 bg-brand-600 text-white shadow-xs' : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400'}">${U.esc(d.size)}</button>`;
+    }).join('');
+
+    this.qvUpdateStockDisplay();
+  },
+
+  qvUpdateStockDisplay() {
+    const qv = this.state.qv;
+    const p = qv.product;
+    if (!p) return;
+
+    const sizeLabel = U.$('#qv-size-label');
+    const stockEl = U.$('#qv-stock-status');
+    const btnAdd = U.$('#qv-btn-add');
+    const btnBuy = U.$('#qv-btn-buy');
+    const hint = U.$('#qv-size-hint');
+
+    if (hint) hint.classList.add('hidden');
+    if (sizeLabel) sizeLabel.textContent = qv.size || '(Chưa chọn)';
+
+    if (!qv.size) {
+      if (stockEl) stockEl.innerHTML = '<span class="text-rose-600 font-semibold">Vui lòng chọn Kích cỡ còn hàng</span>';
+      if (btnAdd) btnAdd.disabled = true;
+      if (btnBuy) btnBuy.disabled = true;
+      return;
+    }
+
+    const variants = p.variants || [];
+    const v = variants.find(x => x.color === qv.color && x.size === qv.size);
+    const stock = v ? v.stock : p.stock;
+
+    if (stock <= 0) {
+      if (stockEl) stockEl.innerHTML = `<span class="text-rose-600 font-bold">⚠️ Phân loại Màu ${U.esc(qv.color)} - Size ${U.esc(qv.size)} đã tạm hết hàng</span>`;
+      if (btnAdd) btnAdd.disabled = true;
+      if (btnBuy) btnBuy.disabled = true;
+    } else if (stock <= 5) {
+      if (stockEl) stockEl.innerHTML = `<span class="text-amber-700 font-bold">⚡ Chỉ còn ${stock} sản phẩm cho phân loại Màu ${U.esc(qv.color)} - Size ${U.esc(qv.size)}!</span>`;
+      if (btnAdd) btnAdd.disabled = false;
+      if (btnBuy) btnBuy.disabled = false;
+    } else {
+      if (stockEl) stockEl.innerHTML = `<span class="text-emerald-700 font-medium">✓ Còn ${stock} sản phẩm sẵn sàng giao</span>`;
+      if (btnAdd) btnAdd.disabled = false;
+      if (btnBuy) btnBuy.disabled = false;
+    }
   },
 
   qvSetImage(idx) {
@@ -792,23 +899,24 @@ const App = {
 
   qvSelect(kind, value) {
     const qv = this.state.qv;
-    if (kind === 'size') {
-      qv.size = value;
-      U.$('#qv-size-label').textContent = value;
-      U.$('#qv-size-hint').classList.add('hidden');
-      U.$$('#qv-sizes button').forEach(b => {
-        const on = b.dataset.size === value;
-        b.setAttribute('aria-pressed', on);
-        b.className = 'rounded border px-3 py-1 text-xs font-semibold transition ' + (on ? 'border-brand-600 bg-brand-600 text-white' : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400');
-      });
-    } else {
+    if (kind === 'color') {
       qv.color = value;
-      U.$('#qv-color-label').textContent = value;
+      const colorLabel = U.$('#qv-color-label');
+      if (colorLabel) colorLabel.textContent = value;
       U.$$('#qv-colors button').forEach(b => {
         const on = b.dataset.color === value;
         b.setAttribute('aria-pressed', on);
         b.className = 'h-7 w-7 rounded-full border-2 transition ' + (on ? 'border-brand-600 ring-2 ring-brand-200' : 'border-zinc-200');
       });
+      this.qvRenderSizesForColor(value);
+    } else if (kind === 'size') {
+      qv.size = value;
+      U.$$('#qv-sizes button[data-action="qv-size"]').forEach(b => {
+        const on = b.dataset.size === value;
+        b.setAttribute('aria-pressed', on);
+        b.className = 'rounded border px-3 py-1 text-xs font-semibold transition ' + (on ? 'border-brand-600 bg-brand-600 text-white shadow-xs' : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-400');
+      });
+      this.qvUpdateStockDisplay();
     }
   },
 
@@ -819,6 +927,240 @@ const App = {
     if (!this.addToCart(p.id, size, color, qty, null, { open: !buyNow })) return;
     Modal.close('quickview-modal');
     if (buyNow) this.openCheckout();
+  },
+
+  /* ---------- Đánh giá & Bằng chứng Xã hội (Phase 2) ---------- */
+  async loadProductReviews(productId, ratingFilter = null) {
+    const container = U.$('#qv-reviews-container');
+    if (!container) return;
+
+    try {
+      const url = `/api/products/${encodeURIComponent(productId)}/reviews${ratingFilter ? `?rating=${ratingFilter}` : ''}`;
+      const data = await U.api(url);
+      const summary = data.summary || {};
+      const reviews = data.reviews || [];
+      const breakdown = summary.rating_breakdown || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+      const totalRev = summary.total_reviews || 0;
+
+      container.innerHTML = `
+        <div class="space-y-5">
+          <div class="flex items-center justify-between border-b border-zinc-200 pb-3">
+            <div>
+              <h3 class="text-sm font-bold uppercase tracking-wider text-zinc-900 flex items-center gap-1.5">
+                <span>⭐</span> Đánh giá từ khách hàng đã mua
+              </h3>
+              <p class="text-[11px] text-zinc-500">Người thật • Số đo thật • Trải nghiệm chuẩn</p>
+            </div>
+            <button type="button" onclick="App.toggleReviewForm()" class="btn btn-primary btn-sm !py-1.5 text-xs font-semibold">
+              ✍️ Viết đánh giá
+            </button>
+          </div>
+
+          <!-- Tóm tắt số sao & Phân bổ -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 rounded-xl border border-zinc-200 bg-white p-4">
+            <div class="flex flex-col items-center justify-center border-b sm:border-b-0 sm:border-r border-zinc-100 pb-3 sm:pb-0">
+              <span class="text-3xl font-black text-brand-600">${summary.average_rating || 5.0}</span>
+              <div class="star-rating text-sm my-1">
+                ${'★'.repeat(Math.round(summary.average_rating || 5))}${'☆'.repeat(5 - Math.round(summary.average_rating || 5))}
+              </div>
+              <span class="text-[11px] text-zinc-500 font-medium">${totalRev} lượt đánh giá thực tế</span>
+            </div>
+
+            <div class="space-y-1.5 col-span-2">
+              ${[5, 4, 3, 2, 1].map(star => {
+                const count = breakdown[star] || 0;
+                const pct = totalRev > 0 ? Math.round((count / totalRev) * 100) : 0;
+                return `
+                  <div class="flex items-center gap-2 text-xs">
+                    <span class="w-10 text-[11px] font-semibold text-zinc-600">${star} sao</span>
+                    <div class="flex-1 h-2 rounded-full bg-zinc-100 overflow-hidden">
+                      <div class="h-full bg-amber-400 rounded-full" style="width: ${pct}%"></div>
+                    </div>
+                    <span class="w-8 text-right text-[11px] text-zinc-400 font-mono">${count}</span>
+                  </div>
+                `;
+              }).join('')}
+              <div class="pt-1 text-[11px] font-medium text-emerald-700 flex items-center gap-1">
+                <span>✓</span> ${summary.fit_feedback_summary || '96% khách hàng đánh giá đúng kích cỡ'}
+              </div>
+            </div>
+          </div>
+
+          <!-- Bộ lọc số sao -->
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <span class="text-zinc-500 font-medium">Lọc theo:</span>
+            <button type="button" onclick="App.loadProductReviews('${productId}', null)"
+              class="px-2.5 py-1 rounded-full text-[11px] font-semibold transition ${!ratingFilter ? 'bg-zinc-900 text-white' : 'bg-white border border-zinc-200 text-zinc-700 hover:border-zinc-400'}">
+              Tất cả (${totalRev})
+            </button>
+            ${[5, 4, 3].map(st => `
+              <button type="button" onclick="App.loadProductReviews('${productId}', ${st})"
+                class="px-2.5 py-1 rounded-full text-[11px] font-semibold transition ${ratingFilter === st ? 'bg-zinc-900 text-white' : 'bg-white border border-zinc-200 text-zinc-700 hover:border-zinc-400'}">
+                ${st} sao (${breakdown[st] || 0})
+              </button>
+            `).join('')}
+          </div>
+
+          <!-- Form viết đánh giá mới (Mặc định ẩn) -->
+          <div id="qv-review-form-box" class="hidden rounded-xl border border-brand-200 bg-brand-50/40 p-4 space-y-3">
+            <h4 class="text-xs font-bold text-zinc-900 uppercase">Gửi đánh giá của bạn</h4>
+            <form onsubmit="event.preventDefault(); App.submitProductReview('${productId}');" class="space-y-3 text-xs">
+              <div>
+                <label class="block font-semibold text-zinc-700 mb-1">Mức độ hài lòng của bạn *</label>
+                <div class="star-rating star-rating-interactive text-xl text-amber-400" id="review-stars-input">
+                  <button type="button" onclick="App.setReviewStar(1)">★</button>
+                  <button type="button" onclick="App.setReviewStar(2)">★</button>
+                  <button type="button" onclick="App.setReviewStar(3)">★</button>
+                  <button type="button" onclick="App.setReviewStar(4)">★</button>
+                  <button type="button" onclick="App.setReviewStar(5)">★</button>
+                </div>
+                <input type="hidden" id="rf-rating" value="5" />
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block font-semibold text-zinc-700 mb-1">Họ tên của bạn *</label>
+                  <input type="text" id="rf-name" required placeholder="VD: Nguyễn Thảo Ly" class="field !py-2 text-xs" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-zinc-700 mb-1">Cảm nhận độ vừa vặn *</label>
+                  <select id="rf-fit" class="field !py-2 text-xs">
+                    <option value="Vừa vặn">Vừa vặn hoàn hảo</option>
+                    <option value="Hơi rộng">Hơi rộng một chút</option>
+                    <option value="Hơi chật">Hơi chật một chút</option>
+                    <option value="Rộng">Rộng hơn mong đợi</option>
+                    <option value="Chật">Chật hơn mong đợi</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div>
+                  <label class="block font-semibold text-zinc-700 mb-1">Chiều cao (cm)</label>
+                  <input type="number" id="rf-height" min="100" max="220" placeholder="162" class="field !py-2 text-xs" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-zinc-700 mb-1">Cân nặng (kg)</label>
+                  <input type="number" id="rf-weight" min="30" max="180" placeholder="48" class="field !py-2 text-xs" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-zinc-700 mb-1">Size đã mua</label>
+                  <input type="text" id="rf-size" placeholder="S" class="field !py-2 text-xs uppercase" />
+                </div>
+                <div>
+                  <label class="block font-semibold text-zinc-700 mb-1">Màu đã mua</label>
+                  <input type="text" id="rf-color" placeholder="Be / Kem" class="field !py-2 text-xs" />
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-semibold text-zinc-700 mb-1">Nhận xét chi tiết (chất vải, đường may, form dáng...) *</label>
+                <textarea id="rf-comment" rows="2" required placeholder="Chia sẻ trải nghiệm thực tế để giúp mọi người dễ dàng chọn size nhé..." class="field !py-2 text-xs"></textarea>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-1">
+                <button type="button" onclick="App.toggleReviewForm()" class="btn btn-soft text-xs !py-1.5">Hủy</button>
+                <button type="submit" id="rf-submit-btn" class="btn btn-primary text-xs !py-1.5 font-bold uppercase">Gửi đánh giá</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Danh sách bài đánh giá -->
+          <div class="space-y-3" id="qv-reviews-list">
+            ${reviews.length === 0 ? `
+              <div class="text-center py-6 text-xs text-zinc-400">Chưa có đánh giá nào cho phân loại này. Hãy là người đầu tiên nhận xét!</div>
+            ` : reviews.map(r => `
+              <div class="rounded-xl border border-zinc-100 bg-white p-3.5 space-y-2 text-xs shadow-2xs">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <div class="h-7 w-7 rounded-full bg-zinc-200 flex items-center justify-center font-bold text-zinc-700 text-[11px]">
+                      ${U.esc(r.user_name ? r.user_name[0].toUpperCase() : 'K')}
+                    </div>
+                    <div>
+                      <div class="flex items-center gap-1.5">
+                        <strong class="text-zinc-900 font-semibold">${U.esc(r.user_name)}</strong>
+                        <span class="verified-buyer-badge">✓ Đã mua hàng</span>
+                      </div>
+                      <div class="star-rating text-[11px] mt-0.5">
+                        ${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}
+                      </div>
+                    </div>
+                  </div>
+                  <span class="text-[10px] text-zinc-400 font-mono">${U.esc(r.created_at || '')}</span>
+                </div>
+
+                <!-- Tag số đo người mua -->
+                <div class="flex flex-wrap items-center gap-1.5 text-[11px] text-zinc-600 bg-zinc-50 rounded-lg p-2 border border-zinc-100">
+                  ${r.height_cm ? `<span>Cao <strong>${r.height_cm}cm</strong></span>` : ''}
+                  ${r.height_cm && r.weight_kg ? `<span>•</span>` : ''}
+                  ${r.weight_kg ? `<span>Nặng <strong>${r.weight_kg}kg</strong></span>` : ''}
+                  ${r.purchased_size ? `<span>• Size: <strong class="text-brand-600">${U.esc(r.purchased_size)}</strong></span>` : ''}
+                  ${r.purchased_color ? `<span>(${U.esc(r.purchased_color)})</span>` : ''}
+                  ${r.fit_feedback ? `<span class="fit-badge ml-auto">${U.esc(r.fit_feedback)}</span>` : ''}
+                </div>
+
+                <p class="text-zinc-700 leading-relaxed text-xs">${U.esc(r.comment)}</p>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    } catch (e) {
+      container.innerHTML = `<div class="py-6 text-center text-xs text-red-500">Không thể tải đánh giá: ${U.esc(e.message)}</div>`;
+    }
+  },
+
+  toggleReviewForm() {
+    const box = U.$('#qv-review-form-box');
+    if (box) box.classList.toggle('hidden');
+  },
+
+  setReviewStar(n) {
+    const hidden = U.$('#rf-rating');
+    if (hidden) hidden.value = n;
+    const container = U.$('#review-stars-input');
+    if (container) {
+      const btns = container.querySelectorAll('button');
+      btns.forEach((b, i) => {
+        b.textContent = i < n ? '★' : '☆';
+        b.style.color = i < n ? '#fbbf24' : '#d4d4d8';
+      });
+    }
+  },
+
+  async submitProductReview(productId) {
+    const rating = Number(U.$('#rf-rating').value) || 5;
+    const name = U.$('#rf-name').value.trim();
+    const comment = U.$('#rf-comment').value.trim();
+    const fit = U.$('#rf-fit').value;
+    const height = parseFloat(U.$('#rf-height').value) || null;
+    const weight = parseFloat(U.$('#rf-weight').value) || null;
+    const size = U.$('#rf-size').value.trim() || null;
+    const color = U.$('#rf-color').value.trim() || null;
+
+    const submitBtn = U.$('#rf-submit-btn');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Đang gửi...'; }
+
+    try {
+      await U.api(`/api/products/${encodeURIComponent(productId)}/reviews`, {
+        method: 'POST',
+        body: JSON.stringify({
+          user_name: name,
+          rating: rating,
+          comment: comment,
+          fit_feedback: fit,
+          height_cm: height,
+          weight_kg: weight,
+          purchased_size: size,
+          purchased_color: color
+        })
+      });
+      U.toast('Đánh giá của bạn đã được đăng thành công!', 'ok');
+      await this.loadProductReviews(productId);
+    } catch (e) {
+      U.toast('Lỗi khi gửi đánh giá: ' + e.message, 'error');
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Gửi đánh giá'; }
+    }
   },
 
   /* ---------- Giỏ hàng ---------- */
@@ -905,7 +1247,14 @@ const App = {
     if (!this.state.cart.length) { this.state.quote = null; this.state.quoteError = ''; this.renderCart(); return; }
     const seq = ++this._seq.quote;
     try {
-      const q = await U.api('/api/orders/quote', { method: 'POST', body: { items: this.cartPayload(), voucher_code: this.state.voucher || null } });
+      const q = await U.api('/api/orders/quote', {
+        method: 'POST',
+        body: {
+          items: this.cartPayload(),
+          voucher_code: this.state.voucher || null,
+          use_points: this.state.usePoints || 0
+        }
+      });
       if (seq !== this._seq.quote) return;
       this.state.quote = q;
       this.state.quoteError = '';
@@ -984,7 +1333,7 @@ const App = {
     const after = q.subtotal - q.combo_discount;
     const fs = U.$('#cart-freeship');
     fs.classList.remove('hidden');
-    if (after >= CFG.freeShip) {
+    if (after >= CFG.freeShip || (this.state.loyalty && this.state.loyalty.free_shipping_all_orders)) {
       fs.innerHTML = '<span class="font-bold text-emerald-700">🎉 Đơn hàng của bạn được miễn phí vận chuyển!</span>';
     } else {
       const pct = Math.round(after / CFG.freeShip * 100);
@@ -1001,10 +1350,133 @@ const App = {
     let h = row('Tạm tính', `<b>${U.vnd(q.subtotal)}</b>`, 'text-zinc-600');
     if (q.combo_discount) h += row('Giảm combo AI phối đồ', '−' + U.vnd(q.combo_discount), 'font-semibold text-violet-700');
     if (q.voucher_discount) h += row(`Voucher ${U.esc(q.voucher_code)}`, '−' + U.vnd(q.voucher_discount), 'font-semibold text-emerald-700');
+    if (q.points_discount) h += row(`Điểm thưởng AURA (${q.points_used} điểm)`, '−' + U.vnd(q.points_discount), 'font-semibold text-amber-700');
     const ship = q.shipping_fee - q.shipping_discount;
     h += row('Phí vận chuyển', ship ? U.vnd(ship) : 'Miễn phí', ship ? 'text-zinc-600' : 'font-semibold text-emerald-700');
     h += row('Tổng cộng', U.vnd(q.total), 'border-t border-zinc-200 pt-2 text-sm font-extrabold text-brand-600');
+    if (q.points_earned) {
+      h += `<div class="mt-2 text-[11px] font-semibold text-amber-800 bg-amber-50 rounded-lg p-2 flex items-center justify-between border border-amber-200/60">
+        <span class="flex items-center gap-1"><span>💎</span> Tích lũy sau đơn này:</span>
+        <span class="font-bold text-amber-900">+${q.points_earned} điểm (Hạng thẻ VIP)</span>
+      </div>`;
+    }
     return h;
+  },
+
+  /* ---------- Địa giới hành chính 2 cấp (Tỉnh/Thành -> Xã/Phường/Đặc khu) ---------- */
+  async loadLocations() {
+    if (this.state.locations && this.state.locations.length) return this.state.locations;
+    try {
+      this.state.locations = await U.api('/api/locations');
+    } catch (e) {
+      console.warn('Lỗi tải danh mục địa giới hành chính:', e);
+      this.state.locations = [];
+    }
+    return this.state.locations;
+  },
+
+  async initLocations() {
+    const provSelect = U.$('#co-province');
+    const wardSelect = U.$('#co-ward');
+    const streetInput = U.$('#co-street');
+    if (!provSelect || !wardSelect) return;
+
+    await this.loadLocations();
+    const locs = this.state.locations || [];
+
+    // Nạp danh sách 34 tỉnh/thành
+    provSelect.innerHTML = '<option value="">-- Chọn Tỉnh / Thành phố --</option>' +
+      locs.map(p => `<option value="${p.code}" data-name="${U.esc(p.name)}">${U.esc(p.name)}</option>`).join('');
+
+    // Khôi phục lựa chọn cũ nếu có trong localStorage aura_customer
+    const me = U.store.get('aura_customer', {});
+    const savedProvCode = Number(me.province_code);
+    const savedWardCode = Number(me.ward_code);
+
+    let matchedProv = null;
+    if (savedProvCode) {
+      matchedProv = locs.find(p => p.code === savedProvCode);
+    }
+    if (!matchedProv && me.province) {
+      matchedProv = locs.find(p => p.name === me.province || p.name.includes(me.province));
+    }
+
+    if (matchedProv) {
+      provSelect.value = String(matchedProv.code);
+      this.renderWards(matchedProv.code, savedWardCode || me.ward);
+    } else {
+      provSelect.value = '';
+      wardSelect.innerHTML = '<option value="">-- Chọn Xã / Phường / Đặc khu --</option>';
+      wardSelect.disabled = true;
+    }
+
+    if (!provSelect._bound) {
+      provSelect._bound = true;
+      provSelect.addEventListener('change', () => {
+        const pCode = Number(provSelect.value);
+        this.renderWards(pCode);
+        this.syncAddress();
+      });
+    }
+
+    if (!wardSelect._bound) {
+      wardSelect._bound = true;
+      wardSelect.addEventListener('change', () => this.syncAddress());
+    }
+
+    if (streetInput && !streetInput._bound) {
+      streetInput._bound = true;
+      streetInput.addEventListener('input', () => this.syncAddress());
+    }
+
+    this.syncAddress();
+  },
+
+  renderWards(provCode, preselectedWard) {
+    const wardSelect = U.$('#co-ward');
+    if (!wardSelect) return;
+
+    const locs = this.state.locations || [];
+    const prov = locs.find(p => p.code === Number(provCode));
+
+    if (!prov || !prov.wards || !prov.wards.length) {
+      wardSelect.innerHTML = '<option value="">-- Chọn Xã / Phường / Đặc khu --</option>';
+      wardSelect.disabled = true;
+      this.syncAddress();
+      return;
+    }
+
+    // Client-side render wards: lọc mảng wards tương ứng từ province đã nạp
+    wardSelect.innerHTML = '<option value="">-- Chọn Xã / Phường / Đặc khu --</option>' +
+      prov.wards.map(w => `<option value="${w.code}" data-name="${U.esc(w.name)}">${U.esc(w.name)}</option>`).join('');
+    wardSelect.disabled = false;
+
+    if (preselectedWard != null) {
+      const match = prov.wards.find(w => w.code === Number(preselectedWard) || w.name === preselectedWard);
+      if (match) {
+        wardSelect.value = String(match.code);
+      } else {
+        wardSelect.value = '';
+      }
+    } else {
+      wardSelect.value = '';
+    }
+
+    this.syncAddress();
+  },
+
+  syncAddress() {
+    const provSelect = U.$('#co-province');
+    const wardSelect = U.$('#co-ward');
+    const streetInput = U.$('#co-street');
+    const addrHidden = U.$('#co-address');
+
+    const provName = provSelect?.selectedOptions[0]?.dataset?.name || '';
+    const wardName = wardSelect?.selectedOptions[0]?.dataset?.name || '';
+    const street = streetInput ? streetInput.value.trim() : '';
+
+    const parts = [street, wardName, provName].filter(Boolean);
+    if (addrHidden) addrHidden.value = parts.join(', ');
   },
 
   /* ---------- Thanh toán ---------- */
@@ -1015,13 +1487,80 @@ const App = {
     const me = U.store.get('aura_customer', {});
     U.$('#co-name').value ||= me.name || '';
     U.$('#co-phone').value ||= me.phone || '';
-    U.$('#co-address').value ||= me.address || '';
+    if (U.$('#co-street') && !U.$('#co-street').value) {
+      U.$('#co-street').value = me.specific_address || '';
+    }
     U.$('#co-error').classList.add('hidden');
     U.$('#co-voucher').value = this.state.voucher || '';
     this.renderSavedVoucherChips();
+    await Promise.all([this.initLocations(), this.initLoyaltyCheckout()]);
     this.renderCheckoutSummary();
     Modal.open('checkout-modal');
     if (!this.state.voucher && this.state.savedVouchers.length) await this.autoPickVoucher();
+  },
+
+  async initLoyaltyCheckout() {
+    const container = U.$('#co-loyalty-container');
+    if (!container) return;
+    try {
+      const status = await U.api('/api/loyalty/status');
+      if (status && status.points_balance > 0) {
+        container.classList.remove('hidden');
+        const badge = U.$('#co-loyalty-tier-badge');
+        const availPts = U.$('#co-loyalty-points-avail');
+        const availVnd = U.$('#co-loyalty-money-avail');
+        const input = U.$('#co-use-points');
+        if (badge) badge.textContent = status.tier_badge;
+        if (availPts) availPts.textContent = status.points_balance.toLocaleString('vi-VN');
+        if (availVnd) availVnd.textContent = status.points_value_vnd.toLocaleString('vi-VN') + 'đ';
+        if (input) {
+          input.max = status.points_balance;
+          input.value = this.state.usePoints || 0;
+        }
+        this.state.loyalty = status;
+
+        const applyBtn = U.$('#co-apply-points-btn');
+        if (applyBtn && !applyBtn._bound) {
+          applyBtn._bound = true;
+          applyBtn.addEventListener('click', () => this.applyPoints());
+        }
+        const maxBtn = U.$('#co-max-points-btn');
+        if (maxBtn && !maxBtn._bound) {
+          maxBtn._bound = true;
+          maxBtn.addEventListener('click', () => this.applyMaxPoints());
+        }
+      } else {
+        container.classList.add('hidden');
+        this.state.loyalty = null;
+        this.state.usePoints = 0;
+      }
+    } catch {
+      container.classList.add('hidden');
+      this.state.loyalty = null;
+      this.state.usePoints = 0;
+    }
+  },
+
+  applyPoints() {
+    const input = U.$('#co-use-points');
+    const msg = U.$('#co-loyalty-msg');
+    const pts = Math.max(0, parseInt(input?.value, 10) || 0);
+    const max = this.state.loyalty?.points_balance || 0;
+    const finalPts = Math.min(pts, max);
+    this.state.usePoints = finalPts;
+    if (input) input.value = finalPts;
+    this.refreshCart();
+    if (msg) {
+      msg.classList.remove('hidden');
+      msg.textContent = finalPts > 0 ? `Đã dùng ${finalPts} điểm (-${(finalPts * 1000).toLocaleString('vi-VN')}đ)` : 'Không áp dụng điểm';
+    }
+  },
+
+  applyMaxPoints() {
+    const max = this.state.loyalty?.points_balance || 0;
+    const input = U.$('#co-use-points');
+    if (input) input.value = max;
+    this.applyPoints();
   },
 
   /** Thử các mã đã lưu và chọn mã có lợi nhất (server tính, không tự đoán). */
@@ -1065,14 +1604,38 @@ const App = {
   async submitOrder() {
     const err = U.$('#co-error'), btn = U.$('#co-submit');
     err.classList.add('hidden');
+
+    const provSelect = U.$('#co-province');
+    const wardSelect = U.$('#co-ward');
+    const streetInput = U.$('#co-street');
+
+    const provCode = provSelect?.value ? Number(provSelect.value) : null;
+    const wardCode = wardSelect?.value ? Number(wardSelect.value) : null;
+    const provName = provSelect?.selectedOptions[0]?.dataset?.name || '';
+    const wardName = wardSelect?.selectedOptions[0]?.dataset?.name || '';
+    const street = streetInput ? streetInput.value.trim() : '';
+
+    if (!provCode) return this.checkoutError('Vui lòng chọn Tỉnh / Thành phố nhận hàng');
+    if (!wardCode) return this.checkoutError('Vui lòng chọn Xã / Phường / Đặc khu nhận hàng');
+    if (street.length < 3) return this.checkoutError('Vui lòng nhập số nhà, tên đường chi tiết (tối thiểu 3 ký tự)');
+
+    const fullAddress = [street, wardName, provName].filter(Boolean).join(', ');
+    if (U.$('#co-address')) U.$('#co-address').value = fullAddress;
+
     const body = {
       customer_name: U.$('#co-name').value.trim(),
       customer_phone: U.$('#co-phone').value.trim(),
-      customer_address: U.$('#co-address').value.trim(),
+      customer_address: fullAddress,
+      province_code: provCode,
+      province_name: provName,
+      ward_code: wardCode,
+      ward_name: wardName,
+      specific_address: street || null,
       customer_note: U.$('#co-note').value.trim() || null,
       payment_method: (U.$('input[name="payment"]:checked') || {}).value || 'cod',
       items: this.cartPayload(),
       voucher_code: this.state.quote && this.state.quote.voucher_code || null,
+      use_points: this.state.usePoints || 0,
     };
     if (body.customer_name.length < 2) return this.checkoutError('Vui lòng nhập họ tên người nhận');
     if (!/^(?:0|\+?84)\d{9}$/.test(body.customer_phone.replace(/[\s.\-]/g, ''))) return this.checkoutError('Số điện thoại không hợp lệ (ví dụ: 0987654321)');
@@ -1081,8 +1644,17 @@ const App = {
     btn.disabled = true; btn.textContent = 'Đang xử lý...';
     try {
       const order = await U.api('/api/orders', { method: 'POST', body });
-      U.store.set('aura_customer', { name: body.customer_name, phone: body.customer_phone, address: body.customer_address });
-      this.state.cart = []; this.state.voucher = ''; this.state.quote = null;
+      U.store.set('aura_customer', { 
+        name: body.customer_name, 
+        phone: body.customer_phone, 
+        address: body.customer_address,
+        province_code: body.province_code,
+        province: body.province_name,
+        ward_code: body.ward_code,
+        ward: body.ward_name,
+        specific_address: street 
+      });
+      this.state.cart = []; this.state.voucher = ''; this.state.usePoints = 0; this.state.quote = null;
       this.saveCart();
       Modal.close('checkout-modal');
       this.showSuccess(order);
@@ -1098,22 +1670,170 @@ const App = {
 
   showSuccess(o) {
     const q = o.quote;
+    if (this._pollTimer) {
+      clearInterval(this._pollTimer);
+      this._pollTimer = null;
+    }
+
+    const isQr = o.payment_method === 'qr_transfer';
+    const isPaid = o.payment_status === 'paid' || o.status === 'confirmed';
+
+    let paymentHtml = '';
+    if (isQr) {
+      const qrUrl = o.qr_code_url || `https://img.vietqr.io/image/MB-0900000001-compact2.png?amount=${q.total}&addInfo=AURA%20${encodeURIComponent(o.order_id)}&accountName=AURA%20STUDIO`;
+      const bank = o.bank_info || {
+        bank_name: 'MBBank (Ngân hàng Quân Đội)',
+        account_number: '0900000001',
+        account_name: 'AURA STUDIO',
+        amount: String(q.total),
+        content: `AURA ${o.order_id}`
+      };
+
+      paymentHtml = `
+      <div id="vietqr-container" class="my-4 rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm">
+        <div class="flex items-center justify-between border-b border-zinc-100 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600 text-white font-extrabold text-xs">V</span>
+            <div>
+              <h3 class="text-xs font-extrabold text-zinc-900 uppercase tracking-wide">Thanh toán VietQR chuẩn NAPAS 247</h3>
+              <p class="text-[10px] text-zinc-500">Mở app Ngân hàng hoặc Ví MoMo/ZaloPay quét mã</p>
+            </div>
+          </div>
+          <span class="rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Tự động 24/7</span>
+        </div>
+
+        <div class="mt-4 flex flex-col items-center sm:flex-row sm:items-start gap-4">
+          <div class="relative flex flex-col items-center">
+            <div class="h-48 w-48 overflow-hidden rounded-xl border-2 border-brand-500 bg-white p-2 shadow-sm ${!isPaid ? 'vietqr-live-pulse' : ''}" id="vietqr-image-wrapper">
+              <img src="${U.esc(qrUrl)}" alt="VietQR Payment Code" class="h-full w-full object-contain" />
+            </div>
+            <span class="mt-1 text-[10px] font-mono text-zinc-400">MBBank • Quét mã tự nhận tiền</span>
+          </div>
+
+          <div class="flex-1 space-y-2 text-xs w-full">
+            <div class="flex items-center justify-between py-1 border-b border-zinc-100">
+              <span class="text-zinc-500">Ngân hàng</span>
+              <span class="font-bold text-zinc-900">${U.esc(bank.bank_name)}</span>
+            </div>
+            <div class="flex items-center justify-between py-1 border-b border-zinc-100">
+              <span class="text-zinc-500">Số tài khoản</span>
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-bold text-brand-600">${U.esc(bank.account_number)}</span>
+                <button type="button" data-action="copy-text" data-text="${U.esc(bank.account_number)}" class="copy-badge-btn" title="Sao chép STK">Sao chép</button>
+              </div>
+            </div>
+            <div class="flex items-center justify-between py-1 border-b border-zinc-100">
+              <span class="text-zinc-500">Chủ tài khoản</span>
+              <span class="font-bold text-zinc-800">${U.esc(bank.account_name)}</span>
+            </div>
+            <div class="flex items-center justify-between py-1 border-b border-zinc-100">
+              <span class="text-zinc-500">Số tiền</span>
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-black text-rose-600 text-sm">${U.vnd(q.total)}</span>
+                <button type="button" data-action="copy-text" data-text="${q.total}" class="copy-badge-btn" title="Sao chép số tiền">Sao chép</button>
+              </div>
+            </div>
+            <div class="flex items-center justify-between py-1">
+              <span class="text-zinc-500">Nội dung CK</span>
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-extrabold text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded border border-brand-200">${U.esc(bank.content)}</span>
+                <button type="button" data-action="copy-text" data-text="${U.esc(bank.content)}" class="copy-badge-btn" title="Sao chép nội dung">Sao chép</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="payment-status-box" class="mt-4 rounded-xl border ${isPaid ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50/80 text-amber-800'} p-3 text-center">
+          ${isPaid ? `
+            <div class="flex items-center justify-center gap-2 text-xs font-bold text-emerald-800">
+              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-xs">✓</span>
+              <span>ĐÃ XÁC NHẬN THANH TOÁN THÀNH CÔNG!</span>
+            </div>
+            <p class="mt-1 text-[11px] text-emerald-700">Hệ thống đã nhận được chuyển khoản. Đơn hàng đang được đóng gói gửi đi.</p>
+          ` : `
+            <div class="flex items-center justify-center gap-2 text-xs font-bold text-amber-800">
+              <span class="flex h-2.5 w-2.5 relative">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+              </span>
+              <span id="payment-status-text">Đang chờ chuyển khoản từ ứng dụng ngân hàng...</span>
+            </div>
+            <p class="mt-1 text-[11px] text-amber-700">Hệ thống tự động kiểm tra trạng thái mỗi 3 giây.</p>
+            <div class="mt-2.5 pt-2 border-t border-amber-200/60">
+              <button type="button" data-action="simulate-payment" data-order-id="${U.esc(o.order_id)}"
+                      class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
+                <span>⚡ Giả lập Chuyển khoản thành công (Test Webhook)</span>
+              </button>
+            </div>
+          `}
+        </div>
+      </div>`;
+    }
+
     U.$('#success-body').innerHTML = `
-    <div class="p-6 text-center">
-      <div class="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-        <svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div>
-      <h2 class="text-lg font-bold">${o.status === 'pending_payment' ? 'Đã ghi nhận đơn hàng' : 'Đặt hàng thành công!'}</h2>
-      <p class="text-xs text-zinc-500">Mã đơn: <b class="text-brand-600">${U.esc(o.order_id)}</b></p>
-      <p class="mx-auto mt-2 max-w-xs text-xs text-zinc-600">${U.esc(o.message)}</p>
-      <div class="my-4 space-y-2 rounded-xl border border-brand-100 bg-brand-50/50 p-4 text-left text-xs">
-        <div class="flex justify-between gap-3"><span class="text-zinc-500">Người nhận</span><b class="text-right">${U.esc(o.customer_name)} (${U.esc(o.customer_phone)})</b></div>
-        <div class="flex justify-between gap-3"><span class="text-zinc-500">Địa chỉ</span><span class="text-right font-medium">${U.esc(o.customer_address)}</span></div>
-        <div class="flex justify-between gap-3"><span class="text-zinc-500">Thanh toán</span><b>${o.payment_method === 'cod' ? 'Khi nhận hàng (COD)' : 'Chuyển khoản'}</b></div>
+    <div class="p-5 sm:p-6 text-center max-w-lg mx-auto">
+      <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full ${isPaid ? 'bg-emerald-100 text-emerald-600' : 'bg-brand-100 text-brand-600'}">
+        <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+      </div>
+      <h2 class="text-base sm:text-lg font-bold text-zinc-900" id="success-title">
+        ${isPaid ? 'Đặt hàng & Thanh toán thành công!' : (isQr ? 'Đã ghi nhận đơn • Vui lòng chuyển khoản' : 'Đặt hàng thành công!')}
+      </h2>
+      <p class="text-xs text-zinc-500 mt-0.5">Mã đơn hàng: <b class="font-mono text-brand-600">${U.esc(o.order_id)}</b></p>
+      
+      ${paymentHtml}
+
+      <div class="my-3 space-y-1.5 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3.5 text-left text-xs">
+        <div class="flex justify-between gap-3"><span class="text-zinc-500">Người nhận</span><b class="text-right text-zinc-800">${U.esc(o.customer_name)} (${U.esc(o.customer_phone)})</b></div>
+        <div class="flex justify-between gap-3"><span class="text-zinc-500">Địa chỉ giao</span><span class="text-right font-medium text-zinc-800">${U.esc(o.customer_address)}</span></div>
+        <div class="flex justify-between gap-3"><span class="text-zinc-500">Hình thức</span><b>${isQr ? 'Chuyển khoản VietQR' : 'Thanh toán khi nhận hàng (COD)'}</b></div>
         ${this.summaryRows(q)}
       </div>
-      <button data-action="close-modal" data-target="success-modal" class="btn btn-primary w-full !py-3 uppercase">Tiếp tục mua sắm</button>
+
+      <div class="mt-4 flex gap-2">
+        <a href="/profile" class="btn btn-soft flex-1 !py-2.5 text-xs text-center">Xem đơn trong Tài khoản</a>
+        <button data-action="close-modal" data-target="success-modal" class="btn btn-primary flex-1 !py-2.5 uppercase tracking-wide text-xs">Tiếp tục mua sắm</button>
+      </div>
     </div>`;
+
     Modal.open('success-modal');
+
+    // Bắt đầu Polling kiểm tra trạng thái thanh toán tự động nếu chưa thanh toán
+    if (isQr && !isPaid) {
+      this._pollTimer = setInterval(async () => {
+        try {
+          const res = await U.api(`/api/payment/check-status/${encodeURIComponent(o.order_id)}`);
+          if (res && (res.status === 'paid' || res.order_status === 'confirmed')) {
+            clearInterval(App._pollTimer);
+            App._pollTimer = null;
+            App.onPaymentSuccess(o.order_id);
+          }
+        } catch { /* tiếp tục polling */ }
+      }, 3000);
+    }
+  },
+
+  onPaymentSuccess(orderId) {
+    U.toast(`Đơn hàng ${orderId} đã được xác nhận thanh toán thành công!`, 'ok');
+    const title = U.$('#success-title');
+    if (title) title.textContent = 'Đặt hàng & Thanh toán thành công!';
+
+    const box = U.$('#payment-status-box');
+    if (box) {
+      box.className = 'mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-center';
+      box.innerHTML = `
+        <div class="flex items-center justify-center gap-2 text-xs font-bold text-emerald-800">
+          <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-xs">✓</span>
+          <span>ĐÃ XÁC NHẬN THANH TOÁN THÀNH CÔNG (PAID)!</span>
+        </div>
+        <p class="mt-1 text-[11px] text-emerald-700">Hệ thống đã nhận được tiền từ giao dịch VietQR. Đơn hàng đang được đóng gói gửi đi!</p>
+      `;
+    }
+
+    const imgWrapper = U.$('#vietqr-image-wrapper');
+    if (imgWrapper) {
+      imgWrapper.classList.remove('vietqr-live-pulse');
+      imgWrapper.classList.add('border-emerald-500');
+    }
   },
 };
 
@@ -1180,9 +1900,384 @@ const Live = {
   },
 };
 
+/* ===================== Giai đoạn 2: SizeChartUI, TrackingUI & InvoiceUI ===================== */
+const SizeChartUI = {
+  currentProductId: null,
+  activeTab: 'specs',
+
+  async open(productId) {
+    this.currentProductId = productId;
+    this.activeTab = 'specs';
+    this.switchTab('specs');
+    Modal.open('size-chart-modal');
+
+    const titleEl = U.$('#sc-modal-title');
+    const subtitleEl = U.$('#sc-modal-subtitle');
+    const tableContainer = U.$('#sc-table-container');
+    const guideContainer = U.$('#sc-guide-cards');
+    const careContainer = U.$('#sc-tab-care');
+
+    if (tableContainer) tableContainer.innerHTML = '<div class="py-8 text-center text-xs text-zinc-400">Đang tải bảng số đo thực tế...</div>';
+
+    try {
+      const data = await U.api(`/api/products/${encodeURIComponent(productId)}/size-chart`);
+      if (titleEl) titleEl.textContent = `Bảng số đo chi tiết: ${data.product_name}`;
+      if (subtitleEl) subtitleEl.textContent = `Danh mục: ${data.category_name} • Đơn vị đo: ${data.unit}`;
+
+      // 1. Render Table
+      if (tableContainer) {
+        const cols = data.columns || [];
+        const rows = data.rows || [];
+        let html = '<table class="size-chart-table"><thead><tr>';
+        cols.forEach(c => { html += `<th>${U.esc(c)}</th>`; });
+        html += '</tr></thead><tbody>';
+
+        rows.forEach(r => {
+          html += '<tr>';
+          cols.forEach(c => {
+            if (c === 'Size') {
+              html += `<td class="font-bold text-brand-600 bg-brand-50/40">${U.esc(r.size)}</td>`;
+            } else {
+              const val = (r.specs && r.specs[c]) || '-';
+              html += `<td>${U.esc(val)}</td>`;
+            }
+          });
+          html += '</tr>';
+        });
+        html += '</tbody></table>';
+        tableContainer.innerHTML = html;
+      }
+
+      // 2. Render Guide
+      if (guideContainer) {
+        const guides = data.measuring_guide || [];
+        guideContainer.innerHTML = guides.map(g => `
+          <div class="rounded-xl border border-zinc-200 bg-white p-3 space-y-1.5 shadow-2xs">
+            <h4 class="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
+              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-brand-100 text-brand-700 text-[10px]">📏</span>
+              ${U.esc(g.part)}
+            </h4>
+            <p class="text-[11px] text-zinc-600 leading-relaxed">${U.esc(g.how_to)}</p>
+            <p class="text-[10px] text-amber-700 font-medium bg-amber-50 rounded px-2 py-1">💡 ${U.esc(g.tip)}</p>
+          </div>
+        `).join('');
+      }
+
+      // 3. Render Care
+      if (careContainer) {
+        const cares = data.care_instructions || [];
+        careContainer.innerHTML = cares.map(c => `
+          <div class="flex items-start gap-2 text-xs text-zinc-700 bg-zinc-50 rounded-lg p-2.5">
+            <span class="text-brand-600 font-bold">✓</span>
+            <span>${U.esc(c)}</span>
+          </div>
+        `).join('');
+      }
+    } catch (e) {
+      if (tableContainer) tableContainer.innerHTML = `<div class="py-8 text-center text-xs text-red-500">Lỗi khi tải bảng size: ${U.esc(e.message)}</div>`;
+    }
+  },
+
+  switchTab(tab) {
+    this.activeTab = tab;
+    ['specs', 'guide', 'care'].forEach(t => {
+      const btn = U.$(`#sc-tab-${t}-btn`);
+      const pane = U.$(`#sc-tab-${t}`);
+      if (btn) {
+        if (t === tab) {
+          btn.className = 'border-b-2 border-brand-600 px-4 py-2.5 text-brand-600 font-bold transition';
+        } else {
+          btn.className = 'border-b-2 border-transparent px-4 py-2.5 text-zinc-500 hover:text-zinc-800 font-medium transition';
+        }
+      }
+      if (pane) {
+        if (t === tab) pane.classList.remove('hidden');
+        else pane.classList.add('hidden');
+      }
+    });
+  }
+};
+window.SizeChartUI = SizeChartUI;
+
+const TrackingUI = {
+  currentOrder: null,
+
+  openModal(code = '') {
+    Modal.open('tracking-modal');
+    const input = U.$('#tracking-input');
+    if (input) {
+      if (code) {
+        input.value = code;
+        this.doSearch();
+      } else {
+        input.focus();
+      }
+    }
+  },
+
+  async doSearch() {
+    const input = U.$('#tracking-input');
+    const code = input ? input.value.trim() : '';
+    if (!code) return;
+
+    const resBox = U.$('#tracking-result');
+    const errBox = U.$('#tracking-error');
+    const submitBtn = U.$('#tracking-submit-btn');
+
+    if (errBox) errBox.classList.add('hidden');
+    if (resBox) resBox.classList.add('hidden');
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Đang tìm...'; }
+
+    try {
+      const data = await U.api(`/api/orders/track/${encodeURIComponent(code)}`);
+      this.currentOrder = data;
+
+      // Điền thông tin kiện hàng
+      U.$('#tr-code').textContent = data.tracking_code;
+      U.$('#tr-carrier').textContent = data.carrier;
+      U.$('#tr-est-date').textContent = data.estimated_delivery;
+      U.$('#tr-cust-name').textContent = data.customer_name;
+      U.$('#tr-cust-phone').textContent = data.customer_phone;
+      U.$('#tr-cust-addr').textContent = data.customer_address;
+      U.$('#tr-payment').textContent = `${data.payment_method} (${data.payment_status})`;
+
+      // Status badge
+      const badge = U.$('#tr-status-badge');
+      if (badge) {
+        badge.textContent = data.shipping_status_label;
+        if (data.shipping_status === 'delivered') {
+          badge.className = 'rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+        } else if (data.shipping_status === 'ready_to_pick' || data.shipping_status === 'pending_confirm') {
+          badge.className = 'rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300';
+        } else {
+          badge.className = 'rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300';
+        }
+      }
+
+      // Stepper Timeline 6 bước
+      const list = U.$('#tr-timeline-list');
+      if (list && data.timeline) {
+        list.innerHTML = data.timeline.map(st => {
+          const isDone = st.status === 'completed';
+          const isCurr = st.status === 'current';
+          const nodeIcon = isDone ? '✓' : isCurr ? '●' : '○';
+          return `
+            <div class="timeline-step ${st.status}">
+              <div class="timeline-node font-bold">${nodeIcon}</div>
+              <div class="space-y-0.5">
+                <div class="flex items-baseline justify-between gap-2">
+                  <h4 class="text-xs font-bold ${isDone ? 'text-zinc-900' : isCurr ? 'text-brand-600' : 'text-zinc-400'}">${U.esc(st.title)}</h4>
+                  <span class="text-[10px] font-mono text-zinc-400 whitespace-nowrap">${U.esc(st.time)}</span>
+                </div>
+                <p class="text-[11px] ${isDone || isCurr ? 'text-zinc-600' : 'text-zinc-400'}">${U.esc(st.description)}</p>
+                <p class="text-[10px] text-zinc-400 font-medium">📍 ${U.esc(st.location)}</p>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      if (resBox) resBox.classList.remove('hidden');
+    } catch (e) {
+      if (errBox) {
+        errBox.textContent = e.message || 'Không tìm thấy đơn hàng. Vui lòng kiểm tra lại mã hoặc số điện thoại.';
+        errBox.classList.remove('hidden');
+      }
+    } finally {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Tra cứu'; }
+    }
+  },
+
+  openInvoice() {
+    if (!this.currentOrder || !this.currentOrder.order_id) return;
+    InvoiceUI.open(this.currentOrder.order_id);
+  },
+
+  async sendNotify() {
+    if (!this.currentOrder || !this.currentOrder.order_id) return;
+    const btn = U.$('#tr-notify-btn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Đang gửi...'; }
+    try {
+      const res = await U.api(`/api/orders/${encodeURIComponent(this.currentOrder.order_id)}/send-notification?channel=zalo`, { method: 'POST' });
+      U.toast(res.message || 'Đã gửi thông báo tiến độ thành công!');
+    } catch (e) {
+      U.toast(e.message || 'Lỗi gửi thông báo', 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<span>📲</span> Giả lập SMS/Zalo cập nhật'; }
+    }
+  }
+};
+window.TrackingUI = TrackingUI;
+
+const InvoiceUI = {
+  async open(orderId) {
+    Modal.open('invoice-modal');
+    try {
+      const inv = await U.api(`/api/orders/${encodeURIComponent(orderId)}/invoice`);
+      U.$('#inv-number').textContent = inv.invoice_number;
+      U.$('#inv-date').textContent = inv.issued_at;
+      U.$('#inv-buyer-name').textContent = inv.buyer.name;
+      U.$('#inv-buyer-phone').textContent = inv.buyer.phone;
+      U.$('#inv-buyer-addr').textContent = inv.buyer.address;
+      U.$('#inv-carrier').textContent = inv.carrier;
+      U.$('#inv-tracking').textContent = inv.tracking_code;
+      U.$('#inv-pay-method').textContent = inv.payment_method;
+      U.$('#inv-pay-status').textContent = inv.payment_status;
+
+      U.$('#inv-subtotal').textContent = U.vnd(inv.subtotal);
+      U.$('#inv-ship-fee').textContent = U.vnd(inv.shipping_fee);
+      U.$('#inv-discount').textContent = `-${U.vnd(inv.discount_amount)}`;
+      U.$('#inv-vat').textContent = `${U.vnd(inv.vat_amount)} (${inv.vat_rate}%)`;
+      U.$('#inv-total').textContent = U.vnd(inv.total_amount);
+
+      const itemsBody = U.$('#inv-items-body');
+      if (itemsBody) {
+        itemsBody.innerHTML = (inv.items || []).map((it, idx) => `
+          <tr class="hover:bg-zinc-50">
+            <td class="py-2.5 px-2.5 text-center text-zinc-500 font-mono">${idx + 1}</td>
+            <td class="py-2.5 px-2.5 font-semibold text-zinc-900">${U.esc(it.name)}</td>
+            <td class="py-2.5 px-2.5 text-center text-zinc-600">${U.esc(it.color)} / ${U.esc(it.size)}</td>
+            <td class="py-2.5 px-2.5 text-center font-bold text-zinc-900">${it.quantity}</td>
+            <td class="py-2.5 px-2.5 text-right font-mono text-zinc-700">${U.vnd(it.unit_price)}</td>
+            <td class="py-2.5 px-2.5 text-right font-mono font-bold text-zinc-900">${U.vnd(it.line_total)}</td>
+          </tr>
+        `).join('');
+      }
+    } catch (e) {
+      U.toast('Không thể tải hóa đơn: ' + e.message, 'error');
+    }
+  }
+};
+window.InvoiceUI = InvoiceUI;
+
+/* ===================== Giai đoạn 3: Phục hồi giỏ hàng & CSKH Đa kênh ===================== */
+const ExitIntentUI = {
+  _timer: null,
+  _triggered: false,
+
+  init() {
+    if (sessionStorage.getItem('aura_exit_intent_shown')) return;
+
+    // Trigger 1: Chuột rời cửa sổ lên trên (di chuyển chuột ra thanh địa chỉ hoặc nút đóng tab)
+    document.addEventListener('mouseleave', (e) => {
+      if (e.clientY <= 15) {
+        this.trigger();
+      }
+    });
+
+    // Trigger 2: Khách dừng thao tác (idle) 45s khi giỏ hàng có sản phẩm
+    this.resetTimer();
+    ['mousemove', 'keydown', 'scroll', 'click'].forEach(evt => {
+      document.addEventListener(evt, () => this.resetTimer(), { passive: true });
+    });
+  },
+
+  resetTimer() {
+    if (this._triggered || sessionStorage.getItem('aura_exit_intent_shown')) return;
+    if (this._timer) clearTimeout(this._timer);
+    this._timer = setTimeout(() => {
+      this.trigger();
+    }, 45000);
+  },
+
+  trigger() {
+    if (this._triggered) return;
+    if (sessionStorage.getItem('aura_exit_intent_shown')) return;
+    if (!App.state.cart || App.state.cart.length === 0) return;
+    const checkoutModal = U.$('#checkout-modal');
+    if (checkoutModal && !checkoutModal.classList.contains('hidden')) return;
+
+    this._triggered = true;
+    sessionStorage.setItem('aura_exit_intent_shown', '1');
+    if (this._timer) clearTimeout(this._timer);
+
+    Modal.open('exit-intent-modal');
+  },
+
+  applyAndCheckout() {
+    Modal.close('exit-intent-modal');
+    App.state.voucher = 'STAYWITHUS';
+    const coVoucher = U.$('#co-voucher');
+    if (coVoucher) coVoucher.value = 'STAYWITHUS';
+    App.openCheckout();
+    App.applyVoucher();
+    U.toast('Đã áp dụng mã STAYWITHUS giảm thêm 5%!');
+  }
+};
+window.ExitIntentUI = ExitIntentUI;
+
+const OmnichannelUI = {
+  isOpen: false,
+
+  toggle() {
+    this.isOpen = !this.isOpen;
+    const menu = U.$('#omnichannel-menu');
+    const icon = U.$('#omnichannel-fab-icon');
+    if (menu) {
+      if (this.isOpen) {
+        menu.classList.remove('hidden');
+      } else {
+        menu.classList.add('hidden');
+      }
+    }
+    if (icon) {
+      icon.textContent = this.isOpen ? '✕' : '🎧';
+    }
+  },
+
+  close() {
+    this.isOpen = false;
+    const menu = U.$('#omnichannel-menu');
+    const icon = U.$('#omnichannel-fab-icon');
+    if (menu) menu.classList.add('hidden');
+    if (icon) icon.textContent = '🎧';
+  },
+
+  init() {
+    document.addEventListener('click', (e) => {
+      if (this.isOpen && !e.target.closest('#omnichannel-widget')) {
+        this.close();
+      }
+    });
+  }
+};
+window.OmnichannelUI = OmnichannelUI;
+
 /* ===================== Đăng ký hành động ===================== */
 Object.assign(Actions, {
-  'close-modal': d => Modal.close(d.target),
+  'open-size-chart': d => SizeChartUI.open(d.productId || (App.state.qv && App.state.qv.product ? App.state.qv.product.id : 'prod_001')),
+  'open-tracking': d => TrackingUI.openModal(d.code || ''),
+  'open-invoice': d => InvoiceUI.open(d.orderId),
+  'close-modal': d => {
+    if (d.target === 'success-modal' && App._pollTimer) {
+      clearInterval(App._pollTimer);
+      App._pollTimer = null;
+    }
+    Modal.close(d.target);
+  },
+  'simulate-payment': async (d, btn) => {
+    if (!d.orderId) return;
+    try {
+      if (btn) { btn.disabled = true; btn.textContent = 'Đang gửi Webhook...'; }
+      U.toast('Đang gửi Webhook xác nhận thanh toán...');
+      const res = await U.api(`/api/payment/simulate-success/${encodeURIComponent(d.orderId)}`, { method: 'POST' });
+      if (res && res.status === 'paid') {
+        if (App._pollTimer) { clearInterval(App._pollTimer); App._pollTimer = null; }
+        App.onPaymentSuccess(d.orderId);
+      }
+    } catch (e) {
+      U.toast(e.message || 'Lỗi khi kích hoạt webhook', 'error');
+      if (btn) { btn.disabled = false; btn.textContent = '⚡ Giả lập Chuyển khoản thành công (Test Webhook)'; }
+    }
+  },
+  'copy-text': d => {
+    if (d.text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(d.text);
+      }
+      U.toast(`Đã sao chép: ${d.text}`);
+    }
+  },
   'scroll-to': d => U.$('#' + d.target).scrollIntoView({ behavior: 'smooth' }),
   'set-category': d => { App.setCategory(d.cat); U.$('#catalog').scrollIntoView({ behavior: 'smooth' }); },
   'set-sort': d => { App.state.filters.sort = d.sort; App.renderSortButtons(); App.loadProducts(); },

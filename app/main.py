@@ -15,17 +15,20 @@ from fastapi.templating import Jinja2Templates
 from app.config import settings
 from app.models.schemas import (
     AdminProductPayload, AuthResponse, Category, ChangePasswordRequest,
-    ChatRequest, ChatResponse, FlashSaleResponse, LiveCommentRequest,
-    LiveCommentResponse, OrderCreateRequest, OrderResponse, OutfitRequest, OutfitResponse,
-    Product, QuoteRequest, QuoteResponse, SizeRecommendRequest, SizeRecommendResponse,
+    ChatRequest, ChatResponse, FlashSaleResponse, InvoiceResponse, LiveCommentRequest,
+    LiveCommentResponse, LoyaltyHistoryResponse, LoyaltyStatusResponse, OrderCreateRequest, OrderResponse, OrderTrackingResponse, OutfitRequest, OutfitResponse,
+    Product, ProductReviewCreate, ProductReviewsResponse, QuoteRequest, QuoteResponse,
+    SizeChartResponse, SizeRecommendRequest, SizeRecommendResponse,
     TrendDebugResponse, TrendItem, TrendingProduct, TrendRefreshResponse,
     User, UserLoginRequest, UserProfileUpdateRequest, UserRegisterRequest,
     VideoItem, Voucher, VoucherCheckRequest, VoucherCheckResponse,
 )
+from app.db.database import db_service
 from app.services.ai_service import ai_service
 from app.services.order_service import OrderError, order_service
 from app.services.outfit_service import outfit_service
 from app.services.product_service import flash_sale_window, product_service
+from app.services.size_chart_service import size_chart_service
 from app.services.trend_service import trend_service
 from app.services.user_service import user_service
 
@@ -427,13 +430,15 @@ def debug_trends():
 # Đơn hàng (server tự tính giá)
 # ==========================================
 @app.post("/api/orders/quote", response_model=QuoteResponse)
-def quote_order(body: QuoteRequest):
-    return order_service.build_quote(body.items, body.voucher_code)
+def quote_order(body: QuoteRequest, request: Request):
+    user = get_current_user_optional(request)
+    return order_service.build_quote(body.items, body.voucher_code, use_points=body.use_points, user=user)
 
 
 @app.post("/api/orders", response_model=OrderResponse)
-def create_order(body: OrderCreateRequest):
-    return order_service.create_order(body)
+def create_order(body: OrderCreateRequest, request: Request):
+    user = get_current_user_optional(request)
+    return order_service.create_order(body, user=user)
 
 
 # ==========================================
@@ -671,3 +676,392 @@ def admin_get_trending(_admin: User = Depends(require_admin)):
 def admin_refresh_trending(_admin: User = Depends(require_admin)):
     res = trend_service.refresh_trends(force=True)
     return res
+
+
+# ==========================================
+# Địa giới hành chính 2 cấp (Nghị quyết 202/2025/QH15)
+# ==========================================
+from app.services.geo_service import geo_service
+
+@app.get("/api/locations")
+def get_locations():
+    """
+    Lấy danh mục 34 Tỉnh/Thành phố và Xã/Phường/Đặc khu
+    theo cơ cấu 2 cấp hành chính mới chính thức từ 1/7/2025 (đọc tĩnh từ vn_locations.json, cache sẵn).
+    """
+    return geo_service.get_all_locations()
+
+
+# ==========================================
+# Giai đoạn 1: Địa giới hành chính Việt Nam (Tương thích ngược)
+# ==========================================
+
+@app.get("/api/geo/provinces", response_model=List[str])
+def get_provinces():
+    """Lấy danh sách 63 tỉnh/thành phố chuẩn hóa."""
+    return geo_service.get_provinces()
+
+
+@app.get("/api/geo/districts", response_model=List[str])
+def get_districts(
+    province: Optional[str] = Query(None),
+    province_code: Optional[str] = Query(None),
+):
+    """Lấy danh sách quận/huyện theo tỉnh/thành phố."""
+    prov = province or province_code or ""
+    code_map = {"01": "Hà Nội", "79": "TP. Hồ Chí Minh", "48": "Đà Nẵng", "31": "Hải Phòng", "92": "Cần Thơ"}
+    prov = code_map.get(prov, prov)
+    return geo_service.get_districts(prov)
+
+
+@app.get("/api/geo/wards", response_model=List[str])
+def get_wards(
+    province: Optional[str] = Query(""),
+    province_code: Optional[str] = Query(""),
+    district: Optional[str] = Query(None),
+    district_code: Optional[str] = Query(None),
+):
+    """Lấy danh sách phường/xã theo quận/huyện."""
+    prov = province or province_code or ""
+    code_map = {"01": "Hà Nội", "79": "TP. Hồ Chí Minh", "48": "Đà Nẵng", "31": "Hải Phòng", "92": "Cần Thơ"}
+    prov = code_map.get(prov, prov)
+    dist = district or district_code or ""
+    dist_map = {"001": "Quận Ba Đình", "002": "Quận Hoàn Kiếm", "004": "Quận Hai Bà Trưng", "005": "Quận Đống Đa"}
+    dist = dist_map.get(dist, dist)
+    return geo_service.get_wards(prov, dist)
+
+
+# ==========================================
+# Giai đoạn 1: Ma trận Biến thể & Tồn kho Màu x Size
+# ==========================================
+@app.get("/api/products/{product_id}/variants")
+def get_product_variants(product_id: str):
+    """Lấy ma trận biến thể tồn kho (Màu x Size) của sản phẩm từ CSDL SQLite."""
+    from app.db.database import db_service
+    return db_service.get_product_variants(product_id)
+
+
+# ==========================================
+# Giai đoạn 1: Cổng thanh toán VietQR & Webhook tự động
+# ==========================================
+import uuid
+from pydantic import BaseModel
+
+class PaymentWebhookPayload(BaseModel):
+    order_id: Optional[str] = None
+    amount: Optional[int] = None
+    transaction_code: Optional[str] = None
+    channel: Optional[str] = "vietqr"
+    content: Optional[str] = None
+    transferAmount: Optional[int] = None
+    referenceCode: Optional[str] = None
+
+
+@app.post("/api/payment/webhook")
+def payment_webhook(body: PaymentWebhookPayload):
+    """
+    Webhook tự động nhận thông báo biến động số dư từ VietQR / PayOS / SePay.
+    Tự động cập nhật trạng thái đơn hàng sang 'confirmed' và thanh toán 'paid'.
+    """
+    import re
+    order_id = body.order_id
+    if not order_id and body.content:
+        # 1. Tìm chuẩn định dạng AURA-YYMMDD-XXXXXX
+        m = re.search(r"(AURA[-_]\d{6}[-_][A-Za-z0-9]+)", body.content, re.IGNORECASE)
+        if m:
+            order_id = m.group(1).upper()
+        else:
+            # 2. Tìm cú pháp 'AURA <order_id>'
+            parts = body.content.strip().split()
+            for i, p in enumerate(parts):
+                if p.upper() == "AURA" and i + 1 < len(parts):
+                    order_id = parts[i + 1].strip()
+                    break
+
+    if not order_id:
+        raise HTTPException(status_code=400, detail="Không tìm thấy mã đơn hàng trong payload webhook")
+
+    from app.db.database import db_service
+    amount = body.amount or body.transferAmount or 0
+    tx_code = body.transaction_code or body.referenceCode or f"TX-{uuid.uuid4().hex[:8].upper()}"
+    ok = db_service.confirm_payment(
+        order_id=order_id,
+        amount=amount,
+        transaction_code=tx_code,
+        payment_channel=body.channel or "vietqr",
+    )
+    if not ok:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy đơn hàng '{order_id}'")
+    return {"success": True, "order_id": order_id, "message": f"Đã xác nhận thanh toán đơn {order_id} thành công!"}
+
+
+@app.get("/api/payment/check-status/{order_id}")
+def check_order_payment_status(order_id: str):
+    """Kiểm tra trạng thái thanh toán theo thời gian thực (Polling khi khách quét mã QR)."""
+    from app.db.database import db_service
+    status = db_service.get_order_payment_status(order_id)
+    if not status.get("exists"):
+        raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
+    return status
+
+
+@app.post("/api/payment/simulate-success/{order_id}")
+def simulate_payment_success(order_id: str):
+    """Giả lập chuyển khoản thành công để trải nghiệm thử nghiệm dòng tiền và webhook."""
+    from app.db.database import db_service
+    order = db_service.get_order_by_id(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
+    
+    amount = order.get("total_amount") or order.get("quote", {}).get("total", 0)
+    tx_code = f"MB-{uuid.uuid4().hex[:8].upper()}"
+    db_service.confirm_payment(order_id=order_id, amount=amount, transaction_code=tx_code, payment_channel="simulation")
+    return {
+        "success": True,
+        "order_id": order_id,
+        "transaction_code": tx_code,
+        "status": "paid",
+        "payment_status": "paid",
+        "order_status": "confirmed",
+        "message": "Thanh toán QR thành công! Trạng thái đơn hàng đã tự động xác nhận."
+    }
+
+
+# ==========================================
+# Giai đoạn 2: Đánh giá & Bằng chứng Xã hội (Social Proof & Reviews)
+# ==========================================
+@app.get("/api/products/{product_id}/reviews", response_model=ProductReviewsResponse)
+def get_product_reviews(
+    product_id: str,
+    rating: Optional[int] = Query(None, ge=1, le=5, description="Lọc theo số sao"),
+    limit: int = Query(50, ge=1, le=100)
+):
+    """Lấy danh sách đánh giá thực tế của sản phẩm kèm phân bổ số sao và số đo người mua."""
+    p = product_service.get_by_id(product_id)
+    if not p:
+        raise HTTPException(status_code=404, detail="Sản phẩm không tồn tại")
+    from app.db.database import db_service
+    res = db_service.get_product_reviews(product_id, rating_filter=rating, limit=limit)
+    return res
+
+
+@app.post("/api/products/{product_id}/reviews")
+def add_product_review(product_id: str, body: ProductReviewCreate):
+    """Gửi đánh giá và nhận xét mới cho sản phẩm kèm số đo thực tế của người mặc."""
+    p = product_service.get_by_id(product_id)
+    if not p:
+        raise HTTPException(status_code=404, detail="Sản phẩm không tồn tại")
+    from app.db.database import db_service
+    review_dict = body.model_dump()
+    created = db_service.add_product_review(product_id, review_dict)
+    
+    # Đồng bộ rating và reviews_count trong bộ nhớ cache
+    with product_service._lock:
+        cached_p = product_service._by_id.get(product_id)
+        if cached_p:
+            cached_p.reviews_count += 1
+            # Cập nhật xấp xỉ
+            cached_p.rating = round((cached_p.rating * (cached_p.reviews_count - 1) + body.rating) / cached_p.reviews_count, 1)
+
+    return {
+        "success": True,
+        "message": "Cảm ơn bạn đã gửi đánh giá! Nhận xét của bạn giúp cộng đồng chọn size chuẩn hơn.",
+        "review": created
+    }
+
+
+# ==========================================
+# Giai đoạn 2: Bảng số đo chi tiết & Hướng dẫn chọn size
+# ==========================================
+@app.get("/api/products/{product_id}/size-chart", response_model=SizeChartResponse)
+def get_product_size_chart(product_id: str):
+    """Lấy bảng thông số đo kích thước thực tế (dài áo, vai, ngực, eo, mông) và hướng dẫn tự đo."""
+    p = product_service.get_by_id(product_id)
+    if not p:
+        raise HTTPException(status_code=404, detail="Sản phẩm không tồn tại")
+    return size_chart_service.get_chart_for_product(product_id)
+
+
+# ==========================================
+# Giai đoạn 2: Tra cứu Vận đơn & Logistics GHN/GHTK
+# ==========================================
+@app.get("/api/orders/track/{tracking_or_order_id}", response_model=OrderTrackingResponse)
+def track_order_shipment(tracking_or_order_id: str):
+    """
+    Tra cứu hành trình vận chuyển kiện hàng công khai không cần đăng nhập:
+    Hỗ trợ tra cứu bằng: Mã đơn hàng (AURA-...), Mã vận đơn (GHN-..., GHTK-...), hoặc SĐT nhận hàng.
+    """
+    from app.db.database import db_service
+    order = db_service.get_order_by_tracking_or_id(tracking_or_order_id)
+    if not order:
+        # Thử tìm trong order_service nếu chưa có trong DB
+        mem_order = order_service.get_order_by_id(tracking_or_order_id)
+        if mem_order:
+            order = db_service._format_order_row(dict(mem_order))
+            order["order_status"] = mem_order.get("status", "confirmed")
+            order["customer_address"] = mem_order.get("customer", {}).get("address", "")
+            order["customer_phone"] = mem_order.get("customer", {}).get("phone", "")
+            order["customer_name"] = mem_order.get("customer", {}).get("name", "")
+            order["total_amount"] = mem_order.get("quote", {}).get("total", 0)
+
+    if not order:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Không tìm thấy thông tin đơn hàng hoặc mã vận đơn '{tracking_or_order_id}'. Vui lòng kiểm tra lại!"
+        )
+
+    timeline = db_service.get_tracking_timeline(order)
+    quote = order.get("quote", {})
+    lines = quote.get("lines", [])
+
+    status_labels = {
+        "pending_payment": "Chờ thanh toán",
+        "confirmed": "Đã xác nhận - Đang đóng gói",
+        "picking": "Bưu tá đang lấy hàng",
+        "in_transit": "Đang vận chuyển liên tỉnh",
+        "delivering": "Shipper đang giao hàng",
+        "completed": "Giao hàng thành công",
+        "cancelled": "Đơn hàng đã hủy",
+    }
+    ship_status = order.get("shipping_status", "ready_to_pick")
+    if order.get("order_status") == "completed":
+        ship_status = "delivered"
+
+    return OrderTrackingResponse(
+        order_id=order["order_id"],
+        tracking_code=order.get("tracking_code") or f"GHN-VN-{order['order_id'][-6:]}",
+        carrier=order.get("carrier") or "Giao Hàng Nhanh (GHN Express)",
+        shipping_status=ship_status,
+        shipping_status_label=status_labels.get(order.get("order_status"), "Đang xử lý"),
+        estimated_delivery=order.get("estimated_delivery") or "2 - 3 ngày tới",
+        customer_name=order.get("customer_name") or order.get("customer", {}).get("name", "Khách hàng"),
+        customer_phone=order.get("customer_phone") or order.get("customer", {}).get("phone", ""),
+        customer_address=order.get("customer_address") or order.get("customer", {}).get("address", ""),
+        timeline=timeline,
+        items=lines,
+        total_amount=order.get("total_amount") or quote.get("total", 0),
+        payment_method="Chuyển khoản QR NAPAS" if order.get("payment_method") == "qr_transfer" else "Thanh toán khi nhận hàng (COD)",
+        payment_status="Đã thanh toán" if order.get("payment_status") == "paid" else "Chưa thanh toán",
+        created_at=order.get("created_at") or "",
+    )
+
+
+# ==========================================
+# Giai đoạn 2: Hóa đơn điện tử E-Invoice
+# ==========================================
+@app.get("/api/orders/{order_id}/invoice", response_model=InvoiceResponse)
+def get_order_invoice(order_id: str):
+    """Lấy dữ liệu hóa đơn điện tử VAT thương mại phục vụ xem và in ấn (window.print)."""
+    from app.db.database import db_service
+    order = db_service.get_order_by_id(order_id)
+    if not order:
+        order = order_service.get_order_by_id(order_id)
+        if order:
+            order = db_service._format_order_row(dict(order))
+
+    if not order:
+        raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng để xuất hóa đơn")
+
+    quote = order.get("quote", {})
+    subtotal = quote.get("subtotal", 0)
+    shipping_fee = quote.get("shipping_fee", 0)
+    discount = quote.get("combo_discount", 0) + quote.get("voucher_discount", 0)
+    total = quote.get("total", subtotal + shipping_fee - discount)
+
+    # Thuế GTGT 8% (đã bao gồm trong giá bán niêm yết theo chuẩn bán lẻ VN)
+    vat_rate = 8
+    vat_amount = round(total * 8 / 108)
+
+    # Sinh mã số hóa đơn điện tử bảo mật
+    inv_number = f"INV-AURA-{order['order_id'].replace('AURA-', '')}"
+    
+    issued_date = order.get("created_at") or time.strftime("%d/%m/%Y %H:%M")
+
+    return InvoiceResponse(
+        invoice_number=inv_number,
+        order_id=order["order_id"],
+        issued_at=issued_date,
+        seller={
+            "company_name": "CÔNG TY CỔ PHẦN THỜI TRANG AURA STUDIO VIỆT NAM",
+            "tax_code": "0317894562",
+            "address": "Số 186 Hai Bà Trưng, Phường Đa Kao, Quận 1, TP. Hồ Chí Minh",
+            "hotline": "1900 8866 (8:00 - 22:00)",
+            "email": "support@aurastudio.vn",
+            "website": "https://aurastudio.vn"
+        },
+        buyer={
+            "name": order.get("customer_name") or order.get("customer", {}).get("name", "Khách hàng"),
+            "phone": order.get("customer_phone") or order.get("customer", {}).get("phone", ""),
+            "address": order.get("customer_address") or order.get("customer", {}).get("address", ""),
+        },
+        items=quote.get("lines", []),
+        subtotal=subtotal,
+        shipping_fee=shipping_fee,
+        discount_amount=discount,
+        vat_rate=vat_rate,
+        vat_amount=vat_amount,
+        total_amount=total,
+        payment_method="Chuyển khoản QR NAPAS 247" if order.get("payment_method") == "qr_transfer" else "Thanh toán khi nhận hàng (COD)",
+        payment_status="Đã thanh toán" if order.get("payment_status") == "paid" else "Chưa thanh toán (Thu hộ COD)",
+        carrier=order.get("carrier") or "Giao Hàng Nhanh (GHN Express)",
+        tracking_code=order.get("tracking_code") or f"GHN-VN-{order['order_id'][-6:]}",
+    )
+
+
+@app.post("/api/orders/{order_id}/send-notification")
+def send_order_notification(order_id: str, channel: str = Query("zalo", enum=["zalo", "email", "sms"])):
+    """Giả lập gửi thông báo tiến độ đơn hàng tự động qua Zalo ZNS / SMS / Email."""
+    from app.db.database import db_service
+    order = db_service.get_order_by_id(order_id)
+    if not order:
+        order = order_service.get_order_by_id(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng")
+
+    phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
+    cust_name = order.get("customer_name") or order.get("customer", {}).get("name", "Quý khách")
+    tracking = order.get("tracking_code") or f"GHN-VN-{order_id[-6:]}"
+
+    return {
+        "success": True,
+        "channel": channel,
+        "recipient": phone,
+        "message": f"Đã gửi thông báo hành trình đơn hàng {order_id} (Vận đơn {tracking}) tới {cust_name} qua {channel.upper()} thành công!"
+    }
+
+
+# ==========================================
+# Giai đoạn 3: Khách hàng thân thiết & Loyalty Club
+# ==========================================
+@app.get("/api/loyalty/status", response_model=LoyaltyStatusResponse)
+def get_loyalty_status(request: Request):
+    """Lấy trạng thái hạng thẻ thành viên, điểm tích lũy và đặc quyền AURA Club."""
+    user = get_current_user(request)
+    return db_service.get_user_loyalty(user.id)
+
+
+@app.get("/api/loyalty/history", response_model=LoyaltyHistoryResponse)
+def get_loyalty_history(request: Request, limit: int = Query(20, ge=1, le=100)):
+    """Lấy lịch sử cộng/trừ điểm thưởng của người dùng."""
+    user = get_current_user(request)
+    status = db_service.get_user_loyalty(user.id)
+    history = db_service.get_loyalty_history(user.id, limit=limit)
+    return {
+        "points_balance": status["points_balance"],
+        "total_spent": status["total_spent"],
+        "tier": status["tier"],
+        "transactions": history,
+    }
+
+
+@app.post("/api/loyalty/simulate-earn")
+def simulate_loyalty_earn(points: int = Query(50, ge=1, le=1000), request: Request = None):
+    """Endpoint hỗ trợ test/demo cộng điểm thưởng nhanh cho tài khoản đang đăng nhập."""
+    user = get_current_user(request)
+    new_bal = db_service.add_loyalty_points(
+        user.id, points, "bonus", f"Điểm thưởng trải nghiệm sự kiện AURA (+{points} điểm)"
+    )
+    return {"success": True, "points_added": points, "new_balance": new_bal}
+
+
+

@@ -1,5 +1,5 @@
 import re
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
@@ -10,6 +10,16 @@ from pydantic import BaseModel, Field, computed_field, field_validator, model_va
 class ProductColor(BaseModel):
     name: str
     hex: str
+
+
+class ProductVariant(BaseModel):
+    id: Optional[int] = None
+    product_id: Optional[str] = None
+    color: str
+    color_hex: Optional[str] = None
+    size: str
+    stock: int = 10
+    sku: Optional[str] = None
 
 
 class Product(BaseModel):
@@ -31,6 +41,7 @@ class Product(BaseModel):
     images: List[str]
     sizes: List[str]
     colors: List[ProductColor]
+    variants: Optional[List[ProductVariant]] = None
     description: str
     material: str
     style: str
@@ -193,6 +204,7 @@ class OrderItem(BaseModel):
 class QuoteRequest(BaseModel):
     items: List[OrderItem] = Field(min_length=1, max_length=50)
     voucher_code: Optional[str] = Field(default=None, max_length=30)
+    use_points: int = Field(default=0, ge=0)
 
 
 class QuoteLine(BaseModel):
@@ -214,6 +226,9 @@ class QuoteResponse(BaseModel):
     voucher_code: Optional[str] = None
     voucher_discount: int
     voucher_message: Optional[str] = None
+    points_used: int = 0
+    points_discount: int = 0
+    points_earned: int = 0
     shipping_fee: int
     shipping_discount: int
     total: int
@@ -235,13 +250,21 @@ PHONE_RE = re.compile(r"^(?:0|\+?84)\d{9}$")
 class OrderCreateRequest(BaseModel):
     customer_name: str = Field(min_length=2, max_length=80)
     customer_phone: str
-    customer_address: str = Field(min_length=8, max_length=250)
+    customer_address: Optional[str] = Field(default=None, max_length=250)
     customer_note: Optional[str] = Field(default=None, max_length=300)
+    province_code: Optional[Union[int, str]] = None
+    ward_code: Optional[Union[int, str]] = None
+    province_name: Optional[str] = None
+    ward_name: Optional[str] = None
+    province: Optional[str] = None
+    ward: Optional[str] = None
+    specific_address: Optional[str] = None
     payment_method: Literal["cod", "qr_transfer"] = "cod"
     items: List[OrderItem] = Field(min_length=1, max_length=50)
     voucher_code: Optional[str] = Field(default=None, max_length=30)
+    use_points: int = Field(default=0, ge=0)
 
-    @field_validator("customer_name", "customer_address")
+    @field_validator("customer_name")
     @classmethod
     def _strip(cls, v: str) -> str:
         return v.strip()
@@ -254,10 +277,46 @@ class OrderCreateRequest(BaseModel):
             raise ValueError("Số điện thoại không hợp lệ (ví dụ: 0987654321)")
         return cleaned
 
+    @model_validator(mode="after")
+    def _validate_locations_and_address(self) -> "OrderCreateRequest":
+        from app.services.geo_service import geo_service
+        # Nếu gửi province_code hoặc ward_code: bắt buộc kiểm tra theo địa giới 2 cấp mới
+        if self.province_code is not None or self.ward_code is not None:
+            if self.province_code is None or self.ward_code is None:
+                raise ValueError("Vui lòng chọn đầy đủ Tỉnh/Thành phố và Xã/Phường")
+            valid, err_msg, prov_obj, ward_obj = geo_service.validate_location(self.province_code, self.ward_code)
+            if not valid:
+                raise ValueError(err_msg or "Mã xã/phường không thuộc tỉnh/thành phố đã chọn")
+            
+            # Gán tên chính thức đã tra cứu từ dữ liệu chuẩn
+            self.province_name = prov_obj["name"]
+            self.ward_name = ward_obj["name"]
+            self.province = prov_obj["name"]
+            self.ward = ward_obj["name"]
+
+            # Xây dựng địa chỉ đầy đủ dạng chuỗi hiển thị được
+            street = (self.specific_address or "").strip()
+            if street:
+                self.customer_address = f"{street}, {self.ward_name}, {self.province_name}"
+            elif not self.customer_address:
+                self.customer_address = f"{self.ward_name}, {self.province_name}"
+
+        # Kiểm tra customer_address tối thiểu
+        if not self.customer_address or len(self.customer_address.strip()) < 8:
+            raise ValueError("Vui lòng cung cấp địa chỉ nhận hàng đầy đủ")
+
+        self.customer_address = self.customer_address.strip()
+        return self
+
 
 class OrderResponse(BaseModel):
     order_id: str
     status: str
+    payment_status: str = "unpaid"
+    carrier: str = "Giao Hàng Nhanh (GHN Express)"
+    tracking_code: Optional[str] = None
+    shipping_status: Optional[str] = "ready_to_pick"
+    estimated_delivery: Optional[str] = None
     quote: QuoteResponse
     customer_name: str
     customer_phone: str
@@ -265,6 +324,109 @@ class OrderResponse(BaseModel):
     payment_method: str
     created_at: str
     message: str
+    qr_code_url: Optional[str] = None
+    bank_info: Optional[Dict[str, str]] = None
+
+
+# ==========================================
+# Đánh giá & Bằng chứng Xã hội (Phase 2)
+# ==========================================
+class ProductReviewCreate(BaseModel):
+    user_name: str = Field(min_length=2, max_length=50)
+    rating: int = Field(ge=1, le=5)
+    comment: str = Field(min_length=3, max_length=1000)
+    height_cm: Optional[float] = Field(default=None, ge=100, le=230)
+    weight_kg: Optional[float] = Field(default=None, ge=30, le=200)
+    purchased_size: Optional[str] = None
+    purchased_color: Optional[str] = None
+    fit_feedback: Optional[str] = "Vừa vặn"
+
+
+class ProductReviewItem(BaseModel):
+    id: int
+    product_id: str
+    user_name: str
+    rating: int
+    comment: str
+    height_cm: Optional[float] = None
+    weight_kg: Optional[float] = None
+    purchased_size: Optional[str] = None
+    purchased_color: Optional[str] = None
+    fit_feedback: Optional[str] = "Vừa vặn"
+    is_verified_buyer: bool = True
+    likes_count: int = 0
+    created_at: str
+
+
+class ProductReviewsResponse(BaseModel):
+    summary: Dict[str, Any]
+    reviews: List[ProductReviewItem]
+
+
+# ==========================================
+# Bảng số đo & Hướng dẫn chọn size (Phase 2)
+# ==========================================
+class SizeChartResponse(BaseModel):
+    product_id: str
+    product_name: str
+    category_name: str
+    unit: str = "cm"
+    columns: List[str]
+    rows: List[Dict[str, Any]]
+    measuring_guide: List[Dict[str, str]]
+    care_instructions: List[str]
+
+
+# ==========================================
+# Tra cứu Vận đơn & Logistics (Phase 2)
+# ==========================================
+class TrackingTimelineStep(BaseModel):
+    key: str
+    title: str
+    description: str
+    location: str
+    time: str
+    status: Literal["completed", "current", "pending"]
+
+
+class OrderTrackingResponse(BaseModel):
+    order_id: str
+    tracking_code: str
+    carrier: str
+    shipping_status: str
+    shipping_status_label: str
+    estimated_delivery: str
+    customer_name: str
+    customer_phone: str
+    customer_address: str
+    timeline: List[TrackingTimelineStep]
+    items: List[Dict[str, Any]]
+    total_amount: int
+    payment_method: str
+    payment_status: str
+    created_at: str
+
+
+# ==========================================
+# Hóa đơn điện tử E-Invoice (Phase 2)
+# ==========================================
+class InvoiceResponse(BaseModel):
+    invoice_number: str
+    order_id: str
+    issued_at: str
+    seller: Dict[str, str]
+    buyer: Dict[str, str]
+    items: List[Dict[str, Any]]
+    subtotal: int
+    shipping_fee: int
+    discount_amount: int
+    vat_rate: int = 8
+    vat_amount: int
+    total_amount: int
+    payment_method: str
+    payment_status: str
+    carrier: str
+    tracking_code: str
 
 
 # ==========================================
@@ -309,6 +471,45 @@ class TrendRefreshResponse(BaseModel):
 
 
 # ==========================================
+# Khách hàng thân thiết & Điểm thưởng AURA Club (Phase 3)
+# ==========================================
+class LoyaltyStatusResponse(BaseModel):
+    user_id: str
+    user_name: str
+    tier: str
+    tier_name: str
+    tier_badge: str
+    points_balance: int
+    points_value_vnd: int
+    total_spent: int
+    earn_rate_percent: int
+    free_shipping_all_orders: bool
+    next_tier: Optional[str] = None
+    next_tier_name: Optional[str] = None
+    next_tier_spent_needed: int = 0
+    progress_percent: int = 0
+    benefits: List[str] = []
+
+
+class LoyaltyTransactionItem(BaseModel):
+    id: int
+    user_id: str
+    order_id: Optional[str] = None
+    points: int
+    type: str
+    description: str
+    balance_after: int
+    created_at: str
+
+
+class LoyaltyHistoryResponse(BaseModel):
+    points_balance: int
+    total_spent: int
+    tier: str
+    transactions: List[LoyaltyTransactionItem]
+
+
+# ==========================================
 # Người dùng & Xác thực (Authentication & Users)
 # ==========================================
 class User(BaseModel):
@@ -323,6 +524,9 @@ class User(BaseModel):
     status: Literal["active", "disabled"] = "active"
     is_active: bool = True
     avatar: Optional[str] = None
+    points_balance: int = 0
+    total_spent: int = 0
+    tier: str = "Silver"
     created_at: str = ""
 
     @model_validator(mode="before")
