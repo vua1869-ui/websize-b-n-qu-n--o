@@ -4,6 +4,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+DEFAULT_DB_PATH = os.path.join(BASE_DIR, "app", "data", "aura_store.db").replace(os.sep, "/")
+
+
 class Settings(BaseSettings):
     """Cấu hình đọc từ biến môi trường hoặc file .env ở thư mục gốc dự án."""
 
@@ -21,6 +24,23 @@ class Settings(BaseSettings):
 
     # Khóa ký token combo. ĐỔI giá trị này khi triển khai thật.
     SECRET_KEY: str = "dev-only-change-me"
+
+    # Khóa bí mật xác thực webhook thanh toán
+    PAYMENT_WEBHOOK_SECRET: str = "dev-payment-webhook-secret"
+
+    # Database connection string (SQLite mặc định, dễ dàng chuyển đổi sang PostgreSQL)
+    DATABASE_URL: str = f"sqlite:///{DEFAULT_DB_PATH}"
+
+    # ---- Cổng thanh toán VNPay Sandbox ----
+    VNPAY_TMN_CODE: str = "2QXUI4J4"
+    VNPAY_HASH_SECRET: str = "RAIAVDAKACNZZCGTRTTGGBJQOXZDZXXX"
+    VNPAY_URL: str = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+    VNPAY_RETURN_URL: str = "http://127.0.0.1:8000/api/payment/vnpay/return"
+
+    # ---- Cloudinary Image Storage ----
+    CLOUDINARY_CLOUD_NAME: str = "jtquct7e"
+    CLOUDINARY_API_KEY: str = "743289557242615"
+    CLOUDINARY_API_SECRET: str = "3g0sbUI_7_NXZZWb-tIk4a4eqew"
 
     # ---- AI ----
     # auto: thử Gemini (nếu có key) -> Ollama -> bộ máy luật nội bộ

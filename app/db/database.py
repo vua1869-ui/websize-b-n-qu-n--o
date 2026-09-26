@@ -194,6 +194,18 @@ CREATE TABLE IF NOT EXISTS loyalty_transactions (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_loyalty_user ON loyalty_transactions(user_id);
+
+CREATE TABLE IF NOT EXISTS inventory_batches (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    product_id TEXT NOT NULL,
+    quantity INTEGER NOT NULL,
+    cost_price INTEGER NOT NULL,
+    received_at TEXT NOT NULL,
+    note TEXT,
+    created_by TEXT,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_inventory_batches_pid ON inventory_batches(product_id);
 """
 
 
@@ -778,7 +790,11 @@ class DatabaseService:
             params.append(limit)
 
             rows = conn.execute(query, tuple(params)).fetchall()
-            reviews_list = [dict(r) for r in rows]
+            reviews_list = []
+            for r in rows:
+                rev = dict(r)
+                rev["is_verified_buyer"] = bool(rev.get("is_verified_buyer", 0))
+                reviews_list.append(rev)
 
             return {
                 "summary": {
@@ -793,7 +809,42 @@ class DatabaseService:
         finally:
             conn.close()
 
-    def add_product_review(self, product_id: str, review_data: Dict[str, Any]) -> Dict[str, Any]:
+    def check_user_purchased_product(self, user_id: str, product_id: str, username: Optional[str] = None) -> bool:
+        """
+        Kiểm tra xem user_id có ít nhất 1 đơn hàng trạng thái 'paid' hoặc 'completed'
+        chứa product_id hay không (query join orders + order_items).
+        """
+        conn = get_db_connection(self.db_path)
+        try:
+            user_ids = [user_id]
+            if username and username != user_id:
+                user_ids.append(username)
+            placeholders = ",".join("?" for _ in user_ids)
+            query = f"""
+                SELECT 1 
+                FROM orders o
+                JOIN order_items oi ON o.order_id = oi.order_id
+                WHERE o.user_id IN ({placeholders})
+                  AND oi.product_id = ?
+                  AND (
+                    o.payment_status = 'paid'
+                    OR o.order_status IN ('paid', 'completed')
+                  )
+                LIMIT 1;
+            """
+            params = tuple(user_ids + [product_id])
+            row = conn.execute(query, params).fetchone()
+            return row is not None
+        finally:
+            conn.close()
+
+    def add_product_review(
+        self,
+        product_id: str,
+        review_data: Dict[str, Any],
+        user_id: Optional[str] = None,
+        is_verified_buyer: bool = True
+    ) -> Dict[str, Any]:
         """Thêm đánh giá mới từ khách hàng và tự động cập nhật lại rating tổng sản phẩm."""
         with get_db_transaction(self.db_path) as conn:
             now_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
@@ -809,10 +860,10 @@ class DatabaseService:
             cursor = conn.execute(
                 """
                 INSERT INTO reviews 
-                (product_id, user_name, rating, comment, height_cm, weight_kg, purchased_size, purchased_color, fit_feedback, is_verified_buyer, likes_count, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, ?);
+                (product_id, user_id, user_name, rating, comment, height_cm, weight_kg, purchased_size, purchased_color, fit_feedback, is_verified_buyer, likes_count, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?);
                 """,
-                (product_id, user_name, rating, comment, height_cm, weight_kg, purchased_size, purchased_color, fit_feedback, now_str)
+                (product_id, user_id, user_name, rating, comment, height_cm, weight_kg, purchased_size, purchased_color, fit_feedback, 1 if is_verified_buyer else 0, now_str)
             )
             new_id = cursor.lastrowid
 
@@ -830,6 +881,7 @@ class DatabaseService:
             return {
                 "id": new_id,
                 "product_id": product_id,
+                "user_id": user_id,
                 "user_name": user_name,
                 "rating": rating,
                 "comment": comment,
@@ -839,7 +891,7 @@ class DatabaseService:
                 "purchased_color": purchased_color,
                 "fit_feedback": fit_feedback,
                 "created_at": now_str,
-                "is_verified_buyer": 1
+                "is_verified_buyer": bool(is_verified_buyer)
             }
 
     # ==================== LOGISTICS TIMELINE ====================
@@ -1083,6 +1135,245 @@ class DatabaseService:
                 (user_id, limit)
             ).fetchall()
             return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+    # ==================== INVENTORY BATCHES & PROFIT/LOSS ====================
+
+    def add_inventory_batch(
+        self,
+        product_id: str,
+        quantity: int,
+        cost_price: int,
+        note: Optional[str] = None,
+        created_by: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Nhập kho theo lô hàng: Lưu bản ghi vào inventory_batches và tăng tồn kho
+        sản phẩm cha trong CSDL một cách nguyên tử (Atomic transaction).
+        """
+        if quantity <= 0:
+            raise ValueError("Số lượng nhập kho phải lớn hơn 0")
+        if cost_price < 0:
+            raise ValueError("Giá vốn nhập kho không được âm")
+
+        with get_db_transaction(self.db_path) as conn:
+            prod = conn.execute("SELECT id, name, stock, stock_total FROM products WHERE id = ?;", (product_id,)).fetchone()
+            if not prod:
+                raise ValueError(f"Không tìm thấy sản phẩm với mã '{product_id}'")
+
+            now_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+            cur = conn.execute(
+                """
+                INSERT INTO inventory_batches (product_id, quantity, cost_price, received_at, note, created_by)
+                VALUES (?, ?, ?, ?, ?, ?);
+                """,
+                (product_id, quantity, cost_price, now_str, note or "", created_by or "admin")
+            )
+            batch_id = cur.lastrowid
+
+            # Tăng tồn kho sản phẩm cha
+            conn.execute(
+                """
+                UPDATE products 
+                SET stock = stock + ?, stock_total = stock_total + ?
+                WHERE id = ?;
+                """,
+                (quantity, quantity, product_id)
+            )
+
+            new_stock = prod["stock"] + quantity
+            new_stock_total = prod["stock_total"] + quantity
+
+            # Đồng bộ in-memory product_service nếu có
+            try:
+                from app.services.product_service import product_service
+                mem_prod = product_service.get_by_id(product_id)
+                if mem_prod:
+                    mem_prod.stock = new_stock
+                    mem_prod.stock_total = new_stock_total
+            except Exception:
+                pass
+
+            return {
+                "id": batch_id,
+                "product_id": product_id,
+                "product_name": prod["name"],
+                "quantity": quantity,
+                "cost_price": cost_price,
+                "received_at": now_str,
+                "note": note or "",
+                "created_by": created_by or "admin",
+                "new_stock": new_stock,
+                "new_stock_total": new_stock_total,
+            }
+
+    def get_inventory_batches(self, product_id: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+        """Lấy lịch sử các lô hàng nhập kho (theo sản phẩm hoặc toàn bộ kho)."""
+        conn = get_db_connection(self.db_path)
+        try:
+            if product_id:
+                rows = conn.execute(
+                    """
+                    SELECT b.*, p.name as product_name 
+                    FROM inventory_batches b
+                    LEFT JOIN products p ON b.product_id = p.id
+                    WHERE b.product_id = ?
+                    ORDER BY b.id DESC LIMIT ?;
+                    """,
+                    (product_id, limit)
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    """
+                    SELECT b.*, p.name as product_name 
+                    FROM inventory_batches b
+                    LEFT JOIN products p ON b.product_id = p.id
+                    ORDER BY b.id DESC LIMIT ?;
+                    """,
+                    (limit,)
+                ).fetchall()
+            return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+    def get_product_weighted_average_cost(self, product_id: str) -> float:
+        """Tính giá vốn bình quân gia quyền (Weighted Average Cost) của 1 sản phẩm."""
+        conn = get_db_connection(self.db_path)
+        try:
+            row = conn.execute(
+                """
+                SELECT SUM(quantity) as total_qty, SUM(quantity * cost_price) as total_cost
+                FROM inventory_batches
+                WHERE product_id = ?;
+                """,
+                (product_id,)
+            ).fetchone()
+            if row and row["total_qty"] and row["total_qty"] > 0:
+                return round(float(row["total_cost"]) / float(row["total_qty"]), 2)
+            return 0.0
+        finally:
+            conn.close()
+
+    def get_profit_loss_report(self) -> Dict[str, Any]:
+        """
+        Báo cáo Lãi/Lỗ dựa trên doanh thu từ các đơn hàng đã thanh toán ('paid' hoặc 'completed')
+        và giá vốn bình quân gia quyền (Weighted Average Cost - WAC) từ các lô nhập kho.
+        """
+        conn = get_db_connection(self.db_path)
+        try:
+            # 1. Tính WAC cho tất cả sản phẩm đã có lô nhập
+            wac_rows = conn.execute(
+                """
+                SELECT product_id, SUM(quantity) as total_qty, SUM(quantity * cost_price) as total_cost
+                FROM inventory_batches
+                GROUP BY product_id;
+                """
+            ).fetchall()
+            wac_map: Dict[str, float] = {}
+            for r in wac_rows:
+                if r["total_qty"] and r["total_qty"] > 0:
+                    wac_map[r["product_id"]] = round(float(r["total_cost"]) / float(r["total_qty"]), 2)
+
+            # 2. Lấy tất cả order_items từ các đơn hàng đã thanh toán
+            sold_items_rows = conn.execute(
+                """
+                SELECT 
+                    o.order_id,
+                    o.payment_status,
+                    o.order_status,
+                    o.created_at,
+                    oi.product_id,
+                    oi.product_name,
+                    oi.quantity,
+                    oi.unit_price,
+                    oi.line_total
+                FROM orders o
+                JOIN order_items oi ON o.order_id = oi.order_id
+                WHERE o.payment_status = 'paid' OR o.order_status IN ('paid', 'completed')
+                ORDER BY o.created_at DESC;
+                """
+            ).fetchall()
+
+            # Thống kê số đơn hàng đã thanh toán
+            paid_orders_count = conn.execute(
+                """
+                SELECT COUNT(DISTINCT order_id) as cnt, COALESCE(SUM(total_amount), 0) as total_rev
+                FROM orders
+                WHERE payment_status = 'paid' OR order_status IN ('paid', 'completed');
+                """
+            ).fetchone()
+            total_orders = paid_orders_count["cnt"] if paid_orders_count else 0
+
+            # 3. Phân rã theo từng sản phẩm
+            product_stats: Dict[str, Dict[str, Any]] = {}
+            total_revenue = 0
+            total_cogs = 0
+            total_items_sold = 0
+
+            for item in sold_items_rows:
+                pid = item["product_id"]
+                pname = item["product_name"] or pid
+                qty = int(item["quantity"])
+                rev = int(item["line_total"])
+                wac = wac_map.get(pid, 0.0)
+                item_cogs = int(round(wac * qty))
+
+                total_revenue += rev
+                total_cogs += item_cogs
+                total_items_sold += qty
+
+                if pid not in product_stats:
+                    product_stats[pid] = {
+                        "product_id": pid,
+                        "product_name": pname,
+                        "sold_quantity": 0,
+                        "revenue": 0,
+                        "cost_price_wac": wac,
+                        "cogs": 0,
+                        "profit": 0,
+                        "margin_percent": 0.0,
+                    }
+
+                product_stats[pid]["sold_quantity"] += qty
+                product_stats[pid]["revenue"] += rev
+                product_stats[pid]["cogs"] += item_cogs
+
+            # Tính lợi nhuận và tỷ suất cho từng sản phẩm
+            breakdown_list = []
+            for pid, pdata in product_stats.items():
+                pdata["profit"] = pdata["revenue"] - pdata["cogs"]
+                if pdata["revenue"] > 0:
+                    pdata["margin_percent"] = round((pdata["profit"] / pdata["revenue"]) * 100, 1)
+                breakdown_list.append(pdata)
+
+            # Sắp xếp theo doanh thu giảm dần
+            breakdown_list.sort(key=lambda x: x["revenue"], reverse=True)
+
+            gross_profit = total_revenue - total_cogs
+            profit_margin = round((gross_profit / total_revenue) * 100, 1) if total_revenue > 0 else 0.0
+
+            # 4. Lấy 10 lô nhập kho gần nhất
+            recent_batches_rows = conn.execute(
+                """
+                SELECT b.*, p.name as product_name
+                FROM inventory_batches b
+                LEFT JOIN products p ON b.product_id = p.id
+                ORDER BY b.id DESC LIMIT 10;
+                """
+            ).fetchall()
+            recent_batches = [dict(r) for r in recent_batches_rows]
+
+            return {
+                "total_revenue": total_revenue,
+                "total_cogs": total_cogs,
+                "gross_profit": gross_profit,
+                "profit_margin_percent": profit_margin,
+                "total_paid_orders": total_orders,
+                "total_items_sold": total_items_sold,
+                "products_breakdown": breakdown_list,
+                "recent_batches": recent_batches,
+            }
         finally:
             conn.close()
 

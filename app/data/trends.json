@@ -1,329 +1,149 @@
 {
-  "updated_at": "2026-09-26T11:11:47+07:00",
+  "updated_at": "2026-09-26T21:13:06+07:00",
   "source": "google_trends",
   "trends": [
     {
       "keyword": "minimalism",
-      "score": 81.5,
-      "growth_rate": 1073.8,
-      "search_interest": 26.8,
+      "score": 79.4,
+      "growth_rate": 100.5,
+      "search_interest": 18.6,
       "category": "style",
       "status": "rising",
       "source": "google_trends",
-      "updated_at": "2026-09-26T11:11:46+07:00"
+      "updated_at": "2026-09-26T21:13:04+07:00"
+    },
+    {
+      "keyword": "old money",
+      "score": 77.9,
+      "growth_rate": 230.1,
+      "search_interest": 12.5,
+      "category": "style",
+      "status": "rising",
+      "source": "google_trends",
+      "updated_at": "2026-09-26T21:13:04+07:00"
+    },
+    {
+      "keyword": "streetwear",
+      "score": 77.7,
+      "growth_rate": 122.8,
+      "search_interest": 11.5,
+      "category": "style",
+      "status": "rising",
+      "source": "google_trends",
+      "updated_at": "2026-09-26T21:13:04+07:00"
     },
     {
       "keyword": "áo blazer",
-      "score": 75.6,
-      "growth_rate": 140.0,
-      "search_interest": 3.5,
+      "score": 75.8,
+      "growth_rate": 157.5,
+      "search_interest": 3.9,
       "category": "outer",
       "status": "rising",
       "source": "google_trends",
-      "updated_at": "2026-09-26T11:11:46+07:00"
+      "updated_at": "2026-09-26T21:13:04+07:00"
+    },
+    {
+      "keyword": "váy maxi",
+      "score": 75.3,
+      "growth_rate": 68.8,
+      "search_interest": 1.7,
+      "category": "dress",
+      "status": "rising",
+      "source": "google_trends",
+      "updated_at": "2026-09-26T21:13:04+07:00"
     },
     {
       "keyword": "quần baggy",
       "score": 75.2,
-      "growth_rate": 65.0,
-      "search_interest": 1.6,
+      "growth_rate": 66.2,
+      "search_interest": 1.7,
       "category": "bottom",
       "status": "rising",
       "source": "google_trends",
-      "updated_at": "2026-09-26T11:11:46+07:00"
+      "updated_at": "2026-09-26T21:13:04+07:00"
     },
     {
       "keyword": "chân váy",
-      "score": 69.9,
+      "score": 70.0,
       "growth_rate": 13.6,
-      "search_interest": 74.3,
+      "search_interest": 74.9,
       "category": "bottom",
       "status": "stable",
       "source": "google_trends",
-      "updated_at": "2026-09-26T11:11:46+07:00"
-    },
-    {
-      "keyword": "Korean fashion",
-      "score": 68.0,
-      "growth_rate": 76.2,
-      "search_interest": 1.9,
-      "category": "fashion",
-      "status": "rising",
-      "source": "google_trends",
-      "updated_at": "2026-09-26T11:11:46+07:00"
+      "updated_at": "2026-09-26T21:13:04+07:00"
     },
     {
       "keyword": "áo polo",
-      "score": 65.3,
-      "growth_rate": 4.0,
-      "search_interest": 74.6,
+      "score": 65.6,
+      "growth_rate": 4.5,
+      "search_interest": 74.5,
       "category": "top",
       "status": "stable",
       "source": "google_trends",
-      "updated_at": "2026-09-26T11:11:46+07:00"
+      "updated_at": "2026-09-26T21:13:04+07:00"
     },
     {
       "keyword": "áo oversize",
-      "score": 58.7,
-      "growth_rate": 28.7,
-      "search_interest": 0.7,
+      "score": 59.4,
+      "growth_rate": 30.0,
+      "search_interest": 0.8,
       "category": "top",
       "status": "rising",
       "source": "google_trends",
-      "updated_at": "2026-09-26T11:11:46+07:00"
-    },
-    {
-      "keyword": "quần jeans ống rộng",
-      "score": 48.4,
-      "growth_rate": 7.5,
-      "search_interest": 0.2,
-      "category": "bottom",
-      "status": "stable",
-      "source": "google_trends",
-      "updated_at": "2026-09-26T11:11:46+07:00"
-    },
-    {
-      "keyword": "quần ống rộng",
-      "score": 47.4,
-      "growth_rate": -10.8,
-      "search_interest": 31.3,
-      "category": "bottom",
-      "status": "stable",
-      "source": "google_trends",
-      "updated_at": "2026-09-26T11:11:46+07:00"
+      "updated_at": "2026-09-26T21:13:04+07:00"
     },
     {
       "keyword": "áo baby tee",
-      "score": 40.2,
-      "growth_rate": -10.0,
-      "search_interest": 1.2,
+      "score": 53.9,
+      "growth_rate": 18.8,
+      "search_interest": 0.5,
       "category": "top",
       "status": "stable",
       "source": "google_trends",
-      "updated_at": "2026-09-26T11:11:46+07:00"
+      "updated_at": "2026-09-26T21:13:04+07:00"
+    },
+    {
+      "keyword": "Y2K",
+      "score": 51.4,
+      "growth_rate": -15.1,
+      "search_interest": 55.4,
+      "category": "fashion",
+      "status": "stable",
+      "source": "google_trends",
+      "updated_at": "2026-09-26T21:13:04+07:00"
+    },
+    {
+      "keyword": "quần jeans ống rộng",
+      "score": 46.6,
+      "growth_rate": 3.8,
+      "search_interest": 0.1,
+      "category": "bottom",
+      "status": "stable",
+      "source": "google_trends",
+      "updated_at": "2026-09-26T21:13:04+07:00"
+    },
+    {
+      "keyword": "quần ống rộng",
+      "score": 46.3,
+      "growth_rate": -13.8,
+      "search_interest": 32.6,
+      "category": "bottom",
+      "status": "stable",
+      "source": "google_trends",
+      "updated_at": "2026-09-26T21:13:04+07:00"
+    },
+    {
+      "keyword": "Korean fashion",
+      "score": 8.2,
+      "growth_rate": -92.0,
+      "search_interest": 3.0,
+      "category": "fashion",
+      "status": "declining",
+      "source": "google_trends",
+      "updated_at": "2026-09-26T21:13:04+07:00"
     }
   ],
   "history": [
-    {
-      "date": "2026-09-23",
-      "keyword": "váy maxi",
-      "score": 75.2
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "quần baggy",
-      "score": 75.1
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "minimalism",
-      "score": 83.6
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "old money",
-      "score": 77.9
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "áo blazer",
-      "score": 75.7
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "váy maxi",
-      "score": 75.2
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "quần baggy",
-      "score": 73.9
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "minimalism",
-      "score": 83.6
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "old money",
-      "score": 77.9
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "áo blazer",
-      "score": 75.7
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "váy maxi",
-      "score": 75.2
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "quần baggy",
-      "score": 73.9
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "minimalism",
-      "score": 83.6
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "old money",
-      "score": 77.9
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "áo blazer",
-      "score": 75.7
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "váy maxi",
-      "score": 75.2
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "quần baggy",
-      "score": 73.9
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "minimalism",
-      "score": 83.5
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "old money",
-      "score": 77.9
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "áo blazer",
-      "score": 75.7
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "váy maxi",
-      "score": 75.2
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "quần baggy",
-      "score": 73.9
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "minimalism",
-      "score": 83.6
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "old money",
-      "score": 77.9
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "áo blazer",
-      "score": 75.7
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "váy maxi",
-      "score": 75.2
-    },
-    {
-      "date": "2026-09-23",
-      "keyword": "quần baggy",
-      "score": 73.9
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "old money",
-      "score": 78.3
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "váy maxi",
-      "score": 75.2
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "Y2K",
-      "score": 54.0
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "streetwear",
-      "score": 37.1
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "old money",
-      "score": 78.3
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "váy maxi",
-      "score": 75.2
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "Y2K",
-      "score": 54.0
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "streetwear",
-      "score": 37.1
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "minimalism",
-      "score": 82.7
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "old money",
-      "score": 78.3
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "áo blazer",
-      "score": 75.7
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "váy maxi",
-      "score": 75.3
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "quần baggy",
-      "score": 75.2
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "minimalism",
-      "score": 82.7
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "old money",
-      "score": 78.2
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "áo blazer",
-      "score": 75.7
-    },
-    {
-      "date": "2026-09-25",
-      "keyword": "quần baggy",
-      "score": 75.2
-    },
     {
       "date": "2026-09-25",
       "keyword": "váy maxi",
@@ -603,6 +423,226 @@
       "date": "2026-09-26",
       "keyword": "Korean fashion",
       "score": 68.0
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "minimalism",
+      "score": 79.4
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "old money",
+      "score": 77.8
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "streetwear",
+      "score": 77.5
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "áo blazer",
+      "score": 75.7
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "quần baggy",
+      "score": 75.2
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "minimalism",
+      "score": 79.6
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "old money",
+      "score": 77.8
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "streetwear",
+      "score": 77.4
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "áo blazer",
+      "score": 75.8
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "quần baggy",
+      "score": 75.2
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "minimalism",
+      "score": 79.6
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "old money",
+      "score": 77.8
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "streetwear",
+      "score": 77.5
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "áo blazer",
+      "score": 75.7
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "quần baggy",
+      "score": 73.4
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "áo polo",
+      "score": 65.1
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "áo oversize",
+      "score": 58.7
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "áo baby tee",
+      "score": 56.9
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "quần ống rộng",
+      "score": 46.3
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "minimalism",
+      "score": 79.6
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "old money",
+      "score": 77.8
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "streetwear",
+      "score": 77.4
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "áo blazer",
+      "score": 75.7
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "quần baggy",
+      "score": 75.2
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "minimalism",
+      "score": 79.3
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "old money",
+      "score": 77.8
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "streetwear",
+      "score": 77.4
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "áo blazer",
+      "score": 75.7
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "quần baggy",
+      "score": 75.2
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "minimalism",
+      "score": 79.4
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "old money",
+      "score": 77.8
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "streetwear",
+      "score": 77.4
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "áo blazer",
+      "score": 75.6
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "quần baggy",
+      "score": 75.2
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "minimalism",
+      "score": 79.4
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "old money",
+      "score": 77.9
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "streetwear",
+      "score": 77.6
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "váy maxi",
+      "score": 75.3
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "áo polo",
+      "score": 65.5
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "minimalism",
+      "score": 79.4
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "old money",
+      "score": 77.9
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "streetwear",
+      "score": 77.7
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "áo blazer",
+      "score": 75.8
+    },
+    {
+      "date": "2026-09-26",
+      "keyword": "váy maxi",
+      "score": 75.3
     }
   ]
 }

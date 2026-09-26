@@ -109,6 +109,7 @@ const CFG = {
 
 const App = {
   state: {
+    user: null,
     catalog: {}, categories: [], products: [], vouchers: [], videos: [], notice: '',
     savedVouchers: U.store.get('aura_vouchers_v2', []),
     cart: U.store.get('aura_cart_v2', []),
@@ -136,15 +137,25 @@ const App = {
     this.refreshCart();
     ExitIntentUI.init();
     OmnichannelUI.init();
+
+    // Tự động mở modal Tra cứu vận đơn nếu URL có query param ?tracking=...
+    const trackingParam = new URLSearchParams(window.location.search).get('tracking');
+    if (trackingParam && window.TrackingUI) {
+      setTimeout(() => window.TrackingUI.openModal(trackingParam), 400);
+    }
   },
 
   async initAuth() {
     try {
       const user = await U.api('/api/auth/me');
       if (user && user.id) {
+        this.state.user = user;
         this.renderAuth(user);
+      } else {
+        this.state.user = null;
       }
     } catch {
+      this.state.user = null;
       // chưa đăng nhập
     }
   },
@@ -941,6 +952,7 @@ const App = {
       const reviews = data.reviews || [];
       const breakdown = summary.rating_breakdown || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
       const totalRev = summary.total_reviews || 0;
+      const isLogged = !!this.state.user;
 
       container.innerHTML = `
         <div class="space-y-5">
@@ -1004,65 +1016,78 @@ const App = {
           <!-- Form viết đánh giá mới (Mặc định ẩn) -->
           <div id="qv-review-form-box" class="hidden rounded-xl border border-brand-200 bg-brand-50/40 p-4 space-y-3">
             <h4 class="text-xs font-bold text-zinc-900 uppercase">Gửi đánh giá của bạn</h4>
-            <form onsubmit="event.preventDefault(); App.submitProductReview('${productId}');" class="space-y-3 text-xs">
-              <div>
-                <label class="block font-semibold text-zinc-700 mb-1">Mức độ hài lòng của bạn *</label>
-                <div class="star-rating star-rating-interactive text-xl text-amber-400" id="review-stars-input">
-                  <button type="button" onclick="App.setReviewStar(1)">★</button>
-                  <button type="button" onclick="App.setReviewStar(2)">★</button>
-                  <button type="button" onclick="App.setReviewStar(3)">★</button>
-                  <button type="button" onclick="App.setReviewStar(4)">★</button>
-                  <button type="button" onclick="App.setReviewStar(5)">★</button>
+            ${!isLogged ? `
+              <div class="rounded-xl border border-amber-200 bg-amber-50/90 p-4 text-center space-y-2">
+                <div class="flex items-center justify-center gap-1.5 text-xs font-bold text-amber-800">
+                  <span>🔒</span> Vui lòng đăng nhập để đánh giá
                 </div>
-                <input type="hidden" id="rf-rating" value="5" />
+                <p class="text-xs text-amber-700">Chỉ những khách hàng đã mua sản phẩm tại AURA STUDIO mới có thể gửi đánh giá và nhận xét.</p>
+                <div class="pt-1.5 flex justify-center gap-2">
+                  <a href="/login" class="btn btn-primary text-xs !py-1.5 px-4 font-bold">Đăng nhập ngay</a>
+                  <button type="button" onclick="App.toggleReviewForm()" class="btn btn-soft text-xs !py-1.5 px-3">Đóng</button>
+                </div>
               </div>
+            ` : `
+              <form onsubmit="event.preventDefault(); App.submitProductReview('${productId}');" class="space-y-3 text-xs">
+                <div>
+                  <label class="block font-semibold text-zinc-700 mb-1">Mức độ hài lòng của bạn *</label>
+                  <div class="star-rating star-rating-interactive text-xl text-amber-400" id="review-stars-input">
+                    <button type="button" onclick="App.setReviewStar(1)">★</button>
+                    <button type="button" onclick="App.setReviewStar(2)">★</button>
+                    <button type="button" onclick="App.setReviewStar(3)">★</button>
+                    <button type="button" onclick="App.setReviewStar(4)">★</button>
+                    <button type="button" onclick="App.setReviewStar(5)">★</button>
+                  </div>
+                  <input type="hidden" id="rf-rating" value="5" />
+                </div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label class="block font-semibold text-zinc-700 mb-1">Họ tên của bạn *</label>
-                  <input type="text" id="rf-name" required placeholder="VD: Nguyễn Thảo Ly" class="field !py-2 text-xs" />
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block font-semibold text-zinc-700 mb-1">Họ tên của bạn *</label>
+                    <input type="text" id="rf-name" required value="${U.esc((this.state.user && (this.state.user.full_name || this.state.user.username)) || '')}" placeholder="VD: Nguyễn Thảo Ly" class="field !py-2 text-xs" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-zinc-700 mb-1">Cảm nhận độ vừa vặn *</label>
+                    <select id="rf-fit" class="field !py-2 text-xs">
+                      <option value="Vừa vặn">Vừa vặn hoàn hảo</option>
+                      <option value="Hơi rộng">Hơi rộng một chút</option>
+                      <option value="Hơi chật">Hơi chật một chút</option>
+                      <option value="Rộng">Rộng hơn mong đợi</option>
+                      <option value="Chật">Chật hơn mong đợi</option>
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label class="block font-semibold text-zinc-700 mb-1">Cảm nhận độ vừa vặn *</label>
-                  <select id="rf-fit" class="field !py-2 text-xs">
-                    <option value="Vừa vặn">Vừa vặn hoàn hảo</option>
-                    <option value="Hơi rộng">Hơi rộng một chút</option>
-                    <option value="Hơi chật">Hơi chật một chút</option>
-                    <option value="Rộng">Rộng hơn mong đợi</option>
-                    <option value="Chật">Chật hơn mong đợi</option>
-                  </select>
-                </div>
-              </div>
 
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div>
-                  <label class="block font-semibold text-zinc-700 mb-1">Chiều cao (cm)</label>
-                  <input type="number" id="rf-height" min="100" max="220" placeholder="162" class="field !py-2 text-xs" />
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div>
+                    <label class="block font-semibold text-zinc-700 mb-1">Chiều cao (cm)</label>
+                    <input type="number" id="rf-height" min="100" max="220" placeholder="162" class="field !py-2 text-xs" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-zinc-700 mb-1">Cân nặng (kg)</label>
+                    <input type="number" id="rf-weight" min="30" max="180" placeholder="48" class="field !py-2 text-xs" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-zinc-700 mb-1">Size đã mua</label>
+                    <input type="text" id="rf-size" placeholder="S" class="field !py-2 text-xs uppercase" />
+                  </div>
+                  <div>
+                    <label class="block font-semibold text-zinc-700 mb-1">Màu đã mua</label>
+                    <input type="text" id="rf-color" placeholder="Be / Kem" class="field !py-2 text-xs" />
+                  </div>
                 </div>
-                <div>
-                  <label class="block font-semibold text-zinc-700 mb-1">Cân nặng (kg)</label>
-                  <input type="number" id="rf-weight" min="30" max="180" placeholder="48" class="field !py-2 text-xs" />
-                </div>
-                <div>
-                  <label class="block font-semibold text-zinc-700 mb-1">Size đã mua</label>
-                  <input type="text" id="rf-size" placeholder="S" class="field !py-2 text-xs uppercase" />
-                </div>
-                <div>
-                  <label class="block font-semibold text-zinc-700 mb-1">Màu đã mua</label>
-                  <input type="text" id="rf-color" placeholder="Be / Kem" class="field !py-2 text-xs" />
-                </div>
-              </div>
 
-              <div>
-                <label class="block font-semibold text-zinc-700 mb-1">Nhận xét chi tiết (chất vải, đường may, form dáng...) *</label>
-                <textarea id="rf-comment" rows="2" required placeholder="Chia sẻ trải nghiệm thực tế để giúp mọi người dễ dàng chọn size nhé..." class="field !py-2 text-xs"></textarea>
-              </div>
+                <div>
+                  <label class="block font-semibold text-zinc-700 mb-1">Nhận xét chi tiết (chất vải, đường may, form dáng...) *</label>
+                  <textarea id="rf-comment" rows="2" required placeholder="Chia sẻ trải nghiệm thực tế để giúp mọi người dễ dàng chọn size nhé..." class="field !py-2 text-xs"></textarea>
+                </div>
 
-              <div class="flex justify-end gap-2 pt-1">
-                <button type="button" onclick="App.toggleReviewForm()" class="btn btn-soft text-xs !py-1.5">Hủy</button>
-                <button type="submit" id="rf-submit-btn" class="btn btn-primary text-xs !py-1.5 font-bold uppercase">Gửi đánh giá</button>
-              </div>
-            </form>
+                <div class="flex justify-end gap-2 pt-1">
+                  <button type="button" onclick="App.toggleReviewForm()" class="btn btn-soft text-xs !py-1.5">Hủy</button>
+                  <button type="submit" id="rf-submit-btn" class="btn btn-primary text-xs !py-1.5 font-bold uppercase">Gửi đánh giá</button>
+                </div>
+              </form>
+            `}
           </div>
 
           <!-- Danh sách bài đánh giá -->
@@ -1079,7 +1104,7 @@ const App = {
                     <div>
                       <div class="flex items-center gap-1.5">
                         <strong class="text-zinc-900 font-semibold">${U.esc(r.user_name)}</strong>
-                        <span class="verified-buyer-badge">✓ Đã mua hàng</span>
+                        ${(r.is_verified_buyer === true || r.is_verified_buyer === 1) ? '<span class="verified-buyer-badge">✓ Đã mua hàng</span>' : ''}
                       </div>
                       <div class="star-rating text-[11px] mt-0.5">
                         ${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}
@@ -1129,6 +1154,11 @@ const App = {
   },
 
   async submitProductReview(productId) {
+    if (!this.state.user) {
+      U.toast('Vui lòng đăng nhập trước khi gửi đánh giá.', 'error');
+      return;
+    }
+
     const rating = Number(U.$('#rf-rating').value) || 5;
     const name = U.$('#rf-name').value.trim();
     const comment = U.$('#rf-comment').value.trim();
@@ -1144,7 +1174,7 @@ const App = {
     try {
       await U.api(`/api/products/${encodeURIComponent(productId)}/reviews`, {
         method: 'POST',
-        body: JSON.stringify({
+        body: {
           user_name: name,
           rating: rating,
           comment: comment,
@@ -1153,12 +1183,12 @@ const App = {
           weight_kg: weight,
           purchased_size: size,
           purchased_color: color
-        })
+        }
       });
       U.toast('Đánh giá của bạn đã được đăng thành công!', 'ok');
       await this.loadProductReviews(productId);
     } catch (e) {
-      U.toast('Lỗi khi gửi đánh giá: ' + e.message, 'error');
+      U.toast(e.message || 'Không thể gửi đánh giá', 'error');
       if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Gửi đánh giá'; }
     }
   },
@@ -1657,9 +1687,26 @@ const App = {
       this.state.cart = []; this.state.voucher = ''; this.state.usePoints = 0; this.state.quote = null;
       this.saveCart();
       Modal.close('checkout-modal');
-      this.showSuccess(order);
-      this.renderCart();
-      this.loadProducts(); this.loadFlash(); // cập nhật tồn kho
+
+      // Nếu khách chọn Thanh toán online VNPay -> Chuyển hướng sang VNPay
+      if (body.payment_method === 'vnpay') {
+        try {
+          const payRes = await U.api('/api/payment/vnpay/create-payment-url', {
+            method: 'POST',
+            body: { order_id: order.order_id }
+          });
+          if (payRes && payRes.payment_url) {
+            window.location.href = payRes.payment_url;
+            return;
+          }
+        } catch (payErr) {
+          console.error('Lỗi tạo URL thanh toán VNPay:', payErr);
+        }
+      }
+
+      // Đơn hàng COD hoặc hình thức khác -> Chuyển hướng tới trang xác nhận đơn hàng thành công
+      window.location.href = `/order-success/${encodeURIComponent(order.order_id)}`;
+      return;
     } catch (e) {
       this.checkoutError(e.message);
       this.refreshCart(); // tồn kho/giá có thể đã đổi
@@ -1676,6 +1723,7 @@ const App = {
     }
 
     const isQr = o.payment_method === 'qr_transfer';
+    const isVNPay = o.payment_method === 'vnpay';
     const isPaid = o.payment_status === 'paid' || o.status === 'confirmed';
 
     let paymentHtml = '';
@@ -1759,10 +1807,53 @@ const App = {
               <span id="payment-status-text">Đang chờ chuyển khoản từ ứng dụng ngân hàng...</span>
             </div>
             <p class="mt-1 text-[11px] text-amber-700">Hệ thống tự động kiểm tra trạng thái mỗi 3 giây.</p>
-            <div class="mt-2.5 pt-2 border-t border-amber-200/60">
+            <div class="mt-2.5 pt-2 border-t border-amber-200/60 flex flex-wrap gap-2 justify-center">
+              <button type="button" data-action="pay-vnpay" data-order-id="${U.esc(o.order_id)}"
+                      class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
+                <span>💳 Thanh toán qua VNPay</span>
+              </button>
               <button type="button" data-action="simulate-payment" data-order-id="${U.esc(o.order_id)}"
                       class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
                 <span>⚡ Giả lập Chuyển khoản thành công (Test Webhook)</span>
+              </button>
+            </div>
+          `}
+        </div>
+      </div>`;
+    } else if (isVNPay) {
+      paymentHtml = `
+      <div id="vnpay-container" class="my-4 rounded-2xl border border-blue-200 bg-blue-50/50 p-4 text-left shadow-sm">
+        <div class="flex items-center justify-between border-b border-blue-100 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-extrabold text-xs">VNP</span>
+            <div>
+              <h3 class="text-xs font-extrabold text-blue-900 uppercase tracking-wide">Cổng thanh toán điện tử VNPay</h3>
+              <p class="text-[10px] text-zinc-500">ATM nội địa • QR Pay • Thẻ quốc tế Visa/Master</p>
+            </div>
+          </div>
+          <span class="rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">VNPay Sandbox</span>
+        </div>
+
+        <div id="payment-status-box" class="mt-4 rounded-xl border ${isPaid ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-blue-200 bg-white text-blue-900'} p-3.5 text-center">
+          ${isPaid ? `
+            <div class="flex items-center justify-center gap-2 text-xs font-bold text-emerald-800">
+              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-xs">✓</span>
+              <span>ĐÃ XÁC NHẬN THANH TOÁN VNPAY THÀNH CÔNG!</span>
+            </div>
+            <p class="mt-1 text-[11px] text-emerald-700">Đơn hàng đã được thanh toán và đang được xử lý.</p>
+          ` : `
+            <div class="flex items-center justify-center gap-2 text-xs font-bold text-blue-800">
+              <span class="flex h-2.5 w-2.5 relative">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+              </span>
+              <span id="payment-status-text">Đang chờ bạn hoàn tất thanh toán trên VNPay...</span>
+            </div>
+            <p class="mt-1 text-[11px] text-zinc-500">Nhấn nút bên dưới để chuyển sang cổng VNPay nếu trình duyệt chưa tự chuyển.</p>
+            <div class="mt-3 flex flex-wrap gap-2 justify-center">
+              <button type="button" data-action="pay-vnpay" data-order-id="${U.esc(o.order_id)}"
+                      class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
+                <span>💳 Thanh toán qua VNPay ngay</span>
               </button>
             </div>
           `}
@@ -1776,7 +1867,7 @@ const App = {
         <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
       </div>
       <h2 class="text-base sm:text-lg font-bold text-zinc-900" id="success-title">
-        ${isPaid ? 'Đặt hàng & Thanh toán thành công!' : (isQr ? 'Đã ghi nhận đơn • Vui lòng chuyển khoản' : 'Đặt hàng thành công!')}
+        ${isPaid ? 'Đặt hàng & Thanh toán thành công!' : (isVNPay ? 'Đã ghi nhận đơn • Vui lòng thanh toán VNPay' : (isQr ? 'Đã ghi nhận đơn • Vui lòng chuyển khoản' : 'Đặt hàng thành công!'))}
       </h2>
       <p class="text-xs text-zinc-500 mt-0.5">Mã đơn hàng: <b class="font-mono text-brand-600">${U.esc(o.order_id)}</b></p>
       
@@ -1785,7 +1876,7 @@ const App = {
       <div class="my-3 space-y-1.5 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3.5 text-left text-xs">
         <div class="flex justify-between gap-3"><span class="text-zinc-500">Người nhận</span><b class="text-right text-zinc-800">${U.esc(o.customer_name)} (${U.esc(o.customer_phone)})</b></div>
         <div class="flex justify-between gap-3"><span class="text-zinc-500">Địa chỉ giao</span><span class="text-right font-medium text-zinc-800">${U.esc(o.customer_address)}</span></div>
-        <div class="flex justify-between gap-3"><span class="text-zinc-500">Hình thức</span><b>${isQr ? 'Chuyển khoản VietQR' : 'Thanh toán khi nhận hàng (COD)'}</b></div>
+        <div class="flex justify-between gap-3"><span class="text-zinc-500">Hình thức</span><b>${isVNPay ? 'VNPay Sandbox' : (isQr ? 'Chuyển khoản VietQR' : 'Thanh toán khi nhận hàng (COD)')}</b></div>
         ${this.summaryRows(q)}
       </div>
 
@@ -1798,7 +1889,7 @@ const App = {
     Modal.open('success-modal');
 
     // Bắt đầu Polling kiểm tra trạng thái thanh toán tự động nếu chưa thanh toán
-    if (isQr && !isPaid) {
+    if ((isQr || isVNPay) && !isPaid) {
       this._pollTimer = setInterval(async () => {
         try {
           const res = await U.api(`/api/payment/check-status/${encodeURIComponent(o.order_id)}`);
@@ -2254,6 +2345,25 @@ Object.assign(Actions, {
       App._pollTimer = null;
     }
     Modal.close(d.target);
+  },
+  'pay-vnpay': async (d, btn) => {
+    if (!d.orderId) return;
+    try {
+      if (btn) { btn.disabled = true; btn.textContent = 'Đang chuyển tới VNPay...'; }
+      U.toast('Đang tạo liên kết thanh toán VNPay...');
+      const res = await U.api('/api/payment/vnpay/create-payment-url', {
+        method: 'POST',
+        body: { order_id: d.orderId }
+      });
+      if (res && res.payment_url) {
+        window.location.href = res.payment_url;
+      } else {
+        throw new Error('Không nhận được liên kết thanh toán từ máy chủ');
+      }
+    } catch (e) {
+      U.toast(e.message || 'Lỗi khi tạo liên kết thanh toán VNPay', 'error');
+      if (btn) { btn.disabled = false; btn.textContent = '💳 Thanh toán qua VNPay'; }
+    }
   },
   'simulate-payment': async (d, btn) => {
     if (!d.orderId) return;

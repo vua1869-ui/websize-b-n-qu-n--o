@@ -1,4 +1,8 @@
+import hashlib
+import hmac
+import json
 import pytest
+from app.config import settings
 from app.db.database import db_service, get_db_connection
 from app.services.geo_service import geo_service
 from tests.conftest import CUSTOMER, item
@@ -74,8 +78,10 @@ def test_vietqr_creation_and_polling_and_simulate_webhook(client):
     assert poll_data["order_id"] == order_id
     assert poll_data["status"] == "unpaid"
 
-    # 3. Giả lập thanh toán Webhook thành công (simulate-success)
-    r = client.post(f"/api/payment/simulate-success/{order_id}")
+    # 3. Giả lập thanh toán Webhook thành công (simulate-success cần quyền admin)
+    admin_res = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    admin_token = admin_res.json()["token"]
+    r = client.post(f"/api/payment/simulate-success/{order_id}", headers={"Authorization": f"Bearer {admin_token}"})
     assert r.status_code == 200
     sim_data = r.json()
     assert sim_data["status"] == "paid"
@@ -98,13 +104,19 @@ def test_webhook_endpoint_processing(client):
     order_id = order["order_id"]
     total = order["quote"]["total"]
 
-    # Gửi webhook thanh toán ngân hàng (VD SePay / Casso / VietQR IPN)
+    # Gửi webhook thanh toán ngân hàng (VD SePay / Casso / VietQR IPN) với chữ ký HMAC-SHA256
     webhook_payload = {
         "content": f"AURA {order_id}",
         "transferAmount": total,
         "referenceCode": f"FT{order_id.replace('-', '')}",
     }
-    r = client.post("/api/payment/webhook", json=webhook_payload)
+    raw_body = json.dumps(webhook_payload).encode("utf-8")
+    sig = hmac.new(settings.PAYMENT_WEBHOOK_SECRET.encode("utf-8"), raw_body, hashlib.sha256).hexdigest()
+    r = client.post(
+        "/api/payment/webhook",
+        content=raw_body,
+        headers={"Content-Type": "application/json", "X-Signature": sig}
+    )
     assert r.status_code == 200
     res = r.json()
     assert res["success"] is True

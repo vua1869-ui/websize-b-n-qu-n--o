@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full bg-[#FBFBFA]">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Xác nhận đơn hàng #{{ order.order_id }} • {{ app_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/tailwind.css" />
+  <link rel="stylesheet" href="/static/css/custom.css?v={{ version }}" />
+</head>
+<body class="min-h-full bg-[#FBFBFA] text-stone-900 font-sans antialiased selection:bg-brand-600 selection:text-white">
+
+  <!-- Header Đơn Giản -->
+  <header class="sticky top-0 z-30 border-b border-stone-200 bg-white/95 backdrop-blur">
+    <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-3.5 sm:px-6 lg:px-8">
+      <div class="flex items-center gap-4">
+        <a href="/" class="group flex items-center gap-3">
+          <div class="flex flex-col leading-none">
+            <span class="font-serif text-2xl font-bold tracking-tight text-stone-900">AURA</span>
+            <span class="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.3em] text-brand-600">Studio</span>
+          </div>
+        </a>
+        <span class="hidden h-5 w-px bg-stone-200 sm:block"></span>
+        <span class="hidden text-xs uppercase tracking-widest text-stone-400 font-medium sm:block">Xác nhận đơn hàng</span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        {% if user and user.role == 'admin' %}
+        <a href="/admin" class="hidden sm:flex items-center gap-1.5 rounded-md border border-stone-200 bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-stone-800">
+          <span>Quản trị</span>
+        </a>
+        {% endif %}
+        {% if user %}
+        <a href="/profile" class="rounded-md border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 shadow-xs transition hover:bg-stone-50">
+          Đơn hàng của tôi
+        </a>
+        {% endif %}
+        <a href="/" class="rounded-md border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 shadow-xs transition hover:bg-stone-50">
+          Về Cửa hàng
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Nội Dung Chính -->
+  <main class="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+    
+    <!-- Hero / Success Banner Card -->
+    <div class="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
+      <div class="border-b border-stone-100 bg-gradient-to-b from-stone-50/70 to-white px-6 py-10 text-center sm:px-10">
+        
+        <!-- Big Green Success Icon -->
+        <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 ring-8 ring-emerald-50 text-emerald-600 transition">
+          <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+        </div>
+
+        <h1 class="mt-5 font-serif text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">
+          Đặt hàng thành công!
+        </h1>
+        <p class="mt-2 text-sm text-stone-500 max-w-md mx-auto">
+          Cảm ơn bạn đã lựa chọn AURA Studio. Đơn hàng của bạn đã được tiếp nhận và đang sẵn sàng chuyển phát.
+        </p>
+
+        <!-- Order ID pill & copy button -->
+        <div class="mt-5 inline-flex flex-wrap items-center justify-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-4 py-2 text-xs">
+          <span class="text-stone-500">Mã đơn hàng:</span>
+          <span id="order-id-display" class="font-mono text-sm font-bold text-stone-900">{{ order.order_id }}</span>
+          <button type="button" id="copy-order-btn" class="ml-1 inline-flex items-center gap-1 rounded bg-white px-2 py-0.5 text-[11px] font-medium text-stone-600 border border-stone-200 hover:bg-stone-100 transition" title="Sao chép mã đơn">
+            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+            </svg>
+            <span id="copy-btn-text">Sao chép</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Payment Status Notice Card -->
+      <div class="p-6 sm:p-8 space-y-6">
+        {% set is_paid = (order.payment_status == 'paid') %}
+        {% if is_paid %}
+        <!-- Trạng thái: ĐÃ THANH TOÁN (VNPay hoặc đã thu) -->
+        <div class="rounded-xl border border-emerald-200 bg-emerald-50/80 p-5">
+          <div class="flex items-start gap-3.5">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white font-bold text-base shadow-xs">
+              ✓
+            </div>
+            <div class="flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="text-sm font-bold text-emerald-950">Đã thanh toán thành công</h3>
+                <span class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800 border border-emerald-300">
+                  {{ 'Cổng VNPay' if order.payment_method == 'vnpay' else ('Chuyển khoản VietQR' if order.payment_method == 'qr_transfer' else order.payment_method | upper) }}
+                </span>
+              </div>
+              <p class="mt-1 text-xs text-emerald-800 leading-relaxed">
+                Hệ thống đã nhận thanh toán số tiền <strong class="font-bold text-emerald-950">{{ (order.quote.total or order.total_amount) | vnd }}</strong>. Kiện hàng đang được đóng gói và chuẩn bị bàn giao cho bưu tá giao nhận.
+              </p>
+            </div>
+          </div>
+        </div>
+        {% elif order.payment_method == 'cod' or order.payment_status != 'paid' %}
+        <!-- Trạng thái: COD CHƯA THANH TOÁN - LƯU Ý RÕ RÀNG TIỀN MẶT -->
+        <div class="rounded-xl border border-amber-300 bg-amber-50/90 p-5 shadow-xs">
+          <div class="flex items-start gap-3.5">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-500 text-white font-bold text-base shadow-xs">
+              💵
+            </div>
+            <div class="flex-1">
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="text-sm font-bold text-amber-950">Thanh toán khi nhận hàng (COD)</h3>
+                <span class="inline-flex items-center rounded-full bg-amber-200/80 px-2.5 py-0.5 text-[11px] font-semibold text-amber-900 border border-amber-300">
+                  Chờ thu tiền mặt
+                </span>
+              </div>
+              <p class="mt-1 text-xs text-amber-900 leading-relaxed">
+                Vui lòng chuẩn bị <strong class="font-bold text-amber-950 underline text-sm">{{ (order.quote.total or order.total_amount) | vnd }}</strong> tiền mặt khi nhận hàng. Bưu tá vận chuyển sẽ liên hệ số điện thoại của bạn trước khi phát hàng.
+              </p>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Two Columns: Thông tin giao hàng & Thông tin vận chuyển -->
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          
+          <!-- Thông tin người nhận -->
+          <div class="rounded-xl border border-stone-200 bg-stone-50/50 p-5 space-y-3">
+            <div class="flex items-center gap-2 border-b border-stone-200 pb-3">
+              <svg class="h-4 w-4 text-stone-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-stone-900">Thông tin giao hàng</h4>
+            </div>
+            
+            <div class="space-y-2 text-xs">
+              <div>
+                <span class="text-stone-400 block text-[10px] uppercase font-semibold">Người nhận:</span>
+                <span class="font-semibold text-stone-800 text-sm">{{ order.customer.name or order.customer_name }}</span>
+              </div>
+              <div>
+                <span class="text-stone-400 block text-[10px] uppercase font-semibold">Số điện thoại:</span>
+                <span class="font-mono font-medium text-stone-800">{{ order.customer.phone or order.customer_phone }}</span>
+              </div>
+              <div>
+                <span class="text-stone-400 block text-[10px] uppercase font-semibold">Địa chỉ nhận hàng:</span>
+                <span class="text-stone-700 leading-relaxed block">{{ order.customer.address or order.customer_address }}</span>
+              </div>
+              {% if (order.customer and order.customer.note) or order.customer_note %}
+              <div>
+                <span class="text-stone-400 block text-[10px] uppercase font-semibold">Ghi chú giao hàng:</span>
+                <span class="italic text-stone-600">{{ order.customer.note or order.customer_note }}</span>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Thông tin vận đơn / Logistics -->
+          <div class="rounded-xl border border-stone-200 bg-stone-50/50 p-5 space-y-3">
+            <div class="flex items-center gap-2 border-b border-stone-200 pb-3">
+              <svg class="h-4 w-4 text-stone-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+              </svg>
+              <h4 class="text-xs font-bold uppercase tracking-wider text-stone-900">Vận chuyển & Kiện hàng</h4>
+            </div>
+
+            <div class="space-y-2 text-xs">
+              <div>
+                <span class="text-stone-400 block text-[10px] uppercase font-semibold">Đơn vị vận chuyển:</span>
+                <span class="font-medium text-stone-800">{{ order.carrier or 'Giao Hàng Nhanh (GHN Express)' }}</span>
+              </div>
+              <div>
+                <span class="text-stone-400 block text-[10px] uppercase font-semibold">Mã vận đơn:</span>
+                <span class="font-mono font-semibold text-brand-700 bg-brand-50 px-2 py-0.5 rounded border border-brand-200">
+                  {{ order.tracking_code or ('GHN-VN-' + order.order_id[-6:]) }}
+                </span>
+              </div>
+              <div>
+                <span class="text-stone-400 block text-[10px] uppercase font-semibold">Dự kiến nhận hàng:</span>
+                <span class="font-medium text-stone-800">{{ order.estimated_delivery or '2 - 3 ngày tới' }}</span>
+              </div>
+              <div>
+                <span class="text-stone-400 block text-[10px] uppercase font-semibold">Trạng thái bưu kiện:</span>
+                <span class="inline-flex items-center gap-1 rounded bg-stone-200/70 px-2 py-0.5 font-medium text-stone-700 text-[11px]">
+                  {{ 'Sẵn sàng giao nhận' if order.shipping_status == 'ready_to_pick' else ('Đang xử lý đóng gói' if order.shipping_status == 'pending_confirm' else order.shipping_status) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Order Items Summary Table -->
+        <div class="rounded-xl border border-stone-200 bg-white overflow-hidden">
+          <div class="border-b border-stone-200 bg-stone-50/70 px-5 py-3.5 flex items-center justify-between">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-stone-900">
+              Chi tiết sản phẩm đã mua
+            </h4>
+            <span class="text-xs text-stone-400 font-medium">
+              {{ (order.quote.lines | length) if order.quote and order.quote.lines else 0 }} sản phẩm
+            </span>
+          </div>
+
+          <!-- Danh sách sản phẩm -->
+          <div class="divide-y divide-stone-100 px-5">
+            {% for line in (order.quote.lines if order.quote and order.quote.lines else []) %}
+            <div class="flex items-center gap-4 py-4">
+              <img src="{{ line.image or '/static/images/placeholder.jpg' }}" alt="{{ line.name }}" 
+                   class="h-16 w-16 rounded-lg object-cover border border-stone-200 bg-stone-50 shrink-0" 
+                   onerror="this.src='/static/images/placeholder.jpg'" />
+              
+              <div class="flex-1 min-w-0">
+                <h5 class="text-sm font-semibold text-stone-900 truncate">{{ line.name }}</h5>
+                <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-stone-500">
+                  {% if line.size %}
+                  <span class="inline-flex items-center rounded bg-stone-100 px-1.5 py-0.5 font-medium text-stone-700">Size: {{ line.size }}</span>
+                  {% endif %}
+                  {% if line.color %}
+                  <span class="inline-flex items-center rounded bg-stone-100 px-1.5 py-0.5 font-medium text-stone-700">Màu: {{ line.color }}</span>
+                  {% endif %}
+                  {% if line.combo %}
+                  <span class="inline-flex items-center rounded bg-amber-50 px-1.5 py-0.5 font-medium text-amber-700 border border-amber-200">AI Combo</span>
+                  {% endif %}
+                </div>
+                <div class="mt-1 text-xs text-stone-400">
+                  Số lượng: <span class="font-bold text-stone-700">x{{ line.quantity }}</span>
+                </div>
+              </div>
+
+              <div class="text-right shrink-0">
+                <div class="text-sm font-bold text-stone-900">{{ line.line_total | vnd }}</div>
+                {% if line.quantity > 1 %}
+                <div class="text-[11px] text-stone-400">({{ line.unit_price | vnd }}/sp)</div>
+                {% endif %}
+              </div>
+            </div>
+            {% else %}
+            <div class="py-6 text-center text-xs text-stone-400">
+              Không tìm thấy dòng sản phẩm chi tiết
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Bảng tổng tiền đơn hàng -->
+          <div class="border-t border-stone-200 bg-stone-50/70 p-5 space-y-2 text-xs">
+            <div class="flex items-center justify-between text-stone-600">
+              <span>Tạm tính tiền hàng:</span>
+              <span class="font-medium text-stone-900">{{ (order.quote.subtotal or order.subtotal) | vnd }}</span>
+            </div>
+
+            {% if (order.quote and order.quote.combo_discount and order.quote.combo_discount > 0) %}
+            <div class="flex items-center justify-between text-amber-700">
+              <span>Ưu đãi Stylist Combo:</span>
+              <span class="font-semibold">-{{ order.quote.combo_discount | vnd }}</span>
+            </div>
+            {% endif %}
+
+            {% if (order.quote and order.quote.voucher_discount and order.quote.voucher_discount > 0) or order.discount_amount %}
+            <div class="flex items-center justify-between text-emerald-700">
+              <span>Mã giảm giá Voucher:</span>
+              <span class="font-semibold">-{{ (order.quote.voucher_discount if order.quote and order.quote.voucher_discount else order.discount_amount) | vnd }}</span>
+            </div>
+            {% endif %}
+
+            {% if (order.quote and order.quote.points_discount and order.quote.points_discount > 0) %}
+            <div class="flex items-center justify-between text-amber-700">
+              <span>Đổi điểm tích lũy:</span>
+              <span class="font-semibold">-{{ order.quote.points_discount | vnd }}</span>
+            </div>
+            {% endif %}
+
+            <div class="flex items-center justify-between text-stone-600">
+              <span>Phí vận chuyển toàn quốc:</span>
+              {% set s_fee = (order.quote.shipping_fee if order.quote and order.quote.shipping_fee is not none else order.shipping_fee) %}
+              {% if s_fee and s_fee > 0 %}
+              <span class="font-medium text-stone-900">{{ s_fee | vnd }}</span>
+              {% else %}
+              <span class="font-semibold text-emerald-700">Miễn phí ship</span>
+              {% endif %}
+            </div>
+
+            <div class="border-t border-stone-200 pt-3 flex items-center justify-between text-sm">
+              <span class="font-bold text-stone-900">Tổng thanh toán:</span>
+              <div class="text-right">
+                <span class="text-lg font-black text-brand-700">{{ (order.quote.total or order.total_amount) | vnd }}</span>
+                <span class="block text-[10px] text-stone-400">Đã bao gồm thuế & phí vận chuyển</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-stone-200">
+          <a href="/?tracking={{ order.order_id }}" 
+             class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-stone-900 px-6 py-3 text-xs font-bold uppercase tracking-wider text-white shadow-xs hover:bg-stone-800 transition">
+            <svg class="h-4 w-4 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+            </svg>
+            <span>Theo dõi đơn hàng</span>
+          </a>
+
+          <div class="w-full sm:w-auto flex items-center gap-3">
+            {% if user %}
+            <a href="/profile" 
+               class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 rounded-lg border border-stone-200 bg-white px-5 py-3 text-xs font-semibold uppercase tracking-wider text-stone-700 shadow-xs hover:bg-stone-50 transition">
+              <span>Đơn hàng của tôi</span>
+            </a>
+            {% endif %}
+            
+            <a href="/" 
+               class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 rounded-lg border border-stone-300 bg-white px-6 py-3 text-xs font-bold uppercase tracking-wider text-stone-900 shadow-xs hover:bg-stone-50 transition">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+              </svg>
+              <span>Tiếp tục mua sắm</span>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="mt-12 border-t border-stone-200 bg-white py-6 text-center text-xs text-stone-400">
+    <p>© 2026 AURA Studio. Thiết kế và công nghệ thời trang AI hiện đại.</p>
+  </footer>
+
+  <script>
+    // Xử lý nút copy mã đơn hàng
+    document.getElementById('copy-order-btn')?.addEventListener('click', function() {
+      const code = document.getElementById('order-id-display')?.innerText?.trim();
+      if (!code) return;
+      navigator.clipboard.writeText(code).then(() => {
+        const textSpan = document.getElementById('copy-btn-text');
+        if (textSpan) {
+          textSpan.innerText = 'Đã chép!';
+          setTimeout(() => { textSpan.innerText = 'Sao chép'; }, 2000);
+        }
+      }).catch(() => {
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        const textSpan = document.getElementById('copy-btn-text');
+        if (textSpan) {
+          textSpan.innerText = 'Đã chép!';
+          setTimeout(() => { textSpan.innerText = 'Sao chép'; }, 2000);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

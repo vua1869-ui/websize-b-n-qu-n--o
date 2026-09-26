@@ -356,20 +356,80 @@ class ProductService:
         with open(DATA_PATH, "w", encoding="utf-8") as f:
             json.dump(out, f, ensure_ascii=False, indent=2)
 
+        try:
+            from app.db.database import get_db_transaction
+            import datetime
+            now_str = datetime.datetime.now().isoformat()
+            with get_db_transaction() as conn:
+                for p in self._products:
+                    colors = [c.model_dump() for c in p.colors] if p.colors else []
+                    conn.execute(
+                        """
+                        INSERT INTO products
+                        (id, name, category, category_name, gender, price, original_price, flash_sale, flash_sale_price,
+                         sold_count, stock, stock_total, rating, reviews_count, location, images, sizes, colors,
+                         description, material, style, occasions, tags, is_hot, is_new, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(id) DO UPDATE SET
+                            name=excluded.name,
+                            category=excluded.category,
+                            category_name=excluded.category_name,
+                            gender=excluded.gender,
+                            price=excluded.price,
+                            original_price=excluded.original_price,
+                            flash_sale=excluded.flash_sale,
+                            flash_sale_price=excluded.flash_sale_price,
+                            sold_count=excluded.sold_count,
+                            stock=excluded.stock,
+                            stock_total=excluded.stock_total,
+                            rating=excluded.rating,
+                            reviews_count=excluded.reviews_count,
+                            location=excluded.location,
+                            images=excluded.images,
+                            sizes=excluded.sizes,
+                            colors=excluded.colors,
+                            description=excluded.description,
+                            material=excluded.material,
+                            style=excluded.style,
+                            occasions=excluded.occasions,
+                            tags=excluded.tags,
+                            is_hot=excluded.is_hot,
+                            is_new=excluded.is_new;
+                        """,
+                        (
+                            p.id, p.name, p.category, p.category_name, p.gender,
+                            p.price, p.original_price, 1 if p.flash_sale else 0, p.flash_sale_price,
+                            p.sold_count, p.stock, p.stock_total, p.rating, p.reviews_count,
+                            p.location, json.dumps(p.images, ensure_ascii=False),
+                            json.dumps(p.sizes, ensure_ascii=False),
+                            json.dumps(colors, ensure_ascii=False),
+                            p.description, p.material, p.style,
+                            json.dumps(p.occasions, ensure_ascii=False),
+                            json.dumps(p.tags, ensure_ascii=False),
+                            1 if p.is_hot else 0, 1 if p.is_new else 0, now_str
+                        )
+                    )
+        except Exception:
+            pass
+
     def create_product(self, data: dict) -> Product:
         with self._lock:
-            existing_nums = []
-            for p in self._products:
-                if p.id.startswith("prod_"):
-                    try:
-                        existing_nums.append(int(p.id.split("_")[1]))
-                    except ValueError:
-                        pass
-            next_num = (max(existing_nums) + 1) if existing_nums else 1
-            data["id"] = f"prod_{next_num:03d}"
+            if not data.get("id") or data["id"] in self._by_id:
+                existing_nums = []
+                for p in self._products:
+                    if p.id.startswith("prod_"):
+                        try:
+                            existing_nums.append(int(p.id.split("_")[1]))
+                        except ValueError:
+                            pass
+                next_num = (max(existing_nums) + 1) if existing_nums else 1
+                data["id"] = f"prod_{next_num:03d}"
 
             if not data.get("category_name"):
                 data["category_name"] = CATEGORY_META.get(data.get("category"), ("Sản phẩm", ""))[0]
+
+            if not data.get("gender"):
+                data["gender"] = "unisex"
 
             if not data.get("images") and data.get("image"):
                 data["images"] = [data["image"]]
@@ -476,6 +536,12 @@ class ProductService:
             self._by_id.pop(product_id, None)
             self._words.pop(product_id, None)
             self._save_products_to_disk()
+            try:
+                from app.db.database import get_db_transaction
+                with get_db_transaction() as conn:
+                    conn.execute("DELETE FROM products WHERE id = ?;", (product_id,))
+            except Exception:
+                pass
             return True
 
 

@@ -1,12 +1,15 @@
 import collections
+import hashlib
+import hmac
+import json
 import math
 import os
 import threading
 import time
 import urllib.request
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
+from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, Response, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -15,18 +18,21 @@ from fastapi.templating import Jinja2Templates
 from app.config import settings
 from app.models.schemas import (
     AdminProductPayload, AuthResponse, Category, ChangePasswordRequest,
-    ChatRequest, ChatResponse, FlashSaleResponse, InvoiceResponse, LiveCommentRequest,
-    LiveCommentResponse, LoyaltyHistoryResponse, LoyaltyStatusResponse, OrderCreateRequest, OrderResponse, OrderTrackingResponse, OutfitRequest, OutfitResponse,
-    Product, ProductReviewCreate, ProductReviewsResponse, QuoteRequest, QuoteResponse,
-    SizeChartResponse, SizeRecommendRequest, SizeRecommendResponse,
-    TrendDebugResponse, TrendItem, TrendingProduct, TrendRefreshResponse,
-    User, UserLoginRequest, UserProfileUpdateRequest, UserRegisterRequest,
-    VideoItem, Voucher, VoucherCheckRequest, VoucherCheckResponse,
+    ChatRequest, ChatResponse, FlashSaleResponse, InventoryBatchCreate, InventoryBatchItem,
+    InvoiceResponse, LiveCommentRequest, LiveCommentResponse, LoyaltyHistoryResponse,
+    LoyaltyStatusResponse, OrderCreateRequest, OrderResponse, OrderTrackingResponse,
+    OutfitRequest, OutfitResponse, Product, ProductReviewCreate, ProductReviewsResponse,
+    ProfitReportResponse, QuoteRequest, QuoteResponse, SizeChartResponse,
+    SizeRecommendRequest, SizeRecommendResponse, TrendDebugResponse, TrendItem,
+    TrendingProduct, TrendRefreshResponse, User, UserLoginRequest, UserProfileUpdateRequest,
+    UserRegisterRequest, VideoItem, Voucher, VoucherCheckRequest, VoucherCheckResponse,
 )
 from app.db.database import db_service
 from app.services.ai_service import ai_service
+from app.services.image_service import image_service
 from app.services.order_service import OrderError, order_service
 from app.services.outfit_service import outfit_service
+from app.services.product_import_service import product_import_service
 from app.services.product_service import flash_sale_window, product_service
 from app.services.size_chart_service import size_chart_service
 from app.services.trend_service import trend_service
@@ -180,6 +186,26 @@ def profile_page(request: Request):
     })
 
 
+@app.get("/order-success/{order_id}", response_class=HTMLResponse)
+def order_success_page(request: Request, order_id: str):
+    user = get_current_user_optional(request)
+    order = order_service.get_order_by_id(order_id)
+    if not order:
+        return RedirectResponse(url="/", status_code=302)
+    return templates.TemplateResponse(request, "order-success.html", {
+        "app_name": settings.APP_NAME,
+        "order": order,
+        "user": user,
+        "version": settings.VERSION,
+    })
+
+
+@app.get("/tracking", response_class=HTMLResponse)
+def tracking_page(request: Request, code: Optional[str] = None):
+    url = f"/?tracking={code}" if code else "/?tracking="
+    return RedirectResponse(url=url, status_code=302)
+
+
 @app.get("/403", response_class=HTMLResponse)
 def forbidden_page(request: Request):
     user = get_current_user_optional(request)
@@ -281,6 +307,27 @@ def admin_trending_page(request: Request):
         "app_name": settings.APP_NAME,
         "user": user,
         "current_page": "trending",
+        "version": settings.VERSION,
+    })
+
+
+@app.get("/admin/inventory", response_class=HTMLResponse)
+@app.get("/admin/profit", response_class=HTMLResponse)
+@app.get("/admin/reports/profit", response_class=HTMLResponse)
+def admin_inventory_and_profit_page(request: Request):
+    user = get_current_user_optional(request)
+    if not user:
+        return RedirectResponse(url="/login?redirect=/admin/inventory", status_code=302)
+    if user.role != "admin":
+        return templates.TemplateResponse(request, "403.html", {
+            "app_name": settings.APP_NAME,
+            "user": user,
+            "version": settings.VERSION,
+        }, status_code=403)
+    return templates.TemplateResponse(request, "admin/profit_report.html", {
+        "app_name": settings.APP_NAME,
+        "user": user,
+        "current_page": "inventory",
         "version": settings.VERSION,
     })
 
@@ -486,7 +533,15 @@ def auth_register(body: UserRegisterRequest, response: Response):
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     token = user_service.create_session_token(user)
-    response.set_cookie(key="aura_session", value=token, httponly=False, path="/", max_age=86400 * 7, samesite="lax")
+    response.set_cookie(
+        key="aura_session",
+        value=token,
+        httponly=True,
+        secure=not settings.DEBUG,
+        path="/",
+        max_age=86400 * 7,
+        samesite="lax",
+    )
     return AuthResponse(token=token, user=user, message="Đăng ký tài khoản thành công!")
 
 
@@ -504,7 +559,15 @@ def auth_login(body: UserLoginRequest, response: Response):
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Tài khoản này đã bị tạm khóa bởi quản trị viên")
     token = user_service.create_session_token(user)
-    response.set_cookie(key="aura_session", value=token, httponly=False, path="/", max_age=86400 * 7, samesite="lax")
+    response.set_cookie(
+        key="aura_session",
+        value=token,
+        httponly=True,
+        secure=not settings.DEBUG,
+        path="/",
+        max_age=86400 * 7,
+        samesite="lax",
+    )
     return AuthResponse(success=True, token=token, user=user, message="Đăng nhập thành công!")
 
 
@@ -607,6 +670,112 @@ def admin_delete_product(product_id: str, _admin: User = Depends(require_admin))
     if not ok:
         raise HTTPException(status_code=404, detail="Không tìm thấy sản phẩm để xóa")
     return {"success": True, "message": f"Đã xóa sản phẩm {product_id} thành công"}
+
+
+@app.post("/api/admin/products/import")
+async def admin_import_products(
+    file: UploadFile = File(...),
+    _admin: User = Depends(require_admin),
+):
+    filename = file.filename or ""
+    lower_name = filename.lower()
+    if not (lower_name.endswith(".csv") or lower_name.endswith(".xlsx") or lower_name.endswith(".xls")):
+        raise HTTPException(status_code=400, detail="Định dạng file không hỗ trợ. Vui lòng tải lên file .csv hoặc .xlsx")
+
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="File rỗng, vui lòng kiểm tra lại nội dung")
+
+    try:
+        report = product_import_service.import_products(content, filename)
+        return report
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Lỗi xử lý file import: {str(e)}")
+
+
+@app.post("/api/admin/upload-image")
+async def admin_upload_image(
+    file: UploadFile = File(...),
+    _admin: User = Depends(require_admin),
+):
+    filename = file.filename or ""
+    content_type = (file.content_type or "").lower()
+    lower_name = filename.lower()
+
+    valid_exts = [".jpg", ".jpeg", ".png", ".webp"]
+    valid_mimes = ["image/jpeg", "image/png", "image/webp", "image/jpg"]
+
+    is_valid_ext = any(lower_name.endswith(ext) for ext in valid_exts)
+    is_valid_mime = any(content_type.startswith(m) for m in valid_mimes)
+
+    if not (is_valid_ext or is_valid_mime):
+        raise HTTPException(status_code=400, detail="Chỉ chấp nhận file ảnh định dạng JPG, PNG hoặc WEBP")
+
+    content = await file.read()
+    max_size = 5 * 1024 * 1024  # 5MB
+    if len(content) > max_size:
+        raise HTTPException(status_code=400, detail="Dung lượng ảnh vượt quá giới hạn tối đa 5MB")
+
+    try:
+        result = image_service.upload_image(content, folder="aura_store")
+        return {
+            "url": result["url"],
+            "public_id": result["public_id"],
+            "format": result.get("format"),
+            "bytes": result.get("bytes"),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Không thể tải ảnh lên Cloudinary: {str(e)}")
+
+
+@app.delete("/api/admin/images/{public_id:path}")
+def admin_delete_image(
+    public_id: str,
+    _admin: User = Depends(require_admin),
+):
+    ok = image_service.delete_image(public_id)
+    return {"success": ok}
+
+
+@app.post("/api/admin/products/{product_id}/inventory", response_model=InventoryBatchItem)
+def admin_add_inventory_batch(
+    product_id: str,
+    body: InventoryBatchCreate,
+    _admin: User = Depends(require_admin),
+):
+    prod = product_service.get_by_id(product_id)
+    if not prod:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy sản phẩm với mã '{product_id}'")
+    try:
+        batch = db_service.add_inventory_batch(
+            product_id=product_id,
+            quantity=body.quantity,
+            cost_price=body.cost_price,
+            note=body.note,
+            created_by=_admin.username,
+        )
+        return batch
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/admin/products/{product_id}/inventory", response_model=List[InventoryBatchItem])
+def admin_get_inventory_batches(
+    product_id: str,
+    limit: int = Query(100, ge=1, le=500),
+    _admin: User = Depends(require_admin),
+):
+    prod = product_service.get_by_id(product_id)
+    if not prod:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy sản phẩm với mã '{product_id}'")
+    batches = db_service.get_inventory_batches(product_id=product_id, limit=limit)
+    return batches
+
+
+@app.get("/api/admin/reports/profit", response_model=ProfitReportResponse)
+def admin_profit_report(_admin: User = Depends(require_admin)):
+    report = db_service.get_profit_loss_report()
+    return report
 
 
 @app.get("/api/admin/orders")
@@ -758,12 +927,34 @@ class PaymentWebhookPayload(BaseModel):
 
 
 @app.post("/api/payment/webhook")
-def payment_webhook(body: PaymentWebhookPayload):
+async def payment_webhook(request: Request):
     """
     Webhook tự động nhận thông báo biến động số dư từ VietQR / PayOS / SePay.
     Tự động cập nhật trạng thái đơn hàng sang 'confirmed' và thanh toán 'paid'.
+    Yêu cầu xác thực chữ ký HMAC-SHA256 trong header X-Signature.
     """
+    x_signature = request.headers.get("X-Signature")
+    if not x_signature:
+        raise HTTPException(status_code=401, detail="Thiếu chữ ký xác thực X-Signature")
+
+    raw_body = await request.body()
+    secret = settings.PAYMENT_WEBHOOK_SECRET
+    computed_sig = hmac.new(
+        secret.encode("utf-8"),
+        raw_body,
+        hashlib.sha256,
+    ).hexdigest()
+
+    if not hmac.compare_digest(x_signature.lower(), computed_sig.lower()):
+        raise HTTPException(status_code=401, detail="Chữ ký webhook không hợp lệ")
+
     import re
+    try:
+        data = json.loads(raw_body.decode("utf-8") if raw_body else "{}")
+        body = PaymentWebhookPayload(**data)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Dữ liệu payload webhook không hợp lệ")
+
     order_id = body.order_id
     if not order_id and body.content:
         # 1. Tìm chuẩn định dạng AURA-YYMMDD-XXXXXX
@@ -805,8 +996,13 @@ def check_order_payment_status(order_id: str):
     return status
 
 
-@app.post("/api/payment/simulate-success/{order_id}")
-def simulate_payment_success(order_id: str):
+def check_simulate_enabled():
+    if not settings.DEBUG:
+        raise HTTPException(status_code=404, detail="Endpoint không tồn tại")
+
+
+@app.post("/api/payment/simulate-success/{order_id}", dependencies=[Depends(check_simulate_enabled)])
+def simulate_payment_success(order_id: str, _admin: User = Depends(require_admin)):
     """Giả lập chuyển khoản thành công để trải nghiệm thử nghiệm dòng tiền và webhook."""
     from app.db.database import db_service
     order = db_service.get_order_by_id(order_id)
@@ -828,6 +1024,178 @@ def simulate_payment_success(order_id: str):
 
 
 # ==========================================
+# Cổng thanh toán VNPay (Sandbox / Production)
+# ==========================================
+class VNPayCreatePaymentRequest(BaseModel):
+    order_id: str
+    bank_code: Optional[str] = None
+
+
+@app.post("/api/payment/vnpay/create-payment-url")
+def vnpay_create_payment_url(body: VNPayCreatePaymentRequest, request: Request):
+    """
+    Tạo URL thanh toán VNPay chuẩn HMAC-SHA512.
+    Frontend chuyển hướng khách hàng sang URL này để thực hiện thanh toán.
+    """
+    from app.db.database import db_service
+    from app.services.order_service import order_service
+    order = db_service.get_order_by_id(body.order_id)
+    if not order:
+        order = order_service.get_order_by_id(body.order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
+
+    amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    from app.services.vnpay_service import vnpay_service
+    payment_url = vnpay_service.build_payment_url(
+        order_id=body.order_id,
+        amount=amount,
+        client_ip=client_ip,
+        bank_code=body.bank_code,
+    )
+    return {
+        "success": True,
+        "order_id": body.order_id,
+        "payment_url": payment_url,
+    }
+
+
+@app.get("/api/payment/vnpay/return")
+def vnpay_payment_return(request: Request):
+    """
+    Xử lý khi VNPay redirect khách hàng về sau khi hoàn tất giao dịch.
+    Xác thực chữ ký HMAC-SHA512. Nếu hợp lệ và vnp_ResponseCode == '00', xác nhận đơn hàng thành công.
+    """
+    from app.services.vnpay_service import vnpay_service
+    params = dict(request.query_params)
+    is_valid, vnp_data = vnpay_service.verify_response(params)
+
+    order_id = vnp_data.get("vnp_TxnRef")
+    response_code = vnp_data.get("vnp_ResponseCode")
+    transaction_no = vnp_data.get("vnp_TransactionNo") or f"VNPAY-{order_id}"
+    amount_raw = int(vnp_data.get("vnp_Amount", 0))
+    amount = amount_raw // 100
+
+    accept_header = request.headers.get("accept", "")
+    is_json_request = "application/json" in accept_header.lower()
+    is_browser_html = not is_json_request
+
+    if not is_valid:
+        if is_browser_html:
+            return HTMLResponse(
+                content="""
+                <div style="font-family:sans-serif;text-align:center;padding:50px;">
+                    <h2 style="color:#e11d48;">Lỗi bảo mật thanh toán</h2>
+                    <p>Chữ ký bảo mật VNPay không hợp lệ.</p>
+                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
+                </div>
+                """,
+                status_code=400,
+            )
+        raise HTTPException(status_code=400, detail="Chữ ký phản hồi VNPay không hợp lệ")
+
+    from app.db.database import db_service
+    from app.services.order_service import order_service
+    if response_code == "00":
+        db_service.confirm_payment(
+            order_id=order_id,
+            amount=amount,
+            transaction_code=transaction_no,
+            payment_channel="vnpay",
+        )
+        order_service.update_order_status(order_id, "confirmed")
+        if is_browser_html:
+            return RedirectResponse(url=f"/order-success/{order_id}", status_code=302)
+        return {
+            "success": True,
+            "order_id": order_id,
+            "response_code": response_code,
+            "payment_status": "paid",
+            "order_status": "confirmed",
+            "message": "Thanh toán VNPay thành công!",
+        }
+    else:
+        if is_browser_html:
+            return HTMLResponse(
+                content=f"""
+                <div style="font-family:sans-serif;text-align:center;padding:50px;">
+                    <h2 style="color:#d97706;">Giao dịch chưa hoàn tất</h2>
+                    <p>Mã đơn hàng: <strong>{order_id}</strong></p>
+                    <p>Mã phản hồi VNPay: <strong>{response_code}</strong></p>
+                    <p>Giao dịch thanh toán chưa thành công hoặc quý khách đã hủy thanh toán.</p>
+                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
+                </div>
+                """
+            )
+        return {
+            "success": False,
+            "order_id": order_id,
+            "response_code": response_code,
+            "payment_status": "unpaid",
+            "order_status": "pending_payment",
+            "message": f"Giao dịch không thành công (Mã lỗi VNPay: {response_code})",
+        }
+
+
+@app.api_route("/api/payment/vnpay/ipn", methods=["GET", "POST"])
+async def vnpay_ipn(request: Request):
+    """
+    Xử lý Instant Payment Notification (IPN) từ server VNPay gọi ngầm.
+    Xác thực chữ ký HMAC-SHA512 độc lập với Return URL và cập nhật trạng thái đơn hàng.
+    Trả JSON chuẩn VNPay: {"RspCode": "00", "Message": "Confirm Success"}
+    """
+    from app.services.vnpay_service import vnpay_service
+    params = dict(request.query_params)
+    if not params and request.method == "POST":
+        try:
+            form_data = await request.form()
+            params = dict(form_data)
+        except Exception:
+            try:
+                body_data = await request.json()
+                params = dict(body_data)
+            except Exception:
+                params = {}
+
+    is_valid, vnp_data = vnpay_service.verify_response(params)
+    if not is_valid:
+        return {"RspCode": "97", "Message": "Invalid signature"}
+
+    order_id = vnp_data.get("vnp_TxnRef")
+    from app.db.database import db_service
+    from app.services.order_service import order_service
+    order = db_service.get_order_by_id(order_id)
+    if not order:
+        order = order_service.get_order_by_id(order_id)
+    if not order:
+        return {"RspCode": "01", "Message": "Order not found"}
+
+    order_amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
+    vnp_amount = int(vnp_data.get("vnp_Amount", 0)) // 100
+    if vnp_amount != order_amount:
+        return {"RspCode": "04", "Message": "Invalid amount"}
+
+    if order.get("payment_status") == "paid" or order.get("status") == "confirmed" or order.get("order_status") == "confirmed":
+        return {"RspCode": "02", "Message": "Order already confirmed"}
+
+    response_code = vnp_data.get("vnp_ResponseCode")
+    transaction_no = vnp_data.get("vnp_TransactionNo") or f"VNPAY-{order_id}"
+
+    if response_code == "00":
+        db_service.confirm_payment(
+            order_id=order_id,
+            amount=vnp_amount,
+            transaction_code=transaction_no,
+            payment_channel="vnpay",
+        )
+        order_service.update_order_status(order_id, "confirmed")
+        return {"RspCode": "00", "Message": "Confirm Success"}
+    else:
+        return {"RspCode": "00", "Message": "Payment failed acknowledged"}
+
+
+# ==========================================
 # Giai đoạn 2: Đánh giá & Bằng chứng Xã hội (Social Proof & Reviews)
 # ==========================================
 @app.get("/api/products/{product_id}/reviews", response_model=ProductReviewsResponse)
@@ -846,27 +1214,53 @@ def get_product_reviews(
 
 
 @app.post("/api/products/{product_id}/reviews")
-def add_product_review(product_id: str, body: ProductReviewCreate):
-    """Gửi đánh giá và nhận xét mới cho sản phẩm kèm số đo thực tế của người mặc."""
+def add_product_review(
+    product_id: str,
+    body: ProductReviewCreate,
+    current_user: User = Depends(get_current_user),
+):
+    """Gửi đánh giá và nhận xét mới cho sản phẩm. Yêu cầu đăng nhập và đã mua hàng thành công."""
     p = product_service.get_by_id(product_id)
     if not p:
         raise HTTPException(status_code=404, detail="Sản phẩm không tồn tại")
+
     from app.db.database import db_service
+    has_purchased = db_service.check_user_purchased_product(
+        user_id=current_user.id,
+        product_id=product_id,
+        username=current_user.username,
+    )
+    if not has_purchased:
+        raise HTTPException(
+            status_code=403,
+            detail="Bạn cần mua sản phẩm này trước khi đánh giá.",
+        )
+
     review_dict = body.model_dump()
-    created = db_service.add_product_review(product_id, review_dict)
-    
+    if not review_dict.get("user_name") or not str(review_dict["user_name"]).strip():
+        review_dict["user_name"] = current_user.full_name or current_user.username
+
+    created = db_service.add_product_review(
+        product_id=product_id,
+        review_data=review_dict,
+        user_id=current_user.id,
+        is_verified_buyer=True,
+    )
+
     # Đồng bộ rating và reviews_count trong bộ nhớ cache
     with product_service._lock:
         cached_p = product_service._by_id.get(product_id)
         if cached_p:
             cached_p.reviews_count += 1
             # Cập nhật xấp xỉ
-            cached_p.rating = round((cached_p.rating * (cached_p.reviews_count - 1) + body.rating) / cached_p.reviews_count, 1)
+            cached_p.rating = round(
+                (cached_p.rating * (cached_p.reviews_count - 1) + body.rating) / cached_p.reviews_count, 1
+            )
 
     return {
         "success": True,
         "message": "Cảm ơn bạn đã gửi đánh giá! Nhận xét của bạn giúp cộng đồng chọn size chuẩn hơn.",
-        "review": created
+        "review": created,
     }
 
 

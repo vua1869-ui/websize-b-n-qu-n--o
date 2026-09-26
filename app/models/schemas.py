@@ -259,7 +259,7 @@ class OrderCreateRequest(BaseModel):
     province: Optional[str] = None
     ward: Optional[str] = None
     specific_address: Optional[str] = None
-    payment_method: Literal["cod", "qr_transfer"] = "cod"
+    payment_method: Literal["cod", "qr_transfer", "vnpay"] = "cod"
     items: List[OrderItem] = Field(min_length=1, max_length=50)
     voucher_code: Optional[str] = Field(default=None, max_length=30)
     use_points: int = Field(default=0, ge=0)
@@ -332,7 +332,7 @@ class OrderResponse(BaseModel):
 # Đánh giá & Bằng chứng Xã hội (Phase 2)
 # ==========================================
 class ProductReviewCreate(BaseModel):
-    user_name: str = Field(min_length=2, max_length=50)
+    user_name: Optional[str] = Field(default=None, max_length=50)
     rating: int = Field(ge=1, le=5)
     comment: str = Field(min_length=3, max_length=1000)
     height_cm: Optional[float] = Field(default=None, ge=100, le=230)
@@ -353,7 +353,7 @@ class ProductReviewItem(BaseModel):
     purchased_size: Optional[str] = None
     purchased_color: Optional[str] = None
     fit_feedback: Optional[str] = "Vừa vặn"
-    is_verified_buyer: bool = True
+    is_verified_buyer: bool = False
     likes_count: int = 0
     created_at: str
 
@@ -656,3 +656,47 @@ class AdminProductPayload(BaseModel):
     tags: Optional[List[str]] = None
     is_hot: bool = False
     is_new: bool = False
+
+
+# ==========================================
+# Quản lý Lô Hàng & Báo Cáo Lãi/Lỗ
+# ==========================================
+class InventoryBatchCreate(BaseModel):
+    quantity: int = Field(gt=0, description="Số lượng nhập kho, phải lớn hơn 0")
+    cost_price: int = Field(ge=0, description="Giá vốn nhập đơn vị (VNĐ)")
+    note: Optional[str] = Field(default="", max_length=500)
+
+
+class InventoryBatchItem(BaseModel):
+    id: int
+    product_id: str
+    product_name: Optional[str] = None
+    quantity: int
+    cost_price: int
+    received_at: str
+    note: Optional[str] = ""
+    created_by: Optional[str] = "admin"
+    new_stock: Optional[int] = None
+    new_stock_total: Optional[int] = None
+
+
+class ProfitProductBreakdown(BaseModel):
+    product_id: str
+    product_name: str
+    sold_quantity: int
+    revenue: int
+    cost_price_wac: float
+    cogs: int
+    profit: int
+    margin_percent: float
+
+
+class ProfitReportResponse(BaseModel):
+    total_revenue: int
+    total_cogs: int
+    gross_profit: int
+    profit_margin_percent: float
+    total_paid_orders: int
+    total_items_sold: int
+    products_breakdown: List[ProfitProductBreakdown] = []
+    recent_batches: List[Dict[str, Any]] = []

@@ -236,5 +236,33 @@
     "status": "active",
     "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop",
     "created_at": "26/09/2026 12:23"
+  },
+  {
+    "id": "usr_018",
+    "name": "Học Viên Cập Nhật 52c589",
+    "full_name": "Học Viên Cập Nhật 52c589",
+    "username": "user_52c589",
+    "email": "user_52c589@example.com",
+    "phone": "0987654321",
+    "address": "123 Đường Thời Trang, Quận 1, TP.HCM",
+    "password_hash": "$2b$12$lQAXdRNxpp9CcERi8n27rOgqUwJmtdwX5IGYJi7wvRf/P3vIiV4mi",
+    "role": "user",
+    "status": "active",
+    "avatar": "https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=200&auto=format&fit=crop",
+    "created_at": "26/09/2026 18:33"
+  },
+  {
+    "id": "usr_019",
+    "name": "Học Viên Cập Nhật a1ecd9",
+    "full_name": "Học Viên Cập Nhật a1ecd9",
+    "username": "user_a1ecd9",
+    "email": "user_a1ecd9@example.com",
+    "phone": "0987654321",
+    "address": "123 Đường Thời Trang, Quận 1, TP.HCM",
+    "password_hash": "$2b$12$qtR4m5v.tQiXRDeDna1lvufM66OWnhWRm8vZMYtO2036KzM1psLOq",
+    "role": "user",
+    "status": "active",
+    "avatar": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=200&auto=format&fit=crop",
+    "created_at": "26/09/2026 18:40"
   }
 ]

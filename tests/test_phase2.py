@@ -18,12 +18,12 @@ def test_product_reviews_api(client):
     # 2. Kiểm tra thông tin người đánh giá có số đo thật
     reviews = data["reviews"]
     assert len(reviews) > 0
-    first_rev = reviews[0]
-    assert "user_name" in first_rev
-    assert "rating" in first_rev
-    assert "comment" in first_rev
-    assert "is_verified_buyer" in first_rev
-    assert first_rev["is_verified_buyer"] == 1 or first_rev["is_verified_buyer"] is True
+    verified_rev = next((r for r in reviews if r.get("is_verified_buyer")), reviews[0])
+    assert "user_name" in verified_rev
+    assert "rating" in verified_rev
+    assert "comment" in verified_rev
+    assert "is_verified_buyer" in verified_rev
+    assert verified_rev["is_verified_buyer"] == 1 or verified_rev["is_verified_buyer"] is True
 
     # 3. Lọc theo số sao
     r_filtered = client.get("/api/products/prod_001/reviews?rating=5")
@@ -33,6 +33,25 @@ def test_product_reviews_api(client):
 
 
 def test_add_product_review(client):
+    # 1. Đăng nhập user
+    login_res = client.post("/api/auth/login", json={"username": "user", "password": "user123"})
+    assert login_res.status_code == 200
+    token = login_res.json()["token"]
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # 2. Tạo đơn hàng chứa prod_001 và xác nhận thanh toán
+    order_req = {
+        **CUSTOMER,
+        "payment_method": "qr_transfer",
+        "items": [item("prod_001", qty=1)]
+    }
+    order_res = client.post("/api/orders", json=order_req, headers=headers)
+    assert order_res.status_code == 200
+    order_id = order_res.json()["order_id"]
+    order_total = order_res.json()["quote"]["total"]
+    db_service.confirm_payment(order_id, order_total, "TX-PHASE2-TEST", "test")
+
+    # 3. Gửi đánh giá cho sản phẩm đã mua
     review_payload = {
         "user_name": "Lê Kiều Trang",
         "rating": 5,
@@ -43,7 +62,7 @@ def test_add_product_review(client):
         "purchased_color": "Be / Kem",
         "fit_feedback": "Vừa vặn"
     }
-    r = client.post("/api/products/prod_001/reviews", json=review_payload)
+    r = client.post("/api/products/prod_001/reviews", json=review_payload, headers=headers)
     assert r.status_code == 200
     res = r.json()
     assert res["success"] is True
@@ -53,11 +72,12 @@ def test_add_product_review(client):
     assert created["rating"] == 5
     assert created["height_cm"] == 163.5
     assert created["weight_kg"] == 49.0
+    assert created["is_verified_buyer"] is True
 
     # Kiểm tra lại qua GET reviews
     r_check = client.get("/api/products/prod_001/reviews")
     all_revs = r_check.json()["reviews"]
-    assert any(rev["user_name"] == "Lê Kiều Trang" for rev in all_revs)
+    assert any(rev["user_name"] == "Lê Kiều Trang" and rev["is_verified_buyer"] is True for rev in all_revs)
 
 
 def test_size_chart_api(client):

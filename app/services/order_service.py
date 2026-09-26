@@ -2,6 +2,7 @@
 
 Client chỉ gửi (product_id, size, color, quantity). Giá, khuyến mãi, phí ship
 đều do server tính lại, nên khách không thể tự sửa giá trong trình duyệt.
+Tất cả dữ liệu đơn hàng được lưu trữ và truy vấn qua SQLAlchemy ORM (Database ACID).
 """
 import datetime
 import hashlib
@@ -12,15 +13,16 @@ import threading
 import uuid
 from typing import Any, Dict, List, Optional
 
+from sqlalchemy import func, or_
+
 from app.config import settings
+from app.db.database import db_service
+from app.db.models import OrderDB, OrderItemDB
+from app.db.session import get_db_session
 from app.models.schemas import (
     OrderCreateRequest, OrderItem, OrderResponse, QuoteLine, QuoteResponse,
 )
 from app.services.product_service import product_service
-
-DEFAULT_ORDERS_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "orders.jsonl"
-)
 
 
 class OrderError(Exception):
@@ -41,10 +43,22 @@ def _money(n: int) -> str:
 
 
 class OrderService:
-    def __init__(self, orders_path: str = DEFAULT_ORDERS_PATH):
+    def __init__(self, orders_path: Optional[str] = None):
         self.orders_path = orders_path
         self._lock = threading.Lock()
+        self._ensure_demo_orders()
         self._restore_stock_from_history()
+
+    def _ensure_demo_orders(self):
+        """Đảm bảo CSDL có đơn hàng (tự động migration từ orders.jsonl nếu bảng orders trống)."""
+        try:
+            with get_db_session() as session:
+                count = session.query(func.count(OrderDB.order_id)).scalar()
+                if count == 0:
+                    from scripts.migrate_to_db import run_migration
+                    run_migration()
+        except Exception:
+            pass
 
     # ---------- Tính giá ----------
     def build_quote(self, items: List[OrderItem], voucher_code: Optional[str] = None,
@@ -100,103 +114,92 @@ class OrderService:
         # ---- Voucher ----
         voucher_discount = 0
         voucher_message: Optional[str] = None
-        applied_code: Optional[str] = None
-        voucher = None
-        code = (voucher_code or "").strip().upper()
-        if code:
-            voucher = product_service.get_voucher(code)
-            if not voucher:
-                voucher_message = f"Mã '{code}' không tồn tại"
-            elif after_combo < voucher.min_order:
-                voucher_message = f"Mã {code} áp dụng cho đơn từ {_money(voucher.min_order)}"
-                voucher = None
+        applied_voucher_code: Optional[str] = None
+
+        if voucher_code:
+            code = voucher_code.strip().upper()
+            v = product_service.get_voucher(code)
+            if not v:
+                if strict_voucher:
+                    raise OrderError(f"Mã giảm giá '{code}' không tồn tại hoặc đã hết hạn", 400)
+                voucher_message = f"Mã '{code}' không tồn tại hoặc đã hết hạn"
+            elif after_combo < v.min_order:
+                msg = f"Mã {code} chỉ áp dụng cho đơn từ {_money(v.min_order)}"
+                if strict_voucher:
+                    raise OrderError(msg, 400)
+                voucher_message = msg
             else:
-                applied_code = voucher.code
-            if voucher_message and strict_voucher:
-                raise OrderError(voucher_message, 400)
-
-        after_voucher = after_combo
-        if voucher:
-            if voucher.kind == "amount":
-                voucher_discount = min(voucher.value, after_combo)
-            elif voucher.kind == "percent":
-                voucher_discount = after_combo * voucher.value // 100
-                if voucher.max_discount:
-                    voucher_discount = min(voucher_discount, voucher.max_discount)
-            after_voucher = max(0, after_combo - voucher_discount)
-            if voucher_message is None:
-                voucher_message = f"Đã áp dụng mã {voucher.code}"
-
-        # ---- Hạng thành viên Loyalty & Miễn phí vận chuyển ----
-        from app.db.database import db_service
-        loyalty = None
-        if user and getattr(user, "id", None):
-            loyalty = db_service.get_user_loyalty(user.id)
+                applied_voucher_code = code
+                if v.kind == "amount":
+                    voucher_discount = min(v.value, after_combo)
+                    voucher_message = f"Đã áp dụng mã {code}: giảm {_money(voucher_discount)}"
+                elif v.kind == "percent":
+                    raw = after_combo * v.value // 100
+                    if v.max_discount:
+                        raw = min(raw, v.max_discount)
+                    voucher_discount = min(raw, after_combo)
+                    voucher_message = f"Đã áp dụng mã {code}: giảm {v.value}% ({_money(voucher_discount)})"
+                elif v.kind == "shipping":
+                    pass
 
         # ---- Phí vận chuyển ----
-        shipping_fee = 0 if after_combo >= settings.FREE_SHIPPING_THRESHOLD else settings.SHIPPING_FEE
+        shipping_fee = 0 if subtotal >= settings.FREE_SHIPPING_THRESHOLD else settings.SHIPPING_FEE
         shipping_discount = 0
 
-        # Nếu là hội viên VIP Gold hoặc Diamond: miễn phí vận chuyển 100% mọi đơn hàng
-        if loyalty and loyalty.get("free_shipping_all_orders"):
+        # Đặc quyền VIP AURA Club: Miễn phí vận chuyển 100% cho hội viên Gold/Diamond
+        user_tier = getattr(user, "tier", "Silver") if user else "Silver"
+        if user and user_tier.lower() in ["gold", "diamond"]:
             shipping_discount = shipping_fee
+        elif applied_voucher_code:
+            v = product_service.get_voucher(applied_voucher_code)
+            if v and v.kind == "shipping":
+                shipping_discount = min(v.value if v.value > 0 else shipping_fee, shipping_fee)
+                voucher_message = f"Đã áp dụng mã {applied_voucher_code}: miễn/giảm phí ship"
 
-        if voucher and voucher.kind == "shipping":
-            shipping_discount = shipping_fee
-            if shipping_fee == 0:
-                voucher_message = "Đơn của bạn đã được miễn phí vận chuyển sẵn"
-
-        # ---- Dùng điểm tích lũy AURA Club (1 điểm = 1.000 VNĐ) ----
+        # ---- Điểm thưởng AURA Loyalty Club ----
         points_used = 0
         points_discount = 0
-        if use_points > 0:
-            if not loyalty:
-                if strict_voucher:
-                    raise OrderError("Vui lòng đăng nhập để sử dụng điểm thưởng AURA Club", 401)
-            else:
-                max_pts_avail = loyalty.get("points_balance", 0)
-                max_pts_order = after_voucher // 1000
-                points_used = max(0, min(use_points, max_pts_avail, max_pts_order))
-                points_discount = points_used * 1000
+        if use_points > 0 and user:
+            user_points = getattr(user, "points_balance", 0) or 0
+            if use_points > user_points:
+                raise OrderError(f"Bạn chỉ có {user_points} điểm tích lũy, không đủ {use_points} điểm", 400)
+            max_payable = max(0, after_combo - voucher_discount)
+            max_points_allowed = max_payable // 1000
+            points_to_apply = min(use_points, max_points_allowed)
+            points_used = points_to_apply
+            points_discount = points_to_apply * 1000
 
-        # ---- Tích lũy điểm dự kiến nhận được từ đơn hàng ----
-        earn_rate = loyalty.get("earn_rate_percent", 3) if loyalty else 3
-        net_payable_for_points = max(0, after_voucher - points_discount)
-        points_earned = int((net_payable_for_points * earn_rate) / 100 / 1000)
+        total = max(0, after_combo - voucher_discount - points_discount) + shipping_fee - shipping_discount
 
-        total = after_voucher - points_discount + shipping_fee - shipping_discount
+        # Tích điểm cho đơn hàng: 1 điểm cho mỗi 100.000đ thanh toán
+        net_spent = max(0, after_combo - voucher_discount - points_discount)
+        points_earned = net_spent // 100000
+
         return QuoteResponse(
-            lines=lines, subtotal=subtotal, combo_discount=combo_discount,
-            voucher_code=applied_code, voucher_discount=voucher_discount,
+            lines=lines,
+            subtotal=subtotal,
+            combo_discount=combo_discount,
+            voucher_code=applied_voucher_code,
+            voucher_discount=voucher_discount,
             voucher_message=voucher_message,
+            shipping_fee=shipping_fee,
+            shipping_discount=shipping_discount,
             points_used=points_used,
             points_discount=points_discount,
             points_earned=points_earned,
-            shipping_fee=shipping_fee,
-            shipping_discount=shipping_discount, total=max(0, total),
+            total=total,
+            free_shipping_threshold=settings.FREE_SHIPPING_THRESHOLD,
         )
 
-    # ---------- Tạo đơn ----------
+    # ---------- Đặt hàng ----------
     def create_order(self, req: OrderCreateRequest, user: Optional[Any] = None) -> OrderResponse:
+        # Báo giá lại toàn bộ phía server
         quote = self.build_quote(
-            req.items,
-            req.voucher_code,
-            strict_voucher=True,
-            use_points=getattr(req, "use_points", 0),
-            user=user,
+            req.items, req.voucher_code, strict_voucher=True,
+            use_points=req.use_points, user=user
         )
 
-        # Trừ kho biến thể (Màu x Size) nguyên tử trong CSDL SQLite
-        variant_items = [
-            {"product_id": line.product_id, "color": line.color, "size": line.size, "quantity": line.quantity}
-            for line in quote.lines
-        ]
-        from app.db.database import db_service
-        ok, stock_err = db_service.check_and_deduct_variants_stock(variant_items)
-        if not ok:
-            raise OrderError(stock_err or "Không đủ hàng trong kho", 409)
-
-        # Đồng bộ bộ nhớ đệm
+        # Trừ tồn kho tạm thời trong bộ nhớ
         needed: Dict[str, int] = {}
         for line in quote.lines:
             needed[line.product_id] = needed.get(line.product_id, 0) + line.quantity
@@ -216,7 +219,8 @@ class OrderService:
         estimated_delivery = (now + datetime.timedelta(days=3)).strftime("%d/%m/%Y")
 
         record = {
-            "order_id": order_id, "status": status,
+            "order_id": order_id,
+            "status": status,
             "user_id": getattr(user, "id", None) if user else None,
             "carrier": carrier,
             "tracking_code": tracking_code,
@@ -238,9 +242,18 @@ class OrderService:
             "payment_method": req.payment_method,
             "quote": quote.model_dump(),
         }
+
         try:
-            self._append(record)
+            # Lưu trực tiếp vào Database (orders + order_items)
             db_service.save_order(record)
+
+            if self.orders_path:
+                try:
+                    os.makedirs(os.path.dirname(self.orders_path), exist_ok=True)
+                    with self._lock, open(self.orders_path, "a", encoding="utf-8") as f:
+                        f.write(json.dumps(record, ensure_ascii=False) + "\n")
+                except Exception:
+                    pass
 
             # Xử lý trừ điểm và cộng điểm tích lũy cho người dùng
             if user and getattr(user, "id", None):
@@ -249,8 +262,11 @@ class OrderService:
                 net_paid = max(0, quote.subtotal - quote.combo_discount - quote.voucher_discount - quote.points_discount)
                 db_service.update_user_total_spent_and_tier(user.id, net_paid)
                 if quote.points_earned > 0:
-                    db_service.add_loyalty_points(user.id, quote.points_earned, "earn", f"Tích điểm từ đơn hàng {order_id}", order_id=order_id)
-        except OSError:
+                    db_service.add_loyalty_points(
+                        user.id, quote.points_earned, "earn",
+                        f"Tích điểm từ đơn hàng {order_id}", order_id=order_id
+                    )
+        except Exception as e:
             product_service.release_stock(needed)  # hoàn kho nếu không ghi được đơn
             raise OrderError("Không thể lưu đơn hàng lúc này, vui lòng thử lại", 500)
 
@@ -284,216 +300,200 @@ class OrderService:
             qr_code_url=qr_code_url, bank_info=bank_info,
         )
 
-    # ---------- Lưu trữ ----------
-    def _append(self, record: dict):
-        os.makedirs(os.path.dirname(self.orders_path), exist_ok=True)
-        with self._lock:
-            with open(self.orders_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps(record, ensure_ascii=False) + "\n")
+    # ---------- Lưu trữ & Truy vấn Database ----------
+    def _format_order(self, o: OrderDB) -> dict:
+        quote = {}
+        if o.quote_json:
+            try:
+                quote = json.loads(o.quote_json)
+            except Exception:
+                quote = {}
+        if not quote:
+            quote = {
+                "total": o.total_amount,
+                "subtotal": o.subtotal,
+                "shipping_fee": o.shipping_fee,
+                "lines": [],
+            }
+
+        if not quote.get("lines") and hasattr(o, "items") and o.items:
+            quote["lines"] = [
+                {
+                    "product_id": item.product_id,
+                    "name": item.product_name or item.product_id,
+                    "image": "/static/images/placeholder.jpg",
+                    "size": item.size,
+                    "color": item.color,
+                    "quantity": item.quantity,
+                    "unit_price": item.unit_price,
+                    "line_total": item.line_total,
+                }
+                for item in o.items
+            ]
+
+        return {
+            "order_id": o.order_id,
+            "status": o.order_status,
+            "order_status": o.order_status,
+            "payment_status": o.payment_status,
+            "carrier": o.carrier or "Giao Hàng Nhanh (GHN Express)",
+            "tracking_code": o.tracking_code or f"GHN-VN-{o.order_id[-6:]}",
+            "shipping_status": o.shipping_status or (
+                "ready_to_pick" if o.order_status in ["confirmed", "completed"] else "pending_confirm"
+            ),
+            "estimated_delivery": o.estimated_delivery or "2 - 3 ngày tới",
+            "created_at": o.created_at,
+            "paid_at": o.paid_at,
+            "total_amount": o.total_amount,
+            "subtotal": o.subtotal,
+            "shipping_fee": o.shipping_fee,
+            "discount_amount": o.discount_amount,
+            "customer_name": o.customer_name,
+            "customer_phone": o.customer_phone,
+            "customer_address": o.customer_address,
+            "customer": {
+                "name": o.customer_name,
+                "phone": o.customer_phone,
+                "address": o.customer_address,
+                "province": o.province,
+                "district": o.district,
+                "ward": o.ward,
+                "specific_address": o.specific_address,
+                "note": o.customer_note,
+            },
+            "payment_method": o.payment_method,
+            "quote": quote,
+        }
 
     def _restore_stock_from_history(self):
         """Khởi động lại server không làm 'hồi' lại hàng đã bán."""
-        if not os.path.exists(self.orders_path):
-            return
-        with open(self.orders_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                try:
-                    rec = json.loads(line)
-                    if rec.get("status") == "cancelled":
+        if self.orders_path and os.path.exists(self.orders_path):
+            with open(self.orders_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
                         continue
-                    for l in rec["quote"]["lines"]:
-                        product_service.apply_historical_sale(l["product_id"], l["quantity"])
-                except (ValueError, KeyError):
-                    continue  # bỏ qua dòng hỏng, không làm sập server
+                    try:
+                        rec = json.loads(line)
+                        if rec.get("status") == "cancelled":
+                            continue
+                        for l in rec["quote"]["lines"]:
+                            product_service.apply_historical_sale(l["product_id"], l["quantity"])
+                    except Exception:
+                        continue
+            return
+
+        try:
+            with get_db_session() as session:
+                orders = session.query(OrderDB).filter(OrderDB.order_status != "cancelled").all()
+                for o in orders:
+                    if not o.quote_json:
+                        continue
+                    try:
+                        q = json.loads(o.quote_json)
+                        for l in q.get("lines", []):
+                            product_service.apply_historical_sale(l["product_id"], l["quantity"])
+                    except Exception:
+                        continue
+        except Exception:
+            pass
 
     def count_orders(self) -> int:
-        if not os.path.exists(self.orders_path):
+        if self.orders_path is not None:
+            if os.path.exists(self.orders_path):
+                with open(self.orders_path, "r", encoding="utf-8") as f:
+                    return sum(1 for line in f if line.strip())
             return 0
-        with open(self.orders_path, "r", encoding="utf-8") as f:
-            return sum(1 for line in f if line.strip())
+        with get_db_session() as session:
+            return session.query(func.count(OrderDB.order_id)).scalar() or 0
 
     # ---------- Quản lý đơn hàng Admin ----------
     def get_orders(self, status: Optional[str] = None, search: Optional[str] = None,
                    limit: int = 50, offset: int = 0) -> List[dict]:
         self._ensure_demo_orders()
-        if not os.path.exists(self.orders_path):
-            return []
+        with get_db_session() as session:
+            query = session.query(OrderDB)
+            if status and status != "all":
+                if status == "pending":
+                    query = query.filter(or_(OrderDB.order_status == "pending", OrderDB.order_status == "pending_payment"))
+                else:
+                    query = query.filter(OrderDB.order_status == status)
 
-        orders = []
-        with open(self.orders_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    try:
-                        orders.append(json.loads(line))
-                    except Exception:
-                        continue
+            if search and search.strip():
+                s = f"%{search.strip().lower()}%"
+                query = query.filter(
+                    or_(
+                        func.lower(OrderDB.order_id).like(s),
+                        func.lower(OrderDB.customer_name).like(s),
+                        func.lower(OrderDB.customer_phone).like(s),
+                    )
+                )
 
-        # Mới nhất lên đầu
-        orders.reverse()
-
-        if status and status != "all":
-            orders = [o for o in orders if o.get("status") == status]
-
-        if search and search.strip():
-            s = search.strip().lower()
-            orders = [
-                o for o in orders
-                if s in o.get("order_id", "").lower()
-                or s in o.get("customer", {}).get("name", "").lower()
-                or s in o.get("customer", {}).get("phone", "").lower()
-            ]
-
-        return orders[offset: offset + limit]
+            orders = query.order_by(OrderDB.created_at.desc(), OrderDB.order_id.desc()).offset(offset).limit(limit).all()
+            return [self._format_order(o) for o in orders]
 
     def get_order_by_id(self, order_id: str) -> Optional[dict]:
         self._ensure_demo_orders()
-        if not os.path.exists(self.orders_path):
-            return None
-        with open(self.orders_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    try:
-                        o = json.loads(line)
-                        if o.get("order_id") == order_id:
-                            return o
-                    except Exception:
-                        continue
-        return None
+        with get_db_session() as session:
+            o = session.query(OrderDB).filter(OrderDB.order_id == order_id).first()
+            return self._format_order(o) if o else None
 
     def update_order_status(self, order_id: str, new_status: str) -> Optional[dict]:
-        with self._lock:
-            if not os.path.exists(self.orders_path):
+        with get_db_session() as session:
+            o = session.query(OrderDB).filter(OrderDB.order_id == order_id).first()
+            if not o:
                 return None
-            records = []
-            target = None
-            with open(self.orders_path, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if line:
-                        try:
-                            rec = json.loads(line)
-                            if rec.get("order_id") == order_id:
-                                old_status = rec.get("status")
-                                rec["status"] = new_status
-                                target = rec
-                                # Nếu hủy đơn -> hoàn kho
-                                if new_status == "cancelled" and old_status != "cancelled":
-                                    needed = {l["product_id"]: l["quantity"] for l in rec["quote"]["lines"]}
-                                    product_service.release_stock(needed)
-                            records.append(rec)
-                        except Exception:
-                            continue
 
-            if target:
-                with open(self.orders_path, "w", encoding="utf-8") as f:
-                    for r in records:
-                        f.write(json.dumps(r, ensure_ascii=False) + "\n")
-            return target
+            old_status = o.order_status
+            o.order_status = new_status
+            if new_status == "confirmed" and o.payment_method != "cod":
+                o.payment_status = "paid"
+            if new_status == "completed":
+                o.shipping_status = "delivered"
+            elif new_status == "confirmed" and o.shipping_status in ["pending_confirm", None]:
+                o.shipping_status = "ready_to_pick"
+
+            # Nếu hủy đơn -> hoàn kho
+            if new_status == "cancelled" and old_status != "cancelled":
+                if o.quote_json:
+                    try:
+                        q = json.loads(o.quote_json)
+                        needed = {l["product_id"]: l["quantity"] for l in q.get("lines", [])}
+                        product_service.release_stock(needed)
+                    except Exception:
+                        pass
+
+            session.flush()
+            session.refresh(o)
+            return self._format_order(o)
 
     def get_admin_stats(self) -> dict:
         self._ensure_demo_orders()
-        total_orders = 0
-        total_revenue = 0
-        status_counts = {"pending": 0, "confirmed": 0, "completed": 0, "cancelled": 0}
+        with get_db_session() as session:
+            total_orders = session.query(func.count(OrderDB.order_id)).scalar() or 0
+            total_revenue = (
+                session.query(func.sum(OrderDB.total_amount))
+                .filter(OrderDB.order_status != "cancelled")
+                .scalar()
+            ) or 0
 
-        if os.path.exists(self.orders_path):
-            with open(self.orders_path, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if line:
-                        try:
-                            rec = json.loads(line)
-                            total_orders += 1
-                            st = rec.get("status", "pending")
-                            status_counts[st] = status_counts.get(st, 0) + 1
-                            if st != "cancelled":
-                                total_revenue += rec.get("quote", {}).get("total", 0)
-                        except Exception:
-                            continue
+            rows = (
+                session.query(OrderDB.order_status, func.count(OrderDB.order_id))
+                .group_by(OrderDB.order_status)
+                .all()
+            )
+            status_counts = {"pending": 0, "pending_payment": 0, "confirmed": 0, "completed": 0, "cancelled": 0}
+            for st, cnt in rows:
+                if st:
+                    status_counts[st] = cnt
+            # Hợp nhất pending_payment vào pending cho giao diện tổng quan
+            status_counts["pending"] = status_counts.get("pending", 0) + status_counts.get("pending_payment", 0)
 
-        return {
-            "total_orders": total_orders,
-            "total_revenue": total_revenue,
-            "status_counts": status_counts,
-        }
-
-    def _ensure_demo_orders(self):
-        """Khởi tạo các đơn hàng demo ban đầu nếu chưa có file đơn hàng."""
-        if os.path.exists(self.orders_path) and os.path.getsize(self.orders_path) > 0:
-            return
-
-        demo_customers = [
-            ("Lê Thị Thảo", "0912345678", "45 Lê Lợi, Quận 1, TP. Hồ Chí Minh", "Gọi trước khi giao", "cod", "completed", "prod_001", "M", "Be / Kem"),
-            ("Nguyễn Văn Hùng", "0981234567", "120 Cầu Giấy, Hà Nội", "Giao giờ hành chính", "qr_transfer", "completed", "prod_002", "S", "Trắng Ngọc Trai"),
-            ("Trần Minh Tuấn", "0908765432", "88 Nguyễn Thị Minh Khai, Đà Nẵng", "Để hàng ở bảo vệ", "cod", "confirmed", "prod_003", "L", "Đen Tuyển"),
-            ("Phạm Hồng Nhung", "0976543210", "15 Hai Bà Trưng, Hoàn Kiếm, Hà Nội", "", "cod", "completed", "prod_004", "M", "Đỏ Rượu Vang"),
-            ("Đặng Tiến Anh", "0965432109", "36 Trần Hưng Đạo, Quận 5, TP. Hồ Chí Minh", "Giao buổi chiều", "qr_transfer", "confirmed", "prod_005", "XL", "Trắng Basic"),
-            ("Vũ Bích Ngọc", "0943210987", "72 Bạch Đằng, Hải Châu, Đà Nẵng", "", "cod", "pending_payment", "prod_006", "30", "Xanh Vintage Wash"),
-            ("Đỗ Gia Bảo", "0932109876", "29 Nguyễn Trãi, Thanh Xuân, Hà Nội", "Cho xem hàng", "cod", "completed", "prod_008", "M", "Nâu Chocolate"),
-            ("Ngô Phương Linh", "0921098765", "105 Cách Mạng Tháng 8, Quận 3, TP. Hồ Chí Minh", "", "qr_transfer", "completed", "prod_009", "M", "Đen Tuyền"),
-            ("Hoàng Quốc Việt", "0918765432", "214 Phố Huế, Hai Bà Trưng, Hà Nội", "Hàng dễ vỡ", "cod", "confirmed", "prod_010", "L", "Xám Xi Măng"),
-            ("Trịnh Thu Trang", "0987654322", "58 Nguyễn Văn Linh, Đà Nẵng", "Gọi trước 15 phút", "cod", "cancelled", "prod_012", "S", "Xanh Rêu Pastel"),
-            ("Bùi Thanh Tùng", "0971234568", "19 Quang Trung, Hà Đông, Hà Nội", "", "qr_transfer", "completed", "prod_091", "L", "Đen Washed"),
-            ("Mai Phương Thảo", "0962345679", "33 Hai Bà Trưng, Quận 1, TP. Hồ Chí Minh", "Giao gấp sáng mai", "cod", "confirmed", "prod_096", "M", "Hồng Baby"),
-        ]
-
-        now = datetime.datetime.now()
-        os.makedirs(os.path.dirname(self.orders_path), exist_ok=True)
-        with open(self.orders_path, "w", encoding="utf-8") as f:
-            for idx, (name, phone, addr, note, method, st, pid, sz, col) in enumerate(demo_customers, 1):
-                p = product_service.get_by_id(pid)
-                if not p:
-                    continue
-                p_price = p.final_price
-                sub = p_price
-                fee = 0 if sub >= settings.FREE_SHIPPING_THRESHOLD else settings.SHIPPING_FEE
-                tot = sub + fee
-                order_time = (now - datetime.timedelta(days=idx // 2, hours=idx * 2)).strftime("%d/%m/%Y %H:%M")
-                order_id = f"AURA-{now.strftime('%y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
-
-                carrier = "Giao Hàng Nhanh (GHN Express)" if idx % 2 == 1 else "Giao Hàng Tiết Kiệm (GHTK)"
-                tracking_code = f"GHN-VN-{order_id[-6:]}" if "GHN" in carrier else f"GHTK-VN-{order_id[-6:]}"
-                ship_status = "delivered" if st == "completed" else "in_transit" if st == "confirmed" else "pending_confirm"
-                est_del = (now - datetime.timedelta(days=idx // 2 - 2)).strftime("%d/%m/%Y") if st == "completed" else (now + datetime.timedelta(days=2)).strftime("%d/%m/%Y")
-
-                rec = {
-                    "order_id": order_id,
-                    "status": st,
-                    "carrier": carrier,
-                    "tracking_code": tracking_code,
-                    "shipping_status": ship_status,
-                    "estimated_delivery": est_del,
-                    "created_at": order_time,
-                    "customer": {"name": name, "phone": phone, "address": addr, "note": note},
-                    "payment_method": method,
-                    "quote": {
-                        "lines": [{
-                            "product_id": p.id,
-                            "name": p.name,
-                            "image": p.images[0] if p.images else "",
-                            "size": sz,
-                            "color": col,
-                            "quantity": 1,
-                            "unit_price": p_price,
-                            "line_total": p_price,
-                            "combo": False
-                        }],
-                        "subtotal": sub,
-                        "combo_discount": 0,
-                        "voucher_code": None,
-                        "voucher_discount": 0,
-                        "voucher_message": None,
-                        "shipping_fee": fee,
-                        "shipping_discount": 0,
-                        "total": tot
-                    }
-                }
-                f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+            return {
+                "total_orders": total_orders,
+                "total_revenue": int(total_revenue),
+                "status_counts": status_counts,
+            }
 
 
 order_service = OrderService()

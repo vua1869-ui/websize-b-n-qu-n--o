@@ -1,0 +1,325 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Quản lý Lô hàng & Báo cáo Lãi/Lỗ{% endblock %}
+{% block header_title %}Quản lý Lô hàng & Báo cáo Lãi/Lỗ{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+  <!-- 1. STAT CARDS TỔNG QUAN LÃI/LỖ -->
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <!-- Tổng doanh thu -->
+    <div class="rounded-lg border border-stone-200 bg-white p-5 shadow-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">Doanh thu thực thu</span>
+        <div class="flex h-8 w-8 items-center justify-center rounded-md bg-stone-100 text-stone-700">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+      </div>
+      <p id="stat-revenue" class="mt-3 text-2xl font-bold tracking-tight text-stone-900">...</p>
+      <div class="mt-2 flex items-center text-xs text-stone-400 font-medium">
+        <span>Từ các đơn đã thanh toán</span>
+      </div>
+    </div>
+
+    <!-- Tổng giá vốn hàng bán (COGS) -->
+    <div class="rounded-lg border border-stone-200 bg-white p-5 shadow-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">Giá vốn hàng bán (COGS)</span>
+        <div class="flex h-8 w-8 items-center justify-center rounded-md bg-stone-100 text-stone-700">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6H2.25m0 0v1.5m0-1.5h1.5m-1.5 0h.008v.008H2.25V6zm0 12.75V18a2.25 2.25 0 012.25-2.25h1.5m-3.75 3h1.5m-1.5 0v-1.5m0 1.5h.008v.008H2.25v-.008zm19.5-12.75V6a2.25 2.25 0 00-2.25-2.25h-1.5m3.75 2.25h-1.5m1.5 0v-1.5m0 1.5h-.008v-.008h.008V6z"/></svg>
+        </div>
+      </div>
+      <p id="stat-cogs" class="mt-3 text-2xl font-bold tracking-tight text-stone-900">...</p>
+      <div class="mt-2 flex items-center text-xs text-stone-400 font-medium">
+        <span>Bình quân gia quyền (WAC)</span>
+      </div>
+    </div>
+
+    <!-- Lợi nhuận gộp -->
+    <div class="rounded-lg border border-stone-200 bg-white p-5 shadow-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">Lợi nhuận gộp</span>
+        <div class="flex h-8 w-8 items-center justify-center rounded-md bg-stone-100 text-stone-700">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
+        </div>
+      </div>
+      <p id="stat-gross-profit" class="mt-3 text-2xl font-bold tracking-tight text-stone-900">...</p>
+      <div class="mt-2 flex items-center text-xs text-stone-400 font-medium">
+        <span id="stat-margin-badge" class="font-mono text-brand-600 font-semibold">--%</span>
+        <span class="ml-1 text-stone-400">tỷ suất lợi nhuận</span>
+      </div>
+    </div>
+
+    <!-- Đã xuất bán -->
+    <div class="rounded-lg border border-stone-200 bg-white p-5 shadow-xs">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">Sản phẩm đã bán</span>
+        <div class="flex h-8 w-8 items-center justify-center rounded-md bg-stone-100 text-stone-700">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25c-.669 0-1.188-.578-1.119-1.243l1.263-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
+        </div>
+      </div>
+      <p id="stat-items-sold" class="mt-3 text-2xl font-bold tracking-tight text-stone-900">...</p>
+      <div class="mt-2 flex items-center text-xs text-stone-400 font-medium">
+        <span id="stat-paid-orders">...</span>
+        <span class="ml-1">đơn hàng đã duyệt</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. PHIẾU NHẬP KHO LÔ MỚI -->
+  <div class="rounded-lg border border-stone-200 bg-white p-6 shadow-xs">
+    <div class="flex items-center justify-between border-b border-stone-100 pb-3 mb-4">
+      <div>
+        <h3 class="text-sm font-bold text-stone-900">Tạo Phiếu Nhập Kho Lô Mới</h3>
+        <p class="text-xs text-stone-500">Tự động tăng tồn kho sản phẩm nguyên tử và cập nhật giá vốn bình quân gia quyền (WAC)</p>
+      </div>
+      <span class="rounded-full bg-stone-100 px-3 py-1 text-[11px] font-mono text-stone-600 border border-stone-200">ACID Transaction</span>
+    </div>
+
+    <form id="inventory-form" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+      <div class="sm:col-span-1">
+        <label class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Chọn sản phẩm <span class="text-brand-600">*</span></label>
+        <select id="inv-product-id" required class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white">
+          <option value="">-- Đang nạp danh sách sản phẩm --</option>
+        </select>
+      </div>
+
+      <div class="sm:col-span-1">
+        <label class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Số lượng nhập <span class="text-brand-600">*</span></label>
+        <input type="number" id="inv-quantity" required min="1" placeholder="50"
+               class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900" />
+      </div>
+
+      <div class="sm:col-span-1">
+        <label class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Giá vốn nhập (VNĐ/sp) <span class="text-brand-600">*</span></label>
+        <input type="number" id="inv-cost-price" required min="0" step="1000" placeholder="150000"
+               class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900" />
+      </div>
+
+      <div class="sm:col-span-1">
+        <label class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Ghi chú lô hàng</label>
+        <input type="text" id="inv-note" placeholder="Nhà may Sài Gòn đợt 1..."
+               class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900" />
+      </div>
+
+      <div class="sm:col-span-4 flex justify-end">
+        <button type="submit" id="inv-submit-btn" class="flex items-center gap-2 rounded-md bg-stone-900 px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-white shadow-xs transition hover:bg-stone-800">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+          <span>Nhập kho ngay</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 3. BẢNG PHÂN TÍCH LÃI/LỖ THEO TỪNG SẢN PHẨM -->
+  <div class="rounded-lg border border-stone-200 bg-white shadow-xs overflow-hidden">
+    <div class="flex items-center justify-between border-b border-stone-100 p-4">
+      <div>
+        <h3 class="text-sm font-bold text-stone-900">Báo Cáo Hiệu Quả Lợi Nhuận Theo Sản Phẩm</h3>
+        <p class="text-xs text-stone-400">Doanh thu trừ Giá vốn bình quân gia quyền (WAC)</p>
+      </div>
+      <button onclick="loadProfitReport()" class="rounded-md border border-stone-200 bg-white px-3 py-1.5 text-xs font-medium text-stone-600 hover:bg-stone-50 transition shadow-xs">
+        Làm mới
+      </button>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-[#FAF9F6] border-b border-stone-200 text-stone-400 uppercase tracking-wider text-[10px]">
+          <tr>
+            <th class="py-3 px-4 font-semibold">Sản phẩm</th>
+            <th class="py-3 px-4 font-semibold text-center">Đã bán</th>
+            <th class="py-3 px-4 font-semibold text-right">Giá vốn BQGQ (WAC)</th>
+            <th class="py-3 px-4 font-semibold text-right">Doanh thu</th>
+            <th class="py-3 px-4 font-semibold text-right">Tổng vốn (COGS)</th>
+            <th class="py-3 px-4 font-semibold text-right">Lợi nhuận gộp</th>
+            <th class="py-3 px-4 font-semibold text-right">Tỷ suất (%)</th>
+          </tr>
+        </thead>
+        <tbody id="profit-breakdown-tbody" class="divide-y divide-stone-100 text-stone-800">
+          <tr>
+            <td colspan="7" class="py-8 text-center text-stone-400">Đang tính toán báo cáo lãi lỗ...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 4. LỊCH SỬ CÁC LÔ NHẬP KHO GẦN ĐÂY -->
+  <div class="rounded-lg border border-stone-200 bg-white shadow-xs overflow-hidden">
+    <div class="border-b border-stone-100 p-4">
+      <h3 class="text-sm font-bold text-stone-900">Lịch Sử Các Lô Nhập Kho Gần Đây</h3>
+      <p class="text-xs text-stone-400">Ghi nhận từng phiếu nhập hàng vào kho</p>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-[#FAF9F6] border-b border-stone-200 text-stone-400 uppercase tracking-wider text-[10px]">
+          <tr>
+            <th class="py-3 px-4 font-semibold">Mã lô</th>
+            <th class="py-3 px-4 font-semibold">Sản phẩm</th>
+            <th class="py-3 px-4 font-semibold text-center">Số lượng</th>
+            <th class="py-3 px-4 font-semibold text-right">Giá vốn đơn vị</th>
+            <th class="py-3 px-4 font-semibold">Thời gian nhập</th>
+            <th class="py-3 px-4 font-semibold">Ghi chú</th>
+            <th class="py-3 px-4 font-semibold text-right">Người nhập</th>
+          </tr>
+        </thead>
+        <tbody id="batches-tbody" class="divide-y divide-stone-100 text-stone-800">
+          <tr>
+            <td colspan="7" class="py-8 text-center text-stone-400">Đang nạp lịch sử lô hàng...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  let productsCache = [];
+
+  async function loadProductsForSelect() {
+    try {
+      const res = await fetch("/api/admin/products?limit=200");
+      if (res.ok) {
+        const data = await res.json();
+        productsCache = data.items || [];
+        const select = document.getElementById("inv-product-id");
+        if (productsCache.length > 0) {
+          select.innerHTML = '<option value="">-- Chọn sản phẩm cần nhập kho --</option>' +
+            productsCache.map(p => `<option value="${p.id}">${p.name} (Hiện có: ${p.stock} sp)</option>`).join("");
+        } else {
+          select.innerHTML = '<option value="">Chưa có sản phẩm nào</option>';
+        }
+      }
+    } catch (e) {
+      console.error("Lỗi nạp sản phẩm:", e);
+    }
+  }
+
+  async function loadProfitReport() {
+    try {
+      const res = await fetch("/api/admin/reports/profit");
+      if (!res.ok) return;
+      const data = await res.json();
+
+      // Cập nhật Stat Cards
+      document.getElementById("stat-revenue").textContent = (data.total_revenue || 0).toLocaleString("vi-VN") + "đ";
+      document.getElementById("stat-cogs").textContent = (data.total_cogs || 0).toLocaleString("vi-VN") + "đ";
+      document.getElementById("stat-gross-profit").textContent = (data.gross_profit || 0).toLocaleString("vi-VN") + "đ";
+      document.getElementById("stat-margin-badge").textContent = `${data.profit_margin_percent || 0}%`;
+      document.getElementById("stat-items-sold").textContent = `${data.total_items_sold || 0} sản phẩm`;
+      document.getElementById("stat-paid-orders").textContent = `${data.total_paid_orders || 0}`;
+
+      // Render Bảng phân tích theo sản phẩm
+      const tbodyBreakdown = document.getElementById("profit-breakdown-tbody");
+      if (data.products_breakdown && data.products_breakdown.length > 0) {
+        tbodyBreakdown.innerHTML = data.products_breakdown.map(p => {
+          const isProfitable = p.profit >= 0;
+          return `
+            <tr class="hover:bg-[#FAF9F6]/60 transition">
+              <td class="py-2.5 px-4 font-medium">
+                <p class="font-semibold text-stone-900">${p.product_name}</p>
+                <p class="text-[10px] font-mono text-stone-400">ID: ${p.product_id}</p>
+              </td>
+              <td class="py-2.5 px-4 text-center font-mono font-semibold">${p.sold_quantity}</td>
+              <td class="py-2.5 px-4 text-right font-mono text-stone-600">${Math.round(p.cost_price_wac).toLocaleString("vi-VN")}đ</td>
+              <td class="py-2.5 px-4 text-right font-mono font-semibold text-stone-900">${p.revenue.toLocaleString("vi-VN")}đ</td>
+              <td class="py-2.5 px-4 text-right font-mono text-stone-600">${p.cogs.toLocaleString("vi-VN")}đ</td>
+              <td class="py-2.5 px-4 text-right font-mono font-bold ${isProfitable ? 'text-emerald-700' : 'text-rose-600'}">
+                ${p.profit.toLocaleString("vi-VN")}đ
+              </td>
+              <td class="py-2.5 px-4 text-right font-mono font-semibold">
+                <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] ${isProfitable ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'}">
+                  ${p.margin_percent}%
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      } else {
+        tbodyBreakdown.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-stone-400">Chưa có dữ liệu bán hàng từ đơn đã thanh toán</td></tr>`;
+      }
+
+      // Render Lịch sử các lô nhập kho gần đây
+      const tbodyBatches = document.getElementById("batches-tbody");
+      if (data.recent_batches && data.recent_batches.length > 0) {
+        tbodyBatches.innerHTML = data.recent_batches.map(b => `
+          <tr class="hover:bg-[#FAF9F6]/60 transition">
+            <td class="py-2.5 px-4 font-mono font-bold text-stone-900">#${b.id}</td>
+            <td class="py-2.5 px-4 font-medium">
+              <p class="font-semibold text-stone-900">${b.product_name || b.product_id}</p>
+              <p class="text-[10px] font-mono text-stone-400">ID: ${b.product_id}</p>
+            </td>
+            <td class="py-2.5 px-4 text-center font-mono font-bold text-stone-800">+${b.quantity}</td>
+            <td class="py-2.5 px-4 text-right font-mono font-semibold text-stone-700">${b.cost_price.toLocaleString("vi-VN")}đ</td>
+            <td class="py-2.5 px-4 text-stone-500">${b.received_at}</td>
+            <td class="py-2.5 px-4 text-stone-600 italic">${b.note || "—"}</td>
+            <td class="py-2.5 px-4 text-right text-stone-500 font-mono">@${b.created_by || "admin"}</td>
+          </tr>
+        `).join("");
+      } else {
+        tbodyBatches.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-stone-400">Chưa có lô hàng nhập kho nào được ghi nhận</td></tr>`;
+      }
+
+    } catch (e) {
+      console.error("Lỗi nạp báo cáo:", e);
+    }
+  }
+
+  // Submit Phiếu nhập kho
+  document.getElementById("inventory-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const pid = document.getElementById("inv-product-id").value;
+    const qty = parseInt(document.getElementById("inv-quantity").value);
+    const cost = parseInt(document.getElementById("inv-cost-price").value);
+    const note = document.getElementById("inv-note").value.trim();
+
+    if (!pid) {
+      showToast("Vui lòng chọn sản phẩm cần nhập kho", "error");
+      return;
+    }
+
+    const btn = document.getElementById("inv-submit-btn");
+    btn.disabled = true;
+    btn.innerHTML = "Đang xử lý...";
+
+    try {
+      const res = await fetch(`/api/admin/products/${pid}/inventory`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quantity: qty,
+          cost_price: cost,
+          note: note
+        })
+      });
+
+      const resData = await res.json();
+      if (!res.ok) {
+        showToast(resData.detail || "Không thể tạo phiếu nhập kho", "error");
+        return;
+      }
+
+      showToast(`Đã nhập kho thành công +${qty} sp! Tồn kho mới: ${resData.new_stock}`);
+      document.getElementById("inv-quantity").value = "";
+      document.getElementById("inv-cost-price").value = "";
+      document.getElementById("inv-note").value = "";
+      loadProfitReport();
+      loadProductsForSelect();
+    } catch (err) {
+      showToast("Lỗi kết nối máy chủ", "error");
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = `<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg><span>Nhập kho ngay</span>`;
+    }
+  });
+
+  loadProductsForSelect();
+  loadProfitReport();
+</script>
+{% endblock %}
