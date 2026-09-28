@@ -7,17 +7,17 @@
 <div class="space-y-6">
 
   <!-- Top Action & Search Bar -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-stone-200 bg-white p-4 shadow-xs">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-noir-700 bg-noir-900 p-4 shadow-lg glass-card">
     <div class="flex flex-1 flex-wrap items-center gap-3">
       <!-- Search Input -->
       <div class="relative min-w-[240px] flex-1 max-w-md">
         <input id="search-input" type="search" placeholder="Tìm theo tên, mã sản phẩm hoặc tag..."
-               class="w-full rounded-md border border-stone-200 bg-[#FAF9F6] pl-9 pr-4 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900 placeholder:text-stone-400" />
-        <svg class="absolute left-3 top-2.5 h-4 w-4 shrink-0 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
+               class="w-full rounded-md border border-noir-700 bg-noir-800/60 pl-9 pr-4 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50 placeholder:text-noir-400" />
+        <svg class="absolute left-3 top-2.5 h-4 w-4 shrink-0 text-noir-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
       </div>
 
       <!-- Category Filter -->
-      <select id="cat-filter" class="rounded-md border border-stone-200 bg-[#FAF9F6] px-3 py-2 text-xs text-stone-700 outline-none transition focus:border-stone-900 focus:bg-white">
+      <select id="cat-filter" class="rounded-md border border-noir-700 bg-noir-800/60 px-3 py-2 text-xs text-noir-300 outline-none transition focus:border-gold-500 focus:bg-noir-800">
         <option value="">Tất cả danh mục</option>
         <option value="ao_thun">Áo thun & Polo</option>
         <option value="ao_so_mi">Áo sơ mi</option>
@@ -31,7 +31,7 @@
       </select>
 
       <!-- Gender Filter -->
-      <select id="gender-filter" class="rounded-md border border-stone-200 bg-[#FAF9F6] px-3 py-2 text-xs text-stone-700 outline-none transition focus:border-stone-900 focus:bg-white">
+      <select id="gender-filter" class="rounded-md border border-noir-700 bg-noir-800/60 px-3 py-2 text-xs text-noir-300 outline-none transition focus:border-gold-500 focus:bg-noir-800">
         <option value="">Tất cả giới tính</option>
         <option value="nam">Nam</option>
         <option value="nu">Nữ</option>
@@ -42,13 +42,13 @@
     <!-- Action Buttons -->
     <div class="flex items-center gap-2">
       <!-- Nút nhập CSV / Excel -->
-      <button id="open-import-modal-btn" class="flex items-center justify-center gap-2 rounded-md border border-stone-200 bg-white px-3.5 py-2 text-xs font-semibold uppercase tracking-wider text-stone-700 shadow-xs transition hover:bg-stone-50">
-        <svg class="h-4 w-4 shrink-0 text-stone-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+      <button id="open-import-modal-btn" class="flex items-center justify-center gap-2 rounded-md border border-noir-700 bg-noir-800 px-3.5 py-2 text-xs font-semibold uppercase tracking-wider text-noir-300 shadow-lg transition hover:bg-noir-700">
+        <svg class="h-4 w-4 shrink-0 text-noir-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
         <span>Nhập CSV / Excel</span>
       </button>
 
       <!-- Nút thêm sản phẩm mới -->
-      <button id="open-add-modal-btn" class="flex items-center justify-center gap-2 rounded-md bg-stone-900 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-white shadow-xs transition hover:bg-stone-800">
+      <button id="open-add-modal-btn" class="flex items-center justify-center gap-2 rounded-md bg-gold-500 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-noir-900 shadow-lg transition hover:bg-gold-400">
         <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
         <span>Thêm sản phẩm</span>
       </button>
@@ -56,10 +56,10 @@
   </div>
 
   <!-- Bảng danh sách sản phẩm -->
-  <div class="rounded-lg border border-stone-200 bg-white shadow-xs overflow-hidden">
+  <div class="rounded-lg border border-noir-700 bg-noir-900 shadow-lg overflow-hidden glass-card">
     <div class="overflow-x-auto">
       <table class="w-full text-left text-xs">
-        <thead class="bg-[#FAF9F6] border-b border-stone-200 text-stone-400 uppercase tracking-wider text-[10px]">
+        <thead class="bg-noir-800 border-b border-noir-700 text-noir-400 uppercase tracking-wider text-[10px]">
           <tr>
             <th class="py-3 px-4 font-semibold">Ảnh</th>
             <th class="py-3 px-4 font-semibold">Sản phẩm</th>
@@ -70,18 +70,18 @@
             <th class="py-3 px-4 font-semibold text-right">Thao tác</th>
           </tr>
         </thead>
-        <tbody id="products-tbody" class="divide-y divide-stone-100 text-stone-800">
+        <tbody id="products-tbody" class="divide-y divide-noir-700 text-noir-100">
           <tr>
-            <td colspan="7" class="py-12 text-center text-stone-400">Đang nạp danh sách sản phẩm...</td>
+            <td colspan="7" class="py-12 text-center text-noir-400">Đang nạp danh sách sản phẩm...</td>
           </tr>
         </tbody>
       </table>
     </div>
 
     <!-- Phân trang (Pagination) -->
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-stone-200 px-4 py-3 bg-[#FAF9F6]/50 text-xs">
-      <div id="pagination-info" class="text-stone-500">
-        Đang hiển thị <strong class="text-stone-800">...</strong> sản phẩm
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-noir-700 px-4 py-3 bg-noir-800/50 text-xs">
+      <div id="pagination-info" class="text-noir-400">
+        Đang hiển thị <strong class="text-noir-100">...</strong> sản phẩm
       </div>
       <div id="pagination-controls" class="flex items-center gap-1.5">
         <!-- Generated by JS -->
@@ -92,11 +92,11 @@
 </div>
 
 <!-- 1. MODAL THÊM / SỬA SẢN PHẨM -->
-<div id="product-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 p-4 backdrop-blur-xs hidden overflow-y-auto">
-  <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 sm:p-8 shadow-xl border border-stone-200">
-    <div class="flex items-center justify-between border-b border-stone-100 pb-3">
-      <h3 id="modal-title" class="text-base font-bold tracking-tight text-stone-900">Thêm sản phẩm mới</h3>
-      <button id="close-modal-btn" class="text-stone-400 hover:text-stone-600 transition" aria-label="Đóng">
+<div id="product-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-noir-950/80 p-4 backdrop-blur-xl hidden overflow-y-auto">
+  <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg bg-noir-900 p-6 sm:p-8 shadow-xl border border-noir-700">
+    <div class="flex items-center justify-between border-b border-noir-700 pb-3">
+      <h3 id="modal-title" class="text-base font-bold tracking-tight text-noir-100">Thêm sản phẩm mới</h3>
+      <button id="close-modal-btn" class="text-noir-400 hover:text-gold-400 transition" aria-label="Đóng">
         <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
@@ -106,14 +106,14 @@
 
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div class="sm:col-span-2">
-          <label class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Tên sản phẩm <span class="text-brand-600">*</span></label>
+          <label class="block text-xs uppercase tracking-wider font-semibold text-noir-300">Tên sản phẩm <span class="text-gold-500">*</span></label>
           <input type="text" id="p-name" required placeholder="Áo Blazer Linen Premium..."
-                 class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900" />
+                 class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50" />
         </div>
 
         <div>
-          <label class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Danh mục <span class="text-brand-600">*</span></label>
-          <select id="p-category" required class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white">
+          <label class="block text-xs uppercase tracking-wider font-semibold text-noir-300">Danh mục <span class="text-gold-500">*</span></label>
+          <select id="p-category" required class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800">
             <option value="ao_thun">Áo thun & Polo</option>
             <option value="ao_so_mi">Áo sơ mi</option>
             <option value="ao_khoac">Áo khoác & Blazer</option>
@@ -127,8 +127,8 @@
         </div>
 
         <div>
-          <label class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Giới tính</label>
-          <select id="p-gender" class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white">
+          <label class="block text-xs uppercase tracking-wider font-semibold text-noir-300">Giới tính</label>
+          <select id="p-gender" class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800">
             <option value="unisex">Unisex</option>
             <option value="nam">Nam</option>
             <option value="nu">Nữ</option>
@@ -136,87 +136,87 @@
         </div>
 
         <div>
-          <label class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Giá bán (VNĐ) <span class="text-brand-600">*</span></label>
+          <label class="block text-xs uppercase tracking-wider font-semibold text-noir-300">Giá bán (VNĐ) <span class="text-gold-500">*</span></label>
           <input type="number" id="p-price" required min="1000" step="1000" placeholder="350000"
-                 class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900" />
+                 class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50" />
         </div>
 
         <div>
-          <label class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Giá gốc niêm yết (VNĐ)</label>
+          <label class="block text-xs uppercase tracking-wider font-semibold text-noir-300">Giá gốc niêm yết (VNĐ)</label>
           <input type="number" id="p-orig-price" min="0" step="1000" placeholder="450000"
-                 class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900" />
+                 class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50" />
         </div>
 
         <div>
-          <label class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Số lượng tồn kho <span class="text-brand-600">*</span></label>
+          <label class="block text-xs uppercase tracking-wider font-semibold text-noir-300">Số lượng tồn kho <span class="text-gold-500">*</span></label>
           <input type="number" id="p-stock" required min="0" placeholder="50"
-                 class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900" />
+                 class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50" />
         </div>
 
         <!-- UPLOAD ẢNH QUA CLOUDINARY -->
-        <div class="sm:col-span-2 rounded-md border border-stone-200 bg-[#FAF9F6] p-3.5">
-          <label class="block text-xs uppercase tracking-wider font-semibold text-stone-700">Hình ảnh sản phẩm (Cloudinary Storage)</label>
+        <div class="sm:col-span-2 rounded-md border border-noir-700 bg-noir-800 p-3.5">
+          <label class="block text-xs uppercase tracking-wider font-semibold text-noir-300">Hình ảnh sản phẩm (Cloudinary Storage)</label>
           <div class="mt-2 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <div class="relative h-14 w-14 shrink-0 rounded-md border border-stone-300 bg-white overflow-hidden shadow-xs">
+            <div class="relative h-14 w-14 shrink-0 rounded-md border border-noir-700 bg-noir-900 overflow-hidden shadow-lg">
               <img id="p-image-preview" src="/static/img/placeholder.svg" alt="Preview" class="h-full w-full object-cover" onerror="this.src='/static/img/placeholder.svg'" />
             </div>
             <div class="flex-1 w-full space-y-1.5">
               <div class="flex flex-wrap items-center gap-2">
                 <input type="file" id="p-image-file" accept="image/jpeg,image/png,image/webp,image/jpg" class="hidden" />
-                <button type="button" id="trigger-upload-btn" class="rounded-md border border-stone-300 bg-white px-3 py-1.5 text-xs font-semibold text-stone-800 hover:bg-stone-50 transition shadow-xs flex items-center gap-1.5">
-                  <svg class="h-4 w-4 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                <button type="button" id="trigger-upload-btn" class="rounded-md border border-noir-700 bg-noir-900 px-3 py-1.5 text-xs font-semibold text-noir-100 hover:bg-noir-800 transition shadow-lg flex items-center gap-1.5">
+                  <svg class="h-4 w-4 text-gold-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
                   <span>Tải ảnh lên Cloudinary</span>
                 </button>
-                <span id="p-upload-status" class="text-[11px] text-stone-500">Tối đa 5MB (JPG, PNG, WEBP)</span>
+                <span id="p-upload-status" class="text-[11px] text-noir-400">Tối đa 5MB (JPG, PNG, WEBP)</span>
               </div>
               <input type="text" id="p-image" placeholder="https://res.cloudinary.com/... hoặc dán link ảnh"
-                     class="w-full rounded-md border border-stone-200 bg-white px-3 py-1.5 text-xs text-stone-900 outline-none transition focus:border-stone-900" />
+                     class="w-full rounded-md border border-noir-700 bg-noir-900 px-3 py-1.5 text-xs text-noir-100 outline-none transition focus:border-gold-500" />
             </div>
           </div>
         </div>
 
         <div class="sm:col-span-2">
-          <label class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Mô tả sản phẩm</label>
+          <label class="block text-xs uppercase tracking-wider font-semibold text-noir-300">Mô tả sản phẩm</label>
           <textarea id="p-desc" rows="2" placeholder="Chất liệu thoáng mát, form dáng thanh lịch..."
-                    class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900"></textarea>
+                    class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50"></textarea>
         </div>
 
         <div>
-          <label class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Phong cách (Style)</label>
+          <label class="block text-xs uppercase tracking-wider font-semibold text-noir-300">Phong cách (Style)</label>
           <input type="text" id="p-style" placeholder="Minimalism, Quiet Luxury, Casual..."
-                 class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900" />
+                 class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50" />
         </div>
 
         <div>
-          <label class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Dịp sử dụng (Occasion)</label>
+          <label class="block text-xs uppercase tracking-wider font-semibold text-noir-300">Dịp sử dụng (Occasion)</label>
           <input type="text" id="p-occasion" placeholder="Công sở, Dạo phố, Dự tiệc..."
-                 class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900" />
+                 class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50" />
         </div>
 
         <div class="sm:col-span-2">
-          <label class="block text-xs uppercase tracking-wider font-semibold text-stone-600">Tags (cách nhau bởi dấu phẩy)</label>
+          <label class="block text-xs uppercase tracking-wider font-semibold text-noir-300">Tags (cách nhau bởi dấu phẩy)</label>
           <input type="text" id="p-tags" placeholder="cotton, thoang-mat, blazer, basic..."
-                 class="mt-1.5 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white focus:ring-1 focus:ring-stone-900" />
+                 class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50" />
         </div>
 
-        <div class="sm:col-span-2 rounded-md border border-stone-200 bg-[#FAF9F6] p-4">
+        <div class="sm:col-span-2 rounded-md border border-noir-700 bg-noir-800 p-4">
           <label class="flex items-center gap-2 cursor-pointer select-none">
-            <input type="checkbox" id="p-flash-sale" class="h-4 w-4 rounded border-stone-300 text-stone-900 focus:ring-0" />
-            <span class="text-xs font-semibold text-stone-800">Kích hoạt Flash Sale cho sản phẩm này</span>
+            <input type="checkbox" id="p-flash-sale" class="h-4 w-4 rounded border-noir-700 text-gold-500 bg-noir-900 focus:ring-0" />
+            <span class="text-xs font-semibold text-noir-100">Kích hoạt Flash Sale cho sản phẩm này</span>
           </label>
           <div class="mt-3">
-            <label class="block text-[11px] font-semibold text-stone-600">Giá Flash Sale (VNĐ)</label>
+            <label class="block text-[11px] font-semibold text-noir-300">Giá Flash Sale (VNĐ)</label>
             <input type="number" id="p-flash-price" min="1000" step="1000" placeholder="199000"
-                   class="mt-1 w-full rounded-md border border-stone-200 bg-white px-3 py-1.5 text-xs text-stone-900 outline-none transition focus:border-stone-900" />
+                   class="mt-1 w-full rounded-md border border-noir-700 bg-noir-900 px-3 py-1.5 text-xs text-noir-100 outline-none transition focus:border-gold-500" />
           </div>
         </div>
       </div>
 
-      <div class="mt-6 flex justify-end gap-2 border-t border-stone-100 pt-4">
-        <button type="button" id="cancel-modal-btn" class="rounded-md border border-stone-200 bg-white px-4 py-2 text-xs font-medium text-stone-600 hover:bg-stone-50 transition">
+      <div class="mt-6 flex justify-end gap-2 border-t border-noir-700 pt-4">
+        <button type="button" id="cancel-modal-btn" class="rounded-md border border-noir-700 bg-noir-900 px-4 py-2 text-xs font-medium text-noir-300 hover:bg-noir-800 transition">
           Hủy bỏ
         </button>
-        <button type="submit" class="rounded-md bg-stone-900 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-white shadow-xs hover:bg-stone-800 transition">
+        <button type="submit" class="rounded-md bg-gold-500 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-noir-900 shadow-lg hover:bg-gold-400 transition">
           Lưu thông tin
         </button>
       </div>
@@ -225,51 +225,51 @@
 </div>
 
 <!-- 2. MODAL NHẬP HÀNG LOẠT (CSV / EXCEL) -->
-<div id="import-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 p-4 backdrop-blur-xs hidden overflow-y-auto">
-  <div class="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-lg bg-white p-6 sm:p-8 shadow-xl border border-stone-200">
-    <div class="flex items-center justify-between border-b border-stone-100 pb-3">
+<div id="import-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-noir-950/80 p-4 backdrop-blur-xl hidden overflow-y-auto">
+  <div class="relative w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-lg bg-noir-900 p-6 sm:p-8 shadow-xl border border-noir-700">
+    <div class="flex items-center justify-between border-b border-noir-700 pb-3">
       <div>
-        <h3 class="text-base font-bold tracking-tight text-stone-900">Nhập hàng loạt sản phẩm (CSV / Excel)</h3>
-        <p class="text-xs text-stone-500 mt-0.5">Tự động kiểm tra lỗi từng dòng, upsert sản phẩm có sẵn</p>
+        <h3 class="text-base font-bold tracking-tight text-noir-100">Nhập hàng loạt sản phẩm (CSV / Excel)</h3>
+        <p class="text-xs text-noir-400 mt-0.5">Tự động kiểm tra lỗi từng dòng, upsert sản phẩm có sẵn</p>
       </div>
-      <button id="close-import-modal-btn" class="text-stone-400 hover:text-stone-600 transition" aria-label="Đóng">
+      <button id="close-import-modal-btn" class="text-noir-400 hover:text-gold-400 transition" aria-label="Đóng">
         <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
 
     <div class="mt-4 space-y-4">
-      <div class="rounded-md bg-stone-50 border border-stone-200 p-3 text-xs text-stone-600 space-y-1.5 leading-relaxed">
-        <p class="font-semibold text-stone-900">Định dạng cột chuẩn hỗ trợ:</p>
-        <p class="font-mono text-[11px] bg-white p-2 rounded border border-stone-200 overflow-x-auto text-stone-700">
+      <div class="rounded-md bg-noir-800 border border-noir-700 p-3 text-xs text-noir-300 space-y-1.5 leading-relaxed">
+        <p class="font-semibold text-noir-100">Định dạng cột chuẩn hỗ trợ:</p>
+        <p class="font-mono text-[11px] bg-noir-900 p-2 rounded border border-noir-700 overflow-x-auto text-noir-300">
           id, name, category, gender, price, sizes, colors, occasions, tags, stock, images
         </p>
-        <p class="text-[11px] text-stone-500">
+        <p class="text-[11px] text-noir-400">
           • <strong>id</strong>: Bỏ trống nếu tạo mới, hoặc điền mã có sẵn để cập nhật.<br/>
           • <strong>images</strong>: Danh sách URL ảnh phân cách bởi dấu gạch đứng <code class="font-mono">|</code> (hoặc để trống tải ảnh sau).<br/>
           • <strong>category</strong>: <code class="font-mono">ao_thun, ao_so_mi, ao_khoac, quan_tay, quan_jeans, chan_vay, vay_dam, set_do, phu_kien</code>.
         </p>
       </div>
 
-      <div class="rounded-md border-2 border-dashed border-stone-300 p-6 text-center hover:border-stone-500 transition bg-[#FAF9F6]">
+      <div class="rounded-md border-2 border-dashed border-noir-700 p-6 text-center hover:border-gold-500/30 transition bg-noir-800">
         <input type="file" id="import-file-input" accept=".csv, .xlsx, .xls" class="hidden" />
         <label for="import-file-input" class="cursor-pointer flex flex-col items-center">
-          <svg class="h-10 w-10 text-stone-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-          <span class="text-xs font-semibold text-stone-900 underline">Bấm để chọn file CSV hoặc Excel (.xlsx)</span>
-          <span id="import-file-name" class="text-[11px] text-stone-400 mt-1">Chưa chọn file nào</span>
+          <svg class="h-10 w-10 text-noir-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+          <span class="text-xs font-semibold text-noir-100 underline">Bấm để chọn file CSV hoặc Excel (.xlsx)</span>
+          <span id="import-file-name" class="text-[11px] text-noir-400 mt-1">Chưa chọn file nào</span>
         </label>
       </div>
 
       <!-- Preview Report Sau Khi Import -->
-      <div id="import-report-container" class="hidden space-y-2 border-t border-stone-100 pt-3">
+      <div id="import-report-container" class="hidden space-y-2 border-t border-noir-700 pt-3">
         <div id="import-summary-badge" class="p-3 rounded-md text-xs font-medium"></div>
         <div id="import-errors-box" class="max-h-40 overflow-y-auto space-y-1 text-[11px]"></div>
       </div>
 
-      <div class="flex justify-end gap-2 border-t border-stone-100 pt-4">
-        <button type="button" id="cancel-import-btn" class="rounded-md border border-stone-200 bg-white px-4 py-2 text-xs font-medium text-stone-600 hover:bg-stone-50 transition">
+      <div class="flex justify-end gap-2 border-t border-noir-700 pt-4">
+        <button type="button" id="cancel-import-btn" class="rounded-md border border-noir-700 bg-noir-900 px-4 py-2 text-xs font-medium text-noir-300 hover:bg-noir-800 transition">
           Đóng
         </button>
-        <button type="button" id="start-import-btn" class="rounded-md bg-stone-900 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-white shadow-xs hover:bg-stone-800 transition">
+        <button type="button" id="start-import-btn" class="rounded-md bg-gold-500 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-noir-900 shadow-lg hover:bg-gold-400 transition">
           Bắt đầu nhập
         </button>
       </div>
@@ -278,11 +278,11 @@
 </div>
 
 <!-- 3. MODAL NHANH: NHẬP THÊM HÀNG VÀO KHO (INVENTORY BATCH) -->
-<div id="quick-inv-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/60 p-4 backdrop-blur-xs hidden overflow-y-auto">
-  <div class="relative w-full max-w-md rounded-lg bg-white p-6 shadow-xl border border-stone-200">
-    <div class="flex items-center justify-between border-b border-stone-100 pb-3">
-      <h3 class="text-base font-bold text-stone-900">Phiếu nhập kho lô hàng</h3>
-      <button onclick="closeQuickInvModal()" class="text-stone-400 hover:text-stone-600 transition">
+<div id="quick-inv-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-noir-950/80 p-4 backdrop-blur-xl hidden overflow-y-auto">
+  <div class="relative w-full max-w-md rounded-lg bg-noir-900 p-6 shadow-xl border border-noir-700">
+    <div class="flex items-center justify-between border-b border-noir-700 pb-3">
+      <h3 class="text-base font-bold text-noir-100">Phiếu nhập kho lô hàng</h3>
+      <button onclick="closeQuickInvModal()" class="text-noir-400 hover:text-gold-400 transition">
         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
     </div>
@@ -290,33 +290,33 @@
     <form id="quick-inv-form" class="mt-4 space-y-4">
       <input type="hidden" id="quick-inv-pid" />
       <div>
-        <label class="block text-xs font-semibold text-stone-500 uppercase tracking-wider">Sản phẩm</label>
-        <p id="quick-inv-pname" class="mt-1 font-bold text-stone-900 text-sm">...</p>
+        <label class="block text-xs font-semibold text-noir-400 uppercase tracking-wider">Sản phẩm</label>
+        <p id="quick-inv-pname" class="mt-1 font-bold text-noir-100 text-sm">...</p>
       </div>
 
       <div>
-        <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider">Số lượng nhập <span class="text-brand-600">*</span></label>
+        <label class="block text-xs font-semibold text-noir-300 uppercase tracking-wider">Số lượng nhập <span class="text-gold-500">*</span></label>
         <input type="number" id="quick-inv-qty" required min="1" placeholder="50"
-               class="mt-1 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white" />
+               class="mt-1 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800" />
       </div>
 
       <div>
-        <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider">Giá vốn nhập (VNĐ/sp) <span class="text-brand-600">*</span></label>
+        <label class="block text-xs font-semibold text-noir-300 uppercase tracking-wider">Giá vốn nhập (VNĐ/sp) <span class="text-gold-500">*</span></label>
         <input type="number" id="quick-inv-cost" required min="0" step="1000" placeholder="150000"
-               class="mt-1 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white" />
+               class="mt-1 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800" />
       </div>
 
       <div>
-        <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider">Ghi chú lô hàng</label>
+        <label class="block text-xs font-semibold text-noir-300 uppercase tracking-wider">Ghi chú lô hàng</label>
         <input type="text" id="quick-inv-note" placeholder="Nhà may Sài Gòn đợt 2..."
-               class="mt-1 w-full rounded-md border border-stone-200 bg-[#FAF9F6] px-3.5 py-2 text-xs text-stone-900 outline-none transition focus:border-stone-900 focus:bg-white" />
+               class="mt-1 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800" />
       </div>
 
-      <div class="flex justify-end gap-2 border-t border-stone-100 pt-4">
-        <button type="button" onclick="closeQuickInvModal()" class="rounded-md border border-stone-200 bg-white px-4 py-2 text-xs font-medium text-stone-600 hover:bg-stone-50">
+      <div class="flex justify-end gap-2 border-t border-noir-700 pt-4">
+        <button type="button" onclick="closeQuickInvModal()" class="rounded-md border border-noir-700 bg-noir-900 px-4 py-2 text-xs font-medium text-noir-300 hover:bg-noir-800">
           Hủy
         </button>
-        <button type="submit" id="quick-inv-submit-btn" class="rounded-md bg-stone-900 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-white shadow-xs hover:bg-stone-800">
+        <button type="submit" id="quick-inv-submit-btn" class="rounded-md bg-gold-500 px-5 py-2 text-xs font-semibold uppercase tracking-wider text-noir-900 shadow-lg hover:bg-gold-400">
           Xác nhận nhập kho
         </button>
       </div>
@@ -363,7 +363,7 @@
 
   async function loadProducts(page = 1) {
     currentPage = page;
-    tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-stone-400">Đang tải dữ liệu sản phẩm...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-noir-400">Đang tải dữ liệu sản phẩm...</td></tr>`;
 
     let url = `/api/admin/products?page=${page}&limit=${limit}`;
     if (currentSearch) url += `&search=${encodeURIComponent(currentSearch)}`;
@@ -376,7 +376,7 @@
       currentProducts = data.items || [];
 
       if (currentProducts.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-stone-400">Không tìm thấy sản phẩm nào</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-noir-400">Không tìm thấy sản phẩm nào</td></tr>`;
         document.getElementById("pagination-info").textContent = "Không có sản phẩm";
         document.getElementById("pagination-controls").innerHTML = "";
         return;
@@ -384,46 +384,46 @@
 
       // Render rows
       tbody.innerHTML = currentProducts.map(p => {
-        const origPrice = p.original_price ? `<span class="text-stone-400 line-through text-[11px] block">${p.original_price.toLocaleString("vi-VN")}đ</span>` : "";
+        const origPrice = p.original_price ? `<span class="text-noir-400 line-through text-[11px] block">${p.original_price.toLocaleString("vi-VN")}đ</span>` : "";
         const stockBadge = p.stock <= 0 
-          ? `<span class="inline-flex rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-mono text-rose-700 border border-stone-200">Hết hàng (0)</span>`
+          ? `<span class="inline-flex rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-mono text-rose-400 border border-rose-500/20">Hết hàng (0)</span>`
           : (p.stock <= 10 
-              ? `<span class="inline-flex rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-mono text-stone-800 border border-stone-300">Sắp hết (${p.stock})</span>`
-              : `<span class="inline-flex rounded-full bg-stone-50 px-2 py-0.5 text-[10px] font-mono text-stone-600 border border-stone-200">Còn ${p.stock}</span>`);
+              ? `<span class="inline-flex rounded-full bg-noir-800 px-2 py-0.5 text-[10px] font-mono text-noir-100 border border-noir-700">Sắp hết (${p.stock})</span>`
+              : `<span class="inline-flex rounded-full bg-noir-800 px-2 py-0.5 text-[10px] font-mono text-noir-300 border border-noir-700">Còn ${p.stock}</span>`);
 
         const flashBadge = p.is_flash_sale || p.flash_sale
-          ? `<span class="inline-flex rounded-full bg-stone-900 px-2 py-0.5 text-[10px] font-mono text-white">Sale ${(p.flash_sale_price || p.price).toLocaleString("vi-VN")}đ</span>`
-          : `<span class="text-stone-300 text-[10px]">—</span>`;
+          ? `<span class="inline-flex rounded-full bg-gold-500 px-2 py-0.5 text-[10px] font-mono text-noir-900">Sale ${(p.flash_sale_price || p.price).toLocaleString("vi-VN")}đ</span>`
+          : `<span class="text-noir-500 text-[10px]">—</span>`;
 
         const thumb = (p.images && p.images.length > 0) ? p.images[0] : (p.image || "/static/img/placeholder.svg");
 
         return `
-          <tr class="hover:bg-[#FAF9F6]/60 transition">
+          <tr class="hover:bg-noir-800/60 transition">
             <td class="py-2.5 px-4">
-              <img src="${thumb}" alt="" class="h-10 w-10 rounded-md object-cover bg-stone-100 border border-stone-200" onerror="this.src='/static/img/placeholder.svg'" />
+              <img src="${thumb}" alt="" class="h-10 w-10 rounded-md object-cover bg-noir-800 border border-noir-700" onerror="this.src='/static/img/placeholder.svg'" />
             </td>
             <td class="py-2.5 px-4 font-medium max-w-[260px]">
-              <p class="truncate font-semibold text-stone-900">${p.name}</p>
-              <p class="text-[10px] font-mono text-stone-400">ID: ${p.id}</p>
+              <p class="truncate font-semibold text-noir-100">${p.name}</p>
+              <p class="text-[10px] font-mono text-noir-400">ID: ${p.id}</p>
             </td>
             <td class="py-2.5 px-4">
-              <span class="rounded-md bg-stone-100 px-2 py-0.5 text-[11px] font-medium text-stone-700">${p.category}</span>
-              <span class="text-[10px] text-stone-400 ml-1">(${p.gender})</span>
+              <span class="rounded-md bg-noir-800 px-2 py-0.5 text-[11px] font-medium text-noir-300">${p.category}</span>
+              <span class="text-[10px] text-noir-400 ml-1">(${p.gender})</span>
             </td>
-            <td class="py-2.5 px-4 font-semibold text-brand-600">
+            <td class="py-2.5 px-4 font-semibold text-gold-500">
               ${p.price.toLocaleString("vi-VN")}đ
               ${origPrice}
             </td>
             <td class="py-2.5 px-4">${stockBadge}</td>
             <td class="py-2.5 px-4">${flashBadge}</td>
             <td class="py-2.5 px-4 text-right space-x-1">
-              <button onclick="openQuickInvModal('${p.id}', '${p.name.replace(/'/g, "\\'")}')" class="rounded-md border border-stone-200 bg-white px-2 py-1 text-[11px] font-semibold text-stone-800 hover:bg-stone-50 shadow-xs transition" title="Nhập thêm hàng">
+              <button onclick="openQuickInvModal('${p.id}', '${p.name.replace(/'/g, "\\'")}')" class="rounded-md border border-noir-700 bg-noir-800 px-2 py-1 text-[11px] font-semibold text-noir-100 hover:bg-noir-700 shadow-lg transition" title="Nhập thêm hàng">
                 + Nhập kho
               </button>
-              <button onclick="openEditModal('${p.id}')" class="rounded-md border border-stone-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-700 hover:bg-stone-50 shadow-xs transition">
+              <button onclick="openEditModal('${p.id}')" class="rounded-md border border-noir-700 bg-noir-800 px-2 py-1 text-[11px] font-medium text-noir-300 hover:bg-noir-700 shadow-lg transition">
                 Sửa
               </button>
-              <button onclick="confirmDelete('${p.id}', '${p.name.replace(/'/g, "\\'")}')" class="rounded-md border border-stone-200 bg-white px-2 py-1 text-[11px] font-medium text-stone-500 hover:text-rose-600 hover:bg-stone-50 shadow-xs transition">
+              <button onclick="confirmDelete('${p.id}', '${p.name.replace(/'/g, "\\'")}')" class="rounded-md border border-noir-700 bg-noir-800 px-2 py-1 text-[11px] font-medium text-noir-400 hover:text-rose-400 hover:bg-noir-700 shadow-lg transition">
                 Xóa
               </button>
             </td>
@@ -435,21 +435,21 @@
       const start = (data.page - 1) * data.limit + 1;
       const end = Math.min(data.page * data.limit, data.total);
       document.getElementById("pagination-info").innerHTML = `
-        Đang hiển thị <strong class="text-stone-800">${start} - ${end}</strong> trong số <strong class="text-stone-800">${data.total}</strong> sản phẩm
+        Đang hiển thị <strong class="text-noir-100">${start} - ${end}</strong> trong số <strong class="text-noir-100">${data.total}</strong> sản phẩm
       `;
 
       let btns = "";
       if (data.page > 1) {
-        btns += `<button onclick="loadProducts(${data.page - 1})" class="rounded-md border border-stone-200 bg-white px-2.5 py-1 text-xs text-stone-700 hover:bg-stone-50">&larr; Trước</button>`;
+        btns += `<button onclick="loadProducts(${data.page - 1})" class="rounded-md border border-noir-700 bg-noir-900 px-2.5 py-1 text-xs text-noir-300 hover:bg-noir-800">&larr; Trước</button>`;
       }
-      btns += `<span class="px-2 text-xs font-semibold text-stone-700">Trang ${data.page} / ${data.pages}</span>`;
+      btns += `<span class="px-2 text-xs font-semibold text-noir-300">Trang ${data.page} / ${data.pages}</span>`;
       if (data.page < data.pages) {
-        btns += `<button onclick="loadProducts(${data.page + 1})" class="rounded-md border border-stone-200 bg-white px-2.5 py-1 text-xs text-stone-700 hover:bg-stone-50">Sau &rarr;</button>`;
+        btns += `<button onclick="loadProducts(${data.page + 1})" class="rounded-md border border-noir-700 bg-noir-900 px-2.5 py-1 text-xs text-noir-300 hover:bg-noir-800">Sau &rarr;</button>`;
       }
       document.getElementById("pagination-controls").innerHTML = btns;
 
     } catch (e) {
-      tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-rose-600">Lỗi tải dữ liệu sản phẩm</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-rose-400">Lỗi tải dữ liệu sản phẩm</td></tr>`;
     }
   }
 
@@ -497,7 +497,7 @@
     formData.append("file", file);
 
     pUploadStatus.textContent = "Đang tải ảnh lên Cloudinary...";
-    pUploadStatus.className = "text-[11px] text-brand-600 font-semibold";
+    pUploadStatus.className = "text-[11px] text-gold-500 font-semibold";
 
     try {
       const res = await fetch("/api/admin/upload-image", {
@@ -507,7 +507,7 @@
       const data = await res.json();
       if (!res.ok) {
         pUploadStatus.textContent = data.detail || "Lỗi tải ảnh";
-        pUploadStatus.className = "text-[11px] text-rose-600";
+        pUploadStatus.className = "text-[11px] text-rose-400";
         showToast(data.detail || "Không thể tải ảnh", "error");
         return;
       }
@@ -515,11 +515,11 @@
       pImageInput.value = data.url;
       pImagePreview.src = data.url;
       pUploadStatus.textContent = "✓ Tải ảnh Cloudinary thành công!";
-      pUploadStatus.className = "text-[11px] text-emerald-600 font-semibold";
+      pUploadStatus.className = "text-[11px] text-emerald-400 font-semibold";
       showToast("Đã tải ảnh lên Cloudinary thành công!");
     } catch (e) {
       pUploadStatus.textContent = "Lỗi kết nối máy chủ";
-      pUploadStatus.className = "text-[11px] text-rose-600";
+      pUploadStatus.className = "text-[11px] text-rose-400";
       showToast("Lỗi kết nối máy chủ", "error");
     }
   });
@@ -531,7 +531,7 @@
     modalTitle.textContent = "Thêm sản phẩm mới vào kho";
     pImagePreview.src = "/static/img/placeholder.svg";
     pUploadStatus.textContent = "Tối đa 5MB (JPG, PNG, WEBP)";
-    pUploadStatus.className = "text-[11px] text-stone-500";
+    pUploadStatus.className = "text-[11px] text-noir-400";
     modal.classList.remove("hidden");
   }
 
@@ -551,7 +551,7 @@
     pImageInput.value = imgUrl;
     pImagePreview.src = imgUrl || "/static/img/placeholder.svg";
     pUploadStatus.textContent = "Tối đa 5MB (JPG, PNG, WEBP)";
-    pUploadStatus.className = "text-[11px] text-stone-500";
+    pUploadStatus.className = "text-[11px] text-noir-400";
 
     document.getElementById("p-desc").value = p.description || "";
     document.getElementById("p-style").value = p.style || "";
@@ -693,15 +693,15 @@
       const total = report.total_rows || 0;
 
       if (failed === 0) {
-        importSummaryBadge.className = "p-3 rounded-md text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200";
+        importSummaryBadge.className = "p-3 rounded-md text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
         importSummaryBadge.innerHTML = `✓ Nhập thành công 100%! Đã thêm/cập nhật ${success}/${total} sản phẩm.`;
         importErrorsBox.innerHTML = "";
       } else {
-        importSummaryBadge.className = "p-3 rounded-md text-xs font-medium bg-amber-50 text-amber-900 border border-amber-200";
+        importSummaryBadge.className = "p-3 rounded-md text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20";
         importSummaryBadge.innerHTML = `Hoàn thành: Thành công <strong>${success}</strong> dòng, Bị lỗi <strong>${failed}</strong> dòng trong tổng số <strong>${total}</strong> dòng.`;
 
         importErrorsBox.innerHTML = (report.errors || []).map(err => `
-          <div class="p-2 rounded bg-rose-50 text-rose-800 border border-rose-200">
+          <div class="p-2 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
             <strong>Dòng ${err.row}</strong>: ${err.error} (${err.product_name || "Sản phẩm"})
           </div>
         `).join("");
