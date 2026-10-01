@@ -1,25 +1,22 @@
 <!DOCTYPE html>
-<html lang="vi" class="h-full bg-noir-950">
+<html lang="vi" class="h-full bg-[#FAF8F5]">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Đăng nhập • AURA Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/css/tailwind.css" />
   <link rel="stylesheet" href="/static/css/custom.css?v={{ version }}" />
 </head>
-<body class="flex min-h-full flex-col justify-center py-16 sm:px-6 lg:px-8 font-sans antialiased selection:bg-gold-500 selection:text-white bg-noir-950 text-noir-100">
-  
-  <!-- Subtle gold gradient orb -->
-  <div class="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[500px] bg-gold-500/10 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+<body class="flex min-h-full flex-col justify-center py-16 sm:px-6 lg:px-8 font-sans antialiased bg-[#FAF8F5] text-[#111111]">
 
   <div class="sm:mx-auto sm:w-full sm:max-w-md">
     <!-- Quay lại trang chủ -->
     <div class="mb-8 text-center">
-      <a href="/" class="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-noir-400 transition hover:text-gold-400 font-medium">
-        <svg class="h-4 w-4 shrink-0" style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+      <a href="/" class="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-[#777777] transition hover:text-black font-medium">
+        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
         <span>Trang chủ</span>
       </a>
     </div>
@@ -28,40 +25,40 @@
     <div class="text-center">
       <a href="/" class="inline-flex flex-col items-center group">
         <span class="sr-only">AURA Studio</span>
-        <span class="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-gold-400">AURA</span>
-        <span class="mt-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-gold-500/60">Studio</span>
+        <span class="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-[#111111]">AURA</span>
+        <span class="mt-1 text-[10px] font-semibold uppercase tracking-[0.35em] text-[#777777]">Studio</span>
       </a>
-      <h1 class="mt-6 text-xl sm:text-2xl font-bold tracking-tight text-noir-100">Đăng nhập tài khoản</h1>
-      <p class="mt-1.5 text-xs text-noir-400">
-        Trải nghiệm không gian thời trang tuyển chọn và dịch vụ cá nhân hoá
+      <h1 class="mt-6 font-serif text-2xl font-normal tracking-tight text-[#111111]">Đăng nhập</h1>
+      <p class="mt-1.5 text-xs text-[#666666]">
+        Trải nghiệm không gian thời trang tối giản &amp; dịch vụ cá nhân hoá
       </p>
     </div>
   </div>
 
   <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
-    <div class="glass-card rounded-xl p-6 sm:p-10 shadow-lg">
+    <div class="bg-white border border-[#E5E2DC] rounded-[2px] p-6 sm:p-10 shadow-none">
       
       <!-- Thông báo lỗi / trạng thái -->
-      <div id="login-alert" class="hidden mb-6 rounded-md p-3 text-xs font-medium border"></div>
+      <div id="login-alert" class="hidden mb-6 rounded-[2px] p-3 text-xs font-medium border"></div>
 
       <form id="login-form" class="space-y-5" autocomplete="on">
         <div>
-          <label for="username" class="block text-xs uppercase tracking-wider font-semibold text-noir-300">Tên đăng nhập hoặc Email</label>
+          <label for="username" class="block text-xs uppercase tracking-wider font-semibold text-[#111111]">Tên đăng nhập hoặc Email</label>
           <div class="mt-2">
-            <input id="username" name="username" type="text" required placeholder="Tên đăng nhập hoặc địa chỉ email"
-                   class="w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2.5 text-xs text-noir-100 outline-none transition focus:border-gold-500/60 focus:ring-1 focus:ring-gold-500/20 placeholder:text-noir-400" />
+            <input id="username" name="username" type="text" required placeholder="Tên đăng nhập hoặc email"
+                   class="w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-xs text-[#111111] outline-none transition focus:border-[#111111] placeholder:text-[#999999]" />
           </div>
         </div>
 
         <div>
           <div class="flex items-center justify-between">
-            <label for="password" class="block text-xs uppercase tracking-wider font-semibold text-noir-300">Mật khẩu</label>
-            <a href="javascript:void(0)" onclick="alert('Vui lòng liên hệ quản trị viên hoặc sử dụng tài khoản của bạn.')" class="text-xs text-noir-400 hover:text-gold-400 transition">Quên mật khẩu?</a>
+            <label for="password" class="block text-xs uppercase tracking-wider font-semibold text-[#111111]">Mật khẩu</label>
+            <a href="javascript:void(0)" onclick="alert('Vui lòng liên hệ quản trị viên hoặc sử dụng tài khoản của bạn.')" class="text-xs text-[#777777] hover:text-black transition">Quên mật khẩu?</a>
           </div>
           <div class="mt-2 relative">
             <input id="password" name="password" type="password" required placeholder="••••••••"
-                   class="w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2.5 text-xs text-noir-100 outline-none transition focus:border-gold-500/60 focus:ring-1 focus:ring-gold-500/20 placeholder:text-noir-400 pr-10" />
-            <button type="button" id="toggle-pw-btn" class="absolute inset-y-0 right-0 flex items-center pr-3 text-noir-400 hover:text-gold-400" aria-label="Hiện mật khẩu">
+                   class="w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-xs text-[#111111] outline-none transition focus:border-[#111111] placeholder:text-[#999999] pr-10" />
+            <button type="button" id="toggle-pw-btn" class="absolute inset-y-0 right-0 flex items-center pr-3 text-[#777777] hover:text-black" aria-label="Hiện mật khẩu">
               <svg id="eye-icon" class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </button>
           </div>
@@ -70,20 +67,20 @@
         <div class="flex items-center justify-between pt-0.5">
           <label class="flex items-center cursor-pointer select-none">
             <input id="remember-me" name="remember-me" type="checkbox" checked
-                   class="h-4 w-4 rounded border-noir-600 bg-transparent text-gold-500 focus:ring-0 focus:ring-offset-0" />
-            <span class="ml-2 text-xs text-noir-400">Ghi nhớ đăng nhập</span>
+                   class="h-4 w-4 rounded-[2px] border-[#E5E2DC] text-[#111111] focus:ring-0 accent-[#111111]" />
+            <span class="ml-2 text-xs text-[#666666]">Ghi nhớ đăng nhập</span>
           </label>
         </div>
 
-        <button type="submit" id="submit-btn" class="btn-primary flex w-full items-center justify-center gap-2 rounded-md py-3 text-xs uppercase tracking-widest font-semibold text-white shadow-lg transition active:scale-[0.99]">
+        <button type="submit" id="submit-btn" class="btn btn-primary w-full !py-3 text-xs uppercase tracking-widest font-semibold">
           <span id="submit-text">Đăng nhập</span>
           <svg id="submit-spinner" class="hidden h-4 w-4 shrink-0 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
         </button>
       </form>
 
-      <div class="mt-8 border-t border-noir-700 pt-6 text-center text-xs text-noir-400">
+      <div class="mt-8 border-t border-[#E5E2DC] pt-6 text-center text-xs text-[#666666]">
         <span>Chưa có tài khoản thành viên?</span>
-        <a href="/register" class="ml-1 font-semibold text-noir-100 hover:text-gold-400 transition">Đăng ký ngay &rarr;</a>
+        <a href="/register" class="ml-1 font-semibold text-[#111111] hover:underline transition">Đăng ký ngay &rarr;</a>
       </div>
     </div>
   </div>
@@ -111,10 +108,10 @@
 
     function showAlert(msg, isSuccess = false) {
       alertBox.textContent = msg;
-      alertBox.className = `mb-6 rounded-md p-3 text-xs font-medium border ${
+      alertBox.className = `mb-6 rounded-[2px] p-3 text-xs font-medium border ${
         isSuccess 
-          ? "bg-noir-800 text-gold-400 border-gold-500/20" 
-          : "bg-rose-950/50 text-rose-400 border-rose-900/50"
+          ? "bg-[#FAF8F5] text-[#111111] border-[#111111]" 
+          : "bg-red-50 text-red-700 border-red-200"
       }`;
       alertBox.classList.remove("hidden");
     }

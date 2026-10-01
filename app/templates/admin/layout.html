@@ -6,100 +6,212 @@
   <title>{% block title %}Bảng Điều Khiển{% endblock %} • AURA Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/css/tailwind.css" />
   <link rel="stylesheet" href="/static/css/custom.css?v={{ version }}" />
 </head>
-<body class="min-h-full font-sans antialiased text-noir-100 bg-noir-950 selection:bg-gold-500 selection:text-white flex flex-col">
+<body class="min-h-full font-sans antialiased text-noir-100 bg-[#0F0F12] selection:bg-white selection:text-black flex flex-col">
 
-  <!-- TOP HEADER & THANH CÔNG CỤ ĐIỀU HÀNH ADMIN -->
-  <header class="sticky top-0 z-40 border-b border-gold-500/10 bg-noir-900/95 backdrop-blur-xl shadow-lg">
-    <!-- Hàng trên: Brand & Thao tác chung -->
-    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-      <div class="flex items-center gap-4">
-        <a href="/admin" class="flex items-center gap-2.5">
-          <div class="flex h-8 w-8 items-center justify-center rounded-md bg-gold-500 font-serif text-base font-bold text-white shadow-lg">A</div>
-          <div class="flex flex-col leading-none">
-            <span class="font-serif text-base font-bold tracking-tight text-gold-500">AURA Admin</span>
-            <span class="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.25em] text-gold-400">Management</span>
-          </div>
-        </a>
-        <span class="hidden h-5 w-px bg-noir-700 sm:block"></span>
-        <div class="hidden items-center gap-2 rounded-full bg-noir-800 px-3 py-1 text-[11px] font-medium text-noir-300 sm:flex border border-noir-700">
-          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-          <span>AI Stylist Online</span>
-        </div>
+  <!-- ADMIN MOBILE / TABLET TOP BAR (< 1024px) -->
+  <header class="admin-mobile-top-bar sticky top-0 z-40 bg-[#18181B]/95 backdrop-blur-md border-b border-[#27272A] h-14 px-4 items-center justify-between">
+    <button type="button" id="admin-mobile-menu-btn" class="p-2 -ml-2 text-zinc-300 hover:text-white focus:outline-none" aria-label="Mở menu quản trị">
+      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+      </svg>
+    </button>
+
+    <a href="/admin" class="flex items-center gap-2">
+      <div class="flex h-7 w-7 items-center justify-center rounded-[2px] bg-white font-serif text-sm font-bold text-black">A</div>
+      <div class="flex flex-col leading-none">
+        <span class="font-serif text-sm font-bold tracking-tight text-white">AURA Admin</span>
+        <span class="text-[7px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Management</span>
       </div>
+    </a>
 
-      <div class="flex items-center gap-2.5 sm:gap-3">
-        <a href="/profile" class="rounded-md border border-noir-700 bg-noir-800 px-3 py-1.5 text-xs font-medium text-noir-300 hover:bg-noir-700 transition shadow-lg">
-          Tài khoản: <strong class="text-noir-100">@{{ user.username }}</strong>
-        </a>
-
-        <a href="/" target="_blank" class="rounded-md border border-noir-700 bg-noir-800 px-3 py-1.5 text-xs font-medium text-noir-300 hover:bg-noir-700 transition shadow-lg">
-          Storefront ↗
-        </a>
-
-        <button id="admin-logout-btn" class="flex items-center gap-1.5 rounded-md border border-noir-700 bg-noir-800 px-3 py-1.5 text-xs font-medium text-noir-400 hover:text-rose-400 hover:bg-noir-700 transition shadow-lg" title="Đăng xuất">
-          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
-          <span class="hidden sm:inline">Đăng xuất</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Hàng dưới: THANH CÔNG CỤ QUẢN TRỊ NGANG (Horizontal Toolbar) -->
-    <div class="border-t border-noir-700/80 bg-noir-950">
-      <div class="mx-auto flex max-w-7xl items-center gap-1 sm:gap-1.5 px-4 sm:px-6 lg:px-8 py-1.5 overflow-x-auto no-scrollbar">
-        <a href="/admin" class="admin-toolbar-item {% if current_page == 'dashboard' %}active{% endif %} text-noir-300 hover:text-noir-100">
-          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
-          <span>Tổng quan (Dashboard)</span>
-        </a>
-
-        <a href="/admin/products" class="admin-toolbar-item {% if current_page == 'products' %}active{% endif %} text-noir-300 hover:text-noir-100">
-          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25c-.669 0-1.188-.578-1.119-1.243l1.263-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
-          <span>Sản phẩm</span>
-          <span class="rounded-full bg-gold-500/10 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-gold-500">500</span>
-        </a>
-
-        <a href="/admin/orders" class="admin-toolbar-item {% if current_page == 'orders' %}active{% endif %} text-noir-300 hover:text-noir-100">
-          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
-          <span>Đơn hàng</span>
-        </a>
-
-        <a href="/admin/users" class="admin-toolbar-item {% if current_page == 'users' %}active{% endif %} text-noir-300 hover:text-noir-100">
-          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
-          <span>Người dùng</span>
-        </a>
-
-        <a href="/admin/trending" class="admin-toolbar-item {% if current_page == 'trending' %}active{% endif %} text-noir-300 hover:text-noir-100">
-          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941"/></svg>
-          <span>Xu hướng AI</span>
-          <span class="rounded-full bg-gold-500/10 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-gold-500">Live</span>
-        </a>
-
-        <a href="/admin/inventory" class="admin-toolbar-item {% if current_page == 'inventory' %}active{% endif %} text-noir-300 hover:text-noir-100">
-          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
-          <span>Nhập kho & Lãi/Lỗ</span>
-        </a>
-      </div>
-    </div>
+    <a href="/" target="_blank" class="p-2 -mr-2 text-zinc-300 hover:text-white text-xs font-medium" title="Xem Storefront">
+      Store ↗
+    </a>
   </header>
 
-  <!-- NỘI DUNG CHÍNH (Full Width, Không còn bị sidebar che khuất) -->
-  <main class="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-      <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-noir-100">{% block header_title %}Tổng quan hệ thống{% endblock %}</h1>
+  <!-- ADMIN BACKDROP OVERLAY FOR MOBILE DRAWER -->
+  <div id="admin-sidebar-overlay" class="admin-sidebar-backdrop hidden" aria-hidden="true"></div>
+
+  <!-- ADMIN SIDEBAR DỌC (Cố định 260px bên trái trên PC, Drawer trượt trên Mobile/Tablet) -->
+  <aside id="admin-sidebar" class="admin-sidebar bg-[#18181B] text-zinc-300 border-r border-[#27272A] flex flex-col justify-between p-5 overflow-y-auto" aria-label="Menu Quản Trị">
+    
+    <!-- PHẦN TRÊN: LOGO + BADGE + MENU -->
+    <div class="flex flex-col">
+      
+      <!-- Brand & Nút đóng mobile -->
+      <div class="flex items-center justify-between pb-5 border-b border-[#27272A]">
+        <a href="/admin" class="flex items-center gap-2.5">
+          <div class="flex h-8 w-8 items-center justify-center rounded-[2px] bg-white font-serif text-base font-bold text-black">A</div>
+          <div class="flex flex-col leading-none">
+            <span class="font-serif text-base font-bold tracking-tight text-white">AURA Admin</span>
+            <span class="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.25em] text-zinc-400">Control Center</span>
+          </div>
+        </a>
+        <button type="button" id="admin-mobile-close-btn" class="admin-close-btn p-1.5 text-zinc-400 hover:text-white" aria-label="Đóng menu">
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Trạng thái Stylist AI -->
+      <div class="mt-4 flex items-center justify-between rounded-[2px] bg-[#27272A]/50 px-3 py-1.5 text-[11px] text-zinc-300 border border-[#27272A]">
+        <span class="flex items-center gap-2">
+          <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>AI Stylist Service</span>
+        </span>
+        <span class="text-[10px] font-mono text-emerald-400 font-semibold">Active</span>
+      </div>
+
+      <!-- Danh sách Navigation dọc -->
+      <nav class="mt-5 space-y-1" aria-label="Chức năng quản trị">
+        <!-- 1. Dashboard -->
+        <a href="/admin" class="admin-nav-item {% if current_page == 'dashboard' %}active{% endif %}">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+          </svg>
+          <span class="flex-1">Dashboard</span>
+        </a>
+
+        <!-- 2. Sản phẩm -->
+        <a href="/admin/products" class="admin-nav-item {% if current_page == 'products' %}active{% endif %}">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25c-.669 0-1.188-.578-1.119-1.243l1.263-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+          </svg>
+          <span class="flex-1">Sản phẩm</span>
+          <span class="rounded-[2px] bg-white/10 px-1.5 py-0.5 text-[10px] font-mono text-white">500</span>
+        </a>
+
+        <!-- 3. Nhập kho -->
+        <a href="/admin/inventory" class="admin-nav-item {% if current_page == 'inventory' %}active{% endif %}">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+          </svg>
+          <span class="flex-1">Nhập kho</span>
+        </a>
+
+        <!-- 4. Đơn hàng -->
+        <a href="/admin/orders" class="admin-nav-item {% if current_page == 'orders' %}active{% endif %}">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+          </svg>
+          <span class="flex-1">Đơn hàng</span>
+        </a>
+
+        <!-- 5. Đánh giá & Xu hướng AI -->
+        <a href="/admin/trending" class="admin-nav-item {% if current_page == 'trending' %}active{% endif %}">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+          </svg>
+          <span class="flex-1">Đánh giá & Xu hướng</span>
+          <span class="rounded-[2px] bg-white/10 px-1.5 py-0.5 text-[10px] font-mono text-white">Live</span>
+        </a>
+
+        <!-- 6. Báo cáo lãi/lỗ -->
+        <a href="/admin/inventory#profit-report" class="admin-nav-item">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+          </svg>
+          <span class="flex-1">Báo cáo lãi/lỗ</span>
+        </a>
+
+        <!-- 7. Người dùng -->
+        <a href="/admin/users" class="admin-nav-item {% if current_page == 'users' %}active{% endif %}">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+          </svg>
+          <span class="flex-1">Người dùng</span>
+        </a>
+
+        <!-- 8. Storefront Link -->
+        <a href="/" target="_blank" class="admin-nav-item">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+          </svg>
+          <span class="flex-1">Xem Storefront ↗</span>
+        </a>
+      </nav>
     </div>
-    {% block content %}{% endblock %}
-  </main>
+
+    <!-- PHẦN DƯỚI: THÔNG TIN ADMIN & ĐĂNG XUẤT -->
+    <div class="pt-4 border-t border-[#27272A] space-y-2">
+      <div class="px-2 py-1.5 flex items-center justify-between text-xs">
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="h-6 w-6 rounded-full bg-white flex items-center justify-center text-black font-bold text-[10px]">
+            {{ (user.username if user else 'A')[0]|upper }}
+          </div>
+          <span class="truncate font-medium text-white">@{{ user.username if user else 'admin' }}</span>
+        </div>
+        <span class="rounded-[2px] bg-[#27272A] px-1.5 py-0.5 text-[9px] uppercase font-semibold text-zinc-400">Admin</span>
+      </div>
+
+      <button id="admin-logout-btn" class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-400 hover:text-rose-400 hover:bg-[#27272A] rounded-[2px] transition" title="Đăng xuất khỏi hệ thống">
+        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+        </svg>
+        <span>Đăng xuất</span>
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- NỘI DUNG CHÍNH (Được dịch sang phải nhờ admin-main-layout) -->
+  <div class="admin-main-layout flex-1 flex flex-col min-h-screen">
+    <main class="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-noir-100">{% block header_title %}Tổng quan hệ thống{% endblock %}</h1>
+      </div>
+      {% block content %}{% endblock %}
+    </main>
+  </div>
 
   <!-- Toast Notification Root -->
   <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
   <!-- Scripts -->
   <script>
+    // Admin Drawer Mobile Toggle
+    const adminSidebar = document.getElementById("admin-sidebar");
+    const adminOverlay = document.getElementById("admin-sidebar-overlay");
+    const adminOpenBtn = document.getElementById("admin-mobile-menu-btn");
+    const adminCloseBtn = document.getElementById("admin-mobile-close-btn");
+
+    function openAdminDrawer() {
+      if (adminSidebar) adminSidebar.classList.add("drawer-open");
+      if (adminOverlay) adminOverlay.classList.remove("hidden");
+      document.body.classList.add("overflow-hidden");
+    }
+
+    function closeAdminDrawer() {
+      if (adminSidebar) adminSidebar.classList.remove("drawer-open");
+      if (adminOverlay) adminOverlay.classList.add("hidden");
+      document.body.classList.remove("overflow-hidden");
+    }
+
+    if (adminOpenBtn) adminOpenBtn.addEventListener("click", openAdminDrawer);
+    if (adminCloseBtn) adminCloseBtn.addEventListener("click", closeAdminDrawer);
+    if (adminOverlay) adminOverlay.addEventListener("click", closeAdminDrawer);
+
+    if (adminSidebar) {
+      adminSidebar.querySelectorAll("a").forEach(a => {
+        a.addEventListener("click", () => {
+          if (window.innerWidth < 1024) closeAdminDrawer();
+        });
+      });
+    }
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Escape" && adminSidebar && adminSidebar.classList.contains("drawer-open")) {
+        closeAdminDrawer();
+      }
+    });
+
     // Admin Logout
-    document.getElementById("admin-logout-btn").addEventListener("click", async () => {
+    document.getElementById("admin-logout-btn")?.addEventListener("click", async () => {
       try {
         await fetch("/api/auth/logout", { method: "POST" });
         localStorage.removeItem("aura_token");
@@ -115,13 +227,13 @@
       const container = document.getElementById("toast-container");
       const el = document.createElement("div");
       const isSuccess = type === "success";
-      el.className = \`pointer-events-auto flex items-center gap-2 rounded-md px-4 py-3 text-xs font-semibold text-white shadow-lg transition-all duration-300 transform translate-y-4 opacity-0 \${
-        isSuccess ? "bg-noir-800 border border-gold-500/20" : "bg-rose-900 border border-rose-500/20"
-      }\`;
-      el.innerHTML = \`
-        <span>\${isSuccess ? "✓" : "✕"}</span>
-        <span>\${message}</span>
-      \`;
+      el.className = `pointer-events-auto flex items-center gap-2 rounded-[2px] px-4 py-3 text-xs font-semibold text-white shadow-lg transition-all duration-300 transform translate-y-4 opacity-0 ${
+        isSuccess ? "bg-[#18181B] border border-white/20" : "bg-rose-900 border border-rose-500/20"
+      }`;
+      el.innerHTML = `
+        <span>${isSuccess ? "✓" : "✕"}</span>
+        <span>${message}</span>
+      `;
       container.appendChild(el);
       requestAnimationFrame(() => {
         el.classList.remove("translate-y-4", "opacity-0");

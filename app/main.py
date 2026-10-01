@@ -14,6 +14,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import settings
 from app.models.schemas import (
@@ -86,6 +87,27 @@ async def order_error_handler(_: Request, exc: OrderError):
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
 
 
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404 and "text/html" in request.headers.get("accept", ""):
+        user = get_current_user_optional(request)
+        return templates.TemplateResponse(
+            request,
+            "404.html",
+            {
+                "app_name": settings.APP_NAME,
+                "shipping_fee": settings.SHIPPING_FEE,
+                "free_ship_threshold": settings.FREE_SHIPPING_THRESHOLD,
+                "combo_percent": settings.COMBO_DISCOUNT_PERCENT,
+                "version": settings.VERSION,
+                "user": user,
+                "message": exc.detail if isinstance(exc.detail, str) else "Trang không tồn tại",
+            },
+            status_code=404,
+        )
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+
 # ==========================================
 # Giới hạn tần suất gọi AI (tránh bị spam tốn tiền/tài nguyên)
 # ==========================================
@@ -141,13 +163,100 @@ def require_admin(request: Request) -> User:
 # ==========================================
 @app.get("/", response_class=HTMLResponse)
 def home_page(request: Request):
+    user = get_current_user_optional(request)
+    # Khu vực chọn lọc, mỗi khu vực tối đa 8 sản phẩm
+    hot_products = product_service.get_all(sort="popular")[:8]
+    new_products = product_service.get_all(sort="newest")[:8]
     return templates.TemplateResponse(request, "index.html", {
         "app_name": settings.APP_NAME,
         "shipping_fee": settings.SHIPPING_FEE,
         "free_ship_threshold": settings.FREE_SHIPPING_THRESHOLD,
         "combo_percent": settings.COMBO_DISCOUNT_PERCENT,
         "version": settings.VERSION,
+        "user": user,
+        "hot_products": hot_products,
+        "new_products": new_products,
     })
+
+
+@app.get("/products", response_class=HTMLResponse)
+def products_page(
+    request: Request,
+    category: Optional[str] = None,
+    gender: Optional[str] = "all",
+    sort: Optional[str] = "popular",
+    search: Optional[str] = None,
+    min_price: Optional[int] = None,
+    max_price: Optional[int] = None,
+    flash_sale_only: bool = False,
+):
+    user = get_current_user_optional(request)
+    products = product_service.get_all(
+        category=category,
+        gender=gender,
+        min_price=min_price,
+        max_price=max_price,
+        sort=sort,
+        search=search,
+        flash_sale_only=flash_sale_only,
+    )
+    categories = product_service.get_categories()
+    return templates.TemplateResponse(request, "products.html", {
+        "app_name": settings.APP_NAME,
+        "shipping_fee": settings.SHIPPING_FEE,
+        "free_ship_threshold": settings.FREE_SHIPPING_THRESHOLD,
+        "combo_percent": settings.COMBO_DISCOUNT_PERCENT,
+        "version": settings.VERSION,
+        "user": user,
+        "products": products,
+        "categories": categories,
+        "selected_category": category or "all",
+        "selected_gender": gender or "all",
+        "selected_sort": sort or "popular",
+        "search_query": search or "",
+    })
+
+
+@app.get("/product/{product_id}", response_class=HTMLResponse)
+def product_detail_page(request: Request, product_id: str):
+    user = get_current_user_optional(request)
+    product = product_service.get_by_id(product_id)
+    if not product:
+        return templates.TemplateResponse(
+            request,
+            "404.html",
+            {
+                "app_name": settings.APP_NAME,
+                "shipping_fee": settings.SHIPPING_FEE,
+                "free_ship_threshold": settings.FREE_SHIPPING_THRESHOLD,
+                "combo_percent": settings.COMBO_DISCOUNT_PERCENT,
+                "version": settings.VERSION,
+                "user": user,
+                "message": f"Không tìm thấy sản phẩm với mã '{product_id}'",
+            },
+            status_code=404,
+        )
+    related_products = product_service.get_related(product_id, limit=4)
+    try:
+        size_chart = size_chart_service.get_chart_for_product(product_id)
+    except Exception:
+        size_chart = None
+
+    return templates.TemplateResponse(
+        request,
+        "product-detail.html",
+        {
+            "app_name": settings.APP_NAME,
+            "shipping_fee": settings.SHIPPING_FEE,
+            "free_ship_threshold": settings.FREE_SHIPPING_THRESHOLD,
+            "combo_percent": settings.COMBO_DISCOUNT_PERCENT,
+            "version": settings.VERSION,
+            "user": user,
+            "product": product,
+            "related_products": related_products,
+            "size_chart": size_chart,
+        },
+    )
 
 
 @app.get("/login", response_class=HTMLResponse)

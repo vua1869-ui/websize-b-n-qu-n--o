@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{{ app_name }} • Thời trang tối giản &amp; Tinh tế</title>
+  <title>Tất cả sản phẩm • {{ app_name }}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -13,42 +13,70 @@
 <body class="flex min-h-screen flex-col font-sans bg-[#FAF8F5] text-[#111111]"
       data-free-ship="{{ free_ship_threshold }}" data-ship-fee="{{ shipping_fee }}" data-combo="{{ combo_percent }}">
 
-  {% set active_page = 'home' %}
+  {% set active_page = 'products' %}
   {% include "components/sidebar.html" %}
 
   <div class="main-content-layout flex flex-col flex-1">
 
-  <!-- 3. HERO (1 ảnh lớn full-width, 1 dòng tiêu đề Playfair, 1 nút duy nhất, không chồng lớp/gradient) -->
-  <section class="w-full" aria-label="Bộ sưu tập nổi bật">
-    <div class="relative w-full aspect-[16/9] sm:aspect-[21/9] max-h-[72vh] overflow-hidden bg-[#EAE6DF]">
-      <img src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop"
-           alt="AURA Studio Collection"
-           class="h-full w-full object-cover" />
+  <!-- 3. TIÊU ĐỀ TRANG -->
+  <div class="mx-auto max-w-7xl w-full px-4 pt-12 pb-4 sm:px-6 lg:px-8">
+    <div class="border-b border-[#E5E2DC] pb-6">
+      <h1 class="font-serif text-3xl sm:text-4xl text-[#111111] tracking-tight">Tất cả sản phẩm</h1>
+      <p class="mt-2 text-xs uppercase tracking-widest text-[#777777]">Bộ sưu tập chọn lọc • Tối giản &amp; Thanh lịch</p>
     </div>
-    <div class="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8 text-center">
-      <h1 class="font-serif text-3xl sm:text-5xl text-[#111111] tracking-tight">
-        Tối giản trong từng đường nét
-      </h1>
-      <div class="mt-8">
-        <a href="/products" class="btn btn-primary px-8 py-3.5 text-xs">
-          Xem tất cả sản phẩm
-        </a>
+  </div>
+
+  <!-- 4. CATALOG MAIN -->
+  <main id="catalog" class="mx-auto mb-20 w-full max-w-7xl flex-1 px-4 sm:px-6 lg:px-8">
+    <!-- Bộ lọc & Sắp xếp -->
+    <div class="border-b border-[#E5E2DC] pb-4">
+      <div class="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div id="category-tabs" class="no-scrollbar flex items-center gap-2 overflow-x-auto pb-2 md:pb-0" role="tablist">
+          <button role="tab" aria-selected="{% if selected_category == 'all' %}true{% else %}false{% endif %}" data-action="set-category" data-cat="all" class="chip {% if selected_category == 'all' %}chip-on{% endif %}">Tất cả</button>
+          <button role="tab" aria-selected="{% if selected_category == 'flash_sale' %}true{% else %}false{% endif %}" data-action="set-category" data-cat="flash_sale" class="chip {% if selected_category == 'flash_sale' %}chip-on{% endif %}">🔥 Flash Sale</button>
+          {% for cat in categories %}
+          <button role="tab" aria-selected="{% if selected_category == cat.id %}true{% else %}false{% endif %}" data-action="set-category" data-cat="{{ cat.id }}" class="chip {% if selected_category == cat.id %}chip-on{% endif %}">{{ cat.name }}</button>
+          {% endfor %}
+        </div>
+        <div class="no-scrollbar flex items-center gap-2 overflow-x-auto">
+          <span class="hidden text-xs font-semibold uppercase tracking-wider text-[#666666] sm:inline">Sắp xếp:</span>
+          <button data-action="set-sort" data-sort="popular" class="sort-btn btn btn-sm {% if selected_sort == 'popular' %}btn-primary{% else %}btn-outline{% endif %}">Phổ biến</button>
+          <button data-action="set-sort" data-sort="top_sales" class="sort-btn btn btn-sm {% if selected_sort == 'top_sales' %}btn-primary{% else %}btn-outline{% endif %}">Bán chạy</button>
+          <button data-action="set-sort" data-sort="price_asc" class="sort-btn btn btn-sm {% if selected_sort == 'price_asc' %}btn-primary{% else %}btn-outline{% endif %}">Giá tăng</button>
+          <button data-action="set-sort" data-sort="price_desc" class="sort-btn btn btn-sm {% if selected_sort == 'price_desc' %}btn-primary{% else %}btn-outline{% endif %}">Giá giảm</button>
+        </div>
+      </div>
+
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-4 pt-3 text-xs">
+        <div class="flex flex-wrap items-center gap-3">
+          <label class="flex items-center gap-2 text-xs uppercase tracking-wider text-[#666666]">
+            Dành cho
+            <select id="filter-gender" class="field !w-auto !py-1 text-xs">
+              <option value="all" {% if selected_gender == 'all' %}selected{% endif %}>Tất cả</option>
+              <option value="nam" {% if selected_gender == 'nam' %}selected{% endif %}>Nam</option>
+              <option value="nu" {% if selected_gender == 'nu' %}selected{% endif %}>Nữ</option>
+            </select>
+          </label>
+          <label class="flex items-center gap-2 text-xs uppercase tracking-wider text-[#666666]">
+            Khoảng giá
+            <select id="filter-price" class="field !w-auto !py-1 text-xs">
+              <option value="">Tất cả</option>
+              <option value="0-200000">Dưới 200K</option>
+              <option value="200000-400000">200K – 400K</option>
+              <option value="400000-">Trên 400K</option>
+            </select>
+          </label>
+        </div>
+        <div class="flex items-center gap-4">
+          <span id="products-count" class="text-xs text-[#666666] uppercase tracking-wider">{{ products|length }} SẢN PHẨM</span>
+          <button data-action="reset-filters" class="text-xs font-semibold uppercase tracking-wider text-[#111111] hover:underline">Xóa bộ lọc</button>
+        </div>
       </div>
     </div>
-  </section>
 
-  <!-- 4. KHU VỰC CHỌN LỌC 1: HOT NHẤT TUẦN (tối đa 8 sản phẩm) -->
-  <section id="featured-hot" class="mx-auto my-16 w-full max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Hot nhất tuần" data-section="hot-products">
-    <div class="flex items-baseline justify-between border-b border-[#E5E2DC] pb-4">
-      <div>
-        <h2 class="font-serif text-2xl sm:text-3xl text-[#111111]">Hot nhất tuần</h2>
-        <p class="mt-1 text-xs uppercase tracking-widest text-[#777777]">Được yêu thích nhất trong tuần</p>
-      </div>
-      <a href="/products?sort=popular" class="text-xs uppercase tracking-wider text-[#111111] hover:underline font-semibold">Xem thêm ›</a>
-    </div>
-
-    <div class="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4 sm:gap-8">
-      {% for p in hot_products %}
+    <!-- Lưới sản phẩm (Grid: điện thoại 2 cột, tablet 3 cột, desktop 4 cột, gap gấp rưỡi: gap-6 sm:gap-8) -->
+    <div id="products-grid" class="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4 sm:gap-8">
+      {% for p in products %}
       <article class="product-card group relative flex flex-col text-left">
         <a href="/product/{{ p.id }}" class="block">
           <div class="relative aspect-[3/4] w-full overflow-hidden bg-[#EAE6DF] rounded-[2px]">
@@ -77,60 +105,9 @@
       </article>
       {% endfor %}
     </div>
-  </section>
+  </main>
 
-  <!-- 5. KHU VỰC CHỌN LỌC 2: MỚI VỀ (tối đa 8 sản phẩm) -->
-  <section id="featured-new" class="mx-auto my-16 w-full max-w-7xl px-4 sm:px-6 lg:px-8" aria-label="Sản phẩm mới về" data-section="new-products">
-    <div class="flex items-baseline justify-between border-b border-[#E5E2DC] pb-4">
-      <div>
-        <h2 class="font-serif text-2xl sm:text-3xl text-[#111111]">Mới về</h2>
-        <p class="mt-1 text-xs uppercase tracking-widest text-[#777777]">Thiết kế mới nhất mùa này</p>
-      </div>
-      <a href="/products?sort=newest" class="text-xs uppercase tracking-wider text-[#111111] hover:underline font-semibold">Xem thêm ›</a>
-    </div>
-
-    <div class="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-4 sm:gap-8">
-      {% for p in new_products %}
-      <article class="product-card group relative flex flex-col text-left">
-        <a href="/product/{{ p.id }}" class="block">
-          <div class="relative aspect-[3/4] w-full overflow-hidden bg-[#EAE6DF] rounded-[2px]">
-            <img src="{{ p.images[0] }}" alt="{{ p.name }}" class="h-full w-full object-cover transition-opacity duration-300 {% if p.images|length > 1 %}group-hover:opacity-0{% endif %} {% if not p.in_stock %}opacity-50{% endif %}" loading="lazy" />
-            {% if p.images|length > 1 %}
-            <img src="{{ p.images[1] }}" alt="{{ p.name }}" class="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100 {% if not p.in_stock %}opacity-50{% endif %}" loading="lazy" />
-            {% endif %}
-            {% if not p.in_stock %}
-            <span class="absolute top-2 left-2 rounded-[2px] bg-[#111111]/80 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white">Hết hàng</span>
-            {% elif p.discount_percent > 0 %}
-            <span class="absolute top-2 left-2 rounded-[2px] bg-[#111111] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white">-{{ p.discount_percent }}%</span>
-            {% elif p.is_new %}
-            <span class="absolute top-2 left-2 rounded-[2px] bg-[#111111] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white">Mới</span>
-            {% endif %}
-          </div>
-          <div class="mt-3 space-y-1">
-            <h3 class="text-xs font-normal text-[#111111] truncate">{{ p.name }}</h3>
-            <div class="flex items-center gap-2 text-xs">
-              <span class="font-medium text-[#111111]">{{ p.final_price|vnd }}</span>
-              {% if p.discount_percent > 0 %}
-              <span class="text-[11px] text-[#888888] line-through">{{ p.price|vnd }}</span>
-              {% endif %}
-            </div>
-          </div>
-        </a>
-      </article>
-      {% endfor %}
-    </div>
-  </section>
-
-  <!-- 6. NÚT XEM TẤT CẢ SẢN PHẨM -->
-  <section class="mx-auto my-20 w-full max-w-7xl px-4 text-center">
-    <div class="border-t border-[#E5E2DC] pt-16 pb-8">
-      <a href="/products" class="btn btn-outline px-12 py-3.5 text-xs font-bold tracking-widest uppercase">
-        Xem tất cả sản phẩm
-      </a>
-    </div>
-  </section>
-
-  <!-- ================= MODALS & DRAWERS (Giữ nguyên toàn bộ logic sự kiện) ================= -->
+  <!-- ================= MODALS & DRAWERS ================= -->
 
   <!-- Chat AI Drawer -->
   <div id="chat-drawer" class="drawer hidden" data-modal role="dialog" aria-modal="true" aria-label="Trợ lý Stylist AI">

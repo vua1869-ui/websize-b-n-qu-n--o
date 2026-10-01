@@ -20,8 +20,8 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['"Inter"', "-apple-system", "BlinkMacSystemFont", '"Segoe UI"', "Roboto", "sans-serif"],
-        serif: ['"Cormorant Garamond"', "Georgia", "serif"],
+        sans: ['"Plus Jakarta Sans"', "-apple-system", "BlinkMacSystemFont", '"Segoe UI"', "Roboto", "sans-serif"],
+        serif: ['"Playfair Display"', "Georgia", "serif"],
       },
     },
   },
