@@ -12,12 +12,12 @@
       <!-- Search Input -->
       <div class="relative min-w-[260px] flex-1 max-w-md">
         <input id="order-search" type="search" placeholder="Tìm theo mã đơn AURA, tên khách hoặc SĐT..."
-               class="w-full rounded-md border border-noir-700 bg-noir-800/60 pl-9 pr-4 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50 placeholder:text-noir-400" />
+               class="w-full rounded-md border border-noir-700 bg-noir-800/60 pl-9 pr-4 py-2 text-sm text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50 placeholder:text-noir-400" />
         <svg class="absolute left-3 top-2.5 h-4 w-4 text-noir-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
       </div>
 
       <!-- Quick status pills -->
-      <div id="status-pills" class="flex flex-wrap items-center gap-1.5 text-xs font-medium">
+      <div id="status-pills" class="flex flex-wrap items-center gap-1.5 text-sm font-medium">
         <button data-status="all" class="status-btn active rounded-md bg-gold-500 px-3 py-1.5 text-noir-900 shadow-lg transition">Tất cả</button>
         <button data-status="pending_payment" class="status-btn rounded-md border border-noir-700 bg-noir-900 px-3 py-1.5 text-noir-300 hover:bg-noir-800 transition">Chờ TT</button>
         <button data-status="confirmed" class="status-btn rounded-md border border-noir-700 bg-noir-900 px-3 py-1.5 text-noir-300 hover:bg-noir-800 transition">Đã xác nhận</button>
@@ -31,8 +31,8 @@
   <!-- Orders Table -->
   <div class="rounded-lg border border-noir-700 bg-noir-900 shadow-lg overflow-hidden glass-card">
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs">
-        <thead class="bg-noir-800 border-b border-noir-700 text-noir-400 uppercase tracking-wider text-[10px]">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-noir-800 border-b border-noir-700 text-noir-400 uppercase tracking-wider text-sm">
           <tr>
             <th class="py-3 px-4 font-semibold">Mã đơn hàng</th>
             <th class="py-3 px-4 font-semibold">Thời gian</th>
@@ -61,7 +61,7 @@
     <div class="flex items-center justify-between border-b border-noir-700 pb-3">
       <div>
         <h3 id="modal-order-id" class="font-mono text-base font-bold text-noir-100">Chi tiết đơn hàng</h3>
-        <p id="modal-order-date" class="text-[11px] font-mono text-noir-400 mt-0.5"></p>
+        <p id="modal-order-date" class="text-sm font-mono text-noir-400 mt-0.5"></p>
       </div>
       <button id="close-order-modal" class="text-noir-400 hover:text-gold-400 transition" aria-label="Đóng">
         <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -70,7 +70,7 @@
 
     <div class="mt-5 space-y-4">
       <!-- Khách hàng & Giao hàng -->
-      <div class="rounded-md border border-noir-700 bg-noir-800 p-4 text-xs space-y-1.5">
+      <div class="rounded-md border border-noir-700 bg-noir-800 p-4 text-sm space-y-1.5">
         <p class="font-semibold text-noir-100 text-sm" id="detail-customer-name"></p>
         <p class="text-noir-300">SĐT: <span id="detail-customer-phone" class="font-medium text-noir-100"></span></p>
         <p class="text-noir-300">Địa chỉ: <span id="detail-customer-address" class="text-noir-100"></span></p>
@@ -79,12 +79,12 @@
 
       <!-- Danh sách món hàng -->
       <div>
-        <h4 class="text-xs uppercase tracking-wider font-semibold text-noir-400 mb-2">Sản phẩm trong đơn</h4>
+        <h4 class="text-sm uppercase tracking-wider font-semibold text-noir-400 mb-2">Sản phẩm trong đơn</h4>
         <div id="detail-items-list" class="divide-y divide-noir-700 rounded-md border border-noir-700 p-3 space-y-2 bg-noir-900"></div>
       </div>
 
       <!-- Tổng kết tài chính -->
-      <div class="rounded-md border border-noir-700 bg-noir-800 p-4 text-xs space-y-2">
+      <div class="rounded-md border border-noir-700 bg-noir-800 p-4 text-sm space-y-2">
         <div class="flex justify-between text-noir-300">
           <span>Tạm tính hàng:</span>
           <span id="detail-subtotal" class="font-medium text-noir-100"></span>
@@ -109,16 +109,16 @@
 
       <!-- Đổi trạng thái đơn hàng (Neutral Boutique Styling, NO AMBER BOX) -->
       <div class="rounded-md border border-noir-700 bg-noir-800 p-4">
-        <label class="block text-xs uppercase tracking-wider font-semibold text-noir-300 mb-2">Cập nhật trạng thái đơn hàng:</label>
+        <label class="block text-sm uppercase tracking-wider font-semibold text-noir-300 mb-2">Cập nhật trạng thái đơn hàng:</label>
         <div class="flex gap-2">
-          <select id="update-status-select" class="flex-1 rounded-md border border-noir-700 bg-noir-900 px-3 py-2 text-xs font-medium text-noir-100 outline-none transition focus:border-gold-500">
+          <select id="update-status-select" class="flex-1 rounded-md border border-noir-700 bg-noir-900 px-3 py-2 text-sm font-medium text-noir-100 outline-none transition focus:border-gold-500">
             <option value="pending_payment">Chờ thanh toán (pending_payment)</option>
             <option value="confirmed">Đã xác nhận (confirmed)</option>
             <option value="shipping">Đang giao hàng (shipping)</option>
             <option value="completed">Đã giao thành công (completed)</option>
             <option value="cancelled">Đã hủy đơn (cancelled)</option>
           </select>
-          <button id="save-order-status-btn" class="rounded-md bg-gold-500 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-noir-900 shadow-lg hover:bg-gold-400 transition">
+          <button id="save-order-status-btn" class="rounded-md bg-gold-500 px-4 py-2 text-sm font-semibold uppercase tracking-wider text-noir-900 shadow-lg hover:bg-gold-400 transition">
             Lưu trạng thái
           </button>
         </div>
@@ -173,19 +173,19 @@
         return `
           <tr class="hover:bg-noir-800/60 transition">
             <td class="py-3 px-4 font-mono font-semibold text-noir-100">${o.order_id}</td>
-            <td class="py-3 px-4 text-noir-400 font-mono text-[11px]">${o.created_at || ""}</td>
+            <td class="py-3 px-4 text-noir-400 font-mono text-sm">${o.created_at || ""}</td>
             <td class="py-3 px-4">
               <p class="font-semibold text-noir-100">${o.customer?.name || "N/A"}</p>
-              <p class="text-[10px] text-noir-400 font-mono">${o.customer?.phone || ""}</p>
+              <p class="text-sm text-noir-400 font-mono">${o.customer?.phone || ""}</p>
             </td>
             <td class="py-3 px-4 font-medium text-noir-300">${itemCount} sp</td>
             <td class="py-3 px-4 font-semibold text-gold-500">${total}</td>
             <td class="py-3 px-4 text-noir-400">${o.payment_method === 'cod' ? 'COD' : 'Chuyển khoản'}</td>
             <td class="py-3 px-4">
-              <span class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium border ${st.bg}">${st.label}</span>
+              <span class="inline-flex rounded-full px-2 py-0.5 text-sm font-medium border ${st.bg}">${st.label}</span>
             </td>
             <td class="py-3 px-4 text-right">
-              <button onclick="viewOrder('${o.order_id}')" class="rounded-md border border-noir-700 bg-noir-800 px-2.5 py-1 text-[11px] font-medium text-noir-300 hover:bg-noir-700 hover:text-gold-400 shadow-lg transition">
+              <button onclick="viewOrder('${o.order_id}')" class="rounded-md border border-noir-700 bg-noir-800 px-2.5 py-1 text-sm font-medium text-noir-300 hover:bg-noir-700 hover:text-gold-400 shadow-lg transition">
                 Chi tiết
               </button>
             </td>
@@ -235,7 +235,7 @@
       <div class="flex items-center justify-between py-2">
         <div>
           <p class="font-semibold text-noir-100">${l.name}</p>
-          <p class="text-[10px] text-noir-400">Size: ${l.size} | Màu: ${l.color} | SL: ×${l.quantity}</p>
+          <p class="text-sm text-noir-400">Size: ${l.size} | Màu: ${l.color} | SL: ×${l.quantity}</p>
         </div>
         <p class="font-semibold text-noir-100">${(l.line_total || 0).toLocaleString("vi-VN")}đ</p>
       </div>

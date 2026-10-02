@@ -50,15 +50,8 @@ class OrderService:
         self._restore_stock_from_history()
 
     def _ensure_demo_orders(self):
-        """Đảm bảo CSDL có đơn hàng (tự động migration từ orders.jsonl nếu bảng orders trống)."""
-        try:
-            with get_db_session() as session:
-                count = session.query(func.count(OrderDB.order_id)).scalar()
-                if count == 0:
-                    from scripts.migrate_to_db import run_migration
-                    run_migration()
-        except Exception:
-            pass
+        """Không tự chạy migration nữa. Migration thực hiện thủ công bằng: python scripts/migrate_to_db.py"""
+        pass
 
     # ---------- Tính giá ----------
     def build_quote(self, items: List[OrderItem], voucher_code: Optional[str] = None,

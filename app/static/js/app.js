@@ -45,7 +45,7 @@ const U = {
     if (!root) return;
     while (root.children.length >= 3) root.firstChild.remove();
     const el = document.createElement('div');
-    el.className = 'toast pointer-events-auto flex max-w-sm items-center gap-2 rounded-xl border px-4 py-3 text-xs font-bold text-white shadow-2xl '
+    el.className = 'toast pointer-events-auto flex max-w-sm items-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold text-white shadow-2xl '
       + (type === 'error' ? 'border-red-400 bg-red-700' : 'border-zinc-700 bg-zinc-900');
     el.textContent = (type === 'error' ? '⚠️ ' : '✓ ') + msg;
     root.appendChild(el);
@@ -224,31 +224,31 @@ const App = {
     if (headerAuth) {
       headerAuth.innerHTML = `
         <div class="relative w-full" id="user-menu-wrapper">
-          <button id="user-menu-btn" class="w-full flex items-center justify-between gap-2 rounded-[2px] border border-[#E5E2DC] bg-white px-3 py-2 text-xs font-medium text-[#111111] transition hover:border-[#111111]">
+          <button id="user-menu-btn" class="w-full flex items-center justify-between gap-2 rounded-[2px] border border-[#E5E2DC] bg-white px-3 py-2 text-sm font-medium text-[#111111] transition hover:border-[#111111]">
             <div class="flex items-center gap-2 min-w-0">
-              <div class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#111111] text-[10px] font-bold text-white">
+              <div class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#111111] text-sm font-bold text-white">
                 ${(user.full_name || user.username)[0].toUpperCase()}
               </div>
-              <span class="truncate font-medium text-xs">@${U.esc(user.username)}</span>
+              <span class="truncate font-medium text-sm">@${U.esc(user.username)}</span>
             </div>
             <svg class="h-3.5 w-3.5 shrink-0 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
           </button>
           <div id="user-dropdown-menu" class="absolute left-0 bottom-full mb-1.5 w-full rounded-[2px] border border-[#E5E2DC] bg-white py-1 text-[#111111] shadow-lg hidden z-50">
             <div class="border-b border-[#E5E2DC] px-3.5 py-2.5">
-              <p class="truncate text-xs font-semibold text-[#111111]">${U.esc(user.full_name || user.name || user.username)}</p>
-              <p class="truncate text-[10px] font-mono text-neutral-500 mt-0.5">@${U.esc(user.username)} • ${user.role === 'admin' ? '<span class="text-[#111111] font-semibold">Admin</span>' : 'Thành viên'}</p>
+              <p class="truncate text-sm font-semibold text-[#111111]">${U.esc(user.full_name || user.name || user.username)}</p>
+              <p class="truncate text-sm font-mono text-neutral-500 mt-0.5">@${U.esc(user.username)} • ${user.role === 'admin' ? '<span class="text-[#111111] font-semibold">Admin</span>' : 'Thành viên'}</p>
             </div>
             ${user.role === 'admin' ? `
-              <a href="/admin" class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-[#111111] hover:bg-[#FAF8F5] transition">
+              <a href="/admin" class="flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium text-[#111111] hover:bg-[#FAF8F5] transition">
                 <svg class="h-4 w-4 shrink-0 text-[#111111]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75"/></svg>
                 <span>Quản trị Admin</span>
               </a>
             ` : ''}
-            <a href="/profile" class="flex items-center gap-2.5 px-3.5 py-2 text-xs font-medium text-neutral-700 hover:bg-[#FAF8F5] transition">
+            <a href="/profile" class="flex items-center gap-2.5 px-3.5 py-2 text-sm font-medium text-neutral-700 hover:bg-[#FAF8F5] transition">
               <svg class="h-4 w-4 shrink-0 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
               <span>Tài khoản của tôi</span>
             </a>
-            <button data-action="auth-logout" class="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-xs font-medium text-neutral-500 hover:text-red-600 hover:bg-[#FAF8F5] border-t border-[#E5E2DC] transition">
+            <button data-action="auth-logout" class="flex w-full items-center gap-2.5 px-3.5 py-2 text-left text-sm font-medium text-neutral-500 hover:text-red-600 hover:bg-[#FAF8F5] border-t border-[#E5E2DC] transition">
               <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>
               <span>Đăng xuất</span>
             </button>
@@ -340,7 +340,7 @@ const App = {
     const icons = this.state.categories.map(c => `
       <button data-action="set-category" data-cat="${U.esc(c.id)}" class="group flex flex-col items-center">
         <span class="flex h-12 w-12 items-center justify-center rounded-[2px] bg-[#FAF8F5] text-xl transition group-hover:bg-[#EDEAE3]">${c.icon}</span>
-        <span class="mt-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#111111]">${U.esc(c.name)}</span>
+        <span class="mt-1.5 text-sm font-semibold uppercase tracking-wider text-[#111111]">${U.esc(c.name)}</span>
       </button>`).join('');
     const quickNav = U.$('#quick-nav');
     if (quickNav) {
@@ -395,7 +395,7 @@ const App = {
       this.renderProducts();
     } catch (err) {
       if (seq !== this._seq.products) return;
-      grid.innerHTML = `<div class="col-span-full py-12 text-center text-xs text-red-600">${U.esc(err.message)}
+      grid.innerHTML = `<div class="col-span-full py-12 text-center text-sm text-red-600">${U.esc(err.message)}
         <br><button data-action="reset-filters" class="btn btn-outline mt-3">Thử lại</button></div>`;
     }
   },
@@ -405,26 +405,40 @@ const App = {
     const hasSecond = p.images && p.images.length > 1;
     let badge = '';
     if (out) {
-      badge = '<span class="absolute top-2 left-2 rounded-[2px] bg-[#111111]/80 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white">Hết hàng</span>';
-    } else if (p.discount_percent > 0) {
-      badge = `<span class="absolute top-2 left-2 rounded-[2px] bg-[#111111] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white">-${p.discount_percent}%</span>`;
-    } else if (p.is_new) {
-      badge = '<span class="absolute top-2 left-2 rounded-[2px] bg-[#111111] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white">Mới</span>';
+      badge = '<span class="absolute top-2.5 right-2.5 rounded-full bg-black/80 px-2.5 py-1 text-sm font-bold uppercase tracking-wider text-white">Hết hàng</span>';
+    } else {
+      badge = '<span class="absolute top-2.5 right-2.5 rounded-full bg-black px-2.5 py-1 text-sm font-bold uppercase tracking-wider text-white">BÁN CHẠY</span>';
     }
+    const ratingVal = p.rating ? p.rating : '5.0';
 
     return `
-    <article class="product-card group relative flex flex-col text-left">
+    <article class="product-card group relative flex flex-col text-left cursor-pointer" data-id="${U.esc(p.id)}">
       <a href="/product/${encodeURIComponent(p.id)}" class="block">
-        <div class="relative aspect-[3/4] w-full overflow-hidden bg-[#EAE6DF] rounded-[2px]">
-          ${U.img(p.images[0], p.name, 'h-full w-full object-cover transition-opacity duration-300 ' + (hasSecond ? 'group-hover:opacity-0' : '') + (out ? ' opacity-50' : ''))}
-          ${hasSecond ? U.img(p.images[1], p.name, 'absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100' + (out ? ' opacity-50' : '')) : ''}
+        <div class="relative aspect-[3/4] w-full overflow-hidden bg-[#F2F2F2] rounded-xl">
+          ${U.img(p.images[0], p.name, 'h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 ' + (hasSecond ? 'group-hover:opacity-0' : '') + (out ? ' opacity-50' : ''))}
+          ${hasSecond ? U.img(p.images[1], p.name, 'absolute inset-0 h-full w-full object-cover opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:scale-105' + (out ? ' opacity-50' : '')) : ''}
           ${badge}
+          <div class="absolute bottom-0 inset-x-0 bg-gradient-to-r from-purple-800 to-indigo-900 text-white text-sm font-bold py-1 px-2.5 text-center truncate">
+            TẶNG 01 TẤT THỂ THAO
+          </div>
         </div>
-        <div class="mt-3 space-y-1">
-          <h3 class="text-xs font-normal text-[#111111] truncate">${U.esc(p.name)}</h3>
-          <div class="flex items-center gap-2 text-xs">
-            <span class="font-medium text-[#111111]">${U.vnd(p.final_price)}</span>
-            ${p.discount_percent > 0 ? `<span class="text-[11px] text-[#888888] line-through">${U.vnd(p.price || p.original_price)}</span>` : ''}
+        <div class="mt-3 space-y-1.5">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-1">
+              <span class="h-4 w-4 rounded-full border border-gray-300 inline-block bg-[#F5C2C1]"></span>
+              <span class="h-4 w-4 rounded-full border border-gray-300 inline-block bg-[#FDF0B0]"></span>
+              <span class="h-4 w-4 rounded-full border border-gray-300 inline-block bg-[#275B8E]"></span>
+              <span class="text-sm font-semibold text-[#777777] ml-0.5">+4</span>
+            </div>
+            <div class="flex items-center gap-1 text-sm font-bold text-[#333333]">
+              <span class="text-amber-400">★</span> <span>${ratingVal}</span>
+            </div>
+          </div>
+          <h3 class="text-sm font-semibold text-[#111111] truncate group-hover:text-blue-600 transition">${U.esc(p.name)}</h3>
+          <div class="flex items-center gap-2 text-sm">
+            <span class="font-bold text-[#111111]">${U.vnd(p.final_price)}</span>
+            ${p.discount_percent > 0 ? `<span class="rounded bg-blue-600 px-1.5 py-0.5 text-sm font-bold text-white">-${p.discount_percent}%</span>
+            <span class="text-sm text-[#888888] line-through">${U.vnd(p.price || p.original_price)}</span>` : ''}
           </div>
         </div>
       </a>
@@ -437,26 +451,25 @@ const App = {
     const f = this.state.filters;
     let list = this.state.products;
     if (f.wishlist) list = list.filter(p => this.state.wishlist.includes(p.id));
+    if (f.size) list = list.filter(p => p.sizes && p.sizes.includes(f.size));
+    if (f.color) list = list.filter(p => p.colors && p.colors.some(c => c.name && c.name.toLowerCase().includes(f.color.toLowerCase())));
 
-    let label = `${list.length} SẢN PHẨM`;
-    if (f.wishlist) label = `YÊU THÍCH: ${list.length} SẢN PHẨM`;
-    else if (f.category === 'flash_sale') label = `FLASH SALE: ${list.length} SẢN PHẨM`;
+    let label = `${list.length} kết quả`;
     const countEl = U.$('#products-count');
     if (countEl) countEl.textContent = label;
 
     if (!list.length) {
-      grid.innerHTML = `<div class="col-span-full rounded-[2px] border border-[#E5E2DC] py-16 text-center">
+      grid.innerHTML = `<div class="col-span-full rounded-md border border-[#E5E2DC] py-16 text-center">
         <div class="text-3xl">🔍</div>
-        <h3 class="mt-3 text-xs font-bold uppercase tracking-wider text-[#111111]">Không tìm thấy sản phẩm phù hợp</h3>
-        <p class="mt-1 text-xs text-[#666666]">Hãy thử đổi bộ lọc hoặc hỏi Stylist AI để được gợi ý.</p>
+        <h3 class="mt-3 text-sm font-bold uppercase tracking-wider text-[#111111]">Không tìm thấy sản phẩm phù hợp</h3>
+        <p class="mt-1 text-sm text-[#666666]">Hãy thử đổi bộ lọc hoặc xóa bớt tiêu chí tìm kiếm.</p>
         <div class="mt-4 flex justify-center gap-2">
           <button data-action="reset-filters" class="btn btn-primary">Xóa bộ lọc</button>
-          <button data-action="open-chat" class="btn btn-outline">✨ Hỏi Stylist AI</button>
         </div></div>`;
       return;
     }
     const notice = this.state.notice
-      ? `<p class="col-span-full rounded-[2px] bg-[#FAF8F5] border border-[#E5E2DC] px-3 py-2 text-xs font-semibold text-[#111111]">${U.esc(this.state.notice)}</p>` : '';
+      ? `<p class="col-span-full rounded-md bg-[#FAF8F5] border border-[#E5E2DC] px-3 py-2 text-sm font-semibold text-[#111111]">${U.esc(this.state.notice)}</p>` : '';
     grid.innerHTML = notice + list.map(p => this.productCard(p)).join('');
   },
 
@@ -502,7 +515,7 @@ const App = {
       this.cache(d.items);
       this.renderFlash();
     } catch {
-      if (el) el.innerHTML = '<p class="py-6 text-xs text-zinc-500">Không tải được Flash Sale.</p>';
+      if (el) el.innerHTML = '<p class="py-6 text-sm text-zinc-500">Không tải được Flash Sale.</p>';
     }
     if (!this._timer) this._timer = setInterval(() => this.tick(), 1000);
     this.tick();
@@ -534,13 +547,13 @@ const App = {
         <div class="relative aspect-square overflow-hidden bg-zinc-100">
           ${U.img(p.images[0], p.name, 'h-full w-full object-cover transition-all duration-500 ' + (p.images.length > 1 ? 'group-hover:opacity-0 group-hover:scale-105' : 'group-hover:scale-105'))}
           ${p.images.length > 1 ? U.img(p.images[1], p.name, 'absolute inset-0 h-full w-full object-cover opacity-0 transition-all duration-500 group-hover:opacity-100 group-hover:scale-105') : ''}
-          <span class="absolute right-0 top-0 rounded-bl-lg bg-brand-600 px-2 py-1 text-[11px] font-extrabold text-white">-${p.discount_percent}%</span>
+          <span class="absolute right-0 top-0 rounded-bl-lg bg-brand-600 px-2 py-1 text-sm font-bold text-white">-${p.discount_percent}%</span>
         </div>
         <div class="flex flex-1 flex-col justify-between p-2.5">
-          <h3 class="line-clamp-1 text-xs font-semibold text-zinc-800 group-hover:text-brand-600">${U.esc(p.name)}</h3>
+          <h3 class="line-clamp-1 text-sm font-semibold text-zinc-800 group-hover:text-brand-600">${U.esc(p.name)}</h3>
           <div class="mt-2">
-            <div class="text-base font-extrabold leading-tight text-brand-600">${U.vnd(p.final_price)}</div>
-            <div class="text-[11px] text-zinc-400 line-through">${U.vnd(p.original_price)}</div>
+            <div class="text-base font-bold leading-tight text-brand-600">${U.vnd(p.final_price)}</div>
+            <div class="text-sm text-zinc-400 line-through">${U.vnd(p.original_price)}</div>
           </div>
           <div class="flash-progress mt-2.5"><div class="fill" style="width:${pct}%"></div>
             <div class="label">${p.stock > 0 ? `<span class="flame-anim mr-1">🔥</span>Đã bán ${sold}` : 'Hết hàng'}</div></div>
@@ -564,11 +577,11 @@ const App = {
       <div class="voucher-ticket flex items-center justify-between gap-3 rounded-[2px] p-3 border border-[#E5E2DC] bg-white">
         <div class="flex items-center gap-2.5">
           <div class="flex h-11 w-11 flex-shrink-0 flex-col items-center justify-center rounded-[2px] border border-[#111111] bg-[#FAF8F5] text-[#111111]">
-            <span class="text-xs font-bold">${U.esc(v.code.slice(0, 4))}</span><span class="text-[8px] font-bold uppercase">Mã</span></div>
+            <span class="text-sm font-bold">${U.esc(v.code.slice(0, 4))}</span><span class="text-sm font-bold uppercase">Mã</span></div>
           <div class="min-w-0">
-            <div class="text-xs font-bold text-[#111111]">${U.esc(v.discount_display)}</div>
-            <div class="truncate text-[11px] font-medium text-[#555555]">${U.esc(v.title)}</div>
-            <div class="text-[10px] text-[#888888]">${v.min_order ? 'Đơn từ ' + U.vnd(v.min_order) : 'Mọi đơn hàng'} • ${U.esc(v.expire_in)}</div>
+            <div class="text-sm font-bold text-[#111111]">${U.esc(v.discount_display)}</div>
+            <div class="truncate text-sm font-medium text-[#555555]">${U.esc(v.title)}</div>
+            <div class="text-sm text-[#888888]">${v.min_order ? 'Đơn từ ' + U.vnd(v.min_order) : 'Mọi đơn hàng'} • ${U.esc(v.expire_in)}</div>
           </div>
         </div>
         <button data-action="claim-voucher" data-code="${U.esc(v.code)}" ${saved ? 'disabled' : ''}
@@ -595,17 +608,17 @@ const App = {
       <div class="reel-card group flex flex-col justify-between" data-action="video" data-id="${U.esc(v.id)}" role="button" tabindex="0" aria-label="${U.esc(v.title)}">
         ${U.img(v.poster_image, v.title, 'absolute inset-0 h-full w-full object-cover transition duration-300')}
         <div class="absolute inset-0 bg-black/30"></div>
-        <div class="relative z-10 flex items-center justify-between p-3 text-[10px] text-white">
+        <div class="relative z-10 flex items-center justify-between p-3 text-sm text-white">
           <span class="rounded-[2px] bg-[#111111] px-2 py-0.5 font-bold uppercase tracking-wider">Thử đồ</span>
           <span class="rounded-[2px] bg-black/40 px-2 py-0.5">❤️ ${U.esc(v.likes)}</span>
         </div>
         <div class="relative z-10 mx-auto flex h-12 w-12 items-center justify-center rounded-[2px] bg-white/30 text-white transition">
           <svg class="ml-0.5 h-6 w-6 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>
         <div class="relative z-10 space-y-2 p-3 text-white">
-          <p class="line-clamp-2 text-xs font-medium leading-relaxed">${U.esc(v.title)}</p>
+          <p class="line-clamp-2 text-sm font-medium leading-relaxed">${U.esc(v.title)}</p>
           <div class="flex items-center justify-between gap-2 rounded-[2px] bg-white p-2 text-[#111111]">
-            <span class="line-clamp-1 text-xs font-bold">🛍️ ${U.esc(v.tagged_product.name)}</span>
-            <span class="flex-shrink-0 text-xs font-bold">${U.vnd(v.tagged_product.final_price)}</span>
+            <span class="line-clamp-1 text-sm font-bold">🛍️ ${U.esc(v.tagged_product.name)}</span>
+            <span class="flex-shrink-0 text-sm font-bold">${U.vnd(v.tagged_product.final_price)}</span>
           </div>
         </div>
       </div>`).join('');
@@ -622,18 +635,18 @@ const App = {
       <div class="relative flex aspect-[9/16] max-h-[92vh] flex-col justify-between overflow-hidden rounded-3xl border border-zinc-800 bg-black p-4 text-white shadow-2xl">
         ${media}
         <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/40"></div>
-        <div class="relative z-10 flex items-center justify-between text-xs">
+        <div class="relative z-10 flex items-center justify-between text-sm">
           <div class="flex items-center gap-2">${U.img(v.author_avatar, v.author, 'h-8 w-8 rounded-full border border-white object-cover')}<b>${U.esc(v.author)}</b></div>
           <button data-action="close-modal" data-target="video-modal" class="flex h-8 w-8 items-center justify-center rounded-full bg-black/60" aria-label="Đóng">✕</button>
         </div>
         <div class="relative z-10 space-y-3 pb-1">
-          <p class="text-xs text-zinc-200">${U.esc(v.title)}</p>
+          <p class="text-sm text-zinc-200">${U.esc(v.title)}</p>
           <div class="flex items-center gap-3 rounded-2xl bg-white p-3 text-zinc-900 shadow-2xl">
             ${U.img(p.images[0], p.name, 'h-14 w-12 flex-shrink-0 rounded-lg object-cover')}
             <div class="min-w-0 flex-1">
-              <h3 class="line-clamp-1 text-xs font-bold">${U.esc(p.name)}</h3>
-              <div class="flex items-baseline gap-2"><span class="text-xs font-extrabold text-brand-600">${U.vnd(p.final_price)}</span>
-                <span class="text-[10px] text-zinc-400 line-through">${U.vnd(p.original_price)}</span></div>
+              <h3 class="line-clamp-1 text-sm font-bold">${U.esc(p.name)}</h3>
+              <div class="flex items-baseline gap-2"><span class="text-sm font-bold text-brand-600">${U.vnd(p.final_price)}</span>
+                <span class="text-sm text-zinc-400 line-through">${U.vnd(p.original_price)}</span></div>
             </div>
             <button data-action="quickview" data-id="${p.id}" data-from="video-modal" class="btn btn-primary btn-sm whitespace-nowrap">Mua ngay</button>
           </div>
@@ -682,7 +695,7 @@ const App = {
       this.renderTrending();
     } catch (err) {
       console.warn('[Trending] Lỗi khi nạp xu hướng:', err);
-      if (chipsEl) chipsEl.innerHTML = '<span class="text-xs text-zinc-400">Xu hướng tạm thời chưa cập nhật.</span>';
+      if (chipsEl) chipsEl.innerHTML = '<span class="text-sm text-zinc-400">Xu hướng tạm thời chưa cập nhật.</span>';
       if (prodsGrid) prodsGrid.innerHTML = '';
     }
   },
@@ -706,13 +719,13 @@ const App = {
     if (firstTrend && badgeEl) {
       if (firstTrend.source === 'google_trends') {
         badgeEl.textContent = 'Google Trends VN';
-        badgeEl.className = 'rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200';
+        badgeEl.className = 'rounded-full bg-emerald-50 px-2 py-0.5 text-sm font-bold text-emerald-700 border border-emerald-200';
       } else if (firstTrend.source === 'cached') {
         badgeEl.textContent = 'Dữ liệu xu hướng AURA';
-        badgeEl.className = 'rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200';
+        badgeEl.className = 'rounded-full bg-blue-50 px-2 py-0.5 text-sm font-bold text-blue-700 border border-blue-200';
       } else {
         badgeEl.textContent = 'Demo Trends';
-        badgeEl.className = 'rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200';
+        badgeEl.className = 'rounded-full bg-amber-50 px-2 py-0.5 text-sm font-bold text-amber-700 border border-amber-200';
       }
     }
 
@@ -725,11 +738,11 @@ const App = {
       chipsEl.innerHTML = trends.map(t => {
         const isRising = t.status === 'rising';
         const growthBadge = isRising
-          ? `<span class="text-rose-600 font-extrabold text-[11px]">↑ +${t.growth_rate}%</span>`
-          : (t.status === 'declining' ? `<span class="text-zinc-400 font-semibold text-[11px]">↓ ${t.growth_rate}%</span>` : `<span class="text-amber-600 font-semibold text-[11px]">→ ổn định</span>`);
+          ? `<span class="text-rose-600 font-bold text-sm">↑ +${t.growth_rate}%</span>`
+          : (t.status === 'declining' ? `<span class="text-zinc-400 font-semibold text-sm">↓ ${t.growth_rate}%</span>` : `<span class="text-amber-600 font-semibold text-sm">→ ổn định</span>`);
         return `
           <button type="button" data-action="click-trend" data-kw="${U.esc(t.keyword)}"
-                  class="group flex flex-shrink-0 items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-bold text-zinc-800 shadow-sm transition hover:border-amber-400 hover:bg-amber-50/50 hover:shadow">
+                  class="group flex flex-shrink-0 items-center gap-1.5 rounded-full border border-zinc-200 bg-white px-3 py-1 text-sm font-bold text-zinc-800 shadow-sm transition hover:border-amber-400 hover:bg-amber-50/50 hover:shadow">
             <span>🔥</span>
             <span>${U.esc(t.keyword)}</span>
             ${growthBadge}
@@ -761,28 +774,28 @@ const App = {
           ${U.img(p.images[0], p.name, 'h-full w-full object-cover transition duration-300 group-hover:scale-105')}
           <div class="absolute left-2 top-2 flex flex-col gap-1 items-start">
             ${rankBadge}
-            <span class="rounded bg-black/60 px-1.5 py-0.5 text-[9px] font-bold text-white backdrop-blur-xs">Score ${Math.round(item.final_score)}</span>
+            <span class="rounded bg-black/60 px-1.5 py-0.5 text-sm font-bold text-white backdrop-blur-xs">Score ${Math.round(item.final_score)}</span>
           </div>
           ${p.discount_percent > 0 ? `<span class="badge badge-sale absolute right-2 top-2">-${p.discount_percent}%</span>` : ''}
         </div>
         <div class="p-3">
-          <div class="mb-1 flex items-center justify-between text-[11px] text-zinc-400">
+          <div class="mb-1 flex items-center justify-between text-sm text-zinc-400">
             <span>${U.esc(p.category_name)}</span>
             <span class="text-emerald-700 font-semibold">Còn ${p.stock}</span>
           </div>
-          <h3 class="line-clamp-2 text-xs font-bold text-zinc-800 transition group-hover:text-brand-600 sm:text-sm" title="${U.esc(p.name)}">${U.esc(p.name)}</h3>
+          <h3 class="line-clamp-2 text-sm font-bold text-zinc-800 transition group-hover:text-brand-600 sm:text-sm" title="${U.esc(p.name)}">${U.esc(p.name)}</h3>
           
-          <div class="mt-1.5 flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+          <div class="mt-1.5 flex items-center gap-1 rounded bg-amber-50 px-1.5 py-0.5 text-sm font-medium text-amber-800">
             <span class="text-amber-500">⚡</span>
             <span class="truncate">${U.esc(item.reason)}</span>
           </div>
 
           <div class="mt-2.5">
             <div class="flex items-baseline gap-1.5">
-              <span class="text-sm font-extrabold leading-none text-brand-600 sm:text-base">${U.vnd(p.final_price)}</span>
-              ${p.discount_percent > 0 ? `<span class="text-[10px] text-zinc-400 line-through">${U.vnd(p.original_price)}</span>` : ''}
+              <span class="text-sm font-bold leading-none text-brand-600 sm:text-base">${U.vnd(p.final_price)}</span>
+              ${p.discount_percent > 0 ? `<span class="text-sm text-zinc-400 line-through">${U.vnd(p.original_price)}</span>` : ''}
             </div>
-            <div class="mt-2 flex items-center justify-between border-t border-zinc-100 pt-1.5 text-[11px] text-zinc-500">
+            <div class="mt-2 flex items-center justify-between border-t border-zinc-100 pt-1.5 text-sm text-zinc-500">
               <span><span class="text-amber-400">★</span> <b class="text-zinc-700">${p.rating}</b> • Đã bán ${sold}</span>
             </div>
           </div>
@@ -849,36 +862,38 @@ const App = {
     const out = !p.in_stock || p.stock <= 0;
 
     U.$('#qv-body').innerHTML = `
-    <div class="grid grid-cols-1 gap-6 p-5 sm:p-6 md:grid-cols-2 items-start">
-      <div class="space-y-3">
-        <div class="relative w-full max-w-[340px] sm:max-w-[380px] mx-auto aspect-[3/4] max-h-[440px] overflow-hidden rounded-[2px] border border-[#E5E2DC] bg-[#F2EFE9] group shadow-xs">
-          ${U.img(p.images[0], p.name, 'h-full w-full object-cover transition duration-300').replace('<img ', '<img id="qv-main-img" ')}
-          ${p.images.length > 1 ? `
-          <button data-action="qv-prev-img" class="absolute left-2.5 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-[2px] bg-white/90 text-[#111111] shadow-xs backdrop-blur-sm transition hover:bg-white" aria-label="Xem ảnh trước">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 19l-7-7 7-7"/></svg>
-          </button>
-          <button data-action="qv-next-img" class="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-[2px] bg-white/90 text-[#111111] shadow-xs backdrop-blur-sm transition hover:bg-white" aria-label="Xem ảnh kế tiếp">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5l7 7-7 7"/></svg>
-          </button>
-          <span id="qv-img-badge" class="absolute bottom-2.5 right-2.5 rounded-[2px] bg-black/75 px-2 py-0.5 text-[11px] font-mono text-white tracking-wide">1 / ${p.images.length}</span>
-          ` : ''}
+    <div class="grid grid-cols-1 gap-6 p-5 sm:p-6 md:grid-cols-12 items-start">
+      <div class="md:col-span-7">
+        <div class="flex flex-col-reverse lg:flex-row gap-3 items-start">
+          ${p.images.length > 1 ? `<div class="flex flex-row lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto max-h-[500px] shrink-0 w-full lg:w-auto no-scrollbar" id="qv-thumbs">${p.images.map((img, i) => `
+            <button data-action="qv-img" data-idx="${i}" data-src="${U.esc(img)}" class="qv-thumb-btn h-16 w-13 lg:h-18 lg:w-14 flex-shrink-0 overflow-hidden rounded-[2px] border transition ${i === 0 ? 'border-[#111111] ring-1 ring-[#111111]' : 'border-[#E5E2DC] hover:border-[#111111]'}" aria-label="Xem góc ảnh ${i+1}">
+              ${U.img(img, '', 'h-full w-full object-cover')}</button>`).join('')}</div>` : ''}
+          <div class="relative w-full aspect-[3/4] overflow-hidden rounded-[2px] border border-[#E5E2DC] bg-[#F2EFE9] group shadow-xs flex-1">
+            ${U.img(p.images[0], p.name, 'h-full w-full object-cover transition duration-300').replace('<img ', '<img id="qv-main-img" ')}
+            ${p.images.length > 1 ? `
+            <button data-action="qv-prev-img" class="absolute left-2.5 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-[2px] bg-white/90 text-[#111111] shadow-xs backdrop-blur-sm transition hover:bg-white" aria-label="Xem ảnh trước">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+            <button data-action="qv-next-img" class="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-[2px] bg-white/90 text-[#111111] shadow-xs backdrop-blur-sm transition hover:bg-white" aria-label="Xem ảnh kế tiếp">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5l7 7-7 7"/></svg>
+            </button>
+            <span id="qv-img-badge" class="absolute bottom-2.5 right-2.5 rounded-[2px] bg-black/75 px-2 py-0.5 text-sm font-mono text-white tracking-wide">1 / ${p.images.length}</span>
+            ` : ''}
+          </div>
         </div>
-        ${p.images.length > 1 ? `<div class="flex gap-2 overflow-x-auto pb-1 justify-center max-w-[340px] sm:max-w-[380px] mx-auto no-scrollbar" id="qv-thumbs">${p.images.map((img, i) => `
-          <button data-action="qv-img" data-idx="${i}" data-src="${U.esc(img)}" class="qv-thumb-btn h-16 w-13 sm:h-18 sm:w-14 flex-shrink-0 overflow-hidden rounded-[2px] border transition ${i === 0 ? 'border-[#111111] ring-1 ring-[#111111]' : 'border-[#E5E2DC] hover:border-[#111111]'}" aria-label="Xem góc ảnh ${i+1}">
-            ${U.img(img, '', 'h-full w-full object-cover')}</button>`).join('')}</div>` : ''}
       </div>
-      <div class="flex flex-col justify-between space-y-5">
+      <div class="md:col-span-5 flex flex-col justify-between space-y-5">
         <div>
-          <div class="text-xs sm:text-sm font-medium uppercase tracking-widest text-[#777777]">${U.esc(p.category_name)} • ${U.esc(p.style)}</div>
-          <h2 class="mt-2 font-serif text-xl sm:text-2xl font-normal leading-snug text-[#111111]">${U.esc(p.name)}</h2>
+          <div class="text-sm sm:text-sm font-medium uppercase tracking-widest text-[#777777]">${U.esc(p.category_name)} • ${U.esc(p.style)}</div>
+          <h2 class="mt-2 font-sans text-xl sm:text-2xl font-normal leading-snug text-[#111111]">${U.esc(p.name)}</h2>
           <div class="mt-2 flex items-center gap-3 text-sm text-[#666666]">
             <span class="font-semibold text-[#111111]">${p.rating} ★</span><span>•</span><span>${p.reviews_count} đánh giá</span><span>•</span><span>Đã bán ${p.sold_count}</span>
           </div>
           <div class="mt-4 flex flex-wrap items-baseline gap-3">
             <span class="text-2xl sm:text-3xl font-semibold text-[#111111]">${U.vnd(p.final_price)}</span>
             ${p.discount_percent > 0 ? `<span class="text-sm sm:text-base text-[#888888] line-through">${U.vnd(p.original_price)}</span>
-              <span class="rounded-[2px] border border-[#111111] bg-white px-2.5 py-0.5 text-xs font-semibold text-[#111111] uppercase tracking-wider">-${p.discount_percent}%</span>` : ''}
-            ${p.flash_sale ? '<span class="rounded-[2px] bg-[#111111] px-2.5 py-0.5 text-xs font-semibold text-white uppercase tracking-wider">Flash Sale</span>' : ''}
+              <span class="rounded-[2px] border border-[#111111] bg-white px-2.5 py-0.5 text-sm font-semibold text-[#111111] uppercase tracking-wider">-${p.discount_percent}%</span>` : ''}
+            ${p.flash_sale ? '<span class="rounded-[2px] bg-[#111111] px-2.5 py-0.5 text-sm font-semibold text-white uppercase tracking-wider">Flash Sale</span>' : ''}
           </div>
           <p class="mt-3 text-sm leading-relaxed text-[#444444]">${U.esc(p.description)}</p>
           <p class="mt-1.5 text-sm text-[#666666]"><strong class="text-[#111111] font-medium">Chất liệu:</strong> ${U.esc(p.material)}</p>
@@ -894,7 +909,7 @@ const App = {
           <div class="mt-4 space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="text-sm font-semibold text-[#111111]">Kích cỡ: <span id="qv-size-label" class="font-normal text-[#555555]"></span></span>
-              <div class="flex items-center gap-3 text-xs sm:text-sm font-medium">
+              <div class="flex items-center gap-3 text-sm sm:text-sm font-medium">
                 <button type="button" data-action="open-size-chart" data-product-id="${p.id}" class="underline hover:text-black flex items-center gap-1.5 text-[#555555] transition">📐 Bảng chọn size</button>
                 <span class="text-[#CCCCCC]">•</span>
                 <button type="button" data-action="open-size" data-product-id="${p.id}" class="underline hover:text-black flex items-center gap-1.5 text-[#555555] transition">✨ AI tính size</button>
@@ -915,17 +930,17 @@ const App = {
               <span id="qv-qty" class="min-w-10 text-center text-sm font-semibold text-[#111111] select-none">1</span>
               <button data-action="qv-qty" data-delta="1" class="h-12 w-11 flex items-center justify-center font-medium text-lg text-[#555555] hover:bg-[#FAF8F5] transition select-none" aria-label="Tăng">+</button>
             </div>
-            <button id="qv-btn-add" data-action="qv-add" ${out ? 'disabled' : ''} class="h-12 flex-1 flex items-center justify-center gap-2 px-5 !text-sm font-bold uppercase tracking-wider bg-[#111111] text-white rounded-[2px] hover:bg-black active:scale-[0.99] transition shadow-xs">Thêm vào giỏ</button>
-            <button id="qv-btn-buy" data-action="qv-buy" ${out ? 'disabled' : ''} class="h-12 flex-1 flex items-center justify-center px-4 !text-sm font-bold uppercase tracking-wider border border-[#111111] text-[#111111] bg-white hover:bg-[#111111] hover:text-white rounded-[2px] transition">Mua ngay</button>
+            <button id="qv-btn-add" data-action="qv-add" ${out ? 'disabled' : ''} class="h-12 flex-1 flex items-center justify-center gap-2 px-4 !text-sm font-bold uppercase tracking-wider border border-[#111111] text-[#111111] bg-white hover:bg-[#FAF8F5] rounded-[2px] transition">🛒 Thêm vào giỏ</button>
+            <button id="qv-btn-buy" data-action="qv-buy" ${out ? 'disabled' : ''} class="h-12 flex-1 flex items-center justify-center gap-2 px-4 !text-sm font-bold uppercase tracking-wider bg-[#111111] text-white hover:bg-neutral-800 rounded-[2px] transition shadow-md">⚡ Mua ngay</button>
           </div>
-          <button data-action="open-outfit" data-product-id="${p.id}" class="h-11 w-full flex items-center justify-center px-4 !text-xs sm:!text-sm font-semibold tracking-wider border border-[#D5D2CC] text-[#111111] bg-white hover:border-[#111111] rounded-[2px] transition">✨ AI phối trọn bộ cùng món này (giảm ${CFG.combo}%)</button>
+          <button data-action="open-outfit" data-product-id="${p.id}" class="h-11 w-full flex items-center justify-center px-4 !text-sm sm:!text-sm font-semibold tracking-wider border border-[#D5D2CC] text-[#111111] bg-white hover:border-[#111111] rounded-[2px] transition">✨ AI phối trọn bộ cùng món này (giảm ${CFG.combo}%)</button>
         </div>
       </div>
     </div>
     
     <!-- Khu vực Đánh giá & Bằng chứng Xã hội -->
     <div class="border-t border-[#E5E2DC] bg-[#FAF8F5] p-5 sm:p-6" id="qv-reviews-container">
-      <div class="py-6 text-center text-xs text-[#777777]">Đang nạp đánh giá từ người mua...</div>
+      <div class="py-6 text-center text-sm text-[#777777]">Đang nạp đánh giá từ người mua...</div>
     </div>`;
 
     this.qvRenderSizesForColor(defaultColor);
@@ -1056,10 +1071,20 @@ const App = {
   qvAdd(buyNow) {
     const { product: p, size, color, qty } = this.state.qv;
     if (!p) return;
-    if (!size) { U.$('#qv-size-hint').classList.remove('hidden'); return; }
-    if (!this.addToCart(p.id, size, color, qty, null, { open: !buyNow })) return;
-    Modal.close('quickview-modal');
-    if (buyNow) this.openCheckout();
+    if (!size) {
+      const hint = U.$('#qv-size-hint');
+      if (hint) hint.classList.remove('hidden');
+      U.toast('Vui lòng chọn kích cỡ (size) trước khi mua', 'error');
+      return;
+    }
+    const added = this.addToCart(p.id, size, color, qty, null, { open: !buyNow, silent: buyNow });
+    if (!added) return;
+    if (Modal.isOpen('quickview-modal')) {
+      Modal.close('quickview-modal');
+    }
+    if (buyNow) {
+      this.openCheckout();
+    }
   },
 
   /* ---------- Đánh giá & Bằng chứng Xã hội (Phase 2) ---------- */
@@ -1080,12 +1105,12 @@ const App = {
         <div class="space-y-6">
           <div class="flex items-center justify-between border-b border-[#E5E2DC] pb-4">
             <div>
-              <h3 class="font-serif text-2xl font-normal text-[#111111] tracking-tight">
+              <h3 class="font-sans text-2xl font-normal text-[#111111] tracking-tight">
                 Đánh giá từ khách hàng
               </h3>
-              <p class="mt-0.5 text-xs text-[#777777]">Người thật • Trải nghiệm thật • Thông số chọn size</p>
+              <p class="mt-0.5 text-sm text-[#777777]">Người thật • Trải nghiệm thật • Thông số chọn size</p>
             </div>
-            <button type="button" onclick="App.toggleReviewForm()" class="btn btn-outline text-xs !py-2 px-4 uppercase tracking-wider font-semibold">
+            <button type="button" onclick="App.toggleReviewForm()" class="btn btn-outline text-sm !py-2 px-4 uppercase tracking-wider font-semibold">
               Viết đánh giá
             </button>
           </div>
@@ -1093,11 +1118,11 @@ const App = {
           <!-- Tóm tắt số sao & Phân bổ -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 rounded-[2px] border border-[#E5E2DC] bg-white p-6">
             <div class="flex flex-col items-center justify-center border-b sm:border-b-0 sm:border-r border-[#E5E2DC] pb-4 sm:pb-0">
-              <span class="font-serif text-4xl font-normal text-[#111111]">${summary.average_rating || 5.0}</span>
+              <span class="font-sans text-4xl font-normal text-[#111111]">${summary.average_rating || 5.0}</span>
               <div class="star-rating text-sm my-1.5 text-[#111111]">
                 ${'★'.repeat(Math.round(summary.average_rating || 5))}${'☆'.repeat(5 - Math.round(summary.average_rating || 5))}
               </div>
-              <span class="text-xs text-[#777777]">${totalRev} lượt đánh giá</span>
+              <span class="text-sm text-[#777777]">${totalRev} lượt đánh giá</span>
             </div>
 
             <div class="space-y-2 col-span-2">
@@ -1105,31 +1130,31 @@ const App = {
                 const count = breakdown[star] || 0;
                 const pct = totalRev > 0 ? Math.round((count / totalRev) * 100) : 0;
                 return `
-                  <div class="flex items-center gap-3 text-xs">
+                  <div class="flex items-center gap-3 text-sm">
                     <span class="w-12 text-[#666666] font-medium">${star} sao</span>
                     <div class="flex-1 h-1.5 rounded-full bg-[#E5E2DC] overflow-hidden">
                       <div class="h-full bg-[#111111]" style="width: ${pct}%"></div>
                     </div>
-                    <span class="w-8 text-right text-[11px] text-[#888888] font-mono">${count}</span>
+                    <span class="w-8 text-right text-sm text-[#888888] font-mono">${count}</span>
                   </div>
                 `;
               }).join('')}
-              <div class="pt-2 text-xs text-[#555555] flex items-center gap-1.5">
+              <div class="pt-2 text-sm text-[#555555] flex items-center gap-1.5">
                 <span>✓</span> ${summary.fit_feedback_summary || '96% khách hàng đánh giá đúng kích cỡ'}
               </div>
             </div>
           </div>
 
           <!-- Bộ lọc số sao -->
-          <div class="flex flex-wrap items-center gap-2 text-xs">
+          <div class="flex flex-wrap items-center gap-2 text-sm">
             <span class="text-[#777777]">Lọc theo:</span>
             <button type="button" onclick="App.loadProductReviews('${productId}', null)"
-              class="px-3 py-1.5 rounded-[2px] text-xs font-medium border transition ${!ratingFilter ? 'bg-[#111111] text-white border-[#111111]' : 'bg-white border-[#E5E2DC] text-[#111111] hover:border-[#111111]'}">
+              class="px-3 py-1.5 rounded-[2px] text-sm font-medium border transition ${!ratingFilter ? 'bg-[#111111] text-white border-[#111111]' : 'bg-white border-[#E5E2DC] text-[#111111] hover:border-[#111111]'}">
               Tất cả (${totalRev})
             </button>
             ${[5, 4, 3].map(st => `
               <button type="button" onclick="App.loadProductReviews('${productId}', ${st})"
-                class="px-3 py-1.5 rounded-[2px] text-xs font-medium border transition ${ratingFilter === st ? 'bg-[#111111] text-white border-[#111111]' : 'bg-white border-[#E5E2DC] text-[#111111] hover:border-[#111111]'}">
+                class="px-3 py-1.5 rounded-[2px] text-sm font-medium border transition ${ratingFilter === st ? 'bg-[#111111] text-white border-[#111111]' : 'bg-white border-[#E5E2DC] text-[#111111] hover:border-[#111111]'}">
                 ${st} sao (${breakdown[st] || 0})
               </button>
             `).join('')}
@@ -1137,20 +1162,20 @@ const App = {
 
           <!-- Form viết đánh giá mới (Mặc định ẩn) -->
           <div id="qv-review-form-box" class="hidden rounded-[2px] border border-[#E5E2DC] bg-[#FAF8F5] p-6 space-y-4">
-            <h4 class="font-serif text-base font-medium text-[#111111]">Đánh giá sản phẩm</h4>
+            <h4 class="font-sans text-base font-medium text-[#111111]">Đánh giá sản phẩm</h4>
             ${!isLogged ? `
               <div class="rounded-[2px] border border-[#E5E2DC] bg-white p-6 text-center space-y-3">
-                <div class="font-serif text-base font-medium text-[#111111]">
+                <div class="font-sans text-base font-medium text-[#111111]">
                   Vui lòng đăng nhập để đánh giá
                 </div>
-                <p class="text-xs text-[#666666] max-w-md mx-auto">Chỉ những khách hàng đã mua sản phẩm này tại AURA STUDIO mới có thể gửi đánh giá và nhận xét.</p>
+                <p class="text-sm text-[#666666] max-w-md mx-auto">Chỉ những khách hàng đã mua sản phẩm này tại AURA STUDIO mới có thể gửi đánh giá và nhận xét.</p>
                 <div class="pt-2 flex justify-center gap-3">
-                  <a href="/login?redirect=${encodeURIComponent(window.location.pathname)}" class="btn btn-primary text-xs !py-2 px-5 font-semibold uppercase tracking-wider">Đăng nhập ngay</a>
-                  <button type="button" onclick="App.toggleReviewForm()" class="btn btn-outline text-xs !py-2 px-4">Đóng</button>
+                  <a href="/login?redirect=${encodeURIComponent(window.location.pathname)}" class="btn btn-primary text-sm !py-2 px-5 font-semibold uppercase tracking-wider">Đăng nhập ngay</a>
+                  <button type="button" onclick="App.toggleReviewForm()" class="btn btn-outline text-sm !py-2 px-4">Đóng</button>
                 </div>
               </div>
             ` : `
-              <form onsubmit="event.preventDefault(); App.submitProductReview('${productId}');" class="space-y-4 text-xs">
+              <form onsubmit="event.preventDefault(); App.submitProductReview('${productId}');" class="space-y-4 text-sm">
                 <div>
                   <label class="block font-medium text-[#111111] mb-1">Mức độ hài lòng của bạn *</label>
                   <div class="star-rating star-rating-interactive text-xl text-[#111111]" id="review-stars-input">
@@ -1166,11 +1191,11 @@ const App = {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label class="block font-medium text-[#111111] mb-1">Họ tên của bạn *</label>
-                    <input type="text" id="rf-name" required value="${U.esc((this.state.user && (this.state.user.full_name || this.state.user.username)) || '')}" placeholder="VD: Nguyễn Thảo Ly" class="field !py-2.5 text-xs" />
+                    <input type="text" id="rf-name" required value="${U.esc((this.state.user && (this.state.user.full_name || this.state.user.username)) || '')}" placeholder="VD: Nguyễn Thảo Ly" class="field !py-2.5 text-sm" />
                   </div>
                   <div>
                     <label class="block font-medium text-[#111111] mb-1">Cảm nhận độ vừa vặn *</label>
-                    <select id="rf-fit" class="field !py-2.5 text-xs">
+                    <select id="rf-fit" class="field !py-2.5 text-sm">
                       <option value="Vừa vặn">Vừa vặn hoàn hảo</option>
                       <option value="Hơi rộng">Hơi rộng một chút</option>
                       <option value="Hơi chật">Hơi chật một chút</option>
@@ -1183,30 +1208,30 @@ const App = {
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div>
                     <label class="block font-medium text-[#111111] mb-1">Chiều cao (cm)</label>
-                    <input type="number" id="rf-height" min="100" max="220" placeholder="162" class="field !py-2.5 text-xs" />
+                    <input type="number" id="rf-height" min="100" max="220" placeholder="162" class="field !py-2.5 text-sm" />
                   </div>
                   <div>
                     <label class="block font-medium text-[#111111] mb-1">Cân nặng (kg)</label>
-                    <input type="number" id="rf-weight" min="30" max="180" placeholder="48" class="field !py-2.5 text-xs" />
+                    <input type="number" id="rf-weight" min="30" max="180" placeholder="48" class="field !py-2.5 text-sm" />
                   </div>
                   <div>
                     <label class="block font-medium text-[#111111] mb-1">Size đã mua</label>
-                    <input type="text" id="rf-size" placeholder="S" class="field !py-2.5 text-xs uppercase" />
+                    <input type="text" id="rf-size" placeholder="S" class="field !py-2.5 text-sm uppercase" />
                   </div>
                   <div>
                     <label class="block font-medium text-[#111111] mb-1">Màu đã mua</label>
-                    <input type="text" id="rf-color" placeholder="Be / Kem" class="field !py-2.5 text-xs" />
+                    <input type="text" id="rf-color" placeholder="Be / Kem" class="field !py-2.5 text-sm" />
                   </div>
                 </div>
 
                 <div>
                   <label class="block font-medium text-[#111111] mb-1">Nhận xét chi tiết *</label>
-                  <textarea id="rf-comment" rows="3" required placeholder="Chia sẻ trải nghiệm thực tế về chất vải, đường may, form dáng để giúp cộng đồng chọn size..." class="field !py-2.5 text-xs"></textarea>
+                  <textarea id="rf-comment" rows="3" required placeholder="Chia sẻ trải nghiệm thực tế về chất vải, đường may, form dáng để giúp cộng đồng chọn size..." class="field !py-2.5 text-sm"></textarea>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-2">
-                  <button type="button" onclick="App.toggleReviewForm()" class="btn btn-outline text-xs !py-2 px-4">Hủy</button>
-                  <button type="submit" id="rf-submit-btn" class="btn btn-primary text-xs !py-2 px-6 font-semibold uppercase tracking-wider">Gửi đánh giá</button>
+                  <button type="button" onclick="App.toggleReviewForm()" class="btn btn-outline text-sm !py-2 px-4">Hủy</button>
+                  <button type="submit" id="rf-submit-btn" class="btn btn-primary text-sm !py-2 px-6 font-semibold uppercase tracking-wider">Gửi đánh giá</button>
                 </div>
               </form>
             `}
@@ -1215,12 +1240,12 @@ const App = {
           <!-- Danh sách bài đánh giá -->
           <div class="space-y-4" id="qv-reviews-list">
             ${reviews.length === 0 ? `
-              <div class="text-center py-10 text-xs text-[#888888] rounded-[2px] border border-[#E5E2DC] bg-white">Chưa có đánh giá nào cho phân loại này. Hãy là người đầu tiên nhận xét!</div>
+              <div class="text-center py-10 text-sm text-[#888888] rounded-[2px] border border-[#E5E2DC] bg-white">Chưa có đánh giá nào cho phân loại này. Hãy là người đầu tiên nhận xét!</div>
             ` : reviews.map(r => `
-              <div class="rounded-[2px] border border-[#E5E2DC] bg-white p-5 space-y-3 text-xs">
+              <div class="rounded-[2px] border border-[#E5E2DC] bg-white p-5 space-y-3 text-sm">
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-3">
-                    <div class="h-8 w-8 rounded-full bg-[#FAF8F5] border border-[#E5E2DC] flex items-center justify-center font-serif font-bold text-[#111111] text-xs">
+                    <div class="h-8 w-8 rounded-full bg-[#FAF8F5] border border-[#E5E2DC] flex items-center justify-center font-sans font-bold text-[#111111] text-sm">
                       ${U.esc(r.user_name ? r.user_name[0].toUpperCase() : 'K')}
                     </div>
                     <div>
@@ -1228,32 +1253,32 @@ const App = {
                         <strong class="text-[#111111] font-medium">${U.esc(r.user_name)}</strong>
                         ${(r.is_verified_buyer === true || r.is_verified_buyer === 1) ? '<span class="verified-buyer-badge">✓ Đã mua hàng</span>' : ''}
                       </div>
-                      <div class="star-rating text-xs text-[#111111] mt-0.5">
+                      <div class="star-rating text-sm text-[#111111] mt-0.5">
                         ${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}
                       </div>
                     </div>
                   </div>
-                  <span class="text-[11px] text-[#888888] font-mono">${U.esc(r.created_at || '')}</span>
+                  <span class="text-sm text-[#888888] font-mono">${U.esc(r.created_at || '')}</span>
                 </div>
 
                 <!-- Tag số đo người mua -->
-                <div class="flex flex-wrap items-center gap-2 text-xs text-[#555555] bg-[#FAF8F5] rounded-[2px] p-2.5 border border-[#E5E2DC]">
+                <div class="flex flex-wrap items-center gap-2 text-sm text-[#555555] bg-[#FAF8F5] rounded-[2px] p-2.5 border border-[#E5E2DC]">
                   ${r.height_cm ? `<span>Cao <strong>${r.height_cm}cm</strong></span>` : ''}
                   ${r.height_cm && r.weight_kg ? `<span>•</span>` : ''}
                   ${r.weight_kg ? `<span>Nặng <strong>${r.weight_kg}kg</strong></span>` : ''}
                   ${r.purchased_size ? `<span>• Size: <strong class="text-[#111111] font-semibold">${U.esc(r.purchased_size)}</strong></span>` : ''}
                   ${r.purchased_color ? `<span>(${U.esc(r.purchased_color)})</span>` : ''}
-                  ${r.fit_feedback ? `<span class="ml-auto text-[11px] font-medium uppercase tracking-wider text-[#111111]">${U.esc(r.fit_feedback)}</span>` : ''}
+                  ${r.fit_feedback ? `<span class="ml-auto text-sm font-medium uppercase tracking-wider text-[#111111]">${U.esc(r.fit_feedback)}</span>` : ''}
                 </div>
 
-                <p class="text-[#333333] leading-relaxed text-xs sm:text-sm pt-1">${U.esc(r.comment)}</p>
+                <p class="text-[#333333] leading-relaxed text-sm sm:text-sm pt-1">${U.esc(r.comment)}</p>
               </div>
             `).join('')}
           </div>
         </div>
       `;
     } catch (e) {
-      container.innerHTML = `<div class="py-6 text-center text-xs text-red-500">Không thể tải đánh giá: ${U.esc(e.message)}</div>`;
+      container.innerHTML = `<div class="py-6 text-center text-sm text-red-500">Không thể tải đánh giá: ${U.esc(e.message)}</div>`;
     }
   },
 
@@ -1432,7 +1457,7 @@ const App = {
 
     if (!cart.length) {
       box.innerHTML = `<div class="py-16 text-center"><div class="text-5xl">🛍️</div>
-        <p class="mt-3 text-xs font-semibold text-zinc-600">Giỏ hàng của bạn đang trống</p>
+        <p class="mt-3 text-sm font-semibold text-zinc-600">Giỏ hàng của bạn đang trống</p>
         <button data-action="close-modal" data-target="cart-drawer" class="btn btn-primary mt-4">Tiếp tục mua sắm</button></div>`;
       U.$('#cart-summary').innerHTML = '';
       U.$('#cart-freeship').classList.add('hidden');
@@ -1449,16 +1474,16 @@ const App = {
       }
       if (!p) {
         return `
-        <div class="flex gap-3 border-b border-[#E5E2DC] py-3 text-xs">
-          <div class="h-20 w-16 bg-[#F2EFE9] rounded-[2px] flex items-center justify-center text-[10px] text-[#888888]">Sản phẩm</div>
+        <div class="flex gap-3 border-b border-[#E5E2DC] py-3 text-sm">
+          <div class="h-20 w-16 bg-[#F2EFE9] rounded-[2px] flex items-center justify-center text-sm text-[#888888]">Sản phẩm</div>
           <div class="flex-1 flex flex-col justify-between">
             <div class="flex justify-between items-start">
               <span class="font-medium text-[#111111]">Mã: ${U.esc(l.product_id)}</span>
               <button data-action="cart-remove" data-idx="${i}" class="text-[#888888] hover:text-black">✕</button>
             </div>
-            <div class="text-[11px] text-[#666666]">Size: ${U.esc(l.size)} • Màu: ${U.esc(l.color)}</div>
+            <div class="text-sm text-[#666666]">Size: ${U.esc(l.size)} • Màu: ${U.esc(l.color)}</div>
             <div class="flex justify-between items-center mt-2">
-              <span class="text-xs font-semibold text-[#111111]">SL: ${l.quantity}</span>
+              <span class="text-sm font-semibold text-[#111111]">SL: ${l.quantity}</span>
             </div>
           </div>
         </div>`;
@@ -1466,26 +1491,26 @@ const App = {
       const ql = q && q.lines[i];
       const opt = (arr, cur) => arr.map(v => `<option value="${U.esc(v)}" ${v === cur ? 'selected' : ''}>${U.esc(v)}</option>`).join('');
       return `
-      <div class="flex gap-3 border-b border-[#E5E2DC] py-3 text-xs">
+      <div class="flex gap-3 border-b border-[#E5E2DC] py-3 text-sm">
         ${U.img(p.images[0], p.name, 'h-20 w-16 flex-shrink-0 rounded-[2px] bg-[#F2EFE9] object-cover')}
         <div class="flex min-w-0 flex-1 flex-col justify-between">
           <div>
             <div class="flex items-start justify-between gap-2">
-              <h3 class="line-clamp-2 text-xs font-medium text-[#111111]">${U.esc(p.name)}</h3>
+              <h3 class="line-clamp-2 text-sm font-medium text-[#111111]">${U.esc(p.name)}</h3>
               <button data-action="cart-remove" data-idx="${i}" class="text-[#888888] hover:text-black" aria-label="Xóa">✕</button>
             </div>
             <div class="mt-1 flex flex-wrap gap-1.5">
-              <select data-cart-variant="size" data-idx="${i}" aria-label="Size" class="rounded-[2px] border border-[#E5E2DC] bg-white px-2 py-0.5 text-[11px]">${opt(p.sizes, l.size)}</select>
-              <select data-cart-variant="color" data-idx="${i}" aria-label="Màu" class="max-w-[120px] rounded-[2px] border border-[#E5E2DC] bg-white px-2 py-0.5 text-[11px]">${opt(p.colors.map(c => c.name), l.color)}</select>
-              ${ql && ql.combo ? `<span class="rounded-[2px] border border-[#111111] px-1.5 py-0.5 text-[10px] font-semibold text-[#111111]">Combo -${CFG.combo}%</span>` : ''}
+              <select data-cart-variant="size" data-idx="${i}" aria-label="Size" class="rounded-[2px] border border-[#E5E2DC] bg-white px-2 py-0.5 text-sm">${opt(p.sizes, l.size)}</select>
+              <select data-cart-variant="color" data-idx="${i}" aria-label="Màu" class="max-w-[120px] rounded-[2px] border border-[#E5E2DC] bg-white px-2 py-0.5 text-sm">${opt(p.colors.map(c => c.name), l.color)}</select>
+              ${ql && ql.combo ? `<span class="rounded-[2px] border border-[#111111] px-1.5 py-0.5 text-sm font-semibold text-[#111111]">Combo -${CFG.combo}%</span>` : ''}
             </div>
           </div>
           <div class="mt-2 flex items-center justify-between">
-            <span class="text-xs font-semibold text-[#111111]">${U.vnd(p.final_price)}</span>
+            <span class="text-sm font-semibold text-[#111111]">${U.vnd(p.final_price)}</span>
             <div class="flex items-center overflow-hidden rounded-[2px] border border-[#E5E2DC] bg-white">
-              <button data-action="cart-qty" data-idx="${i}" data-delta="-1" class="px-2 py-0.5 text-xs text-[#555555] hover:bg-[#FAF8F5]" aria-label="Giảm">−</button>
-              <span class="min-w-6 text-center text-xs font-semibold text-[#111111]">${l.quantity}</span>
-              <button data-action="cart-qty" data-idx="${i}" data-delta="1" class="px-2 py-0.5 text-xs text-[#555555] hover:bg-[#FAF8F5]" aria-label="Tăng">+</button>
+              <button data-action="cart-qty" data-idx="${i}" data-delta="-1" class="px-2 py-0.5 text-sm text-[#555555] hover:bg-[#FAF8F5]" aria-label="Giảm">−</button>
+              <span class="min-w-6 text-center text-sm font-semibold text-[#111111]">${l.quantity}</span>
+              <button data-action="cart-qty" data-idx="${i}" data-delta="1" class="px-2 py-0.5 text-sm text-[#555555] hover:bg-[#FAF8F5]" aria-label="Tăng">+</button>
             </div>
           </div>
         </div>
@@ -1529,9 +1554,9 @@ const App = {
     if (q.points_discount) h += row(`Điểm thưởng AURA (${q.points_used} điểm)`, '−' + U.vnd(q.points_discount), 'font-semibold text-amber-700');
     const ship = q.shipping_fee - q.shipping_discount;
     h += row('Phí vận chuyển', ship ? U.vnd(ship) : 'Miễn phí', ship ? 'text-zinc-600' : 'font-semibold text-emerald-700');
-    h += row('Tổng cộng', U.vnd(q.total), 'border-t border-zinc-200 pt-2 text-sm font-extrabold text-brand-600');
+    h += row('Tổng cộng', U.vnd(q.total), 'border-t border-zinc-200 pt-2 text-sm font-bold text-brand-600');
     if (q.points_earned) {
-      h += `<div class="mt-2 text-[11px] font-semibold text-amber-800 bg-amber-50 rounded-lg p-2 flex items-center justify-between border border-amber-200/60">
+      h += `<div class="mt-2 text-sm font-semibold text-amber-800 bg-amber-50 rounded-lg p-2 flex items-center justify-between border border-amber-200/60">
         <span class="flex items-center gap-1"><span>💎</span> Tích lũy sau đơn này:</span>
         <span class="font-bold text-amber-900">+${q.points_earned} điểm (Hạng thẻ VIP)</span>
       </div>`;
@@ -1554,7 +1579,7 @@ const App = {
   async initLocations() {
     const provSelect = U.$('#co-province');
     const wardSelect = U.$('#co-ward');
-    const streetInput = U.$('#co-street');
+    const streetInput = U.$('#co-street') || U.$('#co-address');
     if (!provSelect || !wardSelect) return;
 
     await this.loadLocations();
@@ -1644,15 +1669,15 @@ const App = {
   syncAddress() {
     const provSelect = U.$('#co-province');
     const wardSelect = U.$('#co-ward');
-    const streetInput = U.$('#co-street');
-    const addrHidden = U.$('#co-address');
+    const streetInput = U.$('#co-street') || U.$('#co-address');
 
     const provName = provSelect?.selectedOptions[0]?.dataset?.name || '';
     const wardName = wardSelect?.selectedOptions[0]?.dataset?.name || '';
     const street = streetInput ? streetInput.value.trim() : '';
 
     const parts = [street, wardName, provName].filter(Boolean);
-    if (addrHidden) addrHidden.value = parts.join(', ');
+    const summaryEl = U.$('#co-address-summary');
+    if (summaryEl) summaryEl.textContent = parts.join(', ');
   },
 
   /* ---------- Thanh toán ---------- */
@@ -1660,11 +1685,15 @@ const App = {
     if (!this.state.cart.length) { U.toast('Giỏ hàng đang trống', 'error'); return; }
     if (this.state.quoteError) { U.toast(this.state.quoteError, 'error'); return; }
     Modal.close('cart-drawer');
-    const me = U.store.get('aura_customer', {});
-    U.$('#co-name').value ||= me.name || '';
-    U.$('#co-phone').value ||= me.phone || '';
-    if (U.$('#co-street') && !U.$('#co-street').value) {
-      U.$('#co-street').value = me.specific_address || '';
+    const me = U.store.get('aura_customer', {}) || {};
+    const u = this.state.user;
+    const nameEl = U.$('#co-name');
+    const phoneEl = U.$('#co-phone');
+    if (nameEl) nameEl.value = (u && (u.full_name || u.name || u.username)) || me.name || nameEl.value || '';
+    if (phoneEl) phoneEl.value = (u && u.phone) || me.phone || phoneEl.value || '';
+    const streetEl = U.$('#co-street') || U.$('#co-address');
+    if (streetEl && !streetEl.value) {
+      streetEl.value = me.specific_address || me.street || '';
     }
     U.$('#co-error').classList.add('hidden');
     U.$('#co-voucher').value = this.state.voucher || '';
@@ -1887,13 +1916,13 @@ const App = {
       <div id="vietqr-container" class="my-4 rounded-2xl border border-zinc-200 bg-white p-4 text-left shadow-sm">
         <div class="flex items-center justify-between border-b border-zinc-100 pb-3">
           <div class="flex items-center gap-2">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600 text-white font-extrabold text-xs">V</span>
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600 text-white font-bold text-sm">V</span>
             <div>
-              <h3 class="text-xs font-extrabold text-zinc-900 uppercase tracking-wide">Thanh toán VietQR chuẩn NAPAS 247</h3>
-              <p class="text-[10px] text-zinc-500">Mở app Ngân hàng hoặc Ví MoMo/ZaloPay quét mã</p>
+              <h3 class="text-sm font-bold text-zinc-900 uppercase tracking-wide">Thanh toán VietQR chuẩn NAPAS 247</h3>
+              <p class="text-sm text-zinc-500">Mở app Ngân hàng hoặc Ví MoMo/ZaloPay quét mã</p>
             </div>
           </div>
-          <span class="rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 border border-emerald-200">Tự động 24/7</span>
+          <span class="rounded bg-emerald-50 px-2 py-0.5 text-sm font-bold text-emerald-700 border border-emerald-200">Tự động 24/7</span>
         </div>
 
         <div class="mt-4 flex flex-col items-center sm:flex-row sm:items-start gap-4">
@@ -1901,10 +1930,10 @@ const App = {
             <div class="h-48 w-48 overflow-hidden rounded-xl border-2 border-brand-500 bg-white p-2 shadow-sm ${!isPaid ? 'vietqr-live-pulse' : ''}" id="vietqr-image-wrapper">
               <img src="${U.esc(qrUrl)}" alt="VietQR Payment Code" class="h-full w-full object-contain" />
             </div>
-            <span class="mt-1 text-[10px] font-mono text-zinc-400">MBBank • Quét mã tự nhận tiền</span>
+            <span class="mt-1 text-sm font-mono text-zinc-400">MBBank • Quét mã tự nhận tiền</span>
           </div>
 
-          <div class="flex-1 space-y-2 text-xs w-full">
+          <div class="flex-1 space-y-2 text-sm w-full">
             <div class="flex items-center justify-between py-1 border-b border-zinc-100">
               <span class="text-zinc-500">Ngân hàng</span>
               <span class="font-bold text-zinc-900">${U.esc(bank.bank_name)}</span>
@@ -1923,14 +1952,14 @@ const App = {
             <div class="flex items-center justify-between py-1 border-b border-zinc-100">
               <span class="text-zinc-500">Số tiền</span>
               <div class="flex items-center gap-1.5">
-                <span class="font-mono font-black text-rose-600 text-sm">${U.vnd(q.total)}</span>
+                <span class="font-mono font-bold text-rose-600 text-sm">${U.vnd(q.total)}</span>
                 <button type="button" data-action="copy-text" data-text="${q.total}" class="copy-badge-btn" title="Sao chép số tiền">Sao chép</button>
               </div>
             </div>
             <div class="flex items-center justify-between py-1">
               <span class="text-zinc-500">Nội dung CK</span>
               <div class="flex items-center gap-1.5">
-                <span class="font-mono font-extrabold text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded border border-brand-200">${U.esc(bank.content)}</span>
+                <span class="font-mono font-bold text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded border border-brand-200">${U.esc(bank.content)}</span>
                 <button type="button" data-action="copy-text" data-text="${U.esc(bank.content)}" class="copy-badge-btn" title="Sao chép nội dung">Sao chép</button>
               </div>
             </div>
@@ -1939,27 +1968,27 @@ const App = {
 
         <div id="payment-status-box" class="mt-4 rounded-xl border ${isPaid ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50/80 text-amber-800'} p-3 text-center">
           ${isPaid ? `
-            <div class="flex items-center justify-center gap-2 text-xs font-bold text-emerald-800">
-              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-xs">✓</span>
+            <div class="flex items-center justify-center gap-2 text-sm font-bold text-emerald-800">
+              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-sm">✓</span>
               <span>ĐÃ XÁC NHẬN THANH TOÁN THÀNH CÔNG!</span>
             </div>
-            <p class="mt-1 text-[11px] text-emerald-700">Hệ thống đã nhận được chuyển khoản. Đơn hàng đang được đóng gói gửi đi.</p>
+            <p class="mt-1 text-sm text-emerald-700">Hệ thống đã nhận được chuyển khoản. Đơn hàng đang được đóng gói gửi đi.</p>
           ` : `
-            <div class="flex items-center justify-center gap-2 text-xs font-bold text-amber-800">
+            <div class="flex items-center justify-center gap-2 text-sm font-bold text-amber-800">
               <span class="flex h-2.5 w-2.5 relative">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
               </span>
               <span id="payment-status-text">Đang chờ chuyển khoản từ ứng dụng ngân hàng...</span>
             </div>
-            <p class="mt-1 text-[11px] text-amber-700">Hệ thống tự động kiểm tra trạng thái mỗi 3 giây.</p>
+            <p class="mt-1 text-sm text-amber-700">Hệ thống tự động kiểm tra trạng thái mỗi 3 giây.</p>
             <div class="mt-2.5 pt-2 border-t border-amber-200/60 flex flex-wrap gap-2 justify-center">
               <button type="button" data-action="pay-vnpay" data-order-id="${U.esc(o.order_id)}"
-                      class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
+                      class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 px-3.5 py-1.5 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
                 <span>💳 Thanh toán qua VNPay</span>
               </button>
               <button type="button" data-action="simulate-payment" data-order-id="${U.esc(o.order_id)}"
-                      class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
+                      class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 px-3.5 py-1.5 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
                 <span>⚡ Giả lập Chuyển khoản thành công (Test Webhook)</span>
               </button>
             </div>
@@ -1971,34 +2000,34 @@ const App = {
       <div id="vnpay-container" class="my-4 rounded-2xl border border-blue-200 bg-blue-50/50 p-4 text-left shadow-sm">
         <div class="flex items-center justify-between border-b border-blue-100 pb-3">
           <div class="flex items-center gap-2">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-extrabold text-xs">VNP</span>
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-sm">VNP</span>
             <div>
-              <h3 class="text-xs font-extrabold text-blue-900 uppercase tracking-wide">Cổng thanh toán điện tử VNPay</h3>
-              <p class="text-[10px] text-zinc-500">ATM nội địa • QR Pay • Thẻ quốc tế Visa/Master</p>
+              <h3 class="text-sm font-bold text-blue-900 uppercase tracking-wide">Cổng thanh toán điện tử VNPay</h3>
+              <p class="text-sm text-zinc-500">ATM nội địa • QR Pay • Thẻ quốc tế Visa/Master</p>
             </div>
           </div>
-          <span class="rounded bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">VNPay Sandbox</span>
+          <span class="rounded bg-blue-100 px-2 py-0.5 text-sm font-bold text-blue-700">VNPay Sandbox</span>
         </div>
 
         <div id="payment-status-box" class="mt-4 rounded-xl border ${isPaid ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-blue-200 bg-white text-blue-900'} p-3.5 text-center">
           ${isPaid ? `
-            <div class="flex items-center justify-center gap-2 text-xs font-bold text-emerald-800">
-              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-xs">✓</span>
+            <div class="flex items-center justify-center gap-2 text-sm font-bold text-emerald-800">
+              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-sm">✓</span>
               <span>ĐÃ XÁC NHẬN THANH TOÁN VNPAY THÀNH CÔNG!</span>
             </div>
-            <p class="mt-1 text-[11px] text-emerald-700">Đơn hàng đã được thanh toán và đang được xử lý.</p>
+            <p class="mt-1 text-sm text-emerald-700">Đơn hàng đã được thanh toán và đang được xử lý.</p>
           ` : `
-            <div class="flex items-center justify-center gap-2 text-xs font-bold text-blue-800">
+            <div class="flex items-center justify-center gap-2 text-sm font-bold text-blue-800">
               <span class="flex h-2.5 w-2.5 relative">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
               </span>
               <span id="payment-status-text">Đang chờ bạn hoàn tất thanh toán trên VNPay...</span>
             </div>
-            <p class="mt-1 text-[11px] text-zinc-500">Nhấn nút bên dưới để chuyển sang cổng VNPay nếu trình duyệt chưa tự chuyển.</p>
+            <p class="mt-1 text-sm text-zinc-500">Nhấn nút bên dưới để chuyển sang cổng VNPay nếu trình duyệt chưa tự chuyển.</p>
             <div class="mt-3 flex flex-wrap gap-2 justify-center">
               <button type="button" data-action="pay-vnpay" data-order-id="${U.esc(o.order_id)}"
-                      class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 px-4 py-2 text-xs font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
+                      class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
                 <span>💳 Thanh toán qua VNPay ngay</span>
               </button>
             </div>
@@ -2015,11 +2044,11 @@ const App = {
       <h2 class="text-base sm:text-lg font-bold text-zinc-900" id="success-title">
         ${isPaid ? 'Đặt hàng & Thanh toán thành công!' : (isVNPay ? 'Đã ghi nhận đơn • Vui lòng thanh toán VNPay' : (isQr ? 'Đã ghi nhận đơn • Vui lòng chuyển khoản' : 'Đặt hàng thành công!'))}
       </h2>
-      <p class="text-xs text-zinc-500 mt-0.5">Mã đơn hàng: <b class="font-mono text-brand-600">${U.esc(o.order_id)}</b></p>
+      <p class="text-sm text-zinc-500 mt-0.5">Mã đơn hàng: <b class="font-mono text-brand-600">${U.esc(o.order_id)}</b></p>
       
       ${paymentHtml}
 
-      <div class="my-3 space-y-1.5 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3.5 text-left text-xs">
+      <div class="my-3 space-y-1.5 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3.5 text-left text-sm">
         <div class="flex justify-between gap-3"><span class="text-zinc-500">Người nhận</span><b class="text-right text-zinc-800">${U.esc(o.customer_name)} (${U.esc(o.customer_phone)})</b></div>
         <div class="flex justify-between gap-3"><span class="text-zinc-500">Địa chỉ giao</span><span class="text-right font-medium text-zinc-800">${U.esc(o.customer_address)}</span></div>
         <div class="flex justify-between gap-3"><span class="text-zinc-500">Hình thức</span><b>${isVNPay ? 'VNPay Sandbox' : (isQr ? 'Chuyển khoản VietQR' : 'Thanh toán khi nhận hàng (COD)')}</b></div>
@@ -2027,8 +2056,8 @@ const App = {
       </div>
 
       <div class="mt-4 flex gap-2">
-        <a href="/profile" class="btn btn-soft flex-1 !py-2.5 text-xs text-center">Xem đơn trong Tài khoản</a>
-        <button data-action="close-modal" data-target="success-modal" class="btn btn-primary flex-1 !py-2.5 uppercase tracking-wide text-xs">Tiếp tục mua sắm</button>
+        <a href="/profile" class="btn btn-soft flex-1 !py-2.5 text-sm text-center">Xem đơn trong Tài khoản</a>
+        <button data-action="close-modal" data-target="success-modal" class="btn btn-primary flex-1 !py-2.5 uppercase tracking-wide text-sm">Tiếp tục mua sắm</button>
       </div>
     </div>`;
 
@@ -2058,11 +2087,11 @@ const App = {
     if (box) {
       box.className = 'mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3.5 text-center';
       box.innerHTML = `
-        <div class="flex items-center justify-center gap-2 text-xs font-bold text-emerald-800">
-          <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-xs">✓</span>
+        <div class="flex items-center justify-center gap-2 text-sm font-bold text-emerald-800">
+          <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-sm">✓</span>
           <span>ĐÃ XÁC NHẬN THANH TOÁN THÀNH CÔNG (PAID)!</span>
         </div>
-        <p class="mt-1 text-[11px] text-emerald-700">Hệ thống đã nhận được tiền từ giao dịch VietQR. Đơn hàng đang được đóng gói gửi đi!</p>
+        <p class="mt-1 text-sm text-emerald-700">Hệ thống đã nhận được tiền từ giao dịch VietQR. Đơn hàng đang được đóng gói gửi đi!</p>
       `;
     }
 
@@ -2088,10 +2117,10 @@ const Live = {
   add(user, text, host = false) {
     const box = U.$('#live-comments');
     const div = document.createElement('div');
-    div.className = 'max-w-[88%] rounded-xl p-2 text-xs ' + (host ? 'border border-violet-400/40 bg-gradient-to-r from-violet-900/80 to-indigo-900/80 shadow-lg' : 'bg-black/60 backdrop-blur');
+    div.className = 'max-w-[88%] rounded-xl p-2 text-sm ' + (host ? 'border border-violet-400/40 bg-gradient-to-r from-violet-900/80 to-indigo-900/80 shadow-lg' : 'bg-black/60 backdrop-blur');
     const head = document.createElement('div');
     head.className = 'flex items-center gap-1.5 font-bold ' + (host ? 'text-amber-300' : 'text-zinc-300');
-    if (host) { const b = document.createElement('span'); b.className = 'rounded bg-violet-600 px-1.5 text-[9px] uppercase text-white'; b.textContent = 'Host AI'; head.appendChild(b); }
+    if (host) { const b = document.createElement('span'); b.className = 'rounded bg-violet-600 px-1.5 text-sm uppercase text-white'; b.textContent = 'Host AI'; head.appendChild(b); }
     const name = document.createElement('span'); name.textContent = user + ':'; head.appendChild(name);
     const p = document.createElement('p'); p.className = 'mt-0.5 leading-relaxed'; p.textContent = text; // textContent: chống XSS
     div.append(head, p);
@@ -2119,9 +2148,9 @@ const Live = {
       <div class="flex items-center gap-3 rounded-2xl border-2 border-brand-600 bg-white p-2.5 text-zinc-900 shadow-2xl">
         ${U.img(p.images[0], p.name, 'h-14 w-12 flex-shrink-0 rounded-lg object-cover')}
         <div class="min-w-0 flex-1">
-          <span class="flex items-center gap-1 text-[10px] font-extrabold uppercase text-brand-600"><span class="h-2 w-2 animate-ping rounded-full bg-red-600"></span>Đang ghim trên live</span>
-          <h3 class="line-clamp-1 text-xs font-bold">${U.esc(p.name)}</h3>
-          <span class="text-xs font-black text-brand-600">${U.vnd(p.final_price)}</span>
+          <span class="flex items-center gap-1 text-sm font-bold uppercase text-brand-600"><span class="h-2 w-2 animate-ping rounded-full bg-red-600"></span>Đang ghim trên live</span>
+          <h3 class="line-clamp-1 text-sm font-bold">${U.esc(p.name)}</h3>
+          <span class="text-sm font-bold text-brand-600">${U.vnd(p.final_price)}</span>
         </div>
         <button data-action="quickview" data-id="${p.id}" data-from="live-modal" class="btn btn-primary btn-sm">Chốt đơn</button>
       </div>`;
@@ -2154,7 +2183,7 @@ const SizeChartUI = {
     const guideContainer = U.$('#sc-guide-cards');
     const careContainer = U.$('#sc-tab-care');
 
-    if (tableContainer) tableContainer.innerHTML = '<div class="py-8 text-center text-xs text-zinc-400">Đang tải bảng số đo thực tế...</div>';
+    if (tableContainer) tableContainer.innerHTML = '<div class="py-8 text-center text-sm text-zinc-400">Đang tải bảng số đo thực tế...</div>';
 
     try {
       const data = await U.api(`/api/products/${encodeURIComponent(productId)}/size-chart`);
@@ -2190,12 +2219,12 @@ const SizeChartUI = {
         const guides = data.measuring_guide || [];
         guideContainer.innerHTML = guides.map(g => `
           <div class="rounded-xl border border-zinc-200 bg-white p-3 space-y-1.5 shadow-2xs">
-            <h4 class="text-xs font-bold text-zinc-900 flex items-center gap-1.5">
-              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-brand-100 text-brand-700 text-[10px]">📏</span>
+            <h4 class="text-sm font-bold text-zinc-900 flex items-center gap-1.5">
+              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-brand-100 text-brand-700 text-sm">📏</span>
               ${U.esc(g.part)}
             </h4>
-            <p class="text-[11px] text-zinc-600 leading-relaxed">${U.esc(g.how_to)}</p>
-            <p class="text-[10px] text-amber-700 font-medium bg-amber-50 rounded px-2 py-1">💡 ${U.esc(g.tip)}</p>
+            <p class="text-sm text-zinc-600 leading-relaxed">${U.esc(g.how_to)}</p>
+            <p class="text-sm text-amber-700 font-medium bg-amber-50 rounded px-2 py-1">💡 ${U.esc(g.tip)}</p>
           </div>
         `).join('');
       }
@@ -2204,14 +2233,14 @@ const SizeChartUI = {
       if (careContainer) {
         const cares = data.care_instructions || [];
         careContainer.innerHTML = cares.map(c => `
-          <div class="flex items-start gap-2 text-xs text-zinc-700 bg-zinc-50 rounded-lg p-2.5">
+          <div class="flex items-start gap-2 text-sm text-zinc-700 bg-zinc-50 rounded-lg p-2.5">
             <span class="text-brand-600 font-bold">✓</span>
             <span>${U.esc(c)}</span>
           </div>
         `).join('');
       }
     } catch (e) {
-      if (tableContainer) tableContainer.innerHTML = `<div class="py-8 text-center text-xs text-red-500">Lỗi khi tải bảng size: ${U.esc(e.message)}</div>`;
+      if (tableContainer) tableContainer.innerHTML = `<div class="py-8 text-center text-sm text-red-500">Lỗi khi tải bảng size: ${U.esc(e.message)}</div>`;
     }
   },
 
@@ -2283,11 +2312,11 @@ const TrackingUI = {
       if (badge) {
         badge.textContent = data.shipping_status_label;
         if (data.shipping_status === 'delivered') {
-          badge.className = 'rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
+          badge.className = 'rounded-full px-2.5 py-0.5 text-sm font-bold bg-emerald-100 text-emerald-800 border border-emerald-300';
         } else if (data.shipping_status === 'ready_to_pick' || data.shipping_status === 'pending_confirm') {
-          badge.className = 'rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300';
+          badge.className = 'rounded-full px-2.5 py-0.5 text-sm font-bold bg-amber-100 text-amber-800 border border-amber-300';
         } else {
-          badge.className = 'rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300';
+          badge.className = 'rounded-full px-2.5 py-0.5 text-sm font-bold bg-blue-100 text-blue-800 border border-blue-300';
         }
       }
 
@@ -2303,11 +2332,11 @@ const TrackingUI = {
               <div class="timeline-node font-bold">${nodeIcon}</div>
               <div class="space-y-0.5">
                 <div class="flex items-baseline justify-between gap-2">
-                  <h4 class="text-xs font-bold ${isDone ? 'text-zinc-900' : isCurr ? 'text-brand-600' : 'text-zinc-400'}">${U.esc(st.title)}</h4>
-                  <span class="text-[10px] font-mono text-zinc-400 whitespace-nowrap">${U.esc(st.time)}</span>
+                  <h4 class="text-sm font-bold ${isDone ? 'text-zinc-900' : isCurr ? 'text-brand-600' : 'text-zinc-400'}">${U.esc(st.title)}</h4>
+                  <span class="text-sm font-mono text-zinc-400 whitespace-nowrap">${U.esc(st.time)}</span>
                 </div>
-                <p class="text-[11px] ${isDone || isCurr ? 'text-zinc-600' : 'text-zinc-400'}">${U.esc(st.description)}</p>
-                <p class="text-[10px] text-zinc-400 font-medium">📍 ${U.esc(st.location)}</p>
+                <p class="text-sm ${isDone || isCurr ? 'text-zinc-600' : 'text-zinc-400'}">${U.esc(st.description)}</p>
+                <p class="text-sm text-zinc-400 font-medium">📍 ${U.esc(st.location)}</p>
               </div>
             </div>
           `;
@@ -2548,10 +2577,44 @@ Object.assign(Actions, {
       U.toast(`Đã sao chép: ${d.text}`);
     }
   },
+  'scroll-top': () => window.scrollTo({ top: 0, behavior: 'smooth' }),
+  'filter-size': (d, btn) => {
+    const isSelected = btn.classList.contains('active');
+    U.$$('.filter-size-btn').forEach(b => b.classList.remove('active'));
+    if (!isSelected) {
+      btn.classList.add('active');
+      App.state.filters.size = d.size;
+    } else {
+      App.state.filters.size = null;
+    }
+    App.renderProducts();
+  },
+  'filter-color': (d, btn) => {
+    const isSelected = btn.classList.contains('active');
+    U.$$('.filter-color-btn').forEach(b => b.classList.remove('active'));
+    if (!isSelected) {
+      btn.classList.add('active');
+      App.state.filters.color = d.color;
+    } else {
+      App.state.filters.color = null;
+    }
+    App.renderProducts();
+  },
+  'filter-price-range': (d, input) => {
+    const val = input.value || '';
+    const [a, b] = val.split('-');
+    App.state.filters.min = a ? Number(a) : null;
+    App.state.filters.max = b ? Number(b) : null;
+    App.loadProducts();
+  },
   'scroll-to': d => U.$('#' + d.target).scrollIntoView({ behavior: 'smooth' }),
   'set-category': d => { App.setCategory(d.cat); U.$('#catalog').scrollIntoView({ behavior: 'smooth' }); },
   'set-sort': d => { App.state.filters.sort = d.sort; App.renderSortButtons(); App.loadProducts(); },
-  'reset-filters': () => App.resetFilters(),
+  'reset-filters': () => {
+    U.$$('.filter-size-btn').forEach(b => b.classList.remove('active'));
+    U.$$('.filter-color-btn').forEach(b => b.classList.remove('active'));
+    App.resetFilters();
+  },
   'hot-search': d => { U.$('#search-input').value = d.q; App.state.filters.search = d.q; App.loadProducts(); U.$('#catalog').scrollIntoView({ behavior: 'smooth' }); },
   'show-wishlist': () => {
     if (!App.state.wishlist.length) return U.toast('Bạn chưa lưu sản phẩm yêu thích nào');

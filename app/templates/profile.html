@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Tài khoản cá nhân • AURA Studio</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  {%- include "components/fonts.html" -%}
   <link rel="stylesheet" href="/static/css/tailwind.css" />
   <link rel="stylesheet" href="/static/css/custom.css?v={{ version }}" />
 </head>
@@ -18,7 +16,7 @@
   <div class="main-content-layout flex flex-col flex-1">
 
   <!-- Nội Dung Chính -->
-  <main class="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+  <main class="mx-auto max-w-[1600px] px-4 py-10 sm:px-6 lg:px-10 2xl:px-16">
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-3">
       
       <!-- Cột Trái: Thông tin tổng quan -->
@@ -27,46 +25,46 @@
           <div class="flex flex-col items-center text-center">
             {% set parts = (user.full_name or user.name or user.username).split() %}
             {% set initials = (parts[0][:1] + parts[-1][:1]) if parts|length > 1 else parts[0][:2] %}
-            <div class="user-avatar-initials h-20 w-20 shrink-0 rounded-full flex items-center justify-center bg-[#FAF8F5] text-[#111111] font-serif font-bold text-2xl uppercase tracking-wider border border-[#E5E2DC]">
+            <div class="user-avatar-initials h-20 w-20 shrink-0 rounded-full flex items-center justify-center bg-[#FAF8F5] text-[#111111] font-sans font-bold text-2xl uppercase tracking-wider border border-[#E5E2DC]">
               {{ initials | upper }}
             </div>
-            <h3 class="mt-4 font-serif text-lg font-bold text-[#111111]">{{ user.full_name or user.name }}</h3>
-            <p class="text-xs font-mono text-[#777777]">@{{ user.username }}</p>
+            <h3 class="mt-4 font-sans text-lg font-bold text-[#111111]">{{ user.full_name or user.name }}</h3>
+            <p class="text-sm font-mono text-[#777777]">@{{ user.username }}</p>
             
             <div class="mt-3 flex flex-wrap items-center justify-center gap-2">
               {% if user.role == 'admin' %}
-              <span class="inline-flex items-center gap-1.5 rounded-[2px] bg-[#FAF8F5] px-3 py-1 text-[11px] font-semibold text-[#111111] border border-[#111111]">
+              <span class="inline-flex items-center gap-1.5 rounded-[2px] bg-[#FAF8F5] px-3 py-1 text-sm font-semibold text-[#111111] border border-[#111111]">
                 Quản trị viên
               </span>
               {% else %}
-              <span class="inline-flex items-center gap-1.5 rounded-[2px] bg-[#FAF8F5] px-3 py-1 text-[11px] font-medium text-[#555555] border border-[#E5E2DC]">
+              <span class="inline-flex items-center gap-1.5 rounded-[2px] bg-[#FAF8F5] px-3 py-1 text-sm font-medium text-[#555555] border border-[#E5E2DC]">
                 Thành viên
               </span>
               {% endif %}
 
               {% if user.is_active %}
-              <span class="inline-flex items-center rounded-[2px] bg-emerald-50 px-2.5 py-0.5 text-[10px] font-medium text-emerald-800 border border-emerald-200">
+              <span class="inline-flex items-center rounded-[2px] bg-emerald-50 px-2.5 py-0.5 text-sm font-medium text-emerald-800 border border-emerald-200">
                 Hoạt động
               </span>
               {% else %}
-              <span class="inline-flex items-center rounded-[2px] bg-zinc-100 px-2.5 py-0.5 text-[10px] font-medium text-zinc-500 border border-zinc-200">
+              <span class="inline-flex items-center rounded-[2px] bg-zinc-100 px-2.5 py-0.5 text-sm font-medium text-zinc-500 border border-zinc-200">
                 Tạm khóa
               </span>
               {% endif %}
             </div>
           </div>
 
-          <div class="mt-6 border-t border-[#E5E2DC] pt-5 space-y-3 text-xs">
+          <div class="mt-6 border-t border-[#E5E2DC] pt-5 space-y-3 text-sm">
             <div class="flex items-center justify-between py-1">
-              <span class="text-[#777777] uppercase tracking-wider text-[10px] font-semibold">Email</span>
+              <span class="text-[#777777] uppercase tracking-wider text-sm font-semibold">Email</span>
               <span class="font-medium text-[#111111]">{{ user.email }}</span>
             </div>
             <div class="flex items-center justify-between py-1">
-              <span class="text-[#777777] uppercase tracking-wider text-[10px] font-semibold">Số điện thoại</span>
+              <span class="text-[#777777] uppercase tracking-wider text-sm font-semibold">Số điện thoại</span>
               <span class="font-medium text-[#111111]">{{ user.phone or "Chưa cập nhật" }}</span>
             </div>
             <div class="flex items-center justify-between py-1">
-              <span class="text-[#777777] uppercase tracking-wider text-[10px] font-semibold">Ngày tham gia</span>
+              <span class="text-[#777777] uppercase tracking-wider text-sm font-semibold">Ngày tham gia</span>
               <span class="font-mono text-[#555555]">{{ user.created_at[:10] }}</span>
             </div>
           </div>
@@ -74,19 +72,19 @@
           <!-- Thẻ thành viên VIP mini -->
           <div class="mt-6 rounded-[2px] border border-[#E5E2DC] bg-[#FAF8F5] p-4 relative overflow-hidden">
             <div class="flex items-center justify-between">
-              <span class="text-[10px] font-bold uppercase tracking-wider text-[#111111] flex items-center gap-1.5">
+              <span class="text-sm font-bold uppercase tracking-wider text-[#111111] flex items-center gap-1.5">
                 <span>💎</span> AURA VIP CLUB
               </span>
-              <span id="mini-tier-badge" class="inline-flex items-center rounded-[2px] bg-white px-2 py-0.5 text-[10px] font-semibold text-[#111111] border border-[#E5E2DC]">
+              <span id="mini-tier-badge" class="inline-flex items-center rounded-[2px] bg-white px-2 py-0.5 text-sm font-semibold text-[#111111] border border-[#E5E2DC]">
                 Hạng Bạc
               </span>
             </div>
             <div class="mt-3 flex items-baseline justify-between">
               <div>
-                <p class="text-[10px] uppercase font-semibold text-[#777777]">Điểm thưởng</p>
-                <p class="text-lg font-bold text-[#111111]"><span id="mini-points-balance">0</span> <span class="text-xs font-normal text-[#555555]">điểm</span></p>
+                <p class="text-sm uppercase font-semibold text-[#777777]">Điểm thưởng</p>
+                <p class="text-lg font-bold text-[#111111]"><span id="mini-points-balance">0</span> <span class="text-sm font-normal text-[#555555]">điểm</span></p>
               </div>
-              <button onclick="setTab('loyalty')" class="text-xs font-semibold text-[#111111] hover:underline transition">
+              <button onclick="setTab('loyalty')" class="text-sm font-semibold text-[#111111] hover:underline transition">
                 Xem chi tiết &rarr;
               </button>
             </div>
@@ -94,13 +92,13 @@
 
           {% if user.role == 'admin' %}
           <div class="mt-6 rounded-[2px] border border-[#E5E2DC] bg-white p-4">
-            <h4 class="text-xs font-semibold text-[#111111] uppercase tracking-wider flex items-center gap-2">
+            <h4 class="text-sm font-semibold text-[#111111] uppercase tracking-wider flex items-center gap-2">
               <span>Bảng điều khiển Quản trị</span>
             </h4>
-            <p class="mt-1.5 text-xs text-[#666666] leading-relaxed">
+            <p class="mt-1.5 text-sm text-[#666666] leading-relaxed">
               Bạn có toàn quyền quản lý danh mục sản phẩm, đơn hàng, người dùng và xu hướng AI.
             </p>
-            <a href="/admin" class="mt-3 btn btn-primary flex w-full items-center justify-center text-xs font-semibold uppercase tracking-wider">
+            <a href="/admin" class="mt-3 btn btn-primary flex w-full items-center justify-center text-sm font-semibold uppercase tracking-wider">
               Đến Bảng Điều Khiển Admin &rarr;
             </a>
           </div>
@@ -113,19 +111,19 @@
         
         <!-- Tab chuyển đổi -->
         <div class="flex border-b border-[#E5E2DC] gap-1 overflow-x-auto no-scrollbar">
-          <button id="tab-orders-btn" class="border-b-2 border-[#111111] px-4 py-3 text-xs uppercase tracking-wider font-semibold text-[#111111] flex items-center gap-2 transition shrink-0">
+          <button id="tab-orders-btn" class="border-b-2 border-[#111111] px-4 py-3 text-sm uppercase tracking-wider font-semibold text-[#111111] flex items-center gap-2 transition shrink-0">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25c-.669 0-1.188-.578-1.119-1.243l1.263-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"/></svg>
             <span>Đơn hàng của tôi</span>
           </button>
-          <button id="tab-loyalty-btn" class="border-b-2 border-transparent px-4 py-3 text-xs uppercase tracking-wider font-medium text-[#777777] hover:text-[#111111] flex items-center gap-2 transition shrink-0">
+          <button id="tab-loyalty-btn" class="border-b-2 border-transparent px-4 py-3 text-sm uppercase tracking-wider font-medium text-[#777777] hover:text-[#111111] flex items-center gap-2 transition shrink-0">
             <span>💎</span>
             <span>Hội viên AURA Club</span>
           </button>
-          <button id="tab-profile-btn" class="border-b-2 border-transparent px-4 py-3 text-xs uppercase tracking-wider font-medium text-[#777777] hover:text-[#111111] flex items-center gap-2 transition shrink-0">
+          <button id="tab-profile-btn" class="border-b-2 border-transparent px-4 py-3 text-sm uppercase tracking-wider font-medium text-[#777777] hover:text-[#111111] flex items-center gap-2 transition shrink-0">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
             <span>Thông tin cá nhân</span>
           </button>
-          <button id="tab-password-btn" class="border-b-2 border-transparent px-4 py-3 text-xs uppercase tracking-wider font-medium text-[#777777] hover:text-[#111111] flex items-center gap-2 transition shrink-0">
+          <button id="tab-password-btn" class="border-b-2 border-transparent px-4 py-3 text-sm uppercase tracking-wider font-medium text-[#777777] hover:text-[#111111] flex items-center gap-2 transition shrink-0">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/></svg>
             <span>Đổi mật khẩu</span>
           </button>
@@ -135,11 +133,11 @@
         <div id="tab-orders" class="space-y-4">
           <div class="rounded-[2px] border border-[#E5E2DC] bg-white p-6 sm:p-8 shadow-none">
             <div class="flex items-center justify-between border-b border-[#E5E2DC] pb-4 mb-6">
-              <h4 class="font-serif text-lg font-bold text-[#111111]">Lịch sử đơn hàng</h4>
-              <span class="text-xs text-[#777777]">Tất cả giao dịch của bạn</span>
+              <h4 class="font-sans text-lg font-bold text-[#111111]">Lịch sử đơn hàng</h4>
+              <span class="text-sm text-[#777777]">Tất cả giao dịch của bạn</span>
             </div>
             <div id="orders-list-container" class="space-y-4">
-              <div class="text-center py-12 text-[#777777] text-xs">
+              <div class="text-center py-12 text-[#777777] text-sm">
                 <svg class="mx-auto h-7 w-7 animate-spin text-[#111111]" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 <p class="mt-3">Đang tải lịch sử đơn hàng...</p>
               </div>
@@ -150,33 +148,33 @@
         <!-- 2. Form cập nhật thông tin cá nhân -->
         <div id="tab-profile" class="hidden rounded-[2px] border border-[#E5E2DC] bg-white p-6 sm:p-8 shadow-none">
           <div class="border-b border-[#E5E2DC] pb-4 mb-6">
-            <h4 class="font-serif text-lg font-bold text-[#111111]">Chỉnh sửa thông tin</h4>
-            <p class="text-xs text-[#777777] mt-1">Cập nhật họ tên, số điện thoại và địa chỉ giao nhận mặc định</p>
+            <h4 class="font-sans text-lg font-bold text-[#111111]">Chỉnh sửa thông tin</h4>
+            <p class="text-sm text-[#777777] mt-1">Cập nhật họ tên, số điện thoại và địa chỉ giao nhận mặc định</p>
           </div>
           
-          <div id="profile-msg" class="hidden mb-5 rounded-[2px] p-3 text-xs font-medium border"></div>
+          <div id="profile-msg" class="hidden mb-5 rounded-[2px] p-3 text-sm font-medium border"></div>
 
           <form id="profile-form" class="space-y-5">
             <div>
-              <label for="edit_full_name" class="block text-xs uppercase tracking-wider font-semibold text-[#111111]">Họ và tên</label>
+              <label for="edit_full_name" class="block text-sm uppercase tracking-wider font-semibold text-[#111111]">Họ và tên</label>
               <input id="edit_full_name" type="text" value="{{ user.full_name }}" required
-                     class="mt-1.5 w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-xs text-[#111111] outline-none transition focus:border-[#111111]" />
+                     class="mt-1.5 w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-sm text-[#111111] outline-none transition focus:border-[#111111]" />
             </div>
 
             <div>
-              <label for="edit_phone" class="block text-xs uppercase tracking-wider font-semibold text-[#111111]">Số điện thoại</label>
+              <label for="edit_phone" class="block text-sm uppercase tracking-wider font-semibold text-[#111111]">Số điện thoại</label>
               <input id="edit_phone" type="tel" value="{{ user.phone or '' }}" placeholder="0912345678"
-                     class="mt-1.5 w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-xs text-[#111111] outline-none transition focus:border-[#111111] placeholder:text-[#999999]" />
+                     class="mt-1.5 w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-sm text-[#111111] outline-none transition focus:border-[#111111] placeholder:text-[#999999]" />
             </div>
 
             <div>
-              <label for="edit_address" class="block text-xs uppercase tracking-wider font-semibold text-[#111111]">Địa chỉ giao hàng mặc định</label>
+              <label for="edit_address" class="block text-sm uppercase tracking-wider font-semibold text-[#111111]">Địa chỉ giao hàng mặc định</label>
               <textarea id="edit_address" rows="3" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố..."
-                        class="mt-1.5 w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-xs text-[#111111] outline-none transition focus:border-[#111111] placeholder:text-[#999999]">{{ user.address or '' }}</textarea>
+                        class="mt-1.5 w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-sm text-[#111111] outline-none transition focus:border-[#111111] placeholder:text-[#999999]">{{ user.address or '' }}</textarea>
             </div>
 
             <div class="pt-2">
-              <button type="submit" id="save-profile-btn" class="btn btn-primary px-6 !py-2.5 text-xs font-semibold uppercase tracking-wider">
+              <button type="submit" id="save-profile-btn" class="btn btn-primary px-6 !py-2.5 text-sm font-semibold uppercase tracking-wider">
                 Lưu thay đổi
               </button>
             </div>
@@ -186,33 +184,33 @@
         <!-- 3. Form đổi mật khẩu -->
         <div id="tab-password" class="hidden rounded-[2px] border border-[#E5E2DC] bg-white p-6 sm:p-8 shadow-none">
           <div class="border-b border-[#E5E2DC] pb-4 mb-6">
-            <h4 class="font-serif text-lg font-bold text-[#111111]">Đổi mật khẩu</h4>
-            <p class="text-xs text-[#777777] mt-1">Đảm bảo an toàn tài khoản bằng mật khẩu có độ phức tạp cao</p>
+            <h4 class="font-sans text-lg font-bold text-[#111111]">Đổi mật khẩu</h4>
+            <p class="text-sm text-[#777777] mt-1">Đảm bảo an toàn tài khoản bằng mật khẩu có độ phức tạp cao</p>
           </div>
           
-          <div id="password-msg" class="hidden mb-5 rounded-[2px] p-3 text-xs font-medium border"></div>
+          <div id="password-msg" class="hidden mb-5 rounded-[2px] p-3 text-sm font-medium border"></div>
 
           <form id="password-form" class="space-y-5">
             <div>
-              <label for="old_password" class="block text-xs uppercase tracking-wider font-semibold text-[#111111]">Mật khẩu hiện tại</label>
+              <label for="old_password" class="block text-sm uppercase tracking-wider font-semibold text-[#111111]">Mật khẩu hiện tại</label>
               <input id="old_password" type="password" required placeholder="••••••••"
-                     class="mt-1.5 w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-xs text-[#111111] outline-none transition focus:border-[#111111] placeholder:text-[#999999]" />
+                     class="mt-1.5 w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-sm text-[#111111] outline-none transition focus:border-[#111111] placeholder:text-[#999999]" />
             </div>
 
             <div>
-              <label for="new_password" class="block text-xs uppercase tracking-wider font-semibold text-[#111111]">Mật khẩu mới (tối thiểu 6 ký tự)</label>
+              <label for="new_password" class="block text-sm uppercase tracking-wider font-semibold text-[#111111]">Mật khẩu mới (tối thiểu 6 ký tự)</label>
               <input id="new_password" type="password" required minlength="6" placeholder="••••••••"
-                     class="mt-1.5 w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-xs text-[#111111] outline-none transition focus:border-[#111111] placeholder:text-[#999999]" />
+                     class="mt-1.5 w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-sm text-[#111111] outline-none transition focus:border-[#111111] placeholder:text-[#999999]" />
             </div>
 
             <div>
-              <label for="confirm_new_password" class="block text-xs uppercase tracking-wider font-semibold text-[#111111]">Xác nhận mật khẩu mới</label>
+              <label for="confirm_new_password" class="block text-sm uppercase tracking-wider font-semibold text-[#111111]">Xác nhận mật khẩu mới</label>
               <input id="confirm_new_password" type="password" required minlength="6" placeholder="••••••••"
-                     class="mt-1.5 w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-xs text-[#111111] outline-none transition focus:border-[#111111] placeholder:text-[#999999]" />
+                     class="mt-1.5 w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-sm text-[#111111] outline-none transition focus:border-[#111111] placeholder:text-[#999999]" />
             </div>
 
             <div class="pt-2">
-              <button type="submit" id="save-pw-btn" class="btn btn-primary px-6 !py-2.5 text-xs font-semibold uppercase tracking-wider">
+              <button type="submit" id="save-pw-btn" class="btn btn-primary px-6 !py-2.5 text-sm font-semibold uppercase tracking-wider">
                 Cập nhật mật khẩu
               </button>
             </div>
@@ -227,12 +225,12 @@
               <div class="flex items-start justify-between">
                 <div>
                   <div class="flex items-center gap-2">
-                    <span class="font-serif tracking-widest text-sm uppercase font-bold text-white">AURA VIP CLUB</span>
+                    <span class="font-sans tracking-widest text-sm uppercase font-bold text-white">AURA VIP CLUB</span>
                   </div>
-                  <p class="text-[10px] text-[#888888] font-mono tracking-wider mt-1">EXCLUSIVE MEMBERSHIP</p>
+                  <p class="text-sm text-[#888888] font-mono tracking-wider mt-1">EXCLUSIVE MEMBERSHIP</p>
                 </div>
                 <div class="text-right">
-                  <span id="card-tier-badge" class="inline-flex items-center rounded-[2px] bg-white/10 px-3 py-1 text-xs font-semibold text-white border border-white/20 uppercase tracking-wider">
+                  <span id="card-tier-badge" class="inline-flex items-center rounded-[2px] bg-white/10 px-3 py-1 text-sm font-semibold text-white border border-white/20 uppercase tracking-wider">
                     Hạng Bạc
                   </span>
                 </div>
@@ -241,13 +239,13 @@
               <!-- Hàng dưới: Điểm số & Tên chủ thẻ -->
               <div class="flex items-end justify-between border-t border-white/10 pt-4">
                 <div>
-                  <p class="text-[10px] uppercase tracking-wider text-[#888888] font-medium">Chủ thẻ</p>
+                  <p class="text-sm uppercase tracking-wider text-[#888888] font-medium">Chủ thẻ</p>
                   <p id="card-user-name" class="font-bold text-sm sm:text-base tracking-wider uppercase text-white mt-0.5">{{ user.full_name or user.name }}</p>
                 </div>
                 <div class="text-right">
-                  <p class="text-[10px] uppercase tracking-wider text-[#888888] font-medium">Điểm khả dụng</p>
-                  <p class="text-lg sm:text-xl font-bold text-white"><span id="card-points-val">0</span> <span class="text-xs font-normal text-[#AAAAAA]">điểm</span></p>
-                  <p class="text-[10px] text-[#888888]">(Tương đương <span id="card-money-val">0đ</span>)</p>
+                  <p class="text-sm uppercase tracking-wider text-[#888888] font-medium">Điểm khả dụng</p>
+                  <p class="text-lg sm:text-xl font-bold text-white"><span id="card-points-val">0</span> <span class="text-sm font-normal text-[#AAAAAA]">điểm</span></p>
+                  <p class="text-sm text-[#888888]">(Tương đương <span id="card-money-val">0đ</span>)</p>
                 </div>
               </div>
             </div>
@@ -257,17 +255,17 @@
           <div class="rounded-[2px] border border-[#E5E2DC] bg-white p-6 shadow-none">
             <div class="flex items-center justify-between">
               <div>
-                <h4 class="text-xs font-semibold text-[#111111] uppercase tracking-wider flex items-center gap-2">
+                <h4 class="text-sm font-semibold text-[#111111] uppercase tracking-wider flex items-center gap-2">
                   Tiến trình thăng hạng
                 </h4>
-                <p class="text-xs text-[#666666] mt-1" id="tier-progress-desc">Đang tải tiến trình...</p>
+                <p class="text-sm text-[#666666] mt-1" id="tier-progress-desc">Đang tải tiến trình...</p>
               </div>
               <span id="tier-progress-percent" class="text-base font-bold text-[#111111]">0%</span>
             </div>
             <div class="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-[#E5E2DC]">
               <div id="tier-progress-bar" class="h-full rounded-full bg-[#111111] transition-all duration-500" style="width: 0%"></div>
             </div>
-            <div class="mt-3 flex justify-between text-[11px] font-mono text-[#777777]">
+            <div class="mt-3 flex justify-between text-sm font-mono text-[#777777]">
               <span id="tier-current-tag">Bạc (0đ)</span>
               <span id="tier-next-tag">Vàng (5.000.000đ)</span>
             </div>
@@ -275,7 +273,7 @@
 
           <!-- Danh sách đặc quyền hội viên VIP -->
           <div class="rounded-[2px] border border-[#E5E2DC] bg-white p-6 shadow-none">
-            <h4 class="text-xs font-semibold text-[#111111] uppercase tracking-wider mb-4">
+            <h4 class="text-sm font-semibold text-[#111111] uppercase tracking-wider mb-4">
               Đặc quyền hạng thẻ của bạn
             </h4>
             <div id="loyalty-benefits-list" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -287,17 +285,17 @@
           <div class="rounded-[2px] border border-[#E5E2DC] bg-white p-6 shadow-none">
             <div class="flex items-center justify-between border-b border-[#E5E2DC] pb-4 mb-4">
               <div>
-                <h4 class="text-xs font-semibold text-[#111111] uppercase tracking-wider">Lịch sử biến động điểm</h4>
-                <p class="text-xs text-[#777777] mt-0.5">Chi tiết các lần cộng, trừ và sử dụng điểm thưởng</p>
+                <h4 class="text-sm font-semibold text-[#111111] uppercase tracking-wider">Lịch sử biến động điểm</h4>
+                <p class="text-sm text-[#777777] mt-0.5">Chi tiết các lần cộng, trừ và sử dụng điểm thưởng</p>
               </div>
-              <button onclick="simulateLoyaltyBonus()" class="btn btn-outline text-xs !py-1.5 px-3 font-semibold">
+              <button onclick="simulateLoyaltyBonus()" class="btn btn-outline text-sm !py-1.5 px-3 font-semibold">
                 🎁 Nhận điểm sự kiện (+50)
               </button>
             </div>
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+              <table class="w-full text-left text-sm">
                 <thead>
-                  <tr class="border-b border-[#E5E2DC] bg-[#FAF8F5] text-[#111111] uppercase tracking-wider text-[10px] font-semibold">
+                  <tr class="border-b border-[#E5E2DC] bg-[#FAF8F5] text-[#111111] uppercase tracking-wider text-sm font-semibold">
                     <th class="py-2.5 px-3">Thời gian</th>
                     <th class="py-2.5 px-3">Hoạt động</th>
                     <th class="py-2.5 px-3 text-right">Biến động</th>
@@ -323,16 +321,16 @@
   <div id="profile-tracking-modal" class="modal hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
     <div class="modal-panel max-w-xl w-full bg-white rounded-[2px] p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto border border-[#E5E2DC]">
       <div class="flex items-center justify-between border-b border-[#E5E2DC] pb-3">
-        <h3 class="text-xs font-semibold text-[#111111] uppercase tracking-wider">
+        <h3 class="text-sm font-semibold text-[#111111] uppercase tracking-wider">
           Hành trình vận chuyển đơn hàng
         </h3>
         <button onclick="closeProfileModal('profile-tracking-modal')" class="p-1 text-[#777777] hover:text-black">✕</button>
       </div>
 
-      <div class="rounded-[2px] bg-[#FAF8F5] border border-[#E5E2DC] p-4 text-xs space-y-2">
+      <div class="rounded-[2px] bg-[#FAF8F5] border border-[#E5E2DC] p-4 text-sm space-y-2">
         <div class="flex items-center justify-between">
           <span>Mã vận đơn: <strong id="tr-code" class="font-mono text-[#111111] font-bold">--</strong></span>
-          <span id="tr-status-badge" class="rounded-[2px] px-2 py-0.5 text-[10px] font-semibold border">--</span>
+          <span id="tr-status-badge" class="rounded-[2px] px-2 py-0.5 text-sm font-semibold border">--</span>
         </div>
         <p class="text-[#666666]">Đơn vị: <strong id="tr-carrier" class="text-[#111111]">--</strong> • Dự kiến: <strong id="tr-est-date" class="text-[#111111]">--</strong></p>
         <p class="text-[#666666]">Người nhận: <span id="tr-cust-name" class="font-medium text-[#111111]">--</span></p>
@@ -344,7 +342,7 @@
       </div>
       
       <div class="pt-4 border-t border-[#E5E2DC] flex justify-end">
-        <button onclick="closeProfileModal('profile-tracking-modal')" class="btn btn-outline text-xs !py-1.5 px-4 font-semibold">Đóng</button>
+        <button onclick="closeProfileModal('profile-tracking-modal')" class="btn btn-outline text-sm !py-1.5 px-4 font-semibold">Đóng</button>
       </div>
     </div>
   </div>
@@ -356,9 +354,9 @@
       <!-- Header hóa đơn -->
       <div class="flex items-center justify-between border-b border-[#E5E2DC] px-6 py-4 bg-white">
         <div class="flex items-center gap-3">
-          <span class="font-serif text-xl font-bold tracking-tight text-[#111111]">AURA</span>
+          <span class="font-sans text-xl font-bold tracking-tight text-[#111111]">AURA</span>
           <span class="h-4 w-px bg-[#E5E2DC]"></span>
-          <h3 class="text-xs font-semibold text-[#111111] uppercase tracking-wider">Hóa đơn bán hàng</h3>
+          <h3 class="text-sm font-semibold text-[#111111] uppercase tracking-wider">Hóa đơn bán hàng</h3>
         </div>
         <div class="flex gap-2">
           <button onclick="window.print()" class="p-1.5 text-[#555555] hover:text-black transition" title="In Hóa Đơn">
@@ -372,30 +370,30 @@
       <div class="p-6 overflow-y-auto bg-white invoice-print-area">
         <div class="flex justify-between items-start mb-8 border-b border-[#E5E2DC] pb-6">
           <div>
-            <p class="text-[10px] uppercase font-bold text-[#777777] tracking-wider">Đơn vị bán lẻ</p>
+            <p class="text-sm uppercase font-bold text-[#777777] tracking-wider">Đơn vị bán lẻ</p>
             <h4 class="text-sm font-bold text-[#111111] mt-1">AURA STUDIO</h4>
-            <p class="text-xs text-[#666666] mt-0.5">MST: 0102030405</p>
-            <p class="text-xs text-[#666666]">72 Lê Thánh Tôn, Quận 1, TP. HCM</p>
-            <p class="text-xs text-[#666666]">Hotline: 1900 8888</p>
+            <p class="text-sm text-[#666666] mt-0.5">MST: 0102030405</p>
+            <p class="text-sm text-[#666666]">72 Lê Thánh Tôn, Quận 1, TP. HCM</p>
+            <p class="text-sm text-[#666666]">Hotline: 1900 8888</p>
           </div>
           <div class="text-right">
             <h2 class="text-lg font-mono font-bold text-[#111111]" id="inv-number">INV-000000</h2>
-            <p class="text-xs text-[#666666] mt-1">Ngày xuất: <span id="inv-date" class="font-medium text-[#111111]">--</span></p>
-            <div class="mt-2 inline-flex rounded-[2px] border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-800">
+            <p class="text-sm text-[#666666] mt-1">Ngày xuất: <span id="inv-date" class="font-medium text-[#111111]">--</span></p>
+            <div class="mt-2 inline-flex rounded-[2px] border border-emerald-300 bg-emerald-50 px-2 py-0.5 text-sm font-semibold text-emerald-800">
               Đã thu tiền / Paid
             </div>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-6 mb-8 text-xs">
+        <div class="grid grid-cols-2 gap-6 mb-8 text-sm">
           <div>
-            <p class="text-[10px] uppercase font-bold text-[#777777] tracking-wider mb-2">Thông tin khách hàng</p>
+            <p class="text-sm uppercase font-bold text-[#777777] tracking-wider mb-2">Thông tin khách hàng</p>
             <p class="font-bold text-[#111111] text-sm" id="inv-buyer-name">--</p>
             <p class="text-[#555555] mt-1">SĐT: <span id="inv-buyer-phone" class="font-medium text-[#111111]">--</span></p>
             <p class="text-[#555555]">Đ/c: <span id="inv-buyer-addr" class="text-[#111111]">--</span></p>
           </div>
           <div class="rounded-[2px] bg-[#FAF8F5] p-3 border border-[#E5E2DC]">
-            <p class="text-[10px] uppercase font-bold text-[#777777] tracking-wider mb-2">Vận chuyển &amp; Thanh toán</p>
+            <p class="text-sm uppercase font-bold text-[#777777] tracking-wider mb-2">Vận chuyển &amp; Thanh toán</p>
             <div class="space-y-1">
               <p class="flex justify-between"><span class="text-[#666666]">Đơn vị:</span> <strong class="text-[#111111]" id="inv-carrier">--</strong></p>
               <p class="flex justify-between"><span class="text-[#666666]">Vận đơn:</span> <strong class="font-mono text-[#111111]" id="inv-tracking">--</strong></p>
@@ -407,8 +405,8 @@
 
         <!-- Bảng Sản phẩm -->
         <div class="border border-[#E5E2DC] rounded-[2px] overflow-hidden mb-6">
-          <table class="w-full text-xs">
-            <thead class="bg-[#FAF8F5] text-[#111111] uppercase tracking-wider text-[10px] font-semibold border-b border-[#E5E2DC]">
+          <table class="w-full text-sm">
+            <thead class="bg-[#FAF8F5] text-[#111111] uppercase tracking-wider text-sm font-semibold border-b border-[#E5E2DC]">
               <tr>
                 <th class="py-2.5 px-3 text-center w-8">STT</th>
                 <th class="py-2.5 px-3 text-left">Tên sản phẩm</th>
@@ -425,7 +423,7 @@
         </div>
 
         <!-- Tổng kết tiền -->
-        <div class="flex justify-end text-xs">
+        <div class="flex justify-end text-sm">
           <div class="w-64 space-y-2">
             <div class="flex justify-between text-[#666666]">
               <span>Tạm tính:</span>
@@ -451,7 +449,7 @@
         </div>
 
         <div class="mt-8 pt-6 border-t border-[#E5E2DC] text-center">
-          <p class="text-xs text-[#777777] italic">Cảm ơn quý khách đã tin tưởng và đồng hành cùng AURA Studio!</p>
+          <p class="text-sm text-[#777777] italic">Cảm ơn quý khách đã tin tưởng và đồng hành cùng AURA Studio!</p>
         </div>
       </div>
     </div>
@@ -468,8 +466,8 @@
     const tabProfile = document.getElementById("tab-profile");
     const tabPassword = document.getElementById("tab-password");
 
-    const activeClasses = "border-b-2 border-[#111111] px-4 py-3 text-xs uppercase tracking-wider font-semibold text-[#111111] flex items-center gap-2 transition shrink-0";
-    const inactiveClasses = "border-b-2 border-transparent px-4 py-3 text-xs uppercase tracking-wider font-medium text-[#777777] hover:text-[#111111] flex items-center gap-2 transition shrink-0";
+    const activeClasses = "border-b-2 border-[#111111] px-4 py-3 text-sm uppercase tracking-wider font-semibold text-[#111111] flex items-center gap-2 transition shrink-0";
+    const inactiveClasses = "border-b-2 border-transparent px-4 py-3 text-sm uppercase tracking-wider font-medium text-[#777777] hover:text-[#111111] flex items-center gap-2 transition shrink-0";
 
     function setTab(activeTab) {
       [tabOrdersBtn, tabLoyaltyBtn, tabProfileBtn, tabPasswordBtn].forEach(b => {
@@ -521,9 +519,9 @@
         if (!orders || orders.length === 0) {
           container.innerHTML = `
             <div class="text-center py-12">
-              <p class="text-sm font-serif font-medium text-[#111111]">Bạn chưa có đơn hàng nào</p>
-              <p class="text-xs text-[#777777] mt-1 max-w-sm mx-auto">Khám phá các thiết kế mới và trải nghiệm không gian mua sắm tối giản của AURA.</p>
-              <a href="/products" class="mt-6 inline-flex items-center btn btn-primary px-6 !py-2.5 text-xs font-semibold uppercase tracking-wider">
+              <p class="text-sm font-sans font-medium text-[#111111]">Bạn chưa có đơn hàng nào</p>
+              <p class="text-sm text-[#777777] mt-1 max-w-sm mx-auto">Khám phá các thiết kế mới và trải nghiệm không gian mua sắm tối giản của AURA.</p>
+              <a href="/products" class="mt-6 inline-flex items-center btn btn-primary px-6 !py-2.5 text-sm font-semibold uppercase tracking-wider">
                 Khám phá bộ sưu tập
               </a>
             </div>
@@ -550,14 +548,14 @@
             <div class="rounded-[2px] border border-[#E5E2DC] p-5 bg-white space-y-3">
               <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E2DC] pb-3">
                 <div class="flex items-center gap-2">
-                  <span class="font-mono text-xs font-semibold text-[#111111] tracking-wider">${o.order_id}</span>
-                  <span class="inline-flex rounded-[2px] px-2 py-0.5 text-[10px] font-medium border ${st.bg}">${st.label}</span>
+                  <span class="font-mono text-sm font-semibold text-[#111111] tracking-wider">${o.order_id}</span>
+                  <span class="inline-flex rounded-[2px] px-2 py-0.5 text-sm font-medium border ${st.bg}">${st.label}</span>
                 </div>
-                <span class="font-mono text-[11px] text-[#777777]">${o.created_at || ""}</span>
+                <span class="font-mono text-sm text-[#777777]">${o.created_at || ""}</span>
               </div>
               
               <!-- Chi tiết các món hàng -->
-              <div class="py-1 text-xs space-y-2">
+              <div class="py-1 text-sm space-y-2">
                 ${lines.map(l => `
                   <div class="flex items-center justify-between">
                     <span class="text-[#333333]">${l.name} <span class="text-[#777777]">(${l.color}, ${l.size}) × ${l.quantity}</span></span>
@@ -567,22 +565,22 @@
               </div>
 
               <!-- Thông tin vận đơn & Đơn vị vận chuyển -->
-              <div class="flex flex-wrap items-center justify-between gap-2 rounded-[2px] bg-[#FAF8F5] p-3 text-xs text-[#555555] border border-[#E5E2DC]">
+              <div class="flex flex-wrap items-center justify-between gap-2 rounded-[2px] bg-[#FAF8F5] p-3 text-sm text-[#555555] border border-[#E5E2DC]">
                 <div class="flex items-center gap-1.5">
                   <span>🚚</span>
                   <span>Vận đơn: <strong class="font-mono text-[#111111] font-semibold">${trackingCode}</strong> (${carrier})</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <button type="button" onclick="viewOrderTracking('${o.order_id}')" class="btn btn-outline btn-sm !py-1 text-[11px]">
+                  <button type="button" onclick="viewOrderTracking('${o.order_id}')" class="btn btn-outline btn-sm !py-1 text-sm">
                     Theo dõi bưu tá
                   </button>
-                  <button type="button" onclick="viewOrderInvoice('${o.order_id}')" class="btn btn-outline btn-sm !py-1 text-[11px]">
+                  <button type="button" onclick="viewOrderInvoice('${o.order_id}')" class="btn btn-outline btn-sm !py-1 text-sm">
                     Hóa đơn
                   </button>
                 </div>
               </div>
 
-              <div class="flex items-center justify-between border-t border-[#E5E2DC] pt-3 text-xs">
+              <div class="flex items-center justify-between border-t border-[#E5E2DC] pt-3 text-sm">
                 <span class="text-[#777777]">Hình thức: <strong class="text-[#111111] font-medium">${o.payment_method === 'cod' ? 'COD (Tiền mặt)' : 'Chuyển khoản QR'}</strong></span>
                 <span class="text-sm font-semibold text-[#111111]">Tổng cộng: ${totalStr}</span>
               </div>
@@ -592,7 +590,7 @@
 
       } catch (err) {
         container.innerHTML = `
-          <div class="text-center py-8 text-xs text-red-600">
+          <div class="text-center py-8 text-sm text-red-600">
             Không thể tải đơn hàng lúc này. Vui lòng tải lại trang.
           </div>
         `;
@@ -618,15 +616,15 @@
         const data = await res.json();
         if (!res.ok) {
           msg.textContent = data.detail || "Cập nhật thất bại";
-          msg.className = "mb-5 rounded-[2px] p-3 text-xs font-medium border bg-red-50 text-red-700 border-red-200";
+          msg.className = "mb-5 rounded-[2px] p-3 text-sm font-medium border bg-red-50 text-red-700 border-red-200";
         } else {
           msg.textContent = "Đã lưu thay đổi thông tin cá nhân thành công!";
-          msg.className = "mb-5 rounded-[2px] p-3 text-xs font-medium border bg-[#FAF8F5] text-[#111111] border-[#111111]";
+          msg.className = "mb-5 rounded-[2px] p-3 text-sm font-medium border bg-[#FAF8F5] text-[#111111] border-[#111111]";
           setTimeout(() => location.reload(), 1000);
         }
       } catch (err) {
         msg.textContent = "Lỗi kết nối máy chủ";
-        msg.className = "mb-5 rounded-[2px] p-3 text-xs font-medium border bg-red-50 text-red-700 border-red-200";
+        msg.className = "mb-5 rounded-[2px] p-3 text-sm font-medium border bg-red-50 text-red-700 border-red-200";
       }
     });
 
@@ -642,7 +640,7 @@
 
       if (newPassword !== confirmNew) {
         msg.textContent = "Mật khẩu mới không khớp!";
-        msg.className = "mb-5 rounded-[2px] p-3 text-xs font-medium border bg-red-50 text-red-700 border-red-200";
+        msg.className = "mb-5 rounded-[2px] p-3 text-sm font-medium border bg-red-50 text-red-700 border-red-200";
         return;
       }
 
@@ -655,15 +653,15 @@
         const data = await res.json();
         if (!res.ok) {
           msg.textContent = data.detail || "Đổi mật khẩu thất bại";
-          msg.className = "mb-5 rounded-[2px] p-3 text-xs font-medium border bg-red-50 text-red-700 border-red-200";
+          msg.className = "mb-5 rounded-[2px] p-3 text-sm font-medium border bg-red-50 text-red-700 border-red-200";
         } else {
           msg.textContent = "Đổi mật khẩu thành công!";
-          msg.className = "mb-5 rounded-[2px] p-3 text-xs font-medium border bg-[#FAF8F5] text-[#111111] border-[#111111]";
+          msg.className = "mb-5 rounded-[2px] p-3 text-sm font-medium border bg-[#FAF8F5] text-[#111111] border-[#111111]";
           document.getElementById("password-form").reset();
         }
       } catch (err) {
         msg.textContent = "Lỗi kết nối máy chủ";
-        msg.className = "mb-5 rounded-[2px] p-3 text-xs font-medium border bg-red-50 text-red-700 border-red-200";
+        msg.className = "mb-5 rounded-[2px] p-3 text-sm font-medium border bg-red-50 text-red-700 border-red-200";
       }
     });
 
@@ -674,7 +672,7 @@
       const codeEl = document.getElementById("tr-code");
       const listEl = document.getElementById("tr-timeline-list");
       codeEl.textContent = "Đang tải...";
-      listEl.innerHTML = '<div class="py-6 text-center text-xs text-[#777777]">Đang đồng bộ hành trình bưu cục...</div>';
+      listEl.innerHTML = '<div class="py-6 text-center text-sm text-[#777777]">Đang đồng bộ hành trình bưu cục...</div>';
 
       try {
         const res = await fetch(`/api/orders/track/${encodeURIComponent(orderId)}`);
@@ -690,9 +688,9 @@
         const badge = document.getElementById("tr-status-badge");
         badge.textContent = data.shipping_status_label;
         if (data.shipping_status === 'delivered') {
-          badge.className = 'rounded-[2px] px-2 py-0.5 text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200';
+          badge.className = 'rounded-[2px] px-2 py-0.5 text-sm font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200';
         } else {
-          badge.className = 'rounded-[2px] px-2 py-0.5 text-[10px] font-semibold bg-[#FAF8F5] text-[#111111] border border-[#111111]';
+          badge.className = 'rounded-[2px] px-2 py-0.5 text-sm font-semibold bg-[#FAF8F5] text-[#111111] border border-[#111111]';
         }
 
         if (data.timeline) {
@@ -705,18 +703,18 @@
                 <div class="timeline-node font-bold ${isDone ? 'bg-[#111111] text-white border-[#111111]' : isCurr ? 'bg-white text-[#111111] border-[#111111]' : 'bg-[#FAF8F5] text-[#999999] border-[#E5E2DC]'}">${nodeIcon}</div>
                 <div class="space-y-0.5">
                   <div class="flex items-baseline justify-between gap-2">
-                    <h4 class="text-xs font-semibold ${isDone || isCurr ? 'text-[#111111]' : 'text-[#777777]'}">${st.title}</h4>
-                    <span class="text-[10px] font-mono text-[#888888] whitespace-nowrap">${st.time}</span>
+                    <h4 class="text-sm font-semibold ${isDone || isCurr ? 'text-[#111111]' : 'text-[#777777]'}">${st.title}</h4>
+                    <span class="text-sm font-mono text-[#888888] whitespace-nowrap">${st.time}</span>
                   </div>
-                  <p class="text-[11px] ${isDone || isCurr ? 'text-[#444444]' : 'text-[#888888]'}">${st.description}</p>
-                  <p class="text-[10px] text-[#777777]">📍 ${st.location}</p>
+                  <p class="text-sm ${isDone || isCurr ? 'text-[#444444]' : 'text-[#888888]'}">${st.description}</p>
+                  <p class="text-sm text-[#777777]">📍 ${st.location}</p>
                 </div>
               </div>
             `;
           }).join('');
         }
       } catch (err) {
-        listEl.innerHTML = `<div class="py-6 text-center text-xs text-red-600">${err.message}</div>`;
+        listEl.innerHTML = `<div class="py-6 text-center text-sm text-red-600">${err.message}</div>`;
       }
     }
 
@@ -821,7 +819,7 @@
         const benefitsContainer = document.getElementById("loyalty-benefits-list");
         if (benefitsContainer && status.benefits) {
           benefitsContainer.innerHTML = status.benefits.map(b => `
-            <div class="flex items-start gap-2.5 rounded-[2px] border border-[#E5E2DC] bg-[#FAF8F5] p-3 text-xs">
+            <div class="flex items-start gap-2.5 rounded-[2px] border border-[#E5E2DC] bg-[#FAF8F5] p-3 text-sm">
               <span class="text-[#111111] font-bold">✓</span>
               <span class="font-medium text-[#111111]">${b}</span>
             </div>
@@ -841,7 +839,7 @@
               const ptsColor = isPlus ? "text-emerald-700 font-semibold" : "text-red-600 font-semibold";
               return `
                 <tr class="border-b border-[#E5E2DC] hover:bg-[#FAF8F5] transition">
-                  <td class="py-2.5 px-3 font-mono text-[11px] text-[#777777]">${tx.created_at}</td>
+                  <td class="py-2.5 px-3 font-mono text-sm text-[#777777]">${tx.created_at}</td>
                   <td class="py-2.5 px-3 font-medium text-[#111111]">${tx.description}</td>
                   <td class="py-2.5 px-3 text-right font-mono ${ptsColor}">${ptsStr}</td>
                   <td class="py-2.5 px-3 text-right font-mono font-semibold text-[#555555]">${tx.balance_after}</td>

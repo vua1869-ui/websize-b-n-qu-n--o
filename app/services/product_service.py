@@ -122,7 +122,9 @@ class ProductService:
     def get_all(self, category: Optional[str] = None, gender: Optional[str] = None,
                 min_price: Optional[int] = None, max_price: Optional[int] = None,
                 sort: Optional[str] = "popular", search: Optional[str] = None,
-                flash_sale_only: bool = False) -> List[Product]:
+                flash_sale_only: bool = False, size: Optional[str] = None,
+                color: Optional[str] = None, occasion: Optional[str] = None,
+                material: Optional[str] = None) -> List[Product]:
         results = list(self._products)
 
         if flash_sale_only or category == "flash_sale":
@@ -135,6 +137,18 @@ class ProductService:
             results = [p for p in results if p.final_price >= min_price]
         if max_price is not None:
             results = [p for p in results if p.final_price <= max_price]
+        if size and size.strip():
+            s_upper = size.strip().upper()
+            results = [p for p in results if p.sizes and any(s.upper() == s_upper for s in p.sizes)]
+        if color and color.strip():
+            c_norm = normalize(color.strip())
+            results = [p for p in results if p.colors and any(c_norm in normalize(c.name) for c in p.colors)]
+        if occasion and occasion.strip():
+            occ_norm = normalize(occasion.strip())
+            results = [p for p in results if p.occasions and any(occ_norm in normalize(o) for o in p.occasions)]
+        if material and material.strip():
+            mat_norm = normalize(material.strip())
+            results = [p for p in results if p.material and mat_norm in normalize(p.material)]
 
         if search and search.strip():
             toks = [t for t in tokens(search) if t not in STOPWORDS]

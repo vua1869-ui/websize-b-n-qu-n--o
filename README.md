@@ -10,13 +10,16 @@ Yêu cầu: **Python 3.10+**.
 ```bash
 # 1. (khuyến nghị) tạo môi trường ảo
 python -m venv .venv
-.venv\Scripts\activate          # Windows
+.venv\\Scripts\\activate          # Windows
 # source .venv/bin/activate     # macOS / Linux
 
-# 2. cài thư viện
+# 2. cài thư viện (bao gồm python-multipart cho upload file sản phẩm CSV/Excel)
 pip install -r requirements.txt
 
-# 3. chạy
+# 3. (lần đầu tiên) chạy migration đưa dữ liệu demo vào database
+python scripts/migrate_to_db.py
+
+# 4. chạy
 python run.py
 ```
 
@@ -24,7 +27,9 @@ Mở trình duyệt: **http://127.0.0.1:8000**  (tài liệu API tự sinh: http
 
 Không cần cài Node, không cần API key — AI mặc định dùng bộ luật nội bộ nên web chạy được ngay.
 
-## Cấu hình (tùy chọn)
+## Bảo mật & Cấu hình (quan trọng)
+
+> **⚠️ CẢNH BÁO:** Nếu bạn đã clone repo này và thấy rằng `CLOUDINARY_API_SECRET` hoặc `VNPAY_HASH_SECRET` đã từng có giá trị thật trong lịch sử Git, **hãy vào dashboard Cloudinary (cloudinary.com/console → Settings → Access Keys → Regenerate) và VNPay Merchant Portal để thu hồi và tạo key mới ngay**. Key cũ có thể đã bị lộ công khai.
 
 Sao chép `.env.example` thành `.env` rồi chỉnh. Các biến chính:
 
@@ -34,6 +39,8 @@ Sao chép `.env.example` thành `.env` rồi chỉnh. Các biến chính:
 | `OLLAMA_HOST`, `OLLAMA_MODEL` | Dùng LLM chạy local qua [Ollama](https://ollama.com) |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | Dùng Google Gemini (key lấy tại aistudio.google.com/apikey) |
 | `SECRET_KEY` | Khóa ký ưu đãi combo. **Đổi khi triển khai thật.** |
+| `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET` | Thông tin cổng thanh toán VNPay (lấy tại VNPay Merchant Portal) |
+| `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Lưu ảnh (lấy tại cloudinary.com/console) |
 | `SHIPPING_FEE`, `FREE_SHIPPING_THRESHOLD`, `COMBO_DISCOUNT_PERCENT` | Phí ship, ngưỡng freeship, % giảm combo |
 
 Nếu Gemini/Ollama lỗi hoặc tắt, chat tự chuyển sang bộ luật nội bộ (không treo, không báo lỗi cho khách).

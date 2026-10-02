@@ -179,3 +179,21 @@ class InventoryBatchDB(Base):
     received_at = Column(String, nullable=False)
     note = Column(String, nullable=True)
     created_by = Column(String, nullable=True)
+
+
+class CartItemDB(Base):
+    """Giỏ hàng server-side: lưu cho user đã đăng nhập, sync khi login từ thiết bị khác."""
+    __tablename__ = "cart_items"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    product_id = Column(String, nullable=False)
+    size = Column(String, nullable=False)
+    color = Column(String, nullable=False)
+    quantity = Column(Integer, nullable=False, default=1)
+    combo_token = Column(String, nullable=True)  # token phối đồ AI (nếu có)
+    updated_at = Column(String, nullable=False)
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "product_id", "size", "color", name="uq_cart_user_product_size_color"),
+    )

@@ -32,15 +32,18 @@ class Settings(BaseSettings):
     DATABASE_URL: str = f"sqlite:///{DEFAULT_DB_PATH}"
 
     # ---- Cổng thanh toán VNPay Sandbox ----
-    VNPAY_TMN_CODE: str = "2QXUI4J4"
-    VNPAY_HASH_SECRET: str = "RAIAVDAKACNZZCGTRTTGGBJQOXZDZXXX"
+    # Lấy tại VNPay Merchant Portal (sandbox dùng được ngay, xem tài liệu VNPay)
+    VNPAY_TMN_CODE: str = ""
+    VNPAY_HASH_SECRET: str = ""  # PHẢI đặt trong .env — xem .env.example
     VNPAY_URL: str = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
     VNPAY_RETURN_URL: str = "http://127.0.0.1:8000/api/payment/vnpay/return"
 
     # ---- Cloudinary Image Storage ----
-    CLOUDINARY_CLOUD_NAME: str = "jtquct7e"
-    CLOUDINARY_API_KEY: str = "743289557242615"
-    CLOUDINARY_API_SECRET: str = "3g0sbUI_7_NXZZWb-tIk4a4eqew"
+    # Lấy tại cloudinary.com/console
+    # CẢNH BÁO: Nếu bạn từng commit key thật, hãy vào Cloudinary Console và Regenerate API Secret ngay!
+    CLOUDINARY_CLOUD_NAME: str = ""  # ví dụ: your-cloud-name
+    CLOUDINARY_API_KEY: str = ""     # PHẢI đặt trong .env — xem .env.example
+    CLOUDINARY_API_SECRET: str = ""  # PHẢI đặt trong .env — xem .env.example
 
     # ---- AI ----
     # auto: thử Gemini (nếu có key) -> Ollama -> bộ máy luật nội bộ

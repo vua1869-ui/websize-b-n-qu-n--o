@@ -43,6 +43,34 @@ def test_auth_login_invalid_password():
     assert "Tên đăng nhập hoặc mật khẩu" in res.json()["detail"]
 
 
+def test_auth_login_rate_limit():
+    """Sau 5 lần thử sai liên tiếp trong 5 phút -> nhận 429; đăng nhập đúng reset bộ đếm."""
+    import uuid
+    from app.main import _login_fails, _login_key, _login_lock
+
+    # Tạo username ngẫu nhiên để không ảnh hưởng các test khác
+    fake_user = f"noexist_{uuid.uuid4().hex[:6]}"
+
+    # Xóa bộ đếm cũ nếu có (đảm bảo test độc lập)
+    key = _login_key("testclient", fake_user)
+    with _login_lock:
+        _login_fails[key].clear()
+
+    # 5 lần thử sai đầu -> nhận 401 (mật khẩu sai, chưa bị khóa)
+    for i in range(5):
+        r = client.post("/api/auth/login", json={"username": fake_user, "password": "bad"})
+        assert r.status_code in (401, 422), f"Lần {i+1}: Mong 401/422 nhưng nhận {r.status_code}"
+
+    # Lần thứ 6 -> phải nhận 429
+    r6 = client.post("/api/auth/login", json={"username": fake_user, "password": "bad"})
+    assert r6.status_code == 429, f"Mong 429 nhưng nhận {r6.status_code}: {r6.json()}"
+    assert "thử sai quá nhiều lần" in r6.json()["detail"]
+
+    # Đăng nhập đúng với admin (username khác) không bị ảnh hưởng bởi rate-limit của fake_user
+    r_ok = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    assert r_ok.status_code == 200, "Admin vẫn đăng nhập được bình thường"
+
+
 def test_auth_login_user_and_access_control():
     """User thường đăng nhập thành công nhưng không được vào /admin (403)."""
     # 1. Đăng nhập user
