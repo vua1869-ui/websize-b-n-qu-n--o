@@ -66,26 +66,26 @@
   /* ── Typography tokens (shared) ────────────────────────────────── */
   /* heading-page: serif, 2rem */
   .heading-page {
-    @apply font-serif text-h1 font-semibold leading-tight tracking-tight;
+    @apply font-serif text-[1.75rem] font-semibold leading-tight tracking-tight;
   }
   /* heading-section: serif, 1.5rem */
   .heading-section {
-    @apply font-serif text-h2 font-semibold leading-snug;
+    @apply font-serif text-[1.5rem] font-semibold leading-snug;
   }
   /* heading-card: sans, 1.125rem — tên sản phẩm lớn, panel heading */
   .heading-card {
-    @apply font-sans text-h3 font-semibold leading-snug;
+    @apply font-sans text-[1.125rem] font-semibold leading-snug;
   }
   /* heading-panel: sans, 12px uppercase — sidebar/filter tiêu đề nhỏ */
   .heading-panel {
     @apply font-sans text-label font-bold uppercase tracking-[0.07em];
   }
-  /* text-body: 14px */
-  .text-body { @apply text-body leading-relaxed; }
-  /* text-meta: 13px, subdued */
-  .text-meta { @apply text-body-sm leading-snug text-[#666666]; }
-  /* label-sm: 12px, minimum */
-  .label-sm { @apply text-label font-medium; }
+  /* text-body: 16px */
+  .text-body { font-size: 1rem; line-height: 1.625; }
+  /* text-meta: 15px, subdued */
+  .text-meta { font-size: 0.9375rem; line-height: 1.375; color: #666666; }
+  /* label-sm: 14px, minimum */
+  .label-sm { font-size: 0.875rem; line-height: 1.5; font-weight: 500; }
 
   /* ── Scrollbar util ─────────────────────────────────────────────── */
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
