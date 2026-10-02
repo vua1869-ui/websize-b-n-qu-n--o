@@ -17,8 +17,10 @@ const AIStylist = {
       '💼 Tư vấn đồ đi làm thanh lịch', '🥂 Set đồ đi tiệc sang trọng', '🌊 Trang phục đi biển mùa hè',
       '☕ Outfit hẹn hò cuối tuần', '📏 Cao 1m65 nặng 55kg mặc size gì?', '💸 Áo dưới 300k',
     ];
-    U.$('#chat-form').addEventListener('submit', e => { e.preventDefault(); this.sendFromInput(); });
-    U.$('#size-form').addEventListener('submit', e => { e.preventDefault(); this.calcSize(); });
+    const chatForm = U.$('#chat-form');
+    if (chatForm) chatForm.addEventListener('submit', e => { e.preventDefault(); this.sendFromInput(); });
+    const sizeForm = U.$('#size-form');
+    if (sizeForm) sizeForm.addEventListener('submit', e => { e.preventDefault(); this.calcSize(); });
     this.renderSuggestions();
     this.renderMessages();
   },
@@ -85,7 +87,9 @@ const AIStylist = {
   },
 
   renderSuggestions() {
-    U.$('#chat-suggestions').innerHTML = this.state.suggestions.map(s =>
+    const el = U.$('#chat-suggestions');
+    if (!el) return;
+    el.innerHTML = this.state.suggestions.map(s =>
       `<button data-action="chat-suggest" data-text="${U.esc(s.replace(/^\S+\s/u, ''))}" class="chip">${U.esc(s)}</button>`).join('');
   },
 
@@ -111,6 +115,7 @@ const AIStylist = {
 
   renderMessages() {
     const box = U.$('#chat-messages');
+    if (!box) return;
     let html = this.state.messages.map(m => {
       if (m.role === 'user') {
         return `<div class="mb-4 flex justify-end"><div class="chat-bubble-user max-w-[85%] px-4 py-2.5 text-sm shadow-md">${this.format(m.content)}</div></div>`;
@@ -139,7 +144,8 @@ const AIStylist = {
     }
     box.innerHTML = html;
     box.scrollTop = box.scrollHeight;
-    U.$('#chat-send').disabled = this.state.typing;
+    const sendBtn = U.$('#chat-send');
+    if (sendBtn) sendBtn.disabled = this.state.typing;
   },
 
   /* ---------- Tính size ---------- */
