@@ -187,3 +187,4 @@ pip install --upgrade vietnam-provinces
 python scripts/export_locations.py
 ```
 Script sẽ tự động đồng bộ lại toàn bộ mã code, tên gọi chuẩn của Tỉnh/Thành phố và Xã/Phường vào file `app/data/vn_locations.json`.
+sout
