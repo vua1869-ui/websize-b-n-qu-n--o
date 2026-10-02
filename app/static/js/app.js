@@ -1695,8 +1695,9 @@ const App = {
     if (streetEl && !streetEl.value) {
       streetEl.value = me.specific_address || me.street || '';
     }
-    U.$('#co-error').classList.add('hidden');
-    U.$('#co-voucher').value = this.state.voucher || '';
+    U.$('#co-error')?.classList.add('hidden');
+    const coVoucher = U.$('#co-voucher');
+    if (coVoucher) coVoucher.value = this.state.voucher || '';
     this.renderSavedVoucherChips();
     await Promise.all([this.initLocations(), this.initLoyaltyCheckout()]);
     this.renderCheckoutSummary();
@@ -1781,15 +1782,19 @@ const App = {
   },
 
   renderSavedVoucherChips() {
-    U.$('#co-saved-vouchers').innerHTML = this.state.savedVouchers.map(c =>
+    const el = U.$('#co-saved-vouchers');
+    if (!el) return;
+    el.innerHTML = this.state.savedVouchers.map(c =>
       `<button type="button" data-action="use-voucher" data-code="${U.esc(c)}" class="chip">🎟️ ${U.esc(c)}</button>`).join('');
   },
 
   async applyVoucher(silent = false) {
-    const code = U.$('#co-voucher').value.trim().toUpperCase();
+    const voucherEl = U.$('#co-voucher');
+    const code = (voucherEl?.value ?? '').trim().toUpperCase();
     this.state.voucher = code;
     await this.refreshCart();
     const msg = U.$('#co-voucher-msg'), q = this.state.quote;
+    if (!msg) return;
     if (!code) { msg.classList.add('hidden'); return; }
     msg.classList.remove('hidden');
     const ok = q && q.voucher_code === code;
@@ -1800,7 +1805,9 @@ const App = {
 
   renderCheckoutSummary() {
     const q = this.state.quote;
-    U.$('#co-summary').innerHTML = q
+    const summaryEl = U.$('#co-summary');
+    if (!summaryEl) return;
+    summaryEl.innerHTML = q
       ? q.lines.map(l => `<div class="flex justify-between gap-3 text-zinc-600"><span class="truncate">${l.quantity}× ${U.esc(l.name)} <i class="text-zinc-400">(${U.esc(l.size)}, ${U.esc(l.color)})</i></span><span class="flex-shrink-0">${U.vnd(l.line_total)}</span></div>`).join('')
         + '<div class="my-1 border-t border-zinc-200"></div>' + this.summaryRows(q)
       : '<div class="skeleton h-20 rounded-lg"></div>';
@@ -1808,11 +1815,11 @@ const App = {
 
   async submitOrder() {
     const err = U.$('#co-error'), btn = U.$('#co-submit');
-    err.classList.add('hidden');
+    if (err) err.classList.add('hidden');
 
     const provSelect = U.$('#co-province');
     const wardSelect = U.$('#co-ward');
-    const streetInput = U.$('#co-street');
+    const streetInput = U.$('#co-street') || U.$('#co-address');
 
     const provCode = provSelect?.value ? Number(provSelect.value) : null;
     const wardCode = wardSelect?.value ? Number(wardSelect.value) : null;
@@ -1825,19 +1832,18 @@ const App = {
     if (street.length < 3) return this.checkoutError('Vui lòng nhập số nhà, tên đường chi tiết (tối thiểu 3 ký tự)');
 
     const fullAddress = [street, wardName, provName].filter(Boolean).join(', ');
-    if (U.$('#co-address')) U.$('#co-address').value = fullAddress;
 
     const body = {
-      customer_name: U.$('#co-name').value.trim(),
-      customer_phone: U.$('#co-phone').value.trim(),
+      customer_name: (U.$('#co-name')?.value ?? '').trim(),
+      customer_phone: (U.$('#co-phone')?.value ?? '').trim(),
       customer_address: fullAddress,
       province_code: provCode,
       province_name: provName,
       ward_code: wardCode,
       ward_name: wardName,
       specific_address: street || null,
-      customer_note: U.$('#co-note').value.trim() || null,
-      payment_method: (U.$('input[name="payment"]:checked') || {}).value || 'cod',
+      customer_note: (U.$('#co-note')?.value ?? '').trim() || null,
+      payment_method: (U.$('input[name="payment_method"]:checked') || U.$('input[name="payment"]:checked') || {}).value || 'cod',
       items: this.cartPayload(),
       voucher_code: this.state.quote && this.state.quote.voucher_code || null,
       use_points: this.state.usePoints || 0,
@@ -1888,7 +1894,7 @@ const App = {
     } finally { btn.disabled = false; btn.textContent = 'Đặt hàng'; }
   },
 
-  checkoutError(msg) { const el = U.$('#co-error'); el.textContent = msg; el.classList.remove('hidden'); },
+  checkoutError(msg) { const el = U.$('#co-error'); if (!el) return; el.textContent = msg; el.classList.remove('hidden'); },
 
   showSuccess(o) {
     const q = o.quote;
