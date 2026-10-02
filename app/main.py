@@ -128,6 +128,50 @@ def ai_rate_limit(request: Request):
 
 
 # ==========================================
+# Rate-limit cho endpoint đăng nhập (chống brute-force)
+# Tối đa 5 lần thử sai trong 5 phút cho mỗi cặp (IP, username)
+# ==========================================
+_LOGIN_WINDOW_SEC = 300  # 5 phút
+_LOGIN_MAX_FAILS = 5     # tối đa 5 lần sai
+_login_fails: dict = collections.defaultdict(collections.deque)
+_login_lock = threading.Lock()
+
+
+def _login_key(ip: str, username: str) -> str:
+    return f"{ip}|{username.strip().lower()}"
+
+
+def _check_login_rate_limit(ip: str, username: str) -> None:
+    """Raise HTTP 429 nếu quá {_LOGIN_MAX_FAILS} lần thử sai trong {_LOGIN_WINDOW_SEC} giây."""
+    key = _login_key(ip, username)
+    now = time.time()
+    with _login_lock:
+        q = _login_fails[key]
+        # Dọn các lần thử đã quá cửa sổ 5 phút
+        while q and now - q[0] > _LOGIN_WINDOW_SEC:
+            q.popleft()
+        if len(q) >= _LOGIN_MAX_FAILS:
+            raise HTTPException(
+                status_code=429,
+                detail="Bạn đã thử sai quá nhiều lần, vui lòng thử lại sau vài phút"
+            )
+
+
+def _record_login_fail(ip: str, username: str) -> None:
+    """Ghi nhận một lần thử đăng nhập sai."""
+    key = _login_key(ip, username)
+    with _login_lock:
+        _login_fails[key].append(time.time())
+
+
+def _reset_login_fails(ip: str, username: str) -> None:
+    """Reset bộ đếm khi đăng nhập đúng."""
+    key = _login_key(ip, username)
+    with _login_lock:
+        _login_fails[key].clear()
+
+
+# ==========================================
 # Xác thực & Phân quyền (Authentication & RBAC)
 # ==========================================
 def get_current_user_optional(request: Request) -> Optional[User]:
@@ -655,18 +699,23 @@ def auth_register(body: UserRegisterRequest, response: Response):
 
 
 @app.post("/api/auth/login", response_model=AuthResponse)
-def auth_login(body: UserLoginRequest, response: Response):
+def auth_login(body: UserLoginRequest, request: Request, response: Response):
     identifier = body.username or body.username_or_email
     if not identifier:
         raise HTTPException(status_code=422, detail="Vui lòng nhập tên đăng nhập hoặc email")
+    ip = request.client.host if request.client else "unknown"
+    # Kiểm tra rate-limit trước khi xác thực (bảo vệ chống brute-force)
+    _check_login_rate_limit(ip, identifier)
     try:
         user = user_service.authenticate(identifier, body.password)
     except ValueError as e:
         raise HTTPException(status_code=403, detail=str(e))
     if not user:
+        _record_login_fail(ip, identifier)  # ghi nhận lần thử sai
         raise HTTPException(status_code=401, detail="Tên đăng nhập hoặc mật khẩu không chính xác")
     if not user.is_active:
         raise HTTPException(status_code=403, detail="Tài khoản này đã bị tạm khóa bởi quản trị viên")
+    _reset_login_fails(ip, identifier)  # reset bộ đếm khi đăng nhập đúng
     token = user_service.create_session_token(user)
     response.set_cookie(
         key="aura_session",
@@ -718,6 +767,150 @@ def auth_user_orders(user: User = Depends(get_current_user)):
            (o.get("username") == user.username):
             user_orders.append(o)
     return user_orders
+
+
+# ==========================================
+# Giỏ hàng server-side (Cart API)
+# Chỉ hoạt động khi đã đăng nhập. Khi chưa đăng nhập, frontend dùng localStorage như cũ.
+# ==========================================
+def _cart_row_to_dict(row) -> dict:
+    return {
+        "id": row.id,
+        "user_id": row.user_id,
+        "product_id": row.product_id,
+        "size": row.size,
+        "color": row.color,
+        "quantity": row.quantity,
+        "combo_token": row.combo_token,
+        "updated_at": row.updated_at,
+    }
+
+
+@app.get("/api/cart")
+def get_cart(user: User = Depends(get_current_user)):
+    """Lấy toàn bộ giỏ hàng của user đang đăng nhập."""
+    from app.db.models import CartItemDB
+    from app.db.session import get_db_session
+    with get_db_session() as session:
+        items = session.query(CartItemDB).filter(CartItemDB.user_id == user.id).all()
+        return [_cart_row_to_dict(r) for r in items]
+
+
+@app.post("/api/cart")
+def upsert_cart(body: dict, user: User = Depends(get_current_user)):
+    """Thêm mới hoặc cập nhật số lượng một dòng trong giỏ hàng.
+    
+    Body: {product_id, size, color, quantity, combo_token?}
+    Nếu (user_id, product_id, size, color) đã tồn tại -> cập nhật quantity.
+    """
+    import datetime
+    from app.db.models import CartItemDB
+    from app.db.session import get_db_session
+
+    product_id = str(body.get("product_id", "")).strip()
+    size = str(body.get("size", "")).strip()
+    color = str(body.get("color", "")).strip()
+    quantity = int(body.get("quantity", 1))
+    combo_token = body.get("combo_token")
+
+    if not product_id or not size or not color:
+        raise HTTPException(status_code=422, detail="Thiếu thông tin sản phẩm (product_id, size, color)")
+    if quantity <= 0:
+        raise HTTPException(status_code=422, detail="Số lượng phải lớn hơn 0")
+    if quantity > settings.MAX_QTY_PER_LINE:
+        raise HTTPException(status_code=422, detail=f"Mỗi sản phẩm chỉ được đặt tối đa {settings.MAX_QTY_PER_LINE}")
+
+    now_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+    with get_db_session() as session:
+        existing = session.query(CartItemDB).filter(
+            CartItemDB.user_id == user.id,
+            CartItemDB.product_id == product_id,
+            CartItemDB.size == size,
+            CartItemDB.color == color,
+        ).first()
+
+        if existing:
+            existing.quantity = quantity
+            existing.combo_token = combo_token
+            existing.updated_at = now_str
+            session.flush()
+            session.refresh(existing)
+            return _cart_row_to_dict(existing)
+        else:
+            new_item = CartItemDB(
+                user_id=user.id,
+                product_id=product_id,
+                size=size,
+                color=color,
+                quantity=quantity,
+                combo_token=combo_token,
+                updated_at=now_str,
+            )
+            session.add(new_item)
+            session.flush()
+            session.refresh(new_item)
+            return _cart_row_to_dict(new_item)
+
+
+@app.delete("/api/cart/{item_id}")
+def delete_cart_item(item_id: int, user: User = Depends(get_current_user)):
+    """Xóa một dòng khỏi giỏ hàng theo ID."""
+    from app.db.models import CartItemDB
+    from app.db.session import get_db_session
+
+    with get_db_session() as session:
+        item = session.query(CartItemDB).filter(
+            CartItemDB.id == item_id,
+            CartItemDB.user_id == user.id,  # đảm bảo chỉ xóa item của chính mình
+        ).first()
+        if not item:
+            raise HTTPException(status_code=404, detail="Không tìm thấy dòng giỏ hàng")
+        session.delete(item)
+    return {"success": True, "message": f"Đã xóa dòng giỏ hàng #{item_id}"}
+
+
+@app.post("/api/cart/sync")
+def sync_cart(body: dict, user: User = Depends(get_current_user)):
+    """Đồng bộ giỏ hàng từ localStorage lên server khi người dùng đăng nhập.
+    
+    Body: {"items": [{product_id, size, color, quantity, combo_token?}, ...]}
+    Chiến lược merge: nếu dòng đã tồn tại trên server thì giữ nguyên; nếu chưa có thì thêm mới.
+    Không bao giờ ghi đè xóa dữ liệu đang có trên server.
+    """
+    import datetime
+    from app.db.models import CartItemDB
+    from app.db.session import get_db_session
+
+    local_items = body.get("items", [])
+    if not isinstance(local_items, list):
+        raise HTTPException(status_code=422, detail="items phải là danh sách")
+
+    now_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+    added = 0
+    with get_db_session() as session:
+        for it in local_items:
+            pid = str(it.get("product_id", "")).strip()
+            sz = str(it.get("size", "")).strip()
+            cl = str(it.get("color", "")).strip()
+            qty = int(it.get("quantity", 1))
+            token = it.get("combo_token")
+            if not pid or not sz or not cl or qty <= 0:
+                continue
+            qty = min(qty, settings.MAX_QTY_PER_LINE)
+            existing = session.query(CartItemDB).filter(
+                CartItemDB.user_id == user.id,
+                CartItemDB.product_id == pid,
+                CartItemDB.size == sz,
+                CartItemDB.color == cl,
+            ).first()
+            if not existing:
+                session.add(CartItemDB(
+                    user_id=user.id, product_id=pid, size=sz, color=cl,
+                    quantity=qty, combo_token=token, updated_at=now_str,
+                ))
+                added += 1
+    return {"success": True, "added": added, "message": f"Đã đồng bộ {added} sản phẩm từ localStorage lên server"}
+
 
 
 # ==========================================

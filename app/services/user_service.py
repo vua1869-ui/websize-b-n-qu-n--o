@@ -113,15 +113,8 @@ class UserService:
         self._ensure_initialized()
 
     def _ensure_initialized(self):
-        try:
-            with get_db_session() as session:
-                count = session.query(func.count(UserDB.id)).scalar()
-                if count == 0:
-                    from scripts.migrate_to_db import run_migration
-                    run_migration()
-        except Exception as e:
-            # Sẽ thử lại khi query đầu tiên được gọi
-            pass
+        """Không tự chạy migration nữa. Migration thực hiện thủ công bằng: python scripts/migrate_to_db.py"""
+        pass
 
     # ---------- Token Session ----------
     def create_session_token(self, user: User) -> str:

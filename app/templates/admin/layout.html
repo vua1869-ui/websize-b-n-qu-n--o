@@ -21,14 +21,14 @@
     </button>
 
     <a href="/admin" class="flex items-center gap-2">
-      <div class="flex h-7 w-7 items-center justify-center rounded-[2px] bg-white font-serif text-sm font-bold text-black">A</div>
+      <div class="flex h-7 w-7 items-center justify-center rounded-[2px] bg-white font-sans text-sm font-bold text-black">A</div>
       <div class="flex flex-col leading-none">
-        <span class="font-serif text-sm font-bold tracking-tight text-white">AURA Admin</span>
-        <span class="text-[7px] font-semibold uppercase tracking-[0.2em] text-zinc-400">Management</span>
+        <span class="font-sans text-sm font-bold tracking-tight text-white">AURA Admin</span>
+        <span class="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-400">Management</span>
       </div>
     </a>
 
-    <a href="/" target="_blank" class="p-2 -mr-2 text-zinc-300 hover:text-white text-xs font-medium" title="Xem Storefront">
+    <a href="/" target="_blank" class="p-2 -mr-2 text-zinc-300 hover:text-white text-sm font-medium" title="Xem Storefront">
       Store ↗
     </a>
   </header>
@@ -45,10 +45,10 @@
       <!-- Brand & Nút đóng mobile -->
       <div class="flex items-center justify-between pb-5 border-b border-[#27272A]">
         <a href="/admin" class="flex items-center gap-2.5">
-          <div class="flex h-8 w-8 items-center justify-center rounded-[2px] bg-white font-serif text-base font-bold text-black">A</div>
+          <div class="flex h-8 w-8 items-center justify-center rounded-[2px] bg-white font-sans text-base font-bold text-black">A</div>
           <div class="flex flex-col leading-none">
-            <span class="font-serif text-base font-bold tracking-tight text-white">AURA Admin</span>
-            <span class="mt-0.5 text-[8px] font-semibold uppercase tracking-[0.25em] text-zinc-400">Control Center</span>
+            <span class="font-sans text-base font-bold tracking-tight text-white">AURA Admin</span>
+            <span class="mt-0.5 text-sm font-semibold uppercase tracking-[0.25em] text-zinc-400">Control Center</span>
           </div>
         </a>
         <button type="button" id="admin-mobile-close-btn" class="admin-close-btn p-1.5 text-zinc-400 hover:text-white" aria-label="Đóng menu">
@@ -59,12 +59,12 @@
       </div>
 
       <!-- Trạng thái Stylist AI -->
-      <div class="mt-4 flex items-center justify-between rounded-[2px] bg-[#27272A]/50 px-3 py-1.5 text-[11px] text-zinc-300 border border-[#27272A]">
+      <div class="mt-4 flex items-center justify-between rounded-[2px] bg-[#27272A]/50 px-3 py-1.5 text-sm text-zinc-300 border border-[#27272A]">
         <span class="flex items-center gap-2">
           <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
           <span>AI Stylist Service</span>
         </span>
-        <span class="text-[10px] font-mono text-emerald-400 font-semibold">Active</span>
+        <span class="text-sm font-mono text-emerald-400 font-semibold">Active</span>
       </div>
 
       <!-- Danh sách Navigation dọc -->
@@ -83,7 +83,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25c-.669 0-1.188-.578-1.119-1.243l1.263-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
           </svg>
           <span class="flex-1">Sản phẩm</span>
-          <span class="rounded-[2px] bg-white/10 px-1.5 py-0.5 text-[10px] font-mono text-white">500</span>
+          <span class="rounded-[2px] bg-white/10 px-1.5 py-0.5 text-sm font-mono text-white">500</span>
         </a>
 
         <!-- 3. Nhập kho -->
@@ -108,7 +108,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
           </svg>
           <span class="flex-1">Đánh giá & Xu hướng</span>
-          <span class="rounded-[2px] bg-white/10 px-1.5 py-0.5 text-[10px] font-mono text-white">Live</span>
+          <span class="rounded-[2px] bg-white/10 px-1.5 py-0.5 text-sm font-mono text-white">Live</span>
         </a>
 
         <!-- 6. Báo cáo lãi/lỗ -->
@@ -139,17 +139,17 @@
 
     <!-- PHẦN DƯỚI: THÔNG TIN ADMIN & ĐĂNG XUẤT -->
     <div class="pt-4 border-t border-[#27272A] space-y-2">
-      <div class="px-2 py-1.5 flex items-center justify-between text-xs">
+      <div class="px-2 py-1.5 flex items-center justify-between text-sm">
         <div class="flex items-center gap-2 min-w-0">
-          <div class="h-6 w-6 rounded-full bg-white flex items-center justify-center text-black font-bold text-[10px]">
+          <div class="h-6 w-6 rounded-full bg-white flex items-center justify-center text-black font-bold text-sm">
             {{ (user.username if user else 'A')[0]|upper }}
           </div>
           <span class="truncate font-medium text-white">@{{ user.username if user else 'admin' }}</span>
         </div>
-        <span class="rounded-[2px] bg-[#27272A] px-1.5 py-0.5 text-[9px] uppercase font-semibold text-zinc-400">Admin</span>
+        <span class="rounded-[2px] bg-[#27272A] px-1.5 py-0.5 text-sm uppercase font-semibold text-zinc-400">Admin</span>
       </div>
 
-      <button id="admin-logout-btn" class="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-zinc-400 hover:text-rose-400 hover:bg-[#27272A] rounded-[2px] transition" title="Đăng xuất khỏi hệ thống">
+      <button id="admin-logout-btn" class="w-full flex items-center gap-2.5 px-3 py-2 text-sm font-medium text-zinc-400 hover:text-rose-400 hover:bg-[#27272A] rounded-[2px] transition" title="Đăng xuất khỏi hệ thống">
         <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
         </svg>
@@ -227,7 +227,7 @@
       const container = document.getElementById("toast-container");
       const el = document.createElement("div");
       const isSuccess = type === "success";
-      el.className = `pointer-events-auto flex items-center gap-2 rounded-[2px] px-4 py-3 text-xs font-semibold text-white shadow-lg transition-all duration-300 transform translate-y-4 opacity-0 ${
+      el.className = `pointer-events-auto flex items-center gap-2 rounded-[2px] px-4 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 transform translate-y-4 opacity-0 ${
         isSuccess ? "bg-[#18181B] border border-white/20" : "bg-rose-900 border border-rose-500/20"
       }`;
       el.innerHTML = `

@@ -37,7 +37,7 @@ const AIStylist = {
     const p = id && App.state.catalog[id];
     if (!p) { box.classList.add('hidden'); return; }
     box.innerHTML = `
-      <div class="mb-1 flex items-center justify-between rounded-xl border border-violet-200 bg-violet-50 p-2 text-xs">
+      <div class="mb-1 flex items-center justify-between rounded-xl border border-violet-200 bg-violet-50 p-2 text-sm">
         <div class="flex min-w-0 items-center gap-2">
           ${U.img(p.images[0], p.name, 'h-10 w-8 flex-shrink-0 rounded object-cover')}
           <div class="min-w-0"><span class="text-zinc-500">Đang tư vấn cho:</span><strong class="line-clamp-1 block text-zinc-900">${U.esc(p.name)}</strong></div>
@@ -102,8 +102,8 @@ const AIStylist = {
       <div class="flex gap-2 rounded-xl border border-zinc-200 bg-white p-2 transition hover:border-violet-300">
         ${U.img(p.images[0], p.name, 'h-16 w-12 flex-shrink-0 rounded-lg bg-zinc-100 object-cover')}
         <div class="flex min-w-0 flex-1 flex-col justify-between">
-          <div><h4 class="line-clamp-2 text-[11px] font-semibold text-zinc-900">${U.esc(p.name)}</h4>
-            <span class="text-[11px] font-bold text-violet-700">${U.vnd(p.final_price)}</span></div>
+          <div><h4 class="line-clamp-2 text-sm font-semibold text-zinc-900">${U.esc(p.name)}</h4>
+            <span class="text-sm font-bold text-violet-700">${U.vnd(p.final_price)}</span></div>
           <button data-action="quickview" data-id="${p.id}" ${p.in_stock ? '' : 'disabled'} class="btn btn-dark btn-sm mt-1 !py-1">${p.in_stock ? 'Chọn size' : 'Hết hàng'}</button>
         </div>
       </div>`;
@@ -117,23 +117,23 @@ const AIStylist = {
       }
       return `
       <div class="mb-4 flex items-start gap-2.5">
-        <div class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-xs text-white shadow">✨</div>
+        <div class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-sm text-white shadow">✨</div>
         <div class="min-w-0 max-w-[90%] flex-1">
           <div class="chat-bubble-ai px-4 py-3 text-sm leading-relaxed shadow-sm ${m.error ? '!border-red-200 !bg-red-50' : ''}">
             ${this.format(m.content)}
             ${m.products && m.products.length ? `
               <div class="mt-3 border-t border-zinc-200/70 pt-3">
-                <span class="mb-2 block text-[11px] font-bold uppercase tracking-wider text-zinc-500">Sản phẩm gợi ý</span>
+                <span class="mb-2 block text-sm font-bold uppercase tracking-wider text-zinc-500">Sản phẩm gợi ý</span>
                 <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">${m.products.map(p => this.productMini(p)).join('')}</div>
               </div>` : ''}
           </div>
-          ${m.engine ? `<div class="ml-1 mt-1 flex items-center gap-1.5 text-[10px] text-zinc-400"><span class="h-1.5 w-1.5 rounded-full bg-violet-500"></span>${U.esc(m.engine)}</div>` : ''}
+          ${m.engine ? `<div class="ml-1 mt-1 flex items-center gap-1.5 text-sm text-zinc-400"><span class="h-1.5 w-1.5 rounded-full bg-violet-500"></span>${U.esc(m.engine)}</div>` : ''}
         </div>
       </div>`;
     }).join('');
     if (this.state.typing) {
-      html += `<div class="mb-4 flex items-center gap-2.5"><div class="flex h-7 w-7 animate-pulse items-center justify-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-xs text-white">✨</div>
-        <div class="chat-bubble-ai flex items-center gap-2 px-4 py-2.5 text-xs text-zinc-500">
+      html += `<div class="mb-4 flex items-center gap-2.5"><div class="flex h-7 w-7 animate-pulse items-center justify-center rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 text-sm text-white">✨</div>
+        <div class="chat-bubble-ai flex items-center gap-2 px-4 py-2.5 text-sm text-zinc-500">
           <span class="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-600"></span><span class="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-600 [animation-delay:.2s]"></span><span class="h-1.5 w-1.5 animate-bounce rounded-full bg-violet-600 [animation-delay:.4s]"></span>
           <span class="ml-1 font-medium">Stylist đang soạn gợi ý...</span></div></div>`;
     }
@@ -148,7 +148,7 @@ const AIStylist = {
     const p = productId && App.state.catalog[productId];
     const box = U.$('#size-product');
     if (p) {
-      box.innerHTML = `<div class="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 p-2 text-xs">
+      box.innerHTML = `<div class="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 p-2 text-sm">
         ${U.img(p.images[0], p.name, 'h-10 w-8 rounded object-cover')}
         <div class="min-w-0"><div class="line-clamp-1 font-bold">${U.esc(p.name)}</div>
         <div class="text-zinc-500">Size đang bán: ${p.sizes.map(U.esc).join(', ')}</div></div></div>`;
@@ -183,14 +183,14 @@ const AIStylist = {
       res.innerHTML = `
       <div class="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50 p-4">
         <div class="flex items-center justify-between gap-3">
-          <div><span class="text-[11px] font-bold uppercase tracking-wider text-violet-700">Size khuyến nghị</span>
-            <div class="mt-0.5 break-words text-3xl font-extrabold text-violet-900">${U.esc(d.recommended_size)}</div>
-            ${d.alternative_size ? `<div class="text-[11px] text-zinc-600">Size sát bên cân nhắc: <b>${U.esc(d.alternative_size)}</b></div>` : ''}</div>
-          <div class="text-right text-[11px] text-zinc-500">BMI <b>${d.bmi}</b><br>${U.esc(d.bmi_category)}</div>
+          <div><span class="text-sm font-bold uppercase tracking-wider text-violet-700">Size khuyến nghị</span>
+            <div class="mt-0.5 break-words text-3xl font-bold text-violet-900">${U.esc(d.recommended_size)}</div>
+            ${d.alternative_size ? `<div class="text-sm text-zinc-600">Size sát bên cân nhắc: <b>${U.esc(d.alternative_size)}</b></div>` : ''}</div>
+          <div class="text-right text-sm text-zinc-500">BMI <b>${d.bmi}</b><br>${U.esc(d.bmi_category)}</div>
         </div>
-        <p class="mt-3 border-t border-violet-200/60 pt-2.5 text-xs leading-relaxed text-zinc-700">${U.esc(d.fit_advice)}</p>
-        ${d.note ? `<p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">${U.esc(d.note)}</p>` : ''}
-        <div class="mt-3 grid grid-cols-3 gap-2 text-center text-[11px]">
+        <p class="mt-3 border-t border-violet-200/60 pt-2.5 text-sm leading-relaxed text-zinc-700">${U.esc(d.fit_advice)}</p>
+        ${d.note ? `<p class="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-800">${U.esc(d.note)}</p>` : ''}
+        <div class="mt-3 grid grid-cols-3 gap-2 text-center text-sm">
           ${Object.entries(d.measurements_estimated).map(([k, v]) => `<div class="rounded-lg border border-violet-100 bg-white/80 p-2"><span class="block text-zinc-400">${U.esc(k)}</span><strong class="mt-0.5 block font-semibold text-zinc-800">${U.esc(v)}</strong></div>`).join('')}
         </div>
         ${qvOpen ? `<button data-action="size-apply" data-size="${U.esc(d.recommended_size)}" class="btn btn-ai mt-3 w-full">Chọn size ${U.esc(d.recommended_size)} cho sản phẩm này</button>` : ''}
@@ -238,34 +238,34 @@ const AIStylist = {
     U.$('#outfit-body').innerHTML = `
     <div class="p-5 sm:p-6">
       <div class="flex items-start justify-between gap-3 border-b border-zinc-100 pb-4">
-        <div><span class="mb-1 inline-block rounded-full bg-violet-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-violet-800">AI Curated Look</span>
+        <div><span class="mb-1 inline-block rounded-full bg-violet-100 px-2.5 py-0.5 text-sm font-bold uppercase tracking-wider text-violet-800">AI Curated Look</span>
           <h2 class="text-xl font-bold text-zinc-900">${U.esc(d.outfit_name)}</h2>
-          <p class="mt-1 text-xs text-zinc-500">${U.esc(d.style_concept)}</p></div>
+          <p class="mt-1 text-sm text-zinc-500">${U.esc(d.style_concept)}</p></div>
         <button data-action="close-modal" data-target="outfit-modal" class="icon-btn flex-shrink-0" aria-label="Đóng">✕</button>
       </div>
       ${o.productId ? '' : `<div class="mt-3 space-y-2">
         <div class="no-scrollbar flex gap-2 overflow-x-auto">${chip(this.OCCASIONS, o.occasion, 'outfit-occasion', 'occasion')}</div>
-        <div class="flex items-center gap-2 text-xs text-zinc-500">Dành cho ${chip(this.GENDERS, o.gender, 'outfit-gender', 'gender')}</div></div>`}
-      <div class="mt-3 flex items-start gap-2.5 rounded-xl border border-violet-100 bg-violet-50/60 p-3 text-xs leading-relaxed text-zinc-700">
+        <div class="flex items-center gap-2 text-sm text-zinc-500">Dành cho ${chip(this.GENDERS, o.gender, 'outfit-gender', 'gender')}</div></div>`}
+      <div class="mt-3 flex items-start gap-2.5 rounded-xl border border-violet-100 bg-violet-50/60 p-3 text-sm leading-relaxed text-zinc-700">
         <span class="text-base">💡</span><div><strong>Lời khuyên phối đồ:</strong> ${U.esc(d.style_tip)}</div></div>
 
       <div class="mt-5 grid grid-cols-2 gap-3 ${({ 1: 'sm:grid-cols-1', 2: 'sm:grid-cols-2', 3: 'sm:grid-cols-3' })[d.items.length] || 'sm:grid-cols-4'}">
         ${d.items.map((it, i) => `
         <div class="relative flex flex-col justify-between rounded-xl border border-zinc-200 bg-zinc-50 p-2.5">
-          <span class="absolute left-2 top-2 z-10 rounded bg-zinc-900 px-2 py-0.5 text-[10px] font-semibold text-white">${o.productId && i === 0 ? 'Món của bạn' : 'Món #' + (i + 1)}</span>
+          <span class="absolute left-2 top-2 z-10 rounded bg-zinc-900 px-2 py-0.5 text-sm font-semibold text-white">${o.productId && i === 0 ? 'Món của bạn' : 'Món #' + (i + 1)}</span>
           <div class="mb-2 aspect-[3/4] overflow-hidden rounded-lg bg-white">${U.img(it.images[0], it.name, 'h-full w-full object-cover')}</div>
-          <div><span class="text-[10px] uppercase tracking-wider text-zinc-400">${U.esc(it.category_name)}</span>
-            <h3 class="mt-0.5 line-clamp-2 text-xs font-bold text-zinc-900">${U.esc(it.name)}</h3>
-            <div class="mt-1 text-xs font-bold text-violet-700">${U.vnd(it.final_price)}</div></div>
+          <div><span class="text-sm uppercase tracking-wider text-zinc-400">${U.esc(it.category_name)}</span>
+            <h3 class="mt-0.5 line-clamp-2 text-sm font-bold text-zinc-900">${U.esc(it.name)}</h3>
+            <div class="mt-1 text-sm font-bold text-violet-700">${U.vnd(it.final_price)}</div></div>
         </div>`).join('')}
       </div>
 
       <div class="mt-5 flex flex-col items-center justify-between gap-4 rounded-xl bg-zinc-900 p-4 text-white sm:flex-row">
         <div>
-          <span class="text-xs text-zinc-400 line-through">Tổng lẻ: ${U.vnd(d.total_price)}</span>
+          <span class="text-sm text-zinc-400 line-through">Tổng lẻ: ${U.vnd(d.total_price)}</span>
           <div class="mt-0.5 flex flex-wrap items-baseline gap-2">
             <span class="text-xl font-bold">${U.vnd(d.discounted_combo_price)}</span>
-            <span class="rounded-full bg-emerald-900/60 px-2 py-0.5 text-xs font-semibold text-emerald-300">Tiết kiệm ${U.vnd(saved)} (${d.discount_percentage}%)</span>
+            <span class="rounded-full bg-emerald-900/60 px-2 py-0.5 text-sm font-semibold text-emerald-300">Tiết kiệm ${U.vnd(saved)} (${d.discount_percentage}%)</span>
           </div>
         </div>
         <div class="flex w-full gap-2 sm:w-auto">
@@ -273,7 +273,7 @@ const AIStylist = {
           <button id="outfit-add" data-action="outfit-add" class="btn btn-ai flex-1 uppercase sm:flex-none">🛒 Thêm trọn bộ</button>
         </div>
       </div>
-      <p class="mt-2 text-center text-[11px] text-zinc-400">Giảm ${d.discount_percentage}% được áp dụng tự động trong giỏ hàng khi đủ bộ.</p>
+      <p class="mt-2 text-center text-sm text-zinc-400">Giảm ${d.discount_percentage}% được áp dụng tự động trong giỏ hàng khi đủ bộ.</p>
     </div>`;
   },
 

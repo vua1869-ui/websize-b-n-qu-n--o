@@ -1,0 +1,253 @@
+<!-- VERTICAL SIDEBAR FILTER TOOLBAR (Coolmate Style) -->
+<aside class="catalog-filter-sidebar w-full lg:w-64 shrink-0 bg-white pr-0 lg:pr-6 border-r-0 lg:border-r border-[#E5E5E5] text-sm font-sans">
+  
+  <!-- 1. TOTAL RESULTS COUNTER -->
+  <div class="filter-header pb-4 mb-4 border-b border-[#E5E5E5] flex items-center justify-between">
+    <span id="products-count" class="text-sm font-semibold text-[#666666]">
+      {{ products|length }} kết quả
+    </span>
+    <button data-action="reset-filters" class="text-sm font-medium text-[#111111] hover:underline underline-offset-2">
+      Xóa tất cả
+    </button>
+  </div>
+
+  <!-- FILTER ACCORDIONS -->
+  <div class="filter-accordion-group space-y-4">
+
+    <!-- ACCORDION: KÍCH THƯỚC (SIZE) - Open by Default -->
+    <details class="filter-accordion-item group border-b border-[#E5E5E5] pb-4" open>
+      <summary class="flex items-center justify-between cursor-pointer font-bold text-[#333333] text-sm py-1 select-none">
+        <span>Kích thước</span>
+        <span class="transition-transform group-open:rotate-180 text-sm text-[#888888]">^</span>
+      </summary>
+      
+      <!-- Size Option Rectangular Boxes Grid (XS, S, M, L, XL, 2XL, 3XL) -->
+      <div class="mt-3 size-box-grid">
+        {% for size_opt in ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL'] %}
+        <button type="button" data-action="filter-size" data-size="{{ size_opt }}"
+                class="filter-size-btn flex items-center justify-center h-9 rounded-md border border-[#E0E0E0] bg-white font-medium text-sm text-[#333333] hover:border-[#111111] hover:bg-[#F9F9F9] transition">
+          {{ size_opt }}
+        </button>
+        {% endfor %}
+      </div>
+    </details>
+
+    <!-- ACCORDION: MÀU SẮC (COLOR) -->
+    <details class="filter-accordion-item group border-b border-[#E5E5E5] pb-4" open>
+      <summary class="flex items-center justify-between cursor-pointer font-bold text-[#333333] text-sm py-1 select-none">
+        <span>Màu sắc</span>
+        <span class="transition-transform group-open:rotate-180 text-sm text-[#888888]">^</span>
+      </summary>
+      <div class="mt-3 flex flex-wrap gap-2.5">
+        {% set colors = [
+          {'name': 'Hồng', 'hex': '#F4B5C1'},
+          {'name': 'Vàng', 'hex': '#FDF0B0'},
+          {'name': 'Xanh dương', 'hex': '#275B8E'},
+          {'name': 'Đen', 'hex': '#1C1C1E'},
+          {'name': 'Trắng', 'hex': '#FFFFFF'},
+          {'name': 'Navy', 'hex': '#152238'},
+          {'name': 'Kem', 'hex': '#FDF6E3'},
+          {'name': 'Xanh lá', 'hex': '#A3D9A5'}
+        ] %}
+        {% for c in colors %}
+        <button type="button" data-action="filter-color" data-color="{{ c.name }}"
+                title="{{ c.name }}"
+                class="filter-color-btn h-7 w-7 rounded-full border border-[#D5D2CC] transition hover:scale-110 shadow-xs relative flex items-center justify-center"
+                style="background-color: {{ c.hex }};">
+        </button>
+        {% endfor %}
+      </div>
+    </details>
+
+    <!-- ACCORDION: GIÁ (PRICE) -->
+    <details class="filter-accordion-item group border-b border-[#E5E5E5] pb-4" open>
+      <summary class="flex items-center justify-between cursor-pointer font-bold text-[#333333] text-sm py-1 select-none">
+        <span>Giá</span>
+        <span class="transition-transform group-open:rotate-180 text-sm text-[#888888]">^</span>
+      </summary>
+      <div class="mt-3 space-y-2 text-sm text-[#555555]">
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="radio" name="price_filter_radio" value="" checked data-action="filter-price-range" class="accent-black" />
+          <span>Tất cả mức giá</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="radio" name="price_filter_radio" value="0-200000" data-action="filter-price-range" class="accent-black" />
+          <span>Dưới 200.000đ</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="radio" name="price_filter_radio" value="200000-400000" data-action="filter-price-range" class="accent-black" />
+          <span>200.000đ – 400.000đ</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="radio" name="price_filter_radio" value="400000-" data-action="filter-price-range" class="accent-black" />
+          <span>Trên 400.000đ</span>
+        </label>
+      </div>
+    </details>
+
+    <!-- ACCORDION: CHẤT LIỆU (MATERIAL) -->
+    <details class="filter-accordion-item group border-b border-[#E5E5E5] pb-4">
+      <summary class="flex items-center justify-between cursor-pointer font-bold text-[#333333] text-sm py-1 select-none">
+        <span>Chất liệu</span>
+        <span class="transition-transform group-open:rotate-180 text-sm text-[#888888]">^</span>
+      </summary>
+      <div class="mt-3 space-y-2 text-sm text-[#555555]">
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="cotton" data-action="filter-material" class="accent-black rounded-sm" />
+          <span>Cotton thun cao cấp</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="poly" data-action="filter-material" class="accent-black rounded-sm" />
+          <span>Poly Quick-Dry</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="linen" data-action="filter-material" class="accent-black rounded-sm" />
+          <span>Linen thoáng khí</span>
+        </label>
+      </div>
+    </details>
+
+    <!-- ACCORDION: PHÙ HỢP VỚI (OCCASION) -->
+    <details class="filter-accordion-item group border-b border-[#E5E5E5] pb-4">
+      <summary class="flex items-center justify-between cursor-pointer font-bold text-[#333333] text-sm py-1 select-none">
+        <span>Phù hợp với</span>
+        <span class="transition-transform group-open:rotate-180 text-sm text-[#888888]">^</span>
+      </summary>
+      <div class="mt-3 space-y-2 text-sm text-[#555555]">
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="the_thao" data-action="filter-occasion" class="accent-black rounded-sm" />
+          <span>Tập thể thao & Chạy bộ</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="di_choi" data-action="filter-occasion" class="accent-black rounded-sm" />
+          <span>Đi chơi & Dạo phố</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="cong_so" data-action="filter-occasion" class="accent-black rounded-sm" />
+          <span>Đi làm & Công sở</span>
+        </label>
+      </div>
+    </details>
+
+    <!-- ACCORDION: TÍNH NĂNG (FEATURES) -->
+    <details class="filter-accordion-item group border-b border-[#E5E5E5] pb-4">
+      <summary class="flex items-center justify-between cursor-pointer font-bold text-[#333333] text-sm py-1 select-none">
+        <span>Tính năng</span>
+        <span class="transition-transform group-open:rotate-180 text-sm text-[#888888]">^</span>
+      </summary>
+      <div class="mt-3 space-y-2 text-sm text-[#555555]">
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="tham_hut" class="accent-black rounded-sm" />
+          <span>Thấm hút mồ hôi siêu tốc</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="co_gian" class="accent-black rounded-sm" />
+          <span>Co giãn 4 chiều linh hoạt</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="nhanh_kho" class="accent-black rounded-sm" />
+          <span>Nhanh khô Fast-Dry</span>
+        </label>
+      </div>
+    </details>
+
+    <!-- ACCORDION: KIỂU DÁNG (STYLE) -->
+    <details class="filter-accordion-item group border-b border-[#E5E5E5] pb-4">
+      <summary class="flex items-center justify-between cursor-pointer font-bold text-[#333333] text-sm py-1 select-none">
+        <span>Kiểu dáng</span>
+        <span class="transition-transform group-open:rotate-180 text-sm text-[#888888]">^</span>
+      </summary>
+      <div class="mt-3 space-y-2 text-sm text-[#555555]">
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="slimfit" class="accent-black rounded-sm" />
+          <span>Slimfit (Vừa vặn ôm cơ thể)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="regular" class="accent-black rounded-sm" />
+          <span>Regular (Tiêu chuẩn thoải mái)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="oversize" class="accent-black rounded-sm" />
+          <span>Oversize (Rộng rãi trẻ trung)</span>
+        </label>
+      </div>
+    </details>
+
+    <!-- ACCORDION: MÔN THỂ THAO -->
+    <details class="filter-accordion-item group border-b border-[#E5E5E5] pb-4">
+      <summary class="flex items-center justify-between cursor-pointer font-bold text-[#333333] text-sm py-1 select-none">
+        <span>Môn thể thao</span>
+        <span class="transition-transform group-open:rotate-180 text-sm text-[#888888]">^</span>
+      </summary>
+      <div class="mt-3 space-y-2 text-sm text-[#555555]">
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="chay_bo" class="accent-black rounded-sm" />
+          <span>Chạy bộ (Running)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="pickleball" class="accent-black rounded-sm" />
+          <span>Pickleball & Tennis</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="gym" class="accent-black rounded-sm" />
+          <span>Gym & Fitness</span>
+        </label>
+      </div>
+    </details>
+
+    <!-- ACCORDION: CÔNG NGHỆ -->
+    <details class="filter-accordion-item group border-b border-[#E5E5E5] pb-4">
+      <summary class="flex items-center justify-between cursor-pointer font-bold text-[#333333] text-sm py-1 select-none">
+        <span>Công nghệ</span>
+        <span class="transition-transform group-open:rotate-180 text-sm text-[#888888]">^</span>
+      </summary>
+      <div class="mt-3 space-y-2 text-sm text-[#555555]">
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="vital_seamless" class="accent-black rounded-sm" />
+          <span>Vital Seamless (Không đường may)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="cooltech" class="accent-black rounded-sm" />
+          <span>Cooltech Làm mát tức thì</span>
+        </label>
+      </div>
+    </details>
+
+    <!-- ACCORDION: HOẠ TIẾT -->
+    <details class="filter-accordion-item group border-b border-[#E5E5E5] pb-4">
+      <summary class="flex items-center justify-between cursor-pointer font-bold text-[#333333] text-sm py-1 select-none">
+        <span>Hoạ tiết</span>
+        <span class="transition-transform group-open:rotate-180 text-sm text-[#888888]">^</span>
+      </summary>
+      <div class="mt-3 space-y-2 text-sm text-[#555555]">
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="tron" class="accent-black rounded-sm" />
+          <span>Trơn tối giản (Basic)</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="graphic" class="accent-black rounded-sm" />
+          <span>Graphic Rainbow / In hình</span>
+        </label>
+      </div>
+    </details>
+
+    <!-- ACCORDION: LOẠI VẢI -->
+    <details class="filter-accordion-item group border-b border-[#E5E5E5] pb-4">
+      <summary class="flex items-center justify-between cursor-pointer font-bold text-[#333333] text-sm py-1 select-none">
+        <span>Loại vải</span>
+        <span class="transition-transform group-open:rotate-180 text-sm text-[#888888]">^</span>
+      </summary>
+      <div class="mt-3 space-y-2 text-sm text-[#555555]">
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="vai_thun" class="accent-black rounded-sm" />
+          <span>Vải thun 4 chiều</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer hover:text-black">
+          <input type="checkbox" value="vai_det_kim" class="accent-black rounded-sm" />
+          <span>Vải dệt kim cao cấp</span>
+        </label>
+      </div>
+    </details>
+
+  </div>
+</aside>

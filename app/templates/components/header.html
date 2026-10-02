@@ -1,0 +1,118 @@
+<!-- TOP UTILITY STRIP -->
+<div class="top-utility-bar bg-[#F5F5F5] border-b border-[#E5E5E5] text-sm text-[#666666] py-1.5 px-4 sm:px-6 lg:px-10 2xl:px-16 font-sans">
+  <div class="mx-auto max-w-[1600px] flex items-center justify-between">
+    <!-- Left utility links -->
+    <div class="flex items-center gap-4">
+      <a href="/" class="hover:text-black font-semibold transition">VỀ AURA STUDIO</a>
+      <span class="text-[#CCCCCC]">|</span>
+      <a href="/products?sort=newest" class="hover:text-black font-semibold transition">BỘ SƯU TẬP MỚI</a>
+      <span class="text-[#CCCCCC]">|</span>
+      <a href="/products" class="hover:text-black font-semibold transition">CARE&SHARE</a>
+    </div>
+    <!-- Right utility links -->
+    <div class="hidden md:flex items-center gap-4">
+      <a href="#" class="flex items-center gap-1 hover:text-black transition">
+        <span class="text-amber-500">★</span> <span class="font-semibold">AURA Club</span>
+      </a>
+      <a href="/products" class="hover:text-black transition">Cửa hàng</a>
+      <a href="#" class="hover:text-black transition">Blog</a>
+      <a href="#" class="hover:text-black transition">CSKH</a>
+      {% if user %}
+        <a href="/profile" class="font-semibold text-[#111111] hover:underline">Tài khoản ({{ user.full_name or user.username }})</a>
+      {% else %}
+        <a href="/login" class="font-semibold text-[#111111] hover:underline">Đăng nhập</a>
+      {% endif %}
+      <div class="flex items-center gap-1 cursor-pointer hover:text-black">
+        <span>🇻🇳</span> <span class="font-semibold">VN</span> <span>∨</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN STICKY TOP HEADER -->
+<header class="main-top-header sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E5E5E5] shadow-xs">
+  <div class="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10 2xl:px-16 h-16 flex items-center justify-between gap-4">
+    
+    <!-- Mobile hamburger menu button -->
+    <button type="button" id="mobile-menu-open-btn" data-action="open-mobile-menu" class="lg:hidden p-2 text-[#111111] hover:text-black focus:outline-none" aria-label="Mở menu điều hướng">
+      <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+      </svg>
+    </button>
+
+    <!-- LOGO (AURA STUDIO: Bolt Icon + AURA STUDIO typography) -->
+    <a href="/" class="flex items-center gap-2 shrink-0 group">
+      <div class="h-8 w-8 rounded-full bg-[#111111] text-white flex items-center justify-center font-bold text-lg group-hover:scale-105 transition-transform">
+        ⚡
+      </div>
+      <div class="flex flex-col leading-none">
+        <span class="font-bold text-xl tracking-tight text-[#111111] uppercase font-sans">AURA STUDIO</span>
+      </div>
+    </a>
+
+    <!-- CENTER CATEGORY NAVBAR (Desktop) -->
+    <nav class="hidden lg:flex items-center gap-6 text-sm font-bold uppercase tracking-wider text-[#111111]">
+      <a href="/products?sort=newest" class="relative group py-2 hover:text-black transition {% if selected_category == 'new' %}text-black border-b-2 border-black{% endif %}">
+        NEW
+        <span class="absolute -top-3 -right-3 rounded-full bg-red-600 px-1.5 py-0.2 text-sm font-bold text-white uppercase tracking-normal">HOT</span>
+      </a>
+      <a href="/products?gender=nam" class="py-2 hover:text-black transition {% if selected_gender == 'nam' %}border-b-2 border-black font-bold{% endif %}">
+        NAM
+      </a>
+      <a href="/products?gender=nu" class="py-2 hover:text-black transition {% if selected_gender == 'nu' or active_page == 'products' %}border-b-2 border-black font-bold{% endif %}">
+        NỮ
+      </a>
+      <a href="/products?category=the_thao" class="py-2 hover:text-black transition {% if selected_category == 'the_thao' %}border-b-2 border-black font-bold{% endif %}">
+        THỂ THAO
+      </a>
+      <a href="/products?category=phu_kien" class="py-2 hover:text-black transition {% if selected_category == 'phu_kien' %}border-b-2 border-black font-bold{% endif %}">
+        PHỤ KIỆN
+      </a>
+      <a href="/products?category=flash_sale" class="relative py-2 text-red-600 font-bold hover:text-red-700 transition">
+        <span class="absolute -top-3 left-0 text-sm text-red-600 font-bold">-50%</span>
+        SALE
+      </a>
+    </nav>
+
+    <!-- RIGHT SECTION: SEARCH BAR + ACCOUNT + CART -->
+    <div class="flex items-center gap-3">
+      
+      <!-- Top Search Form Input (Rounded Pill shape like Coolmate) -->
+      <form id="header-search-form" action="/products" method="GET" class="relative w-44 sm:w-60 md:w-72" autocomplete="off">
+        <input type="text" name="search" id="header-search-input"
+               value="{{ search_query if search_query is defined else '' }}"
+               placeholder="Tìm kiếm..."
+               class="w-full rounded-full border border-[#D5D2CC] bg-[#F7F7F7] px-4 py-2 pr-9 text-sm text-[#111111] outline-none transition focus:bg-white focus:border-[#111111] focus:ring-1 focus:ring-[#111111]" />
+        <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#666666] hover:text-black" aria-label="Tìm kiếm">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
+      </form>
+
+      <!-- Account Icon Button -->
+      {% if user %}
+        <a href="/profile" class="p-2 text-[#111111] hover:text-black transition" title="Tài khoản cá nhân" aria-label="Tài khoản">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+          </svg>
+        </a>
+      {% else %}
+        <a href="/login" class="p-2 text-[#111111] hover:text-black transition" title="Đăng nhập" aria-label="Đăng nhập">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+          </svg>
+        </a>
+      {% endif %}
+
+      <!-- Shopping Cart Button with Counter Badge -->
+      <button type="button" data-action="open-cart" class="relative p-2 text-[#111111] hover:text-black transition" aria-label="Giỏ hàng">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25c-.669 0-1.188-.578-1.119-1.243l1.263-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+        </svg>
+        <span class="cart-badge absolute top-0.5 right-0.5 hidden h-4 min-w-4 items-center justify-center rounded-full bg-black px-1 text-sm font-bold text-white">0</span>
+      </button>
+
+    </div>
+  </div>
+</header>

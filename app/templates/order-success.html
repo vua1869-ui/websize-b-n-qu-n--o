@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Xác nhận đơn hàng #{{ order.order_id }} • {{ app_name }}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  {%- include "components/fonts.html" -%}
   <link rel="stylesheet" href="/static/css/tailwind.css" />
   <link rel="stylesheet" href="/static/css/custom.css?v={{ version }}" />
 </head>
@@ -18,7 +16,7 @@
   <div class="main-content-layout flex flex-col flex-1">
 
   <!-- Nội Dung Chính -->
-  <main class="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+  <main class="mx-auto max-w-[1600px] px-4 py-10 sm:px-6 lg:px-10 2xl:px-16">
     
     <div class="border border-[#E5E2DC] bg-white rounded-[2px]">
       <!-- Header Banner -->
@@ -30,18 +28,18 @@
           </svg>
         </div>
 
-        <h1 class="mt-6 font-serif text-2xl sm:text-3xl font-medium tracking-tight text-[#111111]">
+        <h1 class="mt-6 font-sans text-2xl sm:text-3xl font-medium tracking-tight text-[#111111]">
           Đặt hàng thành công!
         </h1>
-        <p class="mt-2 text-xs sm:text-sm text-neutral-500 max-w-md mx-auto leading-relaxed">
+        <p class="mt-2 text-sm sm:text-sm text-neutral-500 max-w-md mx-auto leading-relaxed">
           Cảm ơn bạn đã lựa chọn AURA Studio. Đơn hàng của bạn đã được tiếp nhận và đang sẵn sàng chuyển phát.
         </p>
 
         <!-- Order ID pill & copy button -->
-        <div class="mt-6 inline-flex flex-wrap items-center justify-center gap-2 rounded-[2px] border border-[#E5E2DC] bg-[#FAF8F5] px-4 py-2 text-xs">
+        <div class="mt-6 inline-flex flex-wrap items-center justify-center gap-2 rounded-[2px] border border-[#E5E2DC] bg-[#FAF8F5] px-4 py-2 text-sm">
           <span class="text-neutral-500">Mã đơn hàng:</span>
           <span id="order-id-display" class="font-mono text-sm font-semibold text-[#111111]">{{ order.order_id }}</span>
-          <button type="button" id="copy-order-btn" class="ml-1.5 inline-flex items-center gap-1 rounded-[2px] bg-white px-2 py-0.5 text-[11px] font-medium text-[#111111] border border-[#E5E2DC] hover:border-[#111111] transition" title="Sao chép mã đơn">
+          <button type="button" id="copy-order-btn" class="ml-1.5 inline-flex items-center gap-1 rounded-[2px] bg-white px-2 py-0.5 text-sm font-medium text-[#111111] border border-[#E5E2DC] hover:border-[#111111] transition" title="Sao chép mã đơn">
             <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
             </svg>
@@ -57,17 +55,17 @@
         <!-- Trạng thái: ĐÃ THANH TOÁN (VNPay hoặc đã thu) -->
         <div class="rounded-[2px] border border-[#E5E2DC] bg-[#FAF8F5] p-5">
           <div class="flex items-start gap-3.5">
-            <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#111111] text-white text-xs font-bold">
+            <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#111111] text-white text-sm font-bold">
               ✓
             </div>
             <div class="flex-1">
               <div class="flex flex-wrap items-center gap-2">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-[#111111]">Đã thanh toán thành công</h3>
-                <span class="inline-flex items-center rounded-[2px] border border-[#111111] bg-white px-2 py-0.5 text-[10px] font-semibold text-[#111111] uppercase tracking-wider">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-[#111111]">Đã thanh toán thành công</h3>
+                <span class="inline-flex items-center rounded-[2px] border border-[#111111] bg-white px-2 py-0.5 text-sm font-semibold text-[#111111] uppercase tracking-wider">
                   {{ 'Cổng VNPay' if order.payment_method == 'vnpay' else ('Chuyển khoản VietQR' if order.payment_method == 'qr_transfer' else order.payment_method | upper) }}
                 </span>
               </div>
-              <p class="mt-1 text-xs text-neutral-600 leading-relaxed">
+              <p class="mt-1 text-sm text-neutral-600 leading-relaxed">
                 Hệ thống đã nhận thanh toán số tiền <strong class="font-semibold text-[#111111]">{{ (order.quote.total or order.total_amount) | vnd }}</strong>. Kiện hàng đang được đóng gói và chuẩn bị bàn giao cho bưu tá giao nhận.
               </p>
             </div>
@@ -77,17 +75,17 @@
         <!-- Trạng thái: COD CHƯA THANH TOÁN - LƯU Ý RÕ RÀNG TIỀN MẶT -->
         <div class="rounded-[2px] border border-[#E5E2DC] bg-[#FAF8F5] p-5">
           <div class="flex items-start gap-3.5">
-            <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#111111] bg-white text-[#111111] text-xs font-bold">
+            <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#111111] bg-white text-[#111111] text-sm font-bold">
               ●
             </div>
             <div class="flex-1">
               <div class="flex flex-wrap items-center gap-2">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-[#111111]">Thanh toán khi nhận hàng (COD)</h3>
-                <span class="inline-flex items-center rounded-[2px] border border-[#E5E2DC] bg-white px-2 py-0.5 text-[10px] font-medium text-neutral-600 uppercase tracking-wider">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-[#111111]">Thanh toán khi nhận hàng (COD)</h3>
+                <span class="inline-flex items-center rounded-[2px] border border-[#E5E2DC] bg-white px-2 py-0.5 text-sm font-medium text-neutral-600 uppercase tracking-wider">
                   Chờ thu tiền mặt
                 </span>
               </div>
-              <p class="mt-1 text-xs text-neutral-600 leading-relaxed">
+              <p class="mt-1 text-sm text-neutral-600 leading-relaxed">
                 Vui lòng chuẩn bị <strong class="font-semibold text-[#111111]">{{ (order.quote.total or order.total_amount) | vnd }}</strong> tiền mặt khi nhận hàng. Bưu tá vận chuyển sẽ liên hệ số điện thoại của bạn trước khi phát hàng.
               </p>
             </div>
@@ -101,25 +99,25 @@
           <!-- Thông tin người nhận -->
           <div class="rounded-[2px] border border-[#E5E2DC] bg-[#FAF8F5] p-5 space-y-3">
             <div class="border-b border-[#E5E2DC] pb-2">
-              <h4 class="text-[11px] font-bold uppercase tracking-widest text-[#111111]">Thông tin giao hàng</h4>
+              <h4 class="text-sm font-bold uppercase tracking-widest text-[#111111]">Thông tin giao hàng</h4>
             </div>
             
-            <div class="space-y-2.5 text-xs">
+            <div class="space-y-2.5 text-sm">
               <div>
-                <span class="text-neutral-500 block text-[10px] uppercase tracking-wider font-medium">Người nhận</span>
+                <span class="text-neutral-500 block text-sm uppercase tracking-wider font-medium">Người nhận</span>
                 <span class="font-medium text-[#111111] text-sm">{{ order.customer.name or order.customer_name }}</span>
               </div>
               <div>
-                <span class="text-neutral-500 block text-[10px] uppercase tracking-wider font-medium">Số điện thoại</span>
+                <span class="text-neutral-500 block text-sm uppercase tracking-wider font-medium">Số điện thoại</span>
                 <span class="font-mono text-[#111111]">{{ order.customer.phone or order.customer_phone }}</span>
               </div>
               <div>
-                <span class="text-neutral-500 block text-[10px] uppercase tracking-wider font-medium">Địa chỉ nhận hàng</span>
+                <span class="text-neutral-500 block text-sm uppercase tracking-wider font-medium">Địa chỉ nhận hàng</span>
                 <span class="text-[#111111] leading-relaxed block">{{ order.customer.address or order.customer_address }}</span>
               </div>
               {% if (order.customer and order.customer.note) or order.customer_note %}
               <div>
-                <span class="text-neutral-500 block text-[10px] uppercase tracking-wider font-medium">Ghi chú giao hàng</span>
+                <span class="text-neutral-500 block text-sm uppercase tracking-wider font-medium">Ghi chú giao hàng</span>
                 <span class="italic text-neutral-600">{{ order.customer.note or order.customer_note }}</span>
               </div>
               {% endif %}
@@ -129,27 +127,27 @@
           <!-- Thông tin vận đơn / Logistics -->
           <div class="rounded-[2px] border border-[#E5E2DC] bg-[#FAF8F5] p-5 space-y-3">
             <div class="border-b border-[#E5E2DC] pb-2">
-              <h4 class="text-[11px] font-bold uppercase tracking-widest text-[#111111]">Vận chuyển & Kiện hàng</h4>
+              <h4 class="text-sm font-bold uppercase tracking-widest text-[#111111]">Vận chuyển & Kiện hàng</h4>
             </div>
 
-            <div class="space-y-2.5 text-xs">
+            <div class="space-y-2.5 text-sm">
               <div>
-                <span class="text-neutral-500 block text-[10px] uppercase tracking-wider font-medium">Đơn vị vận chuyển</span>
+                <span class="text-neutral-500 block text-sm uppercase tracking-wider font-medium">Đơn vị vận chuyển</span>
                 <span class="font-medium text-[#111111]">{{ order.carrier or 'Giao Hàng Nhanh (GHN Express)' }}</span>
               </div>
               <div>
-                <span class="text-neutral-500 block text-[10px] uppercase tracking-wider font-medium">Mã vận đơn</span>
+                <span class="text-neutral-500 block text-sm uppercase tracking-wider font-medium">Mã vận đơn</span>
                 <span class="inline-block font-mono font-medium text-[#111111] bg-white px-2 py-0.5 rounded-[2px] border border-[#E5E2DC]">
                   {{ order.tracking_code or ('GHN-VN-' + order.order_id[-6:]) }}
                 </span>
               </div>
               <div>
-                <span class="text-neutral-500 block text-[10px] uppercase tracking-wider font-medium">Dự kiến nhận hàng</span>
+                <span class="text-neutral-500 block text-sm uppercase tracking-wider font-medium">Dự kiến nhận hàng</span>
                 <span class="font-medium text-[#111111]">{{ order.estimated_delivery or '2 - 3 ngày tới' }}</span>
               </div>
               <div>
-                <span class="text-neutral-500 block text-[10px] uppercase tracking-wider font-medium">Trạng thái bưu kiện</span>
-                <span class="inline-flex items-center rounded-[2px] bg-white border border-[#E5E2DC] px-2 py-0.5 font-medium text-neutral-700 text-[11px]">
+                <span class="text-neutral-500 block text-sm uppercase tracking-wider font-medium">Trạng thái bưu kiện</span>
+                <span class="inline-flex items-center rounded-[2px] bg-white border border-[#E5E2DC] px-2 py-0.5 font-medium text-neutral-700 text-sm">
                   {{ 'Sẵn sàng giao nhận' if order.shipping_status == 'ready_to_pick' else ('Đang xử lý đóng gói' if order.shipping_status == 'pending_confirm' else order.shipping_status) }}
                 </span>
               </div>
@@ -160,10 +158,10 @@
         <!-- Order Items Summary Table -->
         <div class="rounded-[2px] border border-[#E5E2DC] bg-white overflow-hidden">
           <div class="border-b border-[#E5E2DC] bg-[#FAF8F5] px-5 py-3 flex items-center justify-between">
-            <h4 class="text-[11px] font-bold uppercase tracking-widest text-[#111111]">
+            <h4 class="text-sm font-bold uppercase tracking-widest text-[#111111]">
               Chi tiết sản phẩm đã mua
             </h4>
-            <span class="text-xs text-neutral-500">
+            <span class="text-sm text-neutral-500">
               {{ (order.quote.lines | length) if order.quote and order.quote.lines else 0 }} sản phẩm
             </span>
           </div>
@@ -177,8 +175,8 @@
                    onerror="this.src='/static/images/placeholder.jpg'" />
               
               <div class="flex-1 min-w-0">
-                <h5 class="text-xs sm:text-sm font-medium text-[#111111] truncate">{{ line.name }}</h5>
-                <div class="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-neutral-500">
+                <h5 class="text-sm sm:text-sm font-medium text-[#111111] truncate">{{ line.name }}</h5>
+                <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-neutral-500">
                   {% if line.size %}
                   <span>Size: {{ line.size }}</span>
                   {% endif %}
@@ -186,10 +184,10 @@
                   <span>• Màu: {{ line.color }}</span>
                   {% endif %}
                   {% if line.combo %}
-                  <span class="border border-[#111111] px-1 py-0.2 text-[9px] uppercase tracking-wider text-[#111111]">Combo</span>
+                  <span class="border border-[#111111] px-1 py-0.2 text-sm uppercase tracking-wider text-[#111111]">Combo</span>
                   {% endif %}
                 </div>
-                <div class="mt-1 text-xs text-neutral-500">
+                <div class="mt-1 text-sm text-neutral-500">
                   Số lượng: <span class="font-medium text-[#111111]">x{{ line.quantity }}</span>
                 </div>
               </div>
@@ -197,19 +195,19 @@
               <div class="text-right shrink-0">
                 <div class="text-sm font-semibold text-[#111111]">{{ line.line_total | vnd }}</div>
                 {% if line.quantity > 1 %}
-                <div class="text-[10px] text-neutral-500">({{ line.unit_price | vnd }}/sp)</div>
+                <div class="text-sm text-neutral-500">({{ line.unit_price | vnd }}/sp)</div>
                 {% endif %}
               </div>
             </div>
             {% else %}
-            <div class="py-6 text-center text-xs text-neutral-500">
+            <div class="py-6 text-center text-sm text-neutral-500">
               Không tìm thấy dòng sản phẩm chi tiết
             </div>
             {% endfor %}
           </div>
 
           <!-- Bảng tổng tiền đơn hàng -->
-          <div class="border-t border-[#E5E2DC] bg-[#FAF8F5] p-5 space-y-2 text-xs">
+          <div class="border-t border-[#E5E2DC] bg-[#FAF8F5] p-5 space-y-2 text-sm">
             <div class="flex items-center justify-between text-neutral-600">
               <span>Tạm tính tiền hàng</span>
               <span class="font-medium text-[#111111]">{{ (order.quote.subtotal or order.subtotal) | vnd }}</span>
@@ -250,7 +248,7 @@
               <span class="font-bold uppercase tracking-wider text-[#111111]">Tổng thanh toán</span>
               <div class="text-right">
                 <span class="text-base sm:text-lg font-bold text-[#111111]">{{ (order.quote.total or order.total_amount) | vnd }}</span>
-                <span class="block text-[10px] text-neutral-500">Đã bao gồm thuế & phí vận chuyển</span>
+                <span class="block text-sm text-neutral-500">Đã bao gồm thuế & phí vận chuyển</span>
               </div>
             </div>
           </div>
@@ -259,7 +257,7 @@
         <!-- Action Buttons -->
         <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-[#E5E2DC]">
           <a href="/?tracking={{ order.order_id }}" 
-             class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-[2px] border border-[#111111] bg-transparent px-6 py-3 text-xs font-medium uppercase tracking-wider text-[#111111] transition hover:bg-[#111111] hover:text-[#FAF8F5]">
+             class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-[2px] border border-[#111111] bg-transparent px-6 py-3 text-sm font-medium uppercase tracking-wider text-[#111111] transition hover:bg-[#111111] hover:text-[#FAF8F5]">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
               <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
             </svg>
@@ -269,13 +267,13 @@
           <div class="w-full sm:w-auto flex items-center gap-3">
             {% if user %}
             <a href="/profile" 
-               class="flex-1 sm:flex-initial inline-flex items-center justify-center rounded-[2px] border border-[#E5E2DC] bg-white px-5 py-3 text-xs font-medium uppercase tracking-wider text-[#111111] hover:border-[#111111] transition">
+               class="flex-1 sm:flex-initial inline-flex items-center justify-center rounded-[2px] border border-[#E5E2DC] bg-white px-5 py-3 text-sm font-medium uppercase tracking-wider text-[#111111] hover:border-[#111111] transition">
               <span>Đơn hàng của tôi</span>
             </a>
             {% endif %}
             
             <a href="/products" 
-               class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 rounded-[2px] bg-[#111111] px-6 py-3 text-xs font-medium uppercase tracking-wider text-[#FAF8F5] hover:bg-neutral-800 transition">
+               class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 rounded-[2px] bg-[#111111] px-6 py-3 text-sm font-medium uppercase tracking-wider text-[#FAF8F5] hover:bg-neutral-800 transition">
               <span>Tiếp tục mua sắm</span>
               <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -288,8 +286,10 @@
     </div>
   </main>
 
-  <footer class="mt-12 border-t border-[#E5E2DC] bg-[#FAF8F5] py-8 text-center text-xs text-neutral-500">
-    <p>© 2026 AURA Studio. Thiết kế và công nghệ thời trang AI hiện đại.</p>
+  <footer class="mt-12 border-t border-[#E5E2DC] bg-[#FAF8F5] py-8 text-center text-sm text-neutral-500">
+    <div class="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10 2xl:px-16">
+      <p>© 2026 AURA Studio. Thiết kế và công nghệ thời trang AI hiện đại.</p>
+    </div>
   </footer>
   </div> <!-- /main-content-layout -->
 

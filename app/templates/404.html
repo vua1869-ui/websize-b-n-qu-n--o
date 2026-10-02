@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>404 - Không tìm thấy trang • {{ app_name }}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  {%- include "components/fonts.html" -%}
   <link rel="stylesheet" href="/static/css/tailwind.css" />
   <link rel="stylesheet" href="/static/css/custom.css?v={{ version }}" />
 </head>
@@ -19,17 +17,17 @@
   <div class="main-content-layout flex flex-col flex-1">
 
   <!-- 3. MAIN 404 CONTENT -->
-  <main class="mx-auto my-auto flex w-full max-w-7xl flex-1 flex-col items-center justify-center px-4 py-24 text-center sm:px-6 lg:px-8">
-    <span class="font-serif text-8xl sm:text-9xl font-light tracking-tight text-[#111111]">404</span>
-    <h1 class="mt-4 font-serif text-2xl sm:text-3xl font-normal text-[#111111]">Không tìm thấy trang yêu cầu</h1>
-    <p class="mt-3 max-w-md text-xs sm:text-sm text-[#666666] leading-relaxed">
+  <main class="mx-auto my-auto flex w-full max-w-[1600px] flex-1 flex-col items-center justify-center px-4 py-24 text-center sm:px-6 lg:px-10 2xl:px-16">
+    <span class="font-sans text-8xl sm:text-9xl font-light tracking-tight text-[#111111]">404</span>
+    <h1 class="mt-4 font-sans text-2xl sm:text-3xl font-normal text-[#111111]">Không tìm thấy trang yêu cầu</h1>
+    <p class="mt-3 max-w-md text-sm sm:text-sm text-[#666666] leading-relaxed">
       {{ message or "Sản phẩm hoặc đường dẫn bạn vừa truy cập không tồn tại hoặc đã được chuyển sang danh mục khác." }}
     </p>
     <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
-      <a href="/products" class="btn btn-primary px-8 !py-3 text-xs uppercase tracking-widest font-semibold">
+      <a href="/products" class="btn btn-primary px-8 !py-3 text-sm uppercase tracking-widest font-semibold">
         Khám phá bộ sưu tập
       </a>
-      <a href="/" class="btn btn-outline px-8 !py-3 text-xs uppercase tracking-widest font-semibold">
+      <a href="/" class="btn btn-outline px-8 !py-3 text-sm uppercase tracking-widest font-semibold">
         Về trang chủ
       </a>
     </div>
@@ -39,14 +37,14 @@
   <div id="cart-drawer" class="drawer hidden" data-modal role="dialog" aria-modal="true" aria-label="Giỏ hàng">
     <div class="drawer-panel">
       <div class="flex items-center justify-between border-b border-[#E5E2DC] px-5 py-4">
-        <h2 class="text-sm font-bold uppercase tracking-wider text-[#111111]">Giỏ hàng <span id="cart-count-label" class="text-xs text-[#777777]"></span></h2>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-[#111111]">Giỏ hàng <span id="cart-count-label" class="text-sm text-[#777777]"></span></h2>
         <button data-action="close-modal" data-target="cart-drawer" class="icon-btn" aria-label="Đóng">✕</button>
       </div>
-      <div id="cart-freeship" class="hidden border-b border-[#E5E2DC] px-4 py-2.5 text-[11px] bg-[#FAF8F5]"></div>
+      <div id="cart-freeship" class="hidden border-b border-[#E5E2DC] px-4 py-2.5 text-sm bg-[#FAF8F5]"></div>
       <div id="cart-lines" class="flex-1 overflow-y-auto p-4"></div>
       <div class="space-y-3 border-t border-[#E5E2DC] bg-[#FAF8F5] p-4">
-        <div id="cart-summary" class="space-y-1.5 text-xs"></div>
-        <p id="cart-error" class="hidden rounded-[2px] bg-red-50 border border-red-200 px-3 py-2 text-xs font-semibold text-red-700"></p>
+        <div id="cart-summary" class="space-y-1.5 text-sm"></div>
+        <p id="cart-error" class="hidden rounded-[2px] bg-red-50 border border-red-200 px-3 py-2 text-sm font-semibold text-red-700"></p>
         <button id="cart-checkout" data-action="checkout" class="btn btn-primary w-full !py-3">Tiến hành đặt hàng</button>
       </div>
     </div>
@@ -55,10 +53,10 @@
   <div id="checkout-modal" class="modal hidden" data-modal role="dialog" aria-modal="true" aria-label="Thanh toán">
     <div class="modal-panel max-w-lg p-6">
       <div class="flex items-center justify-between border-b border-[#E5E2DC] pb-3">
-        <h2 class="text-base font-serif font-bold text-[#111111]">Thông tin giao hàng</h2>
+        <h2 class="text-base font-sans font-bold text-[#111111]">Thông tin giao hàng</h2>
         <button data-action="close-modal" data-target="checkout-modal" class="icon-btn" aria-label="Đóng">✕</button>
       </div>
-      <form id="checkout-form" class="mt-4 space-y-3 text-xs" novalidate>
+      <form id="checkout-form" class="mt-4 space-y-3 text-sm" novalidate>
         <div><label class="field-label" for="co-name">Tên người nhận *</label>
           <input id="co-name" type="text" required minlength="2" maxlength="80" autocomplete="name" placeholder="Nguyễn Văn A" class="field" /></div>
         <div><label class="field-label" for="co-phone">Số điện thoại *</label>
@@ -67,20 +65,20 @@
           <label class="field-label">Địa chỉ nhận hàng *</label>
           <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <div>
-              <label for="co-province" class="block mb-1 text-[11px] font-medium text-[#666666]">Tỉnh / Thành phố *</label>
-              <select id="co-province" required class="field !py-2 text-xs">
+              <label for="co-province" class="block mb-1 text-sm font-medium text-[#666666]">Tỉnh / Thành phố *</label>
+              <select id="co-province" required class="field !py-2 text-sm">
                 <option value="">-- Chọn Tỉnh / Thành phố --</option>
               </select>
             </div>
             <div>
-              <label for="co-ward" class="block mb-1 text-[11px] font-medium text-[#666666]">Xã / Phường / Đặc khu *</label>
-              <select id="co-ward" required disabled class="field !py-2 text-xs">
+              <label for="co-ward" class="block mb-1 text-sm font-medium text-[#666666]">Xã / Phường / Đặc khu *</label>
+              <select id="co-ward" required disabled class="field !py-2 text-sm">
                 <option value="">-- Chọn Xã / Phường / Đặc khu --</option>
               </select>
             </div>
           </div>
           <div>
-            <label for="co-address" class="block mb-1 text-[11px] font-medium text-[#666666]">Số nhà, tên đường *</label>
+            <label for="co-address" class="block mb-1 text-sm font-medium text-[#666666]">Số nhà, tên đường *</label>
             <input id="co-address" type="text" required minlength="5" maxlength="150" placeholder="Số 123 đường ABC" class="field" />
           </div>
         </div>
@@ -113,8 +111,8 @@
           </div>
         </fieldset>
 
-        <div id="co-summary" class="space-y-1.5 border border-[#E5E2DC] bg-[#FAF8F5] p-3 text-xs"></div>
-        <p id="co-error" class="hidden rounded-[2px] bg-red-50 border border-red-200 px-3 py-2 text-xs font-semibold text-red-700" role="alert"></p>
+        <div id="co-summary" class="space-y-1.5 border border-[#E5E2DC] bg-[#FAF8F5] p-3 text-sm"></div>
+        <p id="co-error" class="hidden rounded-[2px] bg-red-50 border border-red-200 px-3 py-2 text-sm font-semibold text-red-700" role="alert"></p>
         <button id="co-submit" type="submit" class="btn btn-primary w-full !py-3">Đặt hàng ngay</button>
       </form>
     </div>
@@ -127,24 +125,24 @@
   <div id="tracking-modal" class="modal hidden" data-modal role="dialog" aria-modal="true" aria-label="Tra cứu đơn hàng">
     <div class="modal-panel max-w-2xl p-6">
       <div class="flex items-center justify-between border-b border-[#E5E2DC] pb-3">
-        <h2 class="text-base font-serif font-bold text-[#111111]">Tra cứu hành trình vận chuyển</h2>
+        <h2 class="text-base font-sans font-bold text-[#111111]">Tra cứu hành trình vận chuyển</h2>
         <button data-action="close-modal" data-target="tracking-modal" class="icon-btn" aria-label="Đóng">✕</button>
       </div>
       <form id="tracking-form" class="mt-4 flex gap-2" onsubmit="event.preventDefault(); TrackingUI.doSearch();">
-        <input id="tracking-input" type="text" required placeholder="Nhập Mã đơn hoặc SĐT..." class="field flex-1 text-xs" />
+        <input id="tracking-input" type="text" required placeholder="Nhập Mã đơn hoặc SĐT..." class="field flex-1 text-sm" />
         <button type="submit" class="btn btn-primary whitespace-nowrap">Tra cứu</button>
       </form>
       <div id="tracking-result" class="mt-5 space-y-4 hidden"></div>
-      <div id="tracking-error" class="mt-4 hidden rounded-[2px] bg-red-50 border border-red-200 p-3 text-xs text-red-700"></div>
+      <div id="tracking-error" class="mt-4 hidden rounded-[2px] bg-red-50 border border-red-200 p-3 text-sm text-red-700"></div>
     </div>
   </div>
 
   <!-- FOOTER -->
-  <footer class="mt-auto border-t border-[#E5E2DC] bg-[#FAF8F5] py-16 text-xs text-[#666666]">
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  <footer class="mt-auto border-t border-[#E5E2DC] bg-[#FAF8F5] py-16 text-sm text-[#666666]">
+    <div class="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-10 2xl:px-16">
       <div class="grid grid-cols-2 gap-8 md:grid-cols-4">
         <div>
-          <h3 class="mb-4 font-serif text-sm font-semibold uppercase tracking-wider text-[#111111]">Chính sách</h3>
+          <h3 class="mb-4 font-sans text-sm font-semibold uppercase tracking-wider text-[#111111]">Chính sách</h3>
           <ul class="space-y-2 text-[#666666]">
             <li>Phí vận chuyển: {{ shipping_fee|vnd }}</li>
             <li>Miễn phí ship đơn từ {{ free_ship_threshold|vnd }}</li>
@@ -152,7 +150,7 @@
           </ul>
         </div>
         <div>
-          <h3 class="mb-4 font-serif text-sm font-semibold uppercase tracking-wider text-[#111111]">Về {{ app_name }}</h3>
+          <h3 class="mb-4 font-sans text-sm font-semibold uppercase tracking-wider text-[#111111]">Về {{ app_name }}</h3>
           <ul class="space-y-2 text-[#666666]">
             <li>Thời trang tối giản &amp; hiện đại</li>
             <li>Stylist AI hỗ trợ 24/7</li>
@@ -161,15 +159,15 @@
           </ul>
         </div>
         <div>
-          <h3 class="mb-4 font-serif text-sm font-semibold uppercase tracking-wider text-[#111111]">Thanh toán</h3>
-          <div class="flex flex-wrap gap-2 text-[10px] font-bold text-[#111111]">
+          <h3 class="mb-4 font-sans text-sm font-semibold uppercase tracking-wider text-[#111111]">Thanh toán</h3>
+          <div class="flex flex-wrap gap-2 text-sm font-bold text-[#111111]">
             <span class="rounded-[2px] border border-[#E5E2DC] bg-white px-2 py-1">COD</span>
             <span class="rounded-[2px] border border-[#E5E2DC] bg-white px-2 py-1">Chuyển khoản VietQR</span>
             <span class="rounded-[2px] border border-[#E5E2DC] bg-white px-2 py-1">VNPay</span>
           </div>
         </div>
         <div>
-          <h3 class="mb-4 font-serif text-sm font-semibold uppercase tracking-wider text-[#111111]">Tính năng AI</h3>
+          <h3 class="mb-4 font-sans text-sm font-semibold uppercase tracking-wider text-[#111111]">Tính năng AI</h3>
           <ul class="space-y-2">
             <li><button data-action="open-chat" class="hover:underline text-[#111111] font-medium">Trợ lý Stylist AI</button></li>
             <li><button data-action="open-size" class="hover:underline">AI tính size theo số đo</button></li>
@@ -177,7 +175,7 @@
           </ul>
         </div>
       </div>
-      <div class="mt-12 border-t border-[#E5E2DC] pt-8 text-center text-[11px] text-[#888888]">&copy; 2026 {{ app_name }}. Tối giản &amp; Thanh lịch.</div>
+      <div class="mt-12 border-t border-[#E5E2DC] pt-8 text-center text-sm text-[#888888]">&copy; 2026 {{ app_name }}. Tối giản &amp; Thanh lịch.</div>
     </div>
   </footer>
   </div> <!-- /main-content-layout -->

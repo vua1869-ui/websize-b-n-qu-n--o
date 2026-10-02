@@ -10,11 +10,11 @@
   <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-noir-700 bg-noir-900 p-4 shadow-lg">
     <div class="relative min-w-[260px] flex-1 max-w-md">
       <input id="user-search" type="search" placeholder="Tìm theo tên đăng nhập, họ tên, email hoặc SĐT..."
-             class="w-full rounded-md border border-noir-700 bg-noir-800/60 pl-9 pr-4 py-2 text-xs text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50 placeholder:text-noir-400" />
+             class="w-full rounded-md border border-noir-700 bg-noir-800/60 pl-9 pr-4 py-2 text-sm text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50 placeholder:text-noir-400" />
       <svg class="absolute left-3 top-2.5 h-4 w-4 shrink-0 text-noir-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
     </div>
 
-    <div class="flex items-center gap-2 text-xs font-medium text-noir-400">
+    <div class="flex items-center gap-2 text-sm font-medium text-noir-400">
       <svg class="h-4 w-4 shrink-0 text-gold-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
       <span>RBAC: Phân quyền trực tiếp Admin & User</span>
     </div>
@@ -23,8 +23,8 @@
   <!-- Users Table -->
   <div class="rounded-lg border border-noir-700 bg-noir-900 shadow-lg overflow-hidden glass-card">
     <div class="overflow-x-auto">
-      <table class="w-full text-left text-xs">
-        <thead class="bg-noir-800 border-b border-noir-700 text-noir-400 uppercase tracking-wider text-[10px]">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-noir-800 border-b border-noir-700 text-noir-400 uppercase tracking-wider text-sm">
           <tr>
             <th class="py-3 px-4 font-semibold">Thành viên</th>
             <th class="py-3 px-4 font-semibold">Tên đăng nhập</th>
@@ -83,21 +83,21 @@
     tbody.innerHTML = filtered.map(u => {
       const isDefaultAdmin = u.username === "admin";
       const roleBadge = u.role === "admin" 
-        ? `<span class="inline-flex items-center gap-1 rounded-full bg-noir-800 px-2.5 py-0.5 text-[10px] font-semibold text-gold-500 border border-gold-500/20">Quản trị viên</span>`
-        : `<span class="inline-flex items-center gap-1 rounded-full bg-noir-800 px-2.5 py-0.5 text-[10px] font-medium text-noir-300 border border-noir-700">Thành viên</span>`;
+        ? `<span class="inline-flex items-center gap-1 rounded-full bg-noir-800 px-2.5 py-0.5 text-sm font-semibold text-gold-500 border border-gold-500/20">Quản trị viên</span>`
+        : `<span class="inline-flex items-center gap-1 rounded-full bg-noir-800 px-2.5 py-0.5 text-sm font-medium text-noir-300 border border-noir-700">Thành viên</span>`;
 
       const statusBadge = u.is_active
-        ? `<span class="inline-flex rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-medium text-emerald-400 border border-emerald-500/20">Hoạt động</span>`
-        : `<span class="inline-flex rounded-full bg-rose-500/10 px-2.5 py-0.5 text-[10px] font-medium text-rose-400 border border-rose-500/20">Đã khóa</span>`;
+        ? `<span class="inline-flex rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-sm font-medium text-emerald-400 border border-emerald-500/20">Hoạt động</span>`
+        : `<span class="inline-flex rounded-full bg-rose-500/10 px-2.5 py-0.5 text-sm font-medium text-rose-400 border border-rose-500/20">Đã khóa</span>`;
 
       const actionButtons = isDefaultAdmin 
-        ? `<span class="text-[11px] font-mono text-noir-400 italic">Mặc định</span>`
+        ? `<span class="text-sm font-mono text-noir-400 italic">Mặc định</span>`
         : `
           <div class="flex items-center justify-end gap-1.5">
-            <button onclick="toggleRole('${u.id}', '${u.role}')" class="rounded-md border border-noir-700 bg-noir-800 px-2 py-1 text-[11px] font-medium text-noir-300 hover:bg-noir-700 hover:text-gold-400 shadow-lg transition" title="Chuyển quyền">
+            <button onclick="toggleRole('${u.id}', '${u.role}')" class="rounded-md border border-noir-700 bg-noir-800 px-2 py-1 text-sm font-medium text-noir-300 hover:bg-noir-700 hover:text-gold-400 shadow-lg transition" title="Chuyển quyền">
               ${u.role === 'admin' ? 'Hạ xuống User' : 'Thăng lên Admin'}
             </button>
-            <button onclick="toggleStatus('${u.id}', ${u.is_active})" class="rounded-md border ${u.is_active ? 'border-noir-700 bg-noir-800 text-noir-300 hover:text-rose-400 hover:bg-noir-700' : 'border-noir-700 bg-noir-800 text-noir-300 hover:bg-noir-700 hover:text-emerald-400'} px-2 py-1 text-[11px] font-medium shadow-lg transition">
+            <button onclick="toggleStatus('${u.id}', ${u.is_active})" class="rounded-md border ${u.is_active ? 'border-noir-700 bg-noir-800 text-noir-300 hover:text-rose-400 hover:bg-noir-700' : 'border-noir-700 bg-noir-800 text-noir-300 hover:bg-noir-700 hover:text-emerald-400'} px-2 py-1 text-sm font-medium shadow-lg transition">
               ${u.is_active ? 'Khóa TK' : 'Mở khóa'}
             </button>
           </div>
@@ -106,15 +106,15 @@
       const initials = (u.full_name || u.username).substring(0, 2).toUpperCase();
 
       const tierBadge = (u.tier === 'Diamond') 
-        ? `<span class="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-bold text-violet-400 border border-violet-500/30">💎 Kim Cương</span>`
+        ? `<span class="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2 py-0.5 text-sm font-bold text-violet-400 border border-violet-500/30">💎 Kim Cương</span>`
         : (u.tier === 'Gold')
-        ? `<span class="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-400 border border-amber-500/30">🥇 Hạng Vàng</span>`
-        : `<span class="inline-flex items-center gap-1 rounded-full bg-noir-800 px-2 py-0.5 text-[10px] font-bold text-noir-300 border border-noir-700">🥈 Hạng Bạc</span>`;
+        ? `<span class="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-sm font-bold text-amber-400 border border-amber-500/30">🥇 Hạng Vàng</span>`
+        : `<span class="inline-flex items-center gap-1 rounded-full bg-noir-800 px-2 py-0.5 text-sm font-bold text-noir-300 border border-noir-700">🥈 Hạng Bạc</span>`;
 
       const pointsDisplay = `
         <div>
           ${tierBadge}
-          <p class="text-[10px] font-mono text-noir-400 font-semibold mt-0.5">${(u.points_balance || 0).toLocaleString('vi-VN')} điểm</p>
+          <p class="text-sm font-mono text-noir-400 font-semibold mt-0.5">${(u.points_balance || 0).toLocaleString('vi-VN')} điểm</p>
         </div>
       `;
 
@@ -122,22 +122,22 @@
         <tr class="hover:bg-noir-800/60 transition">
           <td class="py-3 px-4">
             <div class="flex items-center gap-3">
-              <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gold-500 font-bold text-noir-900 text-xs shrink-0">
+              <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gold-500 font-bold text-noir-900 text-sm shrink-0">
                 ${initials}
               </div>
               <div>
                 <p class="font-semibold text-noir-100">${u.full_name || u.name}</p>
-                <p class="text-[10px] font-mono text-noir-400">ID: ${u.id}</p>
+                <p class="text-sm font-mono text-noir-400">ID: ${u.id}</p>
               </div>
             </div>
           </td>
           <td class="py-3 px-4 font-mono font-medium text-noir-300">@${u.username}</td>
           <td class="py-3 px-4">
             <p class="text-noir-100">${u.email}</p>
-            <p class="text-[10px] text-noir-400 font-mono">${u.phone || "Chưa có SĐT"}</p>
+            <p class="text-sm text-noir-400 font-mono">${u.phone || "Chưa có SĐT"}</p>
           </td>
           <td class="py-3 px-4">${pointsDisplay}</td>
-          <td class="py-3 px-4 text-noir-400 font-mono text-[11px]">${(u.created_at || "").substring(0, 10)}</td>
+          <td class="py-3 px-4 text-noir-400 font-mono text-sm">${(u.created_at || "").substring(0, 10)}</td>
           <td class="py-3 px-4">${roleBadge}</td>
           <td class="py-3 px-4">${statusBadge}</td>
           <td class="py-3 px-4 text-right">${actionButtons}</td>
