@@ -103,6 +103,17 @@
             </a>
           </div>
           {% endif %}
+
+          <!-- Nút Đăng xuất -->
+          <div class="mt-6">
+            <button id="logout-btn" type="button"
+              class="w-full flex items-center justify-center gap-2 rounded-[2px] border border-[#E5E2DC] bg-white px-4 py-2.5 text-sm font-semibold uppercase tracking-wider text-[#555555] transition hover:border-red-300 hover:text-red-600 hover:bg-red-50">
+              <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
+              Đăng xuất
+            </button>
+          </div>
         </div>
       </div>
 
@@ -497,7 +508,7 @@
     tabPasswordBtn.addEventListener("click", () => setTab("password"));
 
     // Logout
-    document.getElementById("logout-btn").addEventListener("click", async () => {
+    document.getElementById("logout-btn")?.addEventListener("click", async () => {
       try {
         await fetch("/api/auth/logout", { method: "POST" });
         localStorage.removeItem("aura_token");
@@ -511,9 +522,24 @@
     // Load User Orders
     async function loadOrders() {
       const container = document.getElementById("orders-list-container");
+      if (!container) return;
+      // Luôn reset spinner trước khi fetch để tránh spinner cũ còn sót
+      container.innerHTML = `
+        <div class="text-center py-12 text-[#777777] text-sm">
+          <svg class="mx-auto h-7 w-7 animate-spin text-[#111111]" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          <p class="mt-3">Đang tải lịch sử đơn hàng...</p>
+        </div>
+      `;
       try {
         const res = await fetch("/api/auth/orders");
-        if (!res.ok) throw new Error();
+        if (res.status === 401) {
+          window.location.href = "/login";
+          return;
+        }
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || `HTTP ${res.status}`);
+        }
         const orders = await res.json();
 
         if (!orders || orders.length === 0) {
@@ -589,9 +615,15 @@
         }).join("");
 
       } catch (err) {
+        console.error("Lỗi tải đơn hàng:", err);
         container.innerHTML = `
-          <div class="text-center py-8 text-sm text-red-600">
-            Không thể tải đơn hàng lúc này. Vui lòng tải lại trang.
+          <div class="text-center py-10">
+            <p class="text-sm font-medium text-red-600">Không tải được đơn hàng</p>
+            <p class="text-sm text-[#777777] mt-1">${err.message || "Lỗi kết nối máy chủ"}</p>
+            <button type="button" onclick="loadOrders()"
+              class="mt-4 btn btn-outline text-sm font-semibold uppercase tracking-wider px-5 !py-2">
+              Thử lại
+            </button>
           </div>
         `;
       }
@@ -765,12 +797,27 @@
 
     // AURA CLUB LOYALTY
     async function loadLoyalty() {
+      const tbody = document.getElementById("loyalty-history-tbody");
+      const benefitsContainer = document.getElementById("loyalty-benefits-list");
+
+      // Hiện spinner cho history khi bắt đầu load
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="4" class="py-8 text-center text-[#777777]">Đang tải lịch sử điểm...</td></tr>`;
+      }
+
       try {
         const [resStatus, resHist] = await Promise.all([
           fetch("/api/loyalty/status"),
           fetch("/api/loyalty/history")
         ]);
-        if (!resStatus.ok || !resHist.ok) return;
+
+        if (resStatus.status === 401 || resHist.status === 401) {
+          window.location.href = "/login";
+          return;
+        }
+        if (!resStatus.ok) throw new Error(`Không thể tải trạng thái hội viên (HTTP ${resStatus.status})`);
+        if (!resHist.ok) throw new Error(`Không thể tải lịch sử điểm (HTTP ${resHist.status})`);
+
         const status = await resStatus.json();
         const hist = await resHist.json();
 
@@ -778,7 +825,7 @@
         const miniTierBadge = document.getElementById("mini-tier-badge");
         const miniPoints = document.getElementById("mini-points-balance");
         if (miniTierBadge) miniTierBadge.textContent = status.tier_badge;
-        if (miniPoints) miniPoints.textContent = status.points_balance.toLocaleString("vi-VN");
+        if (miniPoints) miniPoints.textContent = (status.points_balance || 0).toLocaleString("vi-VN");
 
         // 2. VIP card
         const cardTier = document.getElementById("card-tier-badge");
@@ -787,62 +834,70 @@
         const cardMoney = document.getElementById("card-money-val");
         if (cardTier) cardTier.textContent = status.tier_badge;
         if (cardUser && status.user_name) cardUser.textContent = status.user_name;
-        if (cardPoints) cardPoints.textContent = status.points_balance.toLocaleString("vi-VN");
-        if (cardMoney) cardMoney.textContent = status.points_value_vnd.toLocaleString("vi-VN") + "đ";
+        if (cardPoints) cardPoints.textContent = (status.points_balance || 0).toLocaleString("vi-VN");
+        if (cardMoney) cardMoney.textContent = (status.points_value_vnd || 0).toLocaleString("vi-VN") + "đ";
 
         // 3. Progress bar
+        // Schema dùng next_tier_spent_needed (không phải points_to_next_tier)
         const progPercent = document.getElementById("tier-progress-percent");
         const progBar = document.getElementById("tier-progress-bar");
         const progDesc = document.getElementById("tier-progress-desc");
         const currentTag = document.getElementById("tier-current-tag");
         const nextTag = document.getElementById("tier-next-tag");
 
-        if (progPercent) progPercent.textContent = `${status.progress_percent}%`;
-        if (progBar) progBar.style.width = `${status.progress_percent}%`;
+        const pct = status.progress_percent || 0;
+        if (progPercent) progPercent.textContent = `${pct}%`;
+        if (progBar) progBar.style.width = `${pct}%`;
 
         if (progDesc) {
-          if (status.points_to_next_tier > 0) {
-            progDesc.innerHTML = `Bạn cần chi tiêu thêm <strong class="text-[#111111]">${status.points_to_next_tier.toLocaleString("vi-VN")}đ</strong> để lên ${status.next_tier_badge}`;
+          const needed = status.next_tier_spent_needed || 0;
+          if (needed > 0 && status.next_tier_name) {
+            progDesc.innerHTML = `Bạn cần chi tiêu thêm <strong class="text-[#111111]">${needed.toLocaleString("vi-VN")}đ</strong> để lên ${status.next_tier_name}`;
           } else {
             progDesc.innerHTML = `<span class="text-[#111111] font-semibold">Bạn đã đạt hạng thẻ cao nhất!</span>`;
           }
         }
 
-        if (currentTag) currentTag.textContent = `${status.tier_badge} (${status.current_tier_min_spend.toLocaleString("vi-VN")}đ)`;
-        if (nextTag && status.next_tier_badge) {
-          nextTag.textContent = `${status.next_tier_badge} (${status.next_tier_min_spend.toLocaleString("vi-VN")}đ)`;
-        } else if (nextTag) {
-          nextTag.textContent = "MAX TIER";
+        if (currentTag) currentTag.textContent = `${status.tier_badge} (${(status.total_spent || 0).toLocaleString("vi-VN")}đ đã chi)`;
+        if (nextTag) {
+          if (status.next_tier_name) {
+            nextTag.textContent = `${status.next_tier_name}`;
+          } else {
+            nextTag.textContent = "MAX TIER";
+          }
         }
 
         // 4. Benefits list
-        const benefitsContainer = document.getElementById("loyalty-benefits-list");
-        if (benefitsContainer && status.benefits) {
-          benefitsContainer.innerHTML = status.benefits.map(b => `
-            <div class="flex items-start gap-2.5 rounded-[2px] border border-[#E5E2DC] bg-[#FAF8F5] p-3 text-sm">
-              <span class="text-[#111111] font-bold">✓</span>
-              <span class="font-medium text-[#111111]">${b}</span>
-            </div>
-          `).join('');
+        if (benefitsContainer) {
+          const benefits = status.benefits || [];
+          if (benefits.length === 0) {
+            benefitsContainer.innerHTML = `<p class="text-sm text-[#777777] col-span-2">Chưa có đặc quyền nào cho hạng này.</p>`;
+          } else {
+            benefitsContainer.innerHTML = benefits.map(b => `
+              <div class="flex items-start gap-2.5 rounded-[2px] border border-[#E5E2DC] bg-[#FAF8F5] p-3 text-sm">
+                <span class="text-[#111111] font-bold shrink-0">✓</span>
+                <span class="font-medium text-[#111111]">${b}</span>
+              </div>
+            `).join('');
+          }
         }
 
         // 5. History table
-        const tbody = document.getElementById("loyalty-history-tbody");
         if (tbody) {
           const list = hist.transactions || [];
           if (list.length === 0) {
             tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-[#777777]">Chưa có giao dịch tích/tiêu điểm nào</td></tr>`;
           } else {
             tbody.innerHTML = list.map(tx => {
-              const isPlus = tx.points > 0;
+              const isPlus = (tx.points || 0) > 0;
               const ptsStr = isPlus ? `+${tx.points}` : `${tx.points}`;
               const ptsColor = isPlus ? "text-emerald-700 font-semibold" : "text-red-600 font-semibold";
               return `
                 <tr class="border-b border-[#E5E2DC] hover:bg-[#FAF8F5] transition">
-                  <td class="py-2.5 px-3 font-mono text-sm text-[#777777]">${tx.created_at}</td>
-                  <td class="py-2.5 px-3 font-medium text-[#111111]">${tx.description}</td>
+                  <td class="py-2.5 px-3 font-mono text-sm text-[#777777]">${tx.created_at || ""}</td>
+                  <td class="py-2.5 px-3 font-medium text-[#111111]">${tx.description || ""}</td>
                   <td class="py-2.5 px-3 text-right font-mono ${ptsColor}">${ptsStr}</td>
-                  <td class="py-2.5 px-3 text-right font-mono font-semibold text-[#555555]">${tx.balance_after}</td>
+                  <td class="py-2.5 px-3 text-right font-mono font-semibold text-[#555555]">${tx.balance_after ?? ""}</td>
                 </tr>
               `;
             }).join('');
@@ -850,6 +905,16 @@
         }
       } catch (err) {
         console.error("Lỗi tải thông tin Loyalty:", err);
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr><td colspan="4" class="py-6 text-center">
+              <span class="text-sm text-red-600">Không tải được dữ liệu hội viên: ${err.message}</span>
+            </td></tr>
+          `;
+        }
+        if (benefitsContainer) {
+          benefitsContainer.innerHTML = `<p class="text-sm text-red-600 col-span-2">Không tải được danh sách đặc quyền.</p>`;
+        }
       }
     }
 
