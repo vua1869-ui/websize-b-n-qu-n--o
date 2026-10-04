@@ -5,3 +5,6 @@ __pycache__/
 node_modules/
 app/data/orders.jsonl
 .venv/
+
+app/data/aura_store.db-shm
+app/data/aura_store.db-wal
