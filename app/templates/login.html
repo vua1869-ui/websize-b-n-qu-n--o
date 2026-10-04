@@ -51,7 +51,7 @@
         <div>
           <div class="flex items-center justify-between">
             <label for="password" class="block text-sm uppercase tracking-wider font-semibold text-[#111111]">Mật khẩu</label>
-            <a href="javascript:void(0)" onclick="alert('Vui lòng liên hệ quản trị viên hoặc sử dụng tài khoản của bạn.')" class="text-sm text-[#777777] hover:text-black transition">Quên mật khẩu?</a>
+            <a href="javascript:void(0)" onclick="openForgotModal()" class="text-sm text-[#777777] hover:text-black transition">Quên mật khẩu?</a>
           </div>
           <div class="mt-2 relative">
             <input id="password" name="password" type="password" required placeholder="••••••••"
@@ -168,6 +168,93 @@
         submitSpinner.classList.add("hidden");
       }
     });
+
+    // Forgot Password Modal
+    const forgotModal = document.getElementById("forgot-modal");
+    const forgotForm = document.getElementById("forgot-form");
+    const forgotAlert = document.getElementById("forgot-alert");
+    const forgotSubmitBtn = document.getElementById("forgot-submit-btn");
+    const forgotSubmitText = document.getElementById("forgot-submit-text");
+    const forgotSpinner = document.getElementById("forgot-spinner");
+
+    function openForgotModal() {
+      forgotModal.classList.remove("hidden");
+      forgotAlert.classList.add("hidden");
+    }
+
+    function closeForgotModal() {
+      forgotModal.classList.add("hidden");
+    }
+
+    forgotForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      forgotAlert.classList.add("hidden");
+      const email = document.getElementById("forgot-email").value.trim();
+      if (!email) return;
+
+      forgotSubmitBtn.disabled = true;
+      forgotSubmitText.textContent = "Đang gửi...";
+      forgotSpinner.classList.remove("hidden");
+
+      try {
+        const res = await fetch("/api/auth/forgot-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+
+        forgotAlert.textContent = data.message || data.detail;
+        forgotAlert.className = `my-4 rounded-[2px] p-3 text-sm font-medium border ${
+          res.ok ? "bg-[#FAF8F5] text-[#111111] border-[#111111]" : "bg-red-50 text-red-700 border-red-200"
+        }`;
+        forgotAlert.classList.remove("hidden");
+
+        if (res.ok) {
+          document.getElementById("forgot-email").value = "";
+        }
+      } catch (err) {
+        forgotAlert.textContent = "Lỗi kết nối. Vui lòng thử lại!";
+        forgotAlert.className = "my-4 rounded-[2px] p-3 text-sm font-medium border bg-red-50 text-red-700 border-red-200";
+        forgotAlert.classList.remove("hidden");
+      } finally {
+        forgotSubmitBtn.disabled = false;
+        forgotSubmitText.textContent = "Gửi yêu cầu";
+        forgotSpinner.classList.add("hidden");
+      }
+    });
   </script>
+
+  <!-- Modal Quên mật khẩu -->
+  <div id="forgot-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden px-4">
+    <div class="bg-white border border-[#E5E2DC] rounded-[2px] p-6 sm:p-8 max-w-md w-full shadow-2xl relative">
+      <button type="button" onclick="closeForgotModal()" class="absolute top-4 right-4 text-[#777777] hover:text-black transition">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <h2 class="font-sans text-xl font-bold tracking-tight text-[#111111]">Quên mật khẩu?</h2>
+      <p class="mt-1.5 text-sm text-[#666666]">
+        Nhập địa chỉ email đăng ký tài khoản. Chúng tôi sẽ gửi hướng dẫn khôi phục mật khẩu đến email của bạn.
+      </p>
+
+      <div id="forgot-alert" class="hidden my-4 rounded-[2px] p-3 text-sm font-medium border"></div>
+
+      <form id="forgot-form" class="mt-4 space-y-4">
+        <div>
+          <label for="forgot-email" class="block text-xs uppercase tracking-wider font-semibold text-[#111111]">Email tài khoản</label>
+          <input id="forgot-email" name="email" type="email" required placeholder="example@email.com"
+                 class="mt-1.5 w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-sm text-[#111111] outline-none transition focus:border-[#111111] placeholder:text-[#999999]" />
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="closeForgotModal()" class="btn border border-[#E5E2DC] text-[#111111] w-1/3 text-xs uppercase tracking-widest font-semibold py-2.5 hover:bg-[#FAF8F5]">Hủy</button>
+          <button type="submit" id="forgot-submit-btn" class="btn btn-primary w-2/3 text-xs uppercase tracking-widest font-semibold py-2.5 flex justify-center items-center gap-2">
+            <span id="forgot-submit-text">Gửi yêu cầu</span>
+            <svg id="forgot-spinner" class="hidden h-4 w-4 shrink-0 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </body>
 </html>

@@ -19,11 +19,11 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from app.config import settings
 from app.models.schemas import (
     AdminProductPayload, AuthResponse, Category, ChangePasswordRequest,
-    ChatRequest, ChatResponse, FlashSaleResponse, InventoryBatchCreate, InventoryBatchItem,
+    ChatRequest, ChatResponse, FlashSaleResponse, ForgotPasswordRequest, InventoryBatchCreate, InventoryBatchItem,
     InvoiceResponse, LiveCommentRequest, LiveCommentResponse, LoyaltyHistoryResponse,
     LoyaltyStatusResponse, OrderCreateRequest, OrderResponse, OrderTrackingResponse,
     OutfitRequest, OutfitResponse, Product, ProductReviewCreate, ProductReviewsResponse,
-    ProfitReportResponse, QuoteRequest, QuoteResponse, SizeChartResponse,
+    ProfitReportResponse, QuoteRequest, QuoteResponse, ResetPasswordRequest, SizeChartResponse,
     SizeRecommendRequest, SizeRecommendResponse, TrendDebugResponse, TrendItem,
     TrendingProduct, TrendRefreshResponse, User, UserLoginRequest, UserProfileUpdateRequest,
     UserRegisterRequest, VideoItem, Voucher, VoucherCheckRequest, VoucherCheckResponse,
@@ -169,6 +169,36 @@ def _reset_login_fails(ip: str, username: str) -> None:
     key = _login_key(ip, username)
     with _login_lock:
         _login_fails[key].clear()
+
+
+# ==========================================
+# Rate-limit cho endpoint Quên mật khẩu
+# Tối đa 5 lần yêu cầu trong 5 phút cho mỗi cặp (IP, email)
+# ==========================================
+_FORGOT_PW_WINDOW_SEC = 300  # 5 phút
+_FORGOT_PW_MAX_REQ = 5       # tối đa 5 lần
+_forgot_pw_reqs: dict = collections.defaultdict(collections.deque)
+_forgot_pw_lock = threading.Lock()
+
+
+def _forgot_pw_key(ip: str, email: str) -> str:
+    return f"{ip}|{email.strip().lower()}"
+
+
+def _check_forgot_password_rate_limit(ip: str, email: str) -> None:
+    """Raise HTTP 429 nếu quá {_FORGOT_PW_MAX_REQ} lần yêu cầu trong {_FORGOT_PW_WINDOW_SEC} giây."""
+    key = _forgot_pw_key(ip, email)
+    now = time.time()
+    with _forgot_pw_lock:
+        q = _forgot_pw_reqs[key]
+        while q and now - q[0] > _FORGOT_PW_WINDOW_SEC:
+            q.popleft()
+        if len(q) >= _FORGOT_PW_MAX_REQ:
+            raise HTTPException(
+                status_code=429,
+                detail="Bạn đã yêu cầu đặt lại mật khẩu quá nhiều lần. Vui lòng thử lại sau vài phút."
+            )
+        q.append(now)
 
 
 # ==========================================
@@ -323,6 +353,17 @@ def register_page(request: Request):
         return RedirectResponse(url="/profile", status_code=302)
     return templates.TemplateResponse(request, "register.html", {
         "app_name": settings.APP_NAME,
+        "version": settings.VERSION,
+    })
+
+
+@app.get("/reset-password", response_class=HTMLResponse)
+def reset_password_page(request: Request, token: Optional[str] = Query(None)):
+    user = get_current_user_optional(request)
+    return templates.TemplateResponse(request, "reset-password.html", {
+        "app_name": settings.APP_NAME,
+        "token": token or "",
+        "user": user,
         "version": settings.VERSION,
     })
 
@@ -751,6 +792,23 @@ def auth_update_profile(body: UserProfileUpdateRequest, user: User = Depends(get
 @app.post("/api/auth/change-password")
 def auth_change_password(body: ChangePasswordRequest, user: User = Depends(get_current_user)):
     ok, msg = user_service.change_password(user.id, body.old_password, body.new_password)
+    if not ok:
+        raise HTTPException(status_code=400, detail=msg)
+    return {"success": True, "message": msg}
+
+
+@app.post("/api/auth/forgot-password")
+def auth_forgot_password(body: ForgotPasswordRequest, request: Request):
+    ip = request.client.host if request.client else "unknown"
+    _check_forgot_password_rate_limit(ip, body.email)
+    base_url = str(request.base_url)
+    msg = user_service.request_password_reset(body.email, base_url=base_url)
+    return {"success": True, "message": msg}
+
+
+@app.post("/api/auth/reset-password")
+def auth_reset_password(body: ResetPasswordRequest):
+    ok, msg = user_service.verify_and_reset_password(body.token, body.new_password)
     if not ok:
         raise HTTPException(status_code=400, detail=msg)
     return {"success": True, "message": msg}

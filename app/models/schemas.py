@@ -622,6 +622,36 @@ class ChangePasswordRequest(BaseModel):
         return data
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+    @field_validator("email")
+    @classmethod
+    def _email_format(cls, v: str) -> str:
+        if "@" not in v or "." not in v.split("@")[-1]:
+            raise ValueError("Email không đúng định dạng")
+        return v.lower().strip()
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(min_length=1)
+    new_password: str = Field(min_length=6, max_length=100)
+    confirm_password: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def _sync(cls, data):
+        if isinstance(data, dict) and "confirm_password" not in data:
+            data["confirm_password"] = data.get("new_password")
+        return data
+
+    @model_validator(mode="after")
+    def _check_passwords_match(self) -> "ResetPasswordRequest":
+        if self.confirm_password and self.new_password != self.confirm_password:
+            raise ValueError("Mật khẩu xác nhận không khớp với mật khẩu mới")
+        return self
+
+
 class AuthResponse(BaseModel):
     success: bool = True
     message: str = "Thành công"

@@ -3,6 +3,7 @@ import datetime as dt
 import hashlib
 import hmac
 import os
+import secrets
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -10,9 +11,10 @@ import bcrypt
 from sqlalchemy import func, or_
 
 from app.config import settings
-from app.db.models import UserDB
+from app.db.models import PasswordResetTokenDB, UserDB
 from app.db.session import engine, get_db_session
 from app.models.schemas import User
+from app.services.email_sender import get_email_sender
 
 DEFAULT_AVATARS = [
     "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
@@ -36,28 +38,37 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 def make_auth_token(user_id: str, role: str, expires_in_sec: int = 86400 * 7) -> str:
-    """Tạo signed token xác thực kèm thời gian hết hạn (mặc định 7 ngày)."""
-    exp = int(time.time()) + expires_in_sec
-    data = f"{user_id}:{role}:{exp}"
+    """Tạo signed token xác thực kèm thời điểm tạo và thời gian hết hạn (mặc định 7 ngày)."""
+    now = int(time.time())
+    exp = now + expires_in_sec
+    data = f"{user_id}:{role}:{now}:{exp}"
     sig = hmac.new(settings.SECRET_KEY.encode(), data.encode(), hashlib.sha256).hexdigest()
     raw = f"{data}:{sig}"
     return base64.urlsafe_b64encode(raw.encode()).decode()
 
 
-def verify_auth_token(token: str) -> Optional[Tuple[str, str]]:
-    """Giải mã và kiểm tra chữ ký token. Trả về (user_id, role) nếu hợp lệ."""
+def verify_auth_token(token: str) -> Optional[Tuple[str, str, int]]:
+    """Giải mã và kiểm tra chữ ký token. Trả về (user_id, role, iat) nếu hợp lệ."""
     try:
         raw = base64.urlsafe_b64decode(token.encode()).decode()
         parts = raw.split(":")
-        if len(parts) != 4:
-            return None
-        user_id, role, exp_str, sig = parts
-        if int(exp_str) < time.time():
-            return None
-        data = f"{user_id}:{role}:{exp_str}"
-        expected_sig = hmac.new(settings.SECRET_KEY.encode(), data.encode(), hashlib.sha256).hexdigest()
-        if hmac.compare_digest(sig, expected_sig):
-            return user_id, role
+        if len(parts) == 5:
+            user_id, role, iat_str, exp_str, sig = parts
+            if int(exp_str) < time.time():
+                return None
+            data = f"{user_id}:{role}:{iat_str}:{exp_str}"
+            expected_sig = hmac.new(settings.SECRET_KEY.encode(), data.encode(), hashlib.sha256).hexdigest()
+            if hmac.compare_digest(sig, expected_sig):
+                return user_id, role, int(iat_str)
+        elif len(parts) == 4:
+            user_id, role, exp_str, sig = parts
+            if int(exp_str) < time.time():
+                return None
+            data = f"{user_id}:{role}:{exp_str}"
+            expected_sig = hmac.new(settings.SECRET_KEY.encode(), data.encode(), hashlib.sha256).hexdigest()
+            if hmac.compare_digest(sig, expected_sig):
+                iat = int(exp_str) - (86400 * 7)
+                return user_id, role, iat
     except Exception:
         return None
     return None
@@ -124,8 +135,14 @@ class UserService:
         res = verify_auth_token(token)
         if not res:
             return None
-        user_id, _ = res
-        return self.get_by_id(user_id)
+        user_id, _, iat = res
+        with get_db_session() as session:
+            u = session.query(UserDB).filter(UserDB.id == user_id).first()
+            if not u:
+                return None
+            if u.password_changed_at and iat < int(u.password_changed_at):
+                return None
+            return to_user_model(u)
 
     # ---------- Tìm kiếm & Xác thực ----------
     def get_by_id(self, user_id: str) -> Optional[User]:
@@ -266,7 +283,71 @@ class UserService:
             if not verify_password(old_password, u.password_hash):
                 return False, "Mật khẩu hiện tại không chính xác"
             u.password_hash = hash_password(new_password)
+            u.password_changed_at = time.time()
             return True, "Đổi mật khẩu thành công"
+
+    def request_password_reset(self, email: str, base_url: str = "http://127.0.0.1:8000") -> str:
+        clean_email = email.strip().lower()
+        fixed_msg = "Nếu email tồn tại trong hệ thống, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu đến email của bạn."
+
+        with get_db_session() as session:
+            u = session.query(UserDB).filter(func.lower(UserDB.email) == clean_email).first()
+            if not u or u.status == "disabled":
+                return fixed_msg
+
+            raw_token = secrets.token_urlsafe(32)
+            token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+            expires_at = time.time() + 1800  # Hết hạn 30 phút
+            now_str = dt.datetime.now().strftime("%d/%m/%Y %H:%M")
+
+            reset_entry = PasswordResetTokenDB(
+                user_id=u.id,
+                token_hash=token_hash,
+                expires_at=expires_at,
+                used=0,
+                created_at=now_str,
+            )
+            session.add(reset_entry)
+
+        # Gửi email qua EmailSender
+        sender = get_email_sender()
+        reset_link = f"{base_url.rstrip('/')}/reset-password?token={raw_token}"
+        sender.send_reset_email(clean_email, reset_link)
+
+        return fixed_msg
+
+    def verify_and_reset_password(self, token: str, new_password: str) -> Tuple[bool, str]:
+        if not token or not token.strip():
+            return False, "Mã token không hợp lệ"
+
+        token_hash = hashlib.sha256(token.strip().encode()).hexdigest()
+        now = time.time()
+
+        with get_db_session() as session:
+            reset_token = session.query(PasswordResetTokenDB).filter(
+                PasswordResetTokenDB.token_hash == token_hash
+            ).first()
+
+            if not reset_token:
+                return False, "Mã token không hợp lệ hoặc không tồn tại"
+
+            if reset_token.used == 1:
+                return False, "Mã token này đã được sử dụng"
+
+            if now > reset_token.expires_at:
+                return False, "Mã token đã hết hạn"
+
+            u = session.query(UserDB).filter(UserDB.id == reset_token.user_id).first()
+            if not u:
+                return False, "Tài khoản người dùng không tồn tại"
+
+            # Đổi mật khẩu
+            u.password_hash = hash_password(new_password)
+            u.password_changed_at = now
+            # Đánh dấu token đã dùng
+            reset_token.used = 1
+
+        return True, "Đặt lại mật khẩu thành công. Vui lòng đăng nhập với mật khẩu mới."
 
     # ---------- Admin Quản lý User ----------
     def get_all_users(self) -> List[User]:

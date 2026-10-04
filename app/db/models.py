@@ -26,6 +26,7 @@ class UserDB(Base):
     total_spent = Column(Integer, default=0, nullable=False)
     tier = Column(String, default="Silver", nullable=False)
     created_at = Column(String, nullable=False)
+    password_changed_at = Column(Float, nullable=True)
 
 
 class OrderDB(Base):
@@ -197,3 +198,15 @@ class CartItemDB(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "product_id", "size", "color", name="uq_cart_user_product_size_color"),
     )
+
+
+class PasswordResetTokenDB(Base):
+    """Bảng lưu HASH của token quên mật khẩu (dùng 1 lần, hết hạn 30 phút)."""
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    token_hash = Column(String, nullable=False, index=True)
+    expires_at = Column(Float, nullable=False)
+    used = Column(Integer, default=0, nullable=False)
+    created_at = Column(String, nullable=False)

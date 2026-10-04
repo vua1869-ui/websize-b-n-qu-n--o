@@ -76,5 +76,15 @@ class Settings(BaseSettings):
     TREND_RISING_THRESHOLD: float = 20.0
     TREND_DECLINING_THRESHOLD: float = -20.0
 
+    # ---- Email Sender ----
+    EMAIL_BACKEND: str = "console"  # console | smtp | resend
+    EMAIL_FROM: str = "AURA Studio <no-reply@aurastudio.vn>"
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_TLS: bool = True
+    RESEND_API_KEY: str = ""
+
 
 settings = Settings()
