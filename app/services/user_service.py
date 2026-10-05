@@ -37,29 +37,29 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return False
 
 
-def make_auth_token(user_id: str, role: str, expires_in_sec: int = 86400 * 7) -> str:
-    """Tạo signed token xác thực kèm thời điểm tạo và thời gian hết hạn (mặc định 7 ngày)."""
+def make_auth_token(user_id: str, role: str, token_version: int = 1, expires_in_sec: int = 86400 * 7) -> str:
+    """Tạo signed token xác thực chứa user_id, role, token_version và thời gian hết hạn (mặc định 7 ngày)."""
     now = int(time.time())
     exp = now + expires_in_sec
-    data = f"{user_id}:{role}:{now}:{exp}"
+    data = f"{user_id}:{role}:{token_version}:{exp}"
     sig = hmac.new(settings.SECRET_KEY.encode(), data.encode(), hashlib.sha256).hexdigest()
     raw = f"{data}:{sig}"
     return base64.urlsafe_b64encode(raw.encode()).decode()
 
 
 def verify_auth_token(token: str) -> Optional[Tuple[str, str, int]]:
-    """Giải mã và kiểm tra chữ ký token. Trả về (user_id, role, iat) nếu hợp lệ."""
+    """Giải mã và kiểm tra chữ ký token. Trả về (user_id, role, token_version) nếu hợp lệ."""
     try:
         raw = base64.urlsafe_b64decode(token.encode()).decode()
         parts = raw.split(":")
         if len(parts) == 5:
-            user_id, role, iat_str, exp_str, sig = parts
+            user_id, role, tv_str, exp_str, sig = parts
             if int(exp_str) < time.time():
                 return None
-            data = f"{user_id}:{role}:{iat_str}:{exp_str}"
+            data = f"{user_id}:{role}:{tv_str}:{exp_str}"
             expected_sig = hmac.new(settings.SECRET_KEY.encode(), data.encode(), hashlib.sha256).hexdigest()
             if hmac.compare_digest(sig, expected_sig):
-                return user_id, role, int(iat_str)
+                return user_id, role, int(tv_str)
         elif len(parts) == 4:
             user_id, role, exp_str, sig = parts
             if int(exp_str) < time.time():
@@ -67,8 +67,7 @@ def verify_auth_token(token: str) -> Optional[Tuple[str, str, int]]:
             data = f"{user_id}:{role}:{exp_str}"
             expected_sig = hmac.new(settings.SECRET_KEY.encode(), data.encode(), hashlib.sha256).hexdigest()
             if hmac.compare_digest(sig, expected_sig):
-                iat = int(exp_str) - (86400 * 7)
-                return user_id, role, iat
+                return user_id, role, 1
     except Exception:
         return None
     return None
@@ -94,6 +93,7 @@ def to_user_model(u: Any) -> User:
             total_spent=u.get("total_spent", 0),
             tier=u.get("tier", "Silver"),
             created_at=u.get("created_at", ""),
+            token_version=u.get("token_version", 1) or 1,
         )
 
     status = getattr(u, "status", "active") or "active"
@@ -113,6 +113,7 @@ def to_user_model(u: Any) -> User:
         total_spent=u.total_spent if u.total_spent is not None else 0,
         tier=u.tier or "Silver",
         created_at=u.created_at or "",
+        token_version=getattr(u, "token_version", 1) or 1,
     )
 
 
@@ -129,18 +130,22 @@ class UserService:
 
     # ---------- Token Session ----------
     def create_session_token(self, user: User) -> str:
-        return make_auth_token(user.id, user.role)
+        tv = getattr(user, "token_version", 1) or 1
+        return make_auth_token(user.id, user.role, token_version=tv)
 
     def verify_session_token(self, token: str) -> Optional[User]:
         res = verify_auth_token(token)
         if not res:
             return None
-        user_id, _, iat = res
+        user_id, _, token_version = res
         with get_db_session() as session:
             u = session.query(UserDB).filter(UserDB.id == user_id).first()
             if not u:
                 return None
-            if u.password_changed_at and iat < int(u.password_changed_at):
+            if u.status == "disabled":
+                return None
+            db_tv = getattr(u, "token_version", 1) or 1
+            if token_version != db_tv:
                 return None
             return to_user_model(u)
 
@@ -284,6 +289,7 @@ class UserService:
                 return False, "Mật khẩu hiện tại không chính xác"
             u.password_hash = hash_password(new_password)
             u.password_changed_at = time.time()
+            u.token_version = (u.token_version or 1) + 1
             return True, "Đổi mật khẩu thành công"
 
     def request_password_reset(self, email: str, base_url: str = "http://127.0.0.1:8000") -> str:
@@ -344,6 +350,7 @@ class UserService:
             # Đổi mật khẩu
             u.password_hash = hash_password(new_password)
             u.password_changed_at = now
+            u.token_version = (u.token_version or 1) + 1
             # Đánh dấu token đã dùng
             reset_token.used = 1
 
@@ -380,6 +387,7 @@ class UserService:
                 u.status = "active" if is_active else "disabled"
             else:
                 u.status = "disabled" if u.status == "active" else "active"
+            u.token_version = (u.token_version or 1) + 1
             session.flush()
             session.refresh(u)
             return to_user_model(u)

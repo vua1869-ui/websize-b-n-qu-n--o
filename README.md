@@ -156,6 +156,19 @@ npm install
 npm run build:css        # hoặc: npm run watch:css
 ```
 
+## Triển khai sản phẩm (Production Deployment Checklist)
+
+Trước khi đưa ứng dụng lên máy chủ Production, hãy kiểm tra và hoàn thành các mục sau:
+
+- [ ] **Đặt `APP_ENV=production` & `DEBUG=false`** trong file `.env`.
+- [ ] **Đổi `SECRET_KEY`**: Tạo chuỗi ngẫu nhiên bằng `python -c "import secrets; print(secrets.token_hex(32))"`. Không dùng chuỗi dev mặc định.
+- [ ] **Đổi `PAYMENT_WEBHOOK_SECRET`**: Khóa bí mật khớp với cấu hình webhook thanh toán của VNPay/Ngân hàng.
+- [ ] **Cấu hình CSDL PostgreSQL**: Thay `DATABASE_URL` bằng kết nối PostgreSQL/MySQL thực tế (không dùng SQLite trên Production).
+- [ ] **Cập nhật `VNPAY_RETURN_URL`**: Trỏ về URL tên miền chính thức có `https://...` (không dùng `127.0.0.1` hay `localhost`).
+- [ ] **Cấu hình Email Sender**: Đặt `EMAIL_BACKEND` thành `smtp` hoặc `resend`, cung cấp đầy đủ thông số gửi mail cho tính năng quên mật khẩu.
+- [ ] **Đổi mật khẩu tài khoản Admin mặc định**: Đăng nhập tài khoản `admin` ban đầu và tiến hành đổi mật khẩu mới ngay lập tức.
+- [ ] **Tắt Swagger Docs**: Khi `APP_ENV=production`, hệ thống tự động tắt `/docs`, `/redoc` và `/openapi.json` để bảo mật.
+
 ## Những gì cần lưu ý trước khi bán thật
 
 - **Thanh toán chuyển khoản chưa tích hợp cổng thanh toán**: đơn được ghi nhận ở trạng thái `pending_payment`, bạn cần tự đối soát. Muốn thu tiền tự động cần tích hợp VNPay/MoMo/PayOS...

@@ -186,21 +186,41 @@ class OrderService:
 
     # ---------- Đặt hàng ----------
     def create_order(self, req: OrderCreateRequest, user: Optional[Any] = None) -> OrderResponse:
-        # Báo giá lại toàn bộ phía server
-        quote = self.build_quote(
-            req.items, req.voucher_code, strict_voucher=True,
-            use_points=req.use_points, user=user
-        )
-
-        # Trừ tồn kho tạm thời trong bộ nhớ
-        needed: Dict[str, int] = {}
-        for line in quote.lines:
-            needed[line.product_id] = needed.get(line.product_id, 0) + line.quantity
+        # Bọc toàn bộ kiểm tra & trừ tồn kho dưới Lock để đảm bảo tính nguyên tử (Atomic / Thread-safe)
         with product_service._lock:
+            # 1. Báo giá lại toàn bộ phía server
+            quote = self.build_quote(
+                req.items, req.voucher_code, strict_voucher=True,
+                use_points=req.use_points, user=user
+            )
+
+            # 2. Kiểm tra nghiêm ngặt tồn kho từng sản phẩm dưới Lock
+            needed: Dict[str, int] = {}
+            for line in quote.lines:
+                needed[line.product_id] = needed.get(line.product_id, 0) + line.quantity
+
+            for pid, qty in needed.items():
+                p = product_service._by_id.get(pid)
+                if not p or p.stock < qty:
+                    avail = p.stock if p else 0
+                    msg = (f"'{p.name if p else pid}' chỉ còn {avail} sản phẩm" if avail > 0
+                           else f"'{p.name if p else pid}' đã hết hàng")
+                    raise OrderError(msg, 409)
+
+            # 3. Trừ tồn kho CSDL (Database ACID Transaction)
+            db_items = [
+                {"product_id": line.product_id, "color": line.color, "size": line.size, "quantity": line.quantity}
+                for line in quote.lines
+            ]
+            ok, db_err = db_service.check_and_deduct_variants_stock(db_items)
+            if not ok:
+                raise OrderError(db_err or "Tồn kho không đủ", 409)
+
+            # 4. Trừ tồn kho bộ nhớ
             for pid, qty in needed.items():
                 p = product_service._by_id.get(pid)
                 if p:
-                    p.stock = max(0, p.stock - qty)
+                    p.stock -= qty
                     p.sold_count += qty
 
         now = datetime.datetime.now()

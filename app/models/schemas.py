@@ -528,6 +528,7 @@ class User(BaseModel):
     total_spent: int = 0
     tier: str = "Silver"
     created_at: str = ""
+    token_version: int = 1
 
     @model_validator(mode="before")
     @classmethod

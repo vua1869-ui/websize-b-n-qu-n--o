@@ -51,7 +51,7 @@
         <div>
           <div class="flex items-center justify-between">
             <label for="password" class="block text-sm uppercase tracking-wider font-semibold text-[#111111]">Mật khẩu</label>
-            <a href="javascript:void(0)" onclick="openForgotModal()" class="text-sm text-[#777777] hover:text-black transition">Quên mật khẩu?</a>
+            <button type="button" id="btn-forgot-password" onclick="openForgotModal()" class="text-sm text-[#777777] hover:text-black transition cursor-pointer bg-transparent border-0 p-0 hover:underline">Quên mật khẩu?</button>
           </div>
           <div class="mt-2 relative">
             <input id="password" name="password" type="password" required placeholder="••••••••"
@@ -83,156 +83,14 @@
     </div>
   </div>
 
-  <script>
-    // Password toggle
-    const togglePwBtn = document.getElementById("toggle-pw-btn");
-    const pwInput = document.getElementById("password");
-    if (togglePwBtn && pwInput) {
-      togglePwBtn.addEventListener("click", () => {
-        const isPw = pwInput.type === "password";
-        pwInput.type = isPw ? "text" : "password";
-        togglePwBtn.innerHTML = isPw 
-          ? `<svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/></svg>`
-          : `<svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`;
-      });
-    }
-
-    // Submit handler
-    const form = document.getElementById("login-form");
-    const alertBox = document.getElementById("login-alert");
-    const submitBtn = document.getElementById("submit-btn");
-    const submitText = document.getElementById("submit-text");
-    const submitSpinner = document.getElementById("submit-spinner");
-
-    function showAlert(msg, isSuccess = false) {
-      alertBox.textContent = msg;
-      alertBox.className = `mb-6 rounded-[2px] p-3 text-sm font-medium border ${
-        isSuccess 
-          ? "bg-[#FAF8F5] text-[#111111] border-[#111111]" 
-          : "bg-red-50 text-red-700 border-red-200"
-      }`;
-      alertBox.classList.remove("hidden");
-    }
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      alertBox.classList.add("hidden");
-
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value;
-
-      if (!username || !password) {
-        showAlert("Vui lòng điền đầy đủ tên đăng nhập và mật khẩu");
-        return;
-      }
-
-      submitBtn.disabled = true;
-      submitText.textContent = "Đang xác thực...";
-      submitSpinner.classList.remove("hidden");
-
-      try {
-        const res = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password })
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-          showAlert(data.detail || "Đăng nhập thất bại");
-          submitBtn.disabled = false;
-          submitText.textContent = "Đăng nhập";
-          submitSpinner.classList.add("hidden");
-          return;
-        }
-
-        localStorage.setItem("aura_token", data.token);
-        localStorage.setItem("aura_user", JSON.stringify(data.user));
-
-        showAlert("Đăng nhập thành công! Đang chuyển hướng...", true);
-
-        const params = new URLSearchParams(window.location.search);
-        let redirectUrl = params.get("redirect");
-        if (!redirectUrl) {
-          redirectUrl = data.user.role === "admin" ? "/admin" : "/profile";
-        }
-
-        setTimeout(() => {
-          window.location.href = redirectUrl;
-        }, 600);
-
-      } catch (err) {
-        showAlert("Lỗi kết nối máy chủ. Vui lòng kiểm tra lại mạng!");
-        submitBtn.disabled = false;
-        submitText.textContent = "Đăng nhập";
-        submitSpinner.classList.add("hidden");
-      }
-    });
-
-    // Forgot Password Modal
-    const forgotModal = document.getElementById("forgot-modal");
-    const forgotForm = document.getElementById("forgot-form");
-    const forgotAlert = document.getElementById("forgot-alert");
-    const forgotSubmitBtn = document.getElementById("forgot-submit-btn");
-    const forgotSubmitText = document.getElementById("forgot-submit-text");
-    const forgotSpinner = document.getElementById("forgot-spinner");
-
-    function openForgotModal() {
-      forgotModal.classList.remove("hidden");
-      forgotAlert.classList.add("hidden");
-    }
-
-    function closeForgotModal() {
-      forgotModal.classList.add("hidden");
-    }
-
-    forgotForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      forgotAlert.classList.add("hidden");
-      const email = document.getElementById("forgot-email").value.trim();
-      if (!email) return;
-
-      forgotSubmitBtn.disabled = true;
-      forgotSubmitText.textContent = "Đang gửi...";
-      forgotSpinner.classList.remove("hidden");
-
-      try {
-        const res = await fetch("/api/auth/forgot-password", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email })
-        });
-        const data = await res.json();
-
-        forgotAlert.textContent = data.message || data.detail;
-        forgotAlert.className = `my-4 rounded-[2px] p-3 text-sm font-medium border ${
-          res.ok ? "bg-[#FAF8F5] text-[#111111] border-[#111111]" : "bg-red-50 text-red-700 border-red-200"
-        }`;
-        forgotAlert.classList.remove("hidden");
-
-        if (res.ok) {
-          document.getElementById("forgot-email").value = "";
-        }
-      } catch (err) {
-        forgotAlert.textContent = "Lỗi kết nối. Vui lòng thử lại!";
-        forgotAlert.className = "my-4 rounded-[2px] p-3 text-sm font-medium border bg-red-50 text-red-700 border-red-200";
-        forgotAlert.classList.remove("hidden");
-      } finally {
-        forgotSubmitBtn.disabled = false;
-        forgotSubmitText.textContent = "Gửi yêu cầu";
-        forgotSpinner.classList.add("hidden");
-      }
-    });
-  </script>
-
   <!-- Modal Quên mật khẩu -->
-  <div id="forgot-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden px-4">
-    <div class="bg-white border border-[#E5E2DC] rounded-[2px] p-6 sm:p-8 max-w-md w-full shadow-2xl relative">
-      <button type="button" onclick="closeForgotModal()" class="absolute top-4 right-4 text-[#777777] hover:text-black transition">
+  <div id="forgot-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden px-4" role="dialog" aria-modal="true" aria-labelledby="forgot-modal-title">
+    <div class="bg-white border border-[#E5E2DC] rounded-[2px] p-6 sm:p-8 max-w-md w-full shadow-2xl relative" onclick="event.stopPropagation()">
+      <button type="button" onclick="closeForgotModal()" class="absolute top-4 right-4 text-[#777777] hover:text-black transition" aria-label="Đóng">
         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
       </button>
 
-      <h2 class="font-sans text-xl font-bold tracking-tight text-[#111111]">Quên mật khẩu?</h2>
+      <h2 id="forgot-modal-title" class="font-sans text-xl font-bold tracking-tight text-[#111111]">Quên mật khẩu?</h2>
       <p class="mt-1.5 text-sm text-[#666666]">
         Nhập địa chỉ email đăng ký tài khoản. Chúng tôi sẽ gửi hướng dẫn khôi phục mật khẩu đến email của bạn.
       </p>
@@ -256,5 +114,200 @@
       </form>
     </div>
   </div>
+
+  <script>
+    // Password toggle
+    const togglePwBtn = document.getElementById("toggle-pw-btn");
+    const pwInput = document.getElementById("password");
+    if (togglePwBtn && pwInput) {
+      togglePwBtn.addEventListener("click", () => {
+        const isPw = pwInput.type === "password";
+        pwInput.type = isPw ? "text" : "password";
+        togglePwBtn.innerHTML = isPw 
+          ? `<svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88"/></svg>`
+          : `<svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>`;
+      });
+    }
+
+    // Submit handler
+    const form = document.getElementById("login-form");
+    const alertBox = document.getElementById("login-alert");
+    const submitBtn = document.getElementById("submit-btn");
+    const submitText = document.getElementById("submit-text");
+    const submitSpinner = document.getElementById("submit-spinner");
+
+    function showAlert(msg, isSuccess = false) {
+      if (!alertBox) return;
+      alertBox.textContent = msg;
+      alertBox.className = `mb-6 rounded-[2px] p-3 text-sm font-medium border ${
+        isSuccess 
+          ? "bg-[#FAF8F5] text-[#111111] border-[#111111]" 
+          : "bg-red-50 text-red-700 border-red-200"
+      }`;
+      alertBox.classList.remove("hidden");
+    }
+
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        alertBox.classList.add("hidden");
+
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value;
+
+        if (!username || !password) {
+          showAlert("Vui lòng điền đầy đủ tên đăng nhập và mật khẩu");
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitText.textContent = "Đang xác thực...";
+        submitSpinner.classList.remove("hidden");
+
+        try {
+          const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            showAlert(data.detail || "Đăng nhập thất bại");
+            submitBtn.disabled = false;
+            submitText.textContent = "Đăng nhập";
+            submitSpinner.classList.add("hidden");
+            return;
+          }
+
+          localStorage.setItem("aura_token", data.token);
+          localStorage.setItem("aura_user", JSON.stringify(data.user));
+
+          showAlert("Đăng nhập thành công! Đang chuyển hướng...", true);
+
+          const params = new URLSearchParams(window.location.search);
+          let redirectUrl = params.get("redirect");
+          if (!redirectUrl) {
+            redirectUrl = data.user.role === "admin" ? "/admin" : "/profile";
+          }
+
+          setTimeout(() => {
+            window.location.href = redirectUrl;
+          }, 600);
+
+        } catch (err) {
+          showAlert("Lỗi kết nối máy chủ. Vui lòng kiểm tra lại mạng!");
+          submitBtn.disabled = false;
+          submitText.textContent = "Đang nhập";
+          submitSpinner.classList.add("hidden");
+        }
+      });
+    }
+
+    // Forgot Password Modal Functions
+    const forgotModal = document.getElementById("forgot-modal");
+    const forgotForm = document.getElementById("forgot-form");
+    const forgotAlert = document.getElementById("forgot-alert");
+    const forgotSubmitBtn = document.getElementById("forgot-submit-btn");
+    const forgotSubmitText = document.getElementById("forgot-submit-text");
+    const forgotSpinner = document.getElementById("forgot-spinner");
+    const forgotEmail = document.getElementById("forgot-email");
+
+    function openForgotModal() {
+      const modal = forgotModal || document.getElementById("forgot-modal");
+      const alert = forgotAlert || document.getElementById("forgot-alert");
+      if (modal) {
+        modal.classList.remove("hidden");
+      }
+      if (alert) {
+        alert.classList.add("hidden");
+      }
+      setTimeout(() => {
+        const emailInput = forgotEmail || document.getElementById("forgot-email");
+        if (emailInput) emailInput.focus();
+      }, 50);
+    }
+
+    function closeForgotModal() {
+      const modal = forgotModal || document.getElementById("forgot-modal");
+      if (modal) {
+        modal.classList.add("hidden");
+      }
+    }
+
+    window.openForgotModal = openForgotModal;
+    window.closeForgotModal = closeForgotModal;
+
+    const forgotTrigger = document.getElementById("btn-forgot-password");
+    if (forgotTrigger) {
+      forgotTrigger.addEventListener("click", openForgotModal);
+    }
+
+    // Close when clicking modal backdrop
+    if (forgotModal) {
+      forgotModal.addEventListener("click", (e) => {
+        if (e.target === forgotModal) {
+          closeForgotModal();
+        }
+      });
+    }
+
+    // Close on Escape key
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeForgotModal();
+      }
+    });
+
+    if (forgotForm) {
+      forgotForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const alertEl = forgotAlert || document.getElementById("forgot-alert");
+        const btnEl = forgotSubmitBtn || document.getElementById("forgot-submit-btn");
+        const textEl = forgotSubmitText || document.getElementById("forgot-submit-text");
+        const spinEl = forgotSpinner || document.getElementById("forgot-spinner");
+        const emailEl = forgotEmail || document.getElementById("forgot-email");
+
+        if (alertEl) alertEl.classList.add("hidden");
+        const email = emailEl ? emailEl.value.trim() : "";
+        if (!email) return;
+
+        if (btnEl) btnEl.disabled = true;
+        if (textEl) textEl.textContent = "Đang gửi...";
+        if (spinEl) spinEl.classList.remove("hidden");
+
+        try {
+          const res = await fetch("/api/auth/forgot-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+          });
+          const data = await res.json();
+
+          if (alertEl) {
+            alertEl.textContent = data.message || data.detail || (res.ok ? "Đã gửi liên kết khôi phục." : "Không thể gửi yêu cầu.");
+            alertEl.className = `my-4 rounded-[2px] p-3 text-sm font-medium border ${
+              res.ok ? "bg-[#FAF8F5] text-[#111111] border-[#111111]" : "bg-red-50 text-red-700 border-red-200"
+            }`;
+            alertEl.classList.remove("hidden");
+          }
+
+          if (res.ok && emailEl) {
+            emailEl.value = "";
+          }
+        } catch (err) {
+          if (alertEl) {
+            alertEl.textContent = "Lỗi kết nối. Vui lòng thử lại!";
+            alertEl.className = "my-4 rounded-[2px] p-3 text-sm font-medium border bg-red-50 text-red-700 border-red-200";
+            alertEl.classList.remove("hidden");
+          }
+        } finally {
+          if (btnEl) btnEl.disabled = false;
+          if (textEl) textEl.textContent = "Gửi yêu cầu";
+          if (spinEl) spinEl.classList.add("hidden");
+        }
+      });
+    }
+  </script>
 </body>
 </html>

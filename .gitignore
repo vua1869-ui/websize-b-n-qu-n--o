@@ -4,6 +4,8 @@ __pycache__/
 .pytest_cache/
 node_modules/
 app/data/orders.jsonl
+app/data/aura_store.db
+app/data/users.json
 .venv/
 
 app/data/aura_store.db-shm

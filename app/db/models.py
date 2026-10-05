@@ -27,6 +27,7 @@ class UserDB(Base):
     tier = Column(String, default="Silver", nullable=False)
     created_at = Column(String, nullable=False)
     password_changed_at = Column(Float, nullable=True)
+    token_version = Column(Integer, default=1, nullable=False)
 
 
 class OrderDB(Base):

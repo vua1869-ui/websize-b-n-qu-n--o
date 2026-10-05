@@ -38,6 +38,10 @@ def run_migration():
             with engine.begin() as conn:
                 conn.execute(text("ALTER TABLE users ADD COLUMN password_changed_at FLOAT"))
             print("Đã tự động thêm cột password_changed_at vào bảng users.")
+        if "token_version" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN token_version INTEGER DEFAULT 1"))
+            print("Đã tự động thêm cột token_version vào bảng users.")
 
     users_file = os.path.join(BASE_DIR, "app", "data", "users.json")
     orders_file = os.path.join(BASE_DIR, "app", "data", "orders.jsonl")

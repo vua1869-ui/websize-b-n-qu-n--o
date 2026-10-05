@@ -39,10 +39,14 @@ from app.services.size_chart_service import size_chart_service
 from app.services.trend_service import trend_service
 from app.services.user_service import user_service
 
+is_prod = settings.APP_ENV.strip().lower() == "production"
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.VERSION,
     description="Cửa hàng thời trang tích hợp AI Stylist, tính size, phối đồ và Flash Sale.",
+    docs_url=None if is_prod else "/docs",
+    redoc_url=None if is_prod else "/redoc",
+    openapi_url=None if is_prod else "/openapi.json",
 )
 # Không bật CORS: giao diện và API cùng một origin nên không cần mở cho trang web lạ gọi vào.
 
@@ -662,8 +666,8 @@ def refresh_trends(force: bool = Query(True)):
 
 
 @app.get("/api/trends/debug", response_model=TrendDebugResponse)
-def debug_trends():
-    """Endpoint debug: thông tin chẩn đoán kỹ thuật về cache, nguồn dữ liệu và số lượng."""
+def debug_trends(_admin: User = Depends(require_admin)):
+    """Endpoint debug: thông tin chẩn đoán kỹ thuật (chỉ dành cho Admin)."""
     return trend_service.get_debug_info()
 
 
@@ -1357,7 +1361,7 @@ def check_order_payment_status(order_id: str):
 
 
 def check_simulate_enabled():
-    if not settings.DEBUG:
+    if not settings.DEBUG or settings.APP_ENV.strip().lower() == "production":
         raise HTTPException(status_code=404, detail="Endpoint không tồn tại")
 
 

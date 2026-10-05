@@ -237,7 +237,16 @@ def test_trending_personalization():
 # TEST 12: Debug Endpoint GET /api/trends/debug
 # =========================================================================
 def test_api_trends_debug(client):
-    r = client.get("/api/trends/debug")
+    from app.services.user_service import user_service
+    
+    # 1. Khách chưa đăng nhập -> 401 Unauthorized
+    r_unauth = client.get("/api/trends/debug")
+    assert r_unauth.status_code == 401
+
+    # 2. Đăng nhập Admin -> 200 OK
+    admin_user = user_service.get_by_username("admin")
+    admin_token = user_service.create_session_token(admin_user)
+    r = client.get("/api/trends/debug", headers={"Authorization": f"Bearer {admin_token}"})
     assert r.status_code == 200
     data = r.json()
     assert "last_update" in data

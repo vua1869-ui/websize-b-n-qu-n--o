@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     VERSION: str = "2.1.0"
     HOST: str = "127.0.0.1"
     PORT: int = 8000
-    DEBUG: bool = True
+    APP_ENV: str = "dev"  # dev | production
+    DEBUG: bool = False
 
     # Khóa ký token combo. ĐỔI giá trị này khi triển khai thật.
     SECRET_KEY: str = "dev-only-change-me"
@@ -28,7 +29,7 @@ class Settings(BaseSettings):
     # Khóa bí mật xác thực webhook thanh toán
     PAYMENT_WEBHOOK_SECRET: str = "dev-payment-webhook-secret"
 
-    # Database connection string (SQLite mặc định, dễ dàng chuyển đổi sang PostgreSQL)
+    # Database connection string (SQLite mặc định, chuyển sang PostgreSQL khi production)
     DATABASE_URL: str = f"sqlite:///{DEFAULT_DB_PATH}"
 
     # ---- Cổng thanh toán VNPay Sandbox ----
@@ -37,6 +38,37 @@ class Settings(BaseSettings):
     VNPAY_HASH_SECRET: str = ""  # PHẢI đặt trong .env — xem .env.example
     VNPAY_URL: str = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
     VNPAY_RETURN_URL: str = "http://127.0.0.1:8000/api/payment/vnpay/return"
+
+    from pydantic import model_validator
+
+    @model_validator(mode="after")
+    def _validate_production(self) -> "Settings":
+        """Nếu APP_ENV là production: bắt buộc các khóa secret phải được đổi, không dùng SQLite hay 127.0.0.1."""
+        if self.APP_ENV.strip().lower() == "production":
+            errors = []
+            if not self.SECRET_KEY or self.SECRET_KEY.strip() == "dev-only-change-me" or len(self.SECRET_KEY.strip()) < 16:
+                errors.append("- SECRET_KEY chưa được đặt hoặc vẫn dùng giá trị mặc định dev ('dev-only-change-me'). Bắt buộc tối thiểu 16 ký tự.")
+
+            if not self.PAYMENT_WEBHOOK_SECRET or self.PAYMENT_WEBHOOK_SECRET.strip() == "dev-payment-webhook-secret":
+                errors.append("- PAYMENT_WEBHOOK_SECRET chưa được đặt hoặc vẫn dùng giá trị mặc định dev ('dev-payment-webhook-secret').")
+
+            if "sqlite" in self.DATABASE_URL.lower():
+                errors.append("- DATABASE_URL vẫn dùng SQLite. Khi triển khai Production bắt buộc sử dụng cơ sở dữ liệu như PostgreSQL.")
+
+            if "127.0.0.1" in self.VNPAY_RETURN_URL or "localhost" in self.VNPAY_RETURN_URL:
+                errors.append("- VNPAY_RETURN_URL vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống.")
+
+            if errors:
+                err_msg = (
+                    "\n" + "=" * 80 + "\n"
+                    "🚨 KHÔNG THỂ KHỞI ĐỘNG CẤU HÌNH SẢN XUẤT (APP_ENV=production):\n"
+                    "Phát hiện các thông số cấu hình không an toàn:\n"
+                    + "\n".join(errors) + "\n"
+                    "Vui lòng bổ sung/thay đổi đầy đủ trong file .env hoặc biến môi trường trước khi chạy.\n"
+                    + "=" * 80 + "\n"
+                )
+                raise ValueError(err_msg)
+        return self
 
     # ---- Cloudinary Image Storage ----
     # Lấy tại cloudinary.com/console
