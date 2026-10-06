@@ -37,7 +37,26 @@ from app.services.product_import_service import product_import_service
 from app.services.product_service import flash_sale_window, product_service
 from app.services.size_chart_service import size_chart_service
 from app.services.trend_service import trend_service
+from contextlib import asynccontextmanager
+import html
 from app.services.user_service import user_service
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Khởi tạo DB: Base.metadata.create_all TRƯỚC init_db
+    try:
+        from app.db.models import Base
+        from app.db.session import engine
+        Base.metadata.create_all(bind=engine)
+    except Exception:
+        pass
+    try:
+        db_service.init_db()
+    except Exception:
+        pass
+    yield
+
 
 is_prod = settings.APP_ENV.strip().lower() == "production"
 app = FastAPI(
@@ -47,8 +66,26 @@ app = FastAPI(
     docs_url=None if is_prod else "/docs",
     redoc_url=None if is_prod else "/redoc",
     openapi_url=None if is_prod else "/openapi.json",
+    lifespan=lifespan,
 )
 # Không bật CORS: giao diện và API cùng một origin nên không cần mở cho trang web lạ gọi vào.
+
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "same-origin"
+    response.headers["Content-Security-Policy-Report-Only"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data: https://images.unsplash.com https://img.vietqr.io https://res.cloudinary.com; "
+        "connect-src 'self'"
+    )
+    return response
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
@@ -951,7 +988,7 @@ def auth_change_password(body: ChangePasswordRequest, user: User = Depends(get_c
 def auth_forgot_password(body: ForgotPasswordRequest, request: Request):
     ip = request.client.host if request.client else "unknown"
     _check_forgot_password_rate_limit(ip, body.email)
-    base_url = str(request.base_url)
+    base_url = settings.PUBLIC_BASE_URL.rstrip("/")
     msg = user_service.request_password_reset(body.email, base_url=base_url)
     return {"success": True, "message": msg}
 
@@ -1490,16 +1527,23 @@ async def payment_webhook(request: Request):
         raise HTTPException(status_code=400, detail="Không tìm thấy mã đơn hàng trong payload webhook")
 
     from app.db.database import db_service
-    amount = body.amount or body.transferAmount or 0
+    amount = body.amount if body.amount is not None else body.transferAmount
+    if amount is None or amount <= 0:
+        raise HTTPException(status_code=400, detail="Thiếu số tiền thanh toán (amount) hợp lệ")
+
     tx_code = body.transaction_code or body.referenceCode or f"TX-{uuid.uuid4().hex[:8].upper()}"
-    ok = db_service.confirm_payment(
+    res = db_service.confirm_payment(
         order_id=order_id,
         amount=amount,
         transaction_code=tx_code,
         payment_channel=body.channel or "vietqr",
     )
-    if not ok:
+    if res == "not_found":
         raise HTTPException(status_code=404, detail=f"Không tìm thấy đơn hàng '{order_id}'")
+    elif res == "cancelled":
+        raise HTTPException(status_code=400, detail=f"Đơn hàng '{order_id}' đã bị hủy, không thể xác nhận thanh toán")
+    elif res == "invalid_amount":
+        raise HTTPException(status_code=400, detail=f"Số tiền thanh toán ({amount}) không khớp với giá trị đơn hàng")
     return {"success": True, "order_id": order_id, "message": f"Đã xác nhận thanh toán đơn {order_id} thành công!"}
 
 
@@ -1544,9 +1588,13 @@ def simulate_payment_success(order_id: str, _admin: User = Depends(require_admin
     if not order:
         raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
     
-    amount = order.get("total_amount") or order.get("quote", {}).get("total", 0)
+    amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
     tx_code = f"MB-{uuid.uuid4().hex[:8].upper()}"
-    db_service.confirm_payment(order_id=order_id, amount=amount, transaction_code=tx_code, payment_channel="simulation")
+    res = db_service.confirm_payment(order_id=order_id, amount=amount, transaction_code=tx_code, payment_channel="simulation")
+    if res == "cancelled":
+        raise HTTPException(status_code=400, detail="Đơn hàng đã bị hủy, không thể xác nhận thanh toán")
+    elif res == "invalid_amount":
+        raise HTTPException(status_code=400, detail="Số tiền thanh toán không khớp")
     return {
         "success": True,
         "order_id": order_id,
@@ -1606,12 +1654,6 @@ def vnpay_payment_return(request: Request):
     params = dict(request.query_params)
     is_valid, vnp_data = vnpay_service.verify_response(params)
 
-    order_id = vnp_data.get("vnp_TxnRef")
-    response_code = vnp_data.get("vnp_ResponseCode")
-    transaction_no = vnp_data.get("vnp_TransactionNo") or f"VNPAY-{order_id}"
-    amount_raw = int(vnp_data.get("vnp_Amount", 0))
-    amount = amount_raw // 100
-
     accept_header = request.headers.get("accept", "")
     is_json_request = "application/json" in accept_header.lower()
     is_browser_html = not is_json_request
@@ -1630,23 +1672,82 @@ def vnpay_payment_return(request: Request):
             )
         raise HTTPException(status_code=400, detail="Chữ ký phản hồi VNPay không hợp lệ")
 
+    # Chỉ chạy SAU khi xác thực chữ ký thành công
+    order_id = vnp_data.get("vnp_TxnRef", "")
+    response_code = vnp_data.get("vnp_ResponseCode", "")
+    transaction_no = vnp_data.get("vnp_TransactionNo") or f"VNPAY-{order_id}"
+
+    try:
+        amount_raw = int(vnp_data.get("vnp_Amount", 0))
+        amount = amount_raw // 100
+    except (ValueError, TypeError):
+        amount = 0
+
+    safe_order_id = html.escape(str(order_id))
+    safe_response_code = html.escape(str(response_code))
+
     from app.db.database import db_service
     from app.services.order_service import order_service
+    order = db_service.get_order_by_id(order_id)
+    if not order:
+        order = order_service.get_order_by_id(order_id)
+
+    if not order:
+        if is_browser_html:
+            return HTMLResponse(
+                content=f"""
+                <div style="font-family:sans-serif;text-align:center;padding:50px;">
+                    <h2 style="color:#e11d48;">Lỗi đơn hàng</h2>
+                    <p>Không tìm thấy mã đơn hàng: <strong>{safe_order_id}</strong></p>
+                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
+                </div>
+                """,
+                status_code=404,
+            )
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy đơn hàng '{order_id}'")
+
+    order_amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
+    if amount != order_amount:
+        if is_browser_html:
+            return HTMLResponse(
+                content=f"""
+                <div style="font-family:sans-serif;text-align:center;padding:50px;">
+                    <h2 style="color:#e11d48;">Lỗi số tiền thanh toán</h2>
+                    <p>Số tiền thanh toán ({amount}đ) không khớp với giá trị đơn hàng ({order_amount}đ).</p>
+                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
+                </div>
+                """,
+                status_code=400,
+            )
+        raise HTTPException(status_code=400, detail="Số tiền thanh toán không khớp với đơn hàng")
+
     if response_code == "00":
-        db_service.confirm_payment(
+        confirm_res = db_service.confirm_payment(
             order_id=order_id,
             amount=amount,
             transaction_code=transaction_no,
             payment_channel="vnpay",
         )
+        if confirm_res == "cancelled":
+            if is_browser_html:
+                return HTMLResponse(
+                    content=f"""
+                    <div style="font-family:sans-serif;text-align:center;padding:50px;">
+                        <h2 style="color:#e11d48;">Đơn hàng đã bị hủy</h2>
+                        <p>Đơn hàng <strong>{safe_order_id}</strong> đã bị hủy trước đó.</p>
+                        <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
+                    </div>
+                    """,
+                    status_code=400,
+                )
+            raise HTTPException(status_code=400, detail="Đơn hàng đã bị hủy")
+
         order_service.update_order_status(order_id, "confirmed")
         if is_browser_html:
             resp = RedirectResponse(url=f"/order-success/{order_id}", status_code=302)
-            order_data = db_service.get_order_by_id(order_id)
-            if order_data:
-                phone_val = order_data.get("customer_phone") or order_data.get("customer", {}).get("phone", "")
-                if phone_val:
-                    resp.set_cookie(f"aura_order_{order_id}", phone_val, httponly=True, max_age=3600, samesite="lax")
+            phone_val = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
+            if phone_val:
+                resp.set_cookie(f"aura_order_{order_id}", phone_val, httponly=True, max_age=3600, samesite="lax")
             return resp
         return {
             "success": True,
@@ -1662,8 +1763,8 @@ def vnpay_payment_return(request: Request):
                 content=f"""
                 <div style="font-family:sans-serif;text-align:center;padding:50px;">
                     <h2 style="color:#d97706;">Giao dịch chưa hoàn tất</h2>
-                    <p>Mã đơn hàng: <strong>{order_id}</strong></p>
-                    <p>Mã phản hồi VNPay: <strong>{response_code}</strong></p>
+                    <p>Mã đơn hàng: <strong>{safe_order_id}</strong></p>
+                    <p>Mã phản hồi VNPay: <strong>{safe_response_code}</strong></p>
                     <p>Giao dịch thanh toán chưa thành công hoặc quý khách đã hủy thanh toán.</p>
                     <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
                 </div>
@@ -1713,7 +1814,11 @@ async def vnpay_ipn(request: Request):
         return {"RspCode": "01", "Message": "Order not found"}
 
     order_amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
-    vnp_amount = int(vnp_data.get("vnp_Amount", 0)) // 100
+    try:
+        vnp_amount = int(vnp_data.get("vnp_Amount", 0)) // 100
+    except (ValueError, TypeError):
+        vnp_amount = 0
+
     if vnp_amount != order_amount:
         return {"RspCode": "04", "Message": "Invalid amount"}
 
@@ -1724,12 +1829,21 @@ async def vnpay_ipn(request: Request):
     transaction_no = vnp_data.get("vnp_TransactionNo") or f"VNPAY-{order_id}"
 
     if response_code == "00":
-        db_service.confirm_payment(
+        confirm_res = db_service.confirm_payment(
             order_id=order_id,
             amount=vnp_amount,
             transaction_code=transaction_no,
             payment_channel="vnpay",
         )
+        if confirm_res == "already_paid":
+            return {"RspCode": "02", "Message": "Order already confirmed"}
+        elif confirm_res == "invalid_amount":
+            return {"RspCode": "04", "Message": "Invalid amount"}
+        elif confirm_res == "not_found":
+            return {"RspCode": "01", "Message": "Order not found"}
+        elif confirm_res == "cancelled":
+            return {"RspCode": "02", "Message": "Order cancelled"}
+
         order_service.update_order_status(order_id, "confirmed")
         return {"RspCode": "00", "Message": "Confirm Success"}
     else:

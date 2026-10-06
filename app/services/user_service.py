@@ -292,7 +292,7 @@ class UserService:
             u.token_version = (u.token_version or 1) + 1
             return True, "Đổi mật khẩu thành công"
 
-    def request_password_reset(self, email: str, base_url: str = "http://127.0.0.1:8000") -> str:
+    def request_password_reset(self, email: str, base_url: Optional[str] = None) -> str:
         clean_email = email.strip().lower()
         fixed_msg = "Nếu email tồn tại trong hệ thống, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu đến email của bạn."
 
@@ -317,7 +317,8 @@ class UserService:
 
         # Gửi email qua EmailSender
         sender = get_email_sender()
-        reset_link = f"{base_url.rstrip('/')}/reset-password?token={raw_token}"
+        effective_base_url = (base_url or settings.PUBLIC_BASE_URL).rstrip("/")
+        reset_link = f"{effective_base_url}/reset-password?token={raw_token}"
         sender.send_reset_email(clean_email, reset_link)
 
         return fixed_msg

@@ -529,10 +529,10 @@
 
   <!-- DỮ LIỆU ĐỂ TRANG CHẠY MƯỢT TRÊN CLIENT-SIDE -->
   <script>
-    window.__PRODUCT_DATA__ = {{ product.model_dump_json()|safe }};
+    window.__PRODUCT_DATA__ = {{ product.model_dump()|tojson }};
     window.__RELATED_PRODUCTS__ = [
       {% for rp in related_products %}
-        {{ rp.model_dump_json()|safe }}{% if not loop.last %},{% endif %}
+        {{ rp.model_dump()|tojson }}{% if not loop.last %},{% endif %}
       {% endfor %}
     ];
   </script>

@@ -94,10 +94,10 @@
         ? `<span class="text-sm font-mono text-noir-400 italic">Mặc định</span>`
         : `
           <div class="flex items-center justify-end gap-1.5">
-            <button onclick="toggleRole('${u.id}', '${u.role}')" class="rounded-md border border-noir-700 bg-noir-800 px-2 py-1 text-sm font-medium text-noir-300 hover:bg-noir-700 hover:text-gold-400 shadow-lg transition" title="Chuyển quyền">
+            <button data-user-id="${esc(u.id)}" data-role="${esc(u.role)}" class="btn-toggle-role rounded-md border border-noir-700 bg-noir-800 px-2 py-1 text-sm font-medium text-noir-300 hover:bg-noir-700 hover:text-gold-400 shadow-lg transition" title="Chuyển quyền">
               ${u.role === 'admin' ? 'Hạ xuống User' : 'Thăng lên Admin'}
             </button>
-            <button onclick="toggleStatus('${u.id}', ${u.is_active})" class="rounded-md border ${u.is_active ? 'border-noir-700 bg-noir-800 text-noir-300 hover:text-rose-400 hover:bg-noir-700' : 'border-noir-700 bg-noir-800 text-noir-300 hover:bg-noir-700 hover:text-emerald-400'} px-2 py-1 text-sm font-medium shadow-lg transition">
+            <button data-user-id="${esc(u.id)}" data-active="${u.is_active ? 'true' : 'false'}" class="btn-toggle-status rounded-md border ${u.is_active ? 'border-noir-700 bg-noir-800 text-noir-300 hover:text-rose-400 hover:bg-noir-700' : 'border-noir-700 bg-noir-800 text-noir-300 hover:bg-noir-700 hover:text-emerald-400'} px-2 py-1 text-sm font-medium shadow-lg transition">
               ${u.is_active ? 'Khóa TK' : 'Mở khóa'}
             </button>
           </div>
@@ -123,21 +123,21 @@
           <td class="py-3 px-4">
             <div class="flex items-center gap-3">
               <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gold-500 font-bold text-noir-900 text-sm shrink-0">
-                ${initials}
+                ${esc(initials)}
               </div>
               <div>
-                <p class="font-semibold text-noir-100">${u.full_name || u.name}</p>
-                <p class="text-sm font-mono text-noir-400">ID: ${u.id}</p>
+                <p class="font-semibold text-noir-100">${esc(u.full_name || u.name)}</p>
+                <p class="text-sm font-mono text-noir-400">ID: ${esc(u.id)}</p>
               </div>
             </div>
           </td>
-          <td class="py-3 px-4 font-mono font-medium text-noir-300">@${u.username}</td>
+          <td class="py-3 px-4 font-mono font-medium text-noir-300">@${esc(u.username)}</td>
           <td class="py-3 px-4">
-            <p class="text-noir-100">${u.email}</p>
-            <p class="text-sm text-noir-400 font-mono">${u.phone || "Chưa có SĐT"}</p>
+            <p class="text-noir-100">${esc(u.email)}</p>
+            <p class="text-sm text-noir-400 font-mono">${esc(u.phone || "Chưa có SĐT")}</p>
           </td>
           <td class="py-3 px-4">${pointsDisplay}</td>
-          <td class="py-3 px-4 text-noir-400 font-mono text-sm">${(u.created_at || "").substring(0, 10)}</td>
+          <td class="py-3 px-4 text-noir-400 font-mono text-sm">${esc((u.created_at || "").substring(0, 10))}</td>
           <td class="py-3 px-4">${roleBadge}</td>
           <td class="py-3 px-4">${statusBadge}</td>
           <td class="py-3 px-4 text-right">${actionButtons}</td>
@@ -145,6 +145,18 @@
       `;
     }).join("");
   }
+
+  tbody.addEventListener("click", e => {
+    const roleBtn = e.target.closest(".btn-toggle-role");
+    if (roleBtn) {
+      toggleRole(roleBtn.dataset.userId, roleBtn.dataset.role);
+      return;
+    }
+    const statusBtn = e.target.closest(".btn-toggle-status");
+    if (statusBtn) {
+      toggleStatus(statusBtn.dataset.userId, statusBtn.dataset.active === "true");
+    }
+  });
 
   // Toggle role
   window.toggleRole = async function(userId, currentRole) {

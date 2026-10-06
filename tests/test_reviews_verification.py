@@ -167,8 +167,9 @@ def test_review_completed_order_accepted_200(client):
     assert order_res.status_code == 200
     order_id = order_res.json()["order_id"]
 
-    # 2. Cập nhật trạng thái đơn thành 'completed'
+    # 2. Cập nhật trạng thái đơn thành 'completed' theo đúng quy trình (confirmed -> shipping -> completed)
     from app.services.order_service import order_service
+    order_service.update_order_status(order_id, "shipping")
     order_service.update_order_status(order_id, "completed")
 
     # 3. Gửi review prod_003

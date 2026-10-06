@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from app.db.database import db_service  # noqa: E402
 from app.main import app  # noqa: E402
 from app.services.order_service import order_service  # noqa: E402
 from app.services.product_service import product_service  # noqa: E402
@@ -15,6 +16,7 @@ from app.services.product_service import product_service  # noqa: E402
 def clean_state(tmp_path):
     """Mỗi test: nạp lại kho gốc và ghi đơn vào file tạm (không đụng dữ liệu thật)."""
     order_service.orders_path = str(tmp_path / "orders.jsonl")
+    db_service.seed_reset_stock()
     product_service._load_products()
     yield
 

@@ -142,10 +142,20 @@ def test_create_order_with_points_and_tier_accumulation(client):
     earned = quote["points_earned"]
     assert earned > 0
 
-    # Kiểm tra cập nhật điểm và chi tiêu sau đơn
+    # Theo MỤC C: Đơn COD không cộng điểm thưởng và chi tiêu lúc tạo đơn, chỉ trừ điểm đã dùng
     after_status = client.get("/api/loyalty/status", headers=headers).json()
-    assert after_status["points_balance"] == initial_pts - 10 + earned
-    assert after_status["total_spent"] > initial_spent
+    assert after_status["points_balance"] == initial_pts - 10
+    assert after_status["total_spent"] == initial_spent
+
+    # Khi đơn COD chuyển sang completed (qua shipping) mới cộng điểm thưởng và total_spent
+    from app.services.order_service import order_service
+    order_id = order_data["order_id"]
+    order_service.update_order_status(order_id, "shipping")
+    order_service.update_order_status(order_id, "completed")
+
+    completed_status = client.get("/api/loyalty/status", headers=headers).json()
+    assert completed_status["points_balance"] == initial_pts - 10 + earned
+    assert completed_status["total_spent"] > initial_spent
 
     # Kiểm tra lịch sử giao dịch điểm có cả giao dịch trừ điểm và tích điểm
     hist = client.get("/api/loyalty/history", headers=headers).json()["transactions"]

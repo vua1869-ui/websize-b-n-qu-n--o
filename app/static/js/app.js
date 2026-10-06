@@ -23,11 +23,10 @@ const U = {
     const timer = setTimeout(() => ctrl.abort(), timeout);
     try {
       const headers = body ? { 'Content-Type': 'application/json' } : {};
-      const token = localStorage.getItem('aura_token');
-      if (token) headers['Authorization'] = `Bearer ${token}`;
       const res = await fetch(url, {
         method, signal: ctrl.signal,
         headers,
+        credentials: 'same-origin',
         body: body ? JSON.stringify(body) : undefined,
       });
       let data = null;

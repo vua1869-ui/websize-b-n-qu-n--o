@@ -91,11 +91,25 @@ class ProductService:
         self._products = [Product(**item) for item in data]
         self._by_id = {p.id: p for p in self._products}
         
-        # Đồng bộ ma trận biến thể tồn kho (Màu x Size) từ CSDL SQLite
+        # Đồng bộ ma trận biến thể tồn kho (Màu x Size) và số lượng tồn từ CSDL SQLite
         try:
             from app.db.database import db_service
-            db_service.reset_stock()
+            raw_db_prods = db_service.get_all_products_db()
+            db_prods = raw_db_prods if isinstance(raw_db_prods, dict) else {row["id"]: row for row in raw_db_prods}
             for p in self._products:
+                if p.id in db_prods:
+                    db_p = db_prods[p.id]
+                    if db_p.get("stock") is not None:
+                        p.stock = db_p["stock"]
+                    if db_p.get("stock_total") is not None:
+                        p.stock_total = db_p["stock_total"]
+                    if db_p.get("sold_count") is not None:
+                        p.sold_count = db_p["sold_count"]
+                    if db_p.get("rating") is not None:
+                        p.rating = db_p["rating"]
+                    if db_p.get("reviews_count") is not None:
+                        p.reviews_count = db_p["reviews_count"]
+
                 v_rows = db_service.get_product_variants(p.id)
                 if v_rows:
                     p.variants = [ProductVariant(**v) for v in v_rows]
@@ -104,7 +118,7 @@ class ProductService:
                         ProductVariant(color=c.name, color_hex=c.hex, size=s, stock=p.stock)
                         for c in p.colors for s in p.sizes
                     ]
-        except Exception as e:
+        except Exception:
             # Fallback nếu CSDL đang khởi tạo
             for p in self._products:
                 p.variants = [
@@ -360,12 +374,26 @@ class ProductService:
             "reviews_count", "location", "images", "sizes", "colors", "description", "material",
             "style", "occasions", "tags", "is_hot", "is_new"
         ]
+        disk_products = {}
+        if os.path.exists(DATA_PATH):
+            try:
+                with open(DATA_PATH, "r", encoding="utf-8") as f:
+                    disk_products = {item["id"]: item for item in json.load(f)}
+            except Exception:
+                pass
+
         out = []
         for p in self._products:
             d = p.model_dump()
             rec = {k: d[k] for k in raw_keys if k in d}
             if not rec.get("flash_sale"):
                 rec.pop("flash_sale_price", None)
+            # Không ghi lại runtime stock, sold_count, rating, reviews_count vào products.json
+            if p.id in disk_products:
+                orig = disk_products[p.id]
+                for field in ("stock", "sold_count", "rating", "reviews_count"):
+                    if field in orig:
+                        rec[field] = orig[field]
             out.append(rec)
         with open(DATA_PATH, "w", encoding="utf-8") as f:
             json.dump(out, f, ensure_ascii=False, indent=2)

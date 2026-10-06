@@ -1,3 +1,4 @@
+import datetime
 import re
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
@@ -93,6 +94,9 @@ class Voucher(BaseModel):
     min_order: int = 0
     badge: str
     expire_in: str
+    expires_at: Optional[datetime.datetime] = None
+    max_uses: Optional[int] = None
+    max_uses_per_user: Optional[int] = None
 
     @computed_field  # type: ignore[misc]
     @property
@@ -245,6 +249,8 @@ class VoucherCheckResponse(BaseModel):
 
 
 PHONE_RE = re.compile(r"^(?:0|\+?84)\d{9}$")
+USERNAME_RE = re.compile(r"^[a-zA-Z0-9_.]{3,30}$")
+EMAIL_RE = re.compile(r"^[^<>\s@]+@[^<>\s@]+\.[^<>\s@]+$")
 
 
 class OrderCreateRequest(BaseModel):
@@ -254,11 +260,11 @@ class OrderCreateRequest(BaseModel):
     customer_note: Optional[str] = Field(default=None, max_length=300)
     province_code: Optional[Union[int, str]] = None
     ward_code: Optional[Union[int, str]] = None
-    province_name: Optional[str] = None
-    ward_name: Optional[str] = None
-    province: Optional[str] = None
-    ward: Optional[str] = None
-    specific_address: Optional[str] = None
+    province_name: Optional[str] = Field(default=None, max_length=100)
+    ward_name: Optional[str] = Field(default=None, max_length=100)
+    province: Optional[str] = Field(default=None, max_length=100)
+    ward: Optional[str] = Field(default=None, max_length=100)
+    specific_address: Optional[str] = Field(default=None, max_length=250)
     payment_method: Literal["cod", "qr_transfer", "vnpay"] = "cod"
     items: List[OrderItem] = Field(min_length=1, max_length=50)
     voucher_code: Optional[str] = Field(default=None, max_length=30)
@@ -266,8 +272,20 @@ class OrderCreateRequest(BaseModel):
 
     @field_validator("customer_name")
     @classmethod
-    def _strip(cls, v: str) -> str:
-        return v.strip()
+    def _strip_and_check_name(cls, v: str) -> str:
+        v = v.strip()
+        if "<" in v or ">" in v:
+            raise ValueError("Tên khách hàng không được chứa ký tự < hoặc >")
+        return v
+
+    @field_validator("customer_note", "specific_address", "customer_address")
+    @classmethod
+    def _validate_safe_order_text(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            if "<" in v or ">" in v:
+                raise ValueError("Nội dung không được chứa ký tự < hoặc >")
+            return v.strip()
+        return None
 
     @field_validator("customer_phone")
     @classmethod
@@ -528,7 +546,7 @@ class User(BaseModel):
     total_spent: int = 0
     tier: str = "Silver"
     created_at: str = ""
-    token_version: int = 1
+    token_version: int = Field(default=1, exclude=True)
 
     @model_validator(mode="before")
     @classmethod
@@ -566,12 +584,40 @@ class UserRegisterRequest(BaseModel):
                 data["confirm_password"] = data["password"]
         return data
 
+    @field_validator("username")
+    @classmethod
+    def _validate_username(cls, v: str) -> str:
+        v = v.strip()
+        if not USERNAME_RE.match(v):
+            raise ValueError("Tên đăng nhập chỉ chứa chữ cái, số, dấu chấm hoặc gạch dưới (3-30 ký tự)")
+        return v
+
     @field_validator("email")
     @classmethod
     def _email_format(cls, v: str) -> str:
-        if "@" not in v or "." not in v.split("@")[-1]:
-            raise ValueError("Email không đúng định dạng")
-        return v.lower().strip()
+        v = v.strip()
+        if "<" in v or ">" in v or " " in v or not EMAIL_RE.match(v):
+            raise ValueError("Email không đúng định dạng hoặc chứa ký tự không hợp lệ")
+        return v.lower()
+
+    @field_validator("name", "full_name")
+    @classmethod
+    def _no_tags_name(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            if "<" in v or ">" in v:
+                raise ValueError("Họ và tên không được chứa ký tự < hoặc >")
+            return v.strip()
+        return None
+
+    @field_validator("phone")
+    @classmethod
+    def _validate_phone(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
+        cleaned = re.sub(r"[\s.\-]", "", v)
+        if not PHONE_RE.match(cleaned):
+            raise ValueError("Số điện thoại không hợp lệ (ví dụ: 0987654321)")
+        return cleaned
 
 
 class UserLoginRequest(BaseModel):
@@ -596,7 +642,7 @@ class UserProfileUpdateRequest(BaseModel):
     full_name: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
-    address: Optional[str] = None
+    address: Optional[str] = Field(default=None, max_length=250)
     avatar: Optional[str] = None
 
     @model_validator(mode="before")
@@ -608,6 +654,35 @@ class UserProfileUpdateRequest(BaseModel):
             elif "name" in data and not data.get("full_name"):
                 data["full_name"] = data["name"]
         return data
+
+    @field_validator("name", "full_name", "address")
+    @classmethod
+    def _no_tags(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            if "<" in v or ">" in v:
+                raise ValueError("Nội dung không được chứa ký tự < hoặc >")
+            return v.strip()
+        return None
+
+    @field_validator("email")
+    @classmethod
+    def _email_format(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v = v.strip()
+            if "<" in v or ">" in v or " " in v or not EMAIL_RE.match(v):
+                raise ValueError("Email không đúng định dạng hoặc chứa ký tự không hợp lệ")
+            return v.lower()
+        return None
+
+    @field_validator("phone")
+    @classmethod
+    def _validate_phone(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
+        cleaned = re.sub(r"[\s.\-]", "", v)
+        if not PHONE_RE.match(cleaned):
+            raise ValueError("Số điện thoại không hợp lệ (ví dụ: 0987654321)")
+        return cleaned
 
 
 class ChangePasswordRequest(BaseModel):

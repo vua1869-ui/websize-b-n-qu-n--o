@@ -146,8 +146,8 @@ def test_order_is_persisted_and_stock_restored_after_restart(client):
     from app.services.order_service import order_service
     client.post("/api/orders", json={**CUSTOMER, "items": [item("prod_008", qty=2)]})
     assert order_service.count_orders() == 1
-    product_service._load_products()  # giả lập khởi động lại: kho về số gốc
-    assert product_service.get_by_id("prod_008").stock == 19
+    product_service._load_products()  # giả lập khởi động lại: tồn kho nạp từ DB không bị reset
+    assert product_service.get_by_id("prod_008").stock == 17
     order_service._restore_stock_from_history()
     assert product_service.get_by_id("prod_008").stock == 17
 

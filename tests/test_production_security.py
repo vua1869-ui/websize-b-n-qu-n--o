@@ -54,6 +54,36 @@ def test_production_env_refuses_local_vnpay_return_url():
     assert "VNPAY_RETURN_URL vẫn trỏ về 127.0.0.1" in str(exc_info.value)
 
 
+def test_production_env_refuses_empty_vnpay_hash_secret():
+    """Kiểm tra APP_ENV=production từ chối khi VNPAY_HASH_SECRET rỗng."""
+    with pytest.raises(ValueError) as exc_info:
+        Settings(
+            APP_ENV="production",
+            SECRET_KEY="valid_prod_secret_key_123456789",
+            PAYMENT_WEBHOOK_SECRET="valid_prod_webhook_secret_key_99",
+            DATABASE_URL="postgresql://user:pass@localhost:5432/aura_prod",
+            VNPAY_RETURN_URL="https://aurastudio.vn/api/payment/vnpay/return",
+            PUBLIC_BASE_URL="https://aurastudio.vn",
+            VNPAY_HASH_SECRET=""
+        )
+    assert "VNPAY_HASH_SECRET chưa được đặt" in str(exc_info.value)
+
+
+def test_production_env_refuses_localhost_public_base_url():
+    """Kiểm tra APP_ENV=production từ chối khi PUBLIC_BASE_URL vẫn là localhost / 127.0.0.1."""
+    with pytest.raises(ValueError) as exc_info:
+        Settings(
+            APP_ENV="production",
+            SECRET_KEY="valid_prod_secret_key_123456789",
+            PAYMENT_WEBHOOK_SECRET="valid_prod_webhook_secret_key_99",
+            DATABASE_URL="postgresql://user:pass@localhost:5432/aura_prod",
+            VNPAY_RETURN_URL="https://aurastudio.vn/api/payment/vnpay/return",
+            VNPAY_HASH_SECRET="valid_vnpay_hash_secret_key",
+            PUBLIC_BASE_URL="http://127.0.0.1:8000"
+        )
+    assert "PUBLIC_BASE_URL chưa được đặt hoặc vẫn trỏ về 127.0.0.1" in str(exc_info.value)
+
+
 def test_production_env_valid_config_passes():
     """Kiểm tra APP_ENV=production khởi động thành công khi cung cấp đầy đủ thông số an toàn."""
     s = Settings(
@@ -61,6 +91,8 @@ def test_production_env_valid_config_passes():
         SECRET_KEY="valid_prod_secret_key_123456789",
         PAYMENT_WEBHOOK_SECRET="valid_prod_webhook_secret_key_99",
         DATABASE_URL="postgresql://user:pass@localhost:5432/aura_prod",
-        VNPAY_RETURN_URL="https://aurastudio.vn/api/payment/vnpay/return"
+        VNPAY_RETURN_URL="https://aurastudio.vn/api/payment/vnpay/return",
+        VNPAY_HASH_SECRET="valid_vnpay_hash_secret_key",
+        PUBLIC_BASE_URL="https://aurastudio.vn"
     )
     assert s.APP_ENV == "production"

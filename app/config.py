@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     VNPAY_URL: str = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
     VNPAY_RETURN_URL: str = "http://127.0.0.1:8000/api/payment/vnpay/return"
 
+    # Domain public chính thức của hệ thống (dùng dựng link reset mật khẩu an toàn, không phụ thuộc Host header)
+    PUBLIC_BASE_URL: str = "http://127.0.0.1:8000"
+
     from pydantic import model_validator
 
     @model_validator(mode="after")
@@ -51,6 +54,12 @@ class Settings(BaseSettings):
 
             if not self.PAYMENT_WEBHOOK_SECRET or self.PAYMENT_WEBHOOK_SECRET.strip() == "dev-payment-webhook-secret":
                 errors.append("- PAYMENT_WEBHOOK_SECRET chưa được đặt hoặc vẫn dùng giá trị mặc định dev ('dev-payment-webhook-secret').")
+
+            if not self.VNPAY_HASH_SECRET or not self.VNPAY_HASH_SECRET.strip():
+                errors.append("- VNPAY_HASH_SECRET chưa được đặt hoặc bị rỗng. Khóa rỗng cho phép kẻ tấn công giả mạo chữ ký giao dịch.")
+
+            if not self.PUBLIC_BASE_URL or "127.0.0.1" in self.PUBLIC_BASE_URL or "localhost" in self.PUBLIC_BASE_URL.lower():
+                errors.append("- PUBLIC_BASE_URL chưa được đặt hoặc vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống.")
 
             if "sqlite" in self.DATABASE_URL.lower():
                 errors.append("- DATABASE_URL vẫn dùng SQLite. Khi triển khai Production bắt buộc sử dụng cơ sở dữ liệu như PostgreSQL.")
