@@ -1,7 +1,15 @@
 from sqlalchemy import (
-    Column, Float, ForeignKey, Integer, String, Text, UniqueConstraint,
+    Boolean,
+    Column,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
+
 from app.db.session import Base
 
 
@@ -93,8 +101,12 @@ class ProductDB(Base):
     sold_count = Column(Integer, default=0)
     stock = Column(Integer, default=50)
     stock_total = Column(Integer, default=100)
-    rating = Column(Float, default=5.0)
+    rating = Column(Float, default=0.0)
     reviews_count = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    deleted_at = Column(String, nullable=True)
+    flash_sale_start = Column(String, nullable=True)
+    flash_sale_end = Column(String, nullable=True)
     location = Column(String, default="TP. Hồ Chí Minh")
     images = Column(Text, nullable=True)
     sizes = Column(Text, nullable=True)

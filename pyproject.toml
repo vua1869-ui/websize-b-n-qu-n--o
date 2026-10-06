@@ -1,0 +1,13 @@
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = [
+    "E501",  # line too long (handled by formatter or line-length)
+    "B008",  # do not perform function calls in argument defaults (FastAPI Depends/Query pattern)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]

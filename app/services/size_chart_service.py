@@ -1,5 +1,6 @@
 """Dịch vụ cung cấp thông số bảng size chi tiết (Size Chart) và hướng dẫn đo chuẩn AURA Studio."""
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
+
 from app.services.product_service import product_service
 
 

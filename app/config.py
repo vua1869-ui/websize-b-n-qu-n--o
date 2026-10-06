@@ -1,5 +1,9 @@
+import logging
 import os
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -67,6 +71,15 @@ class Settings(BaseSettings):
             if "127.0.0.1" in self.VNPAY_RETURN_URL or "localhost" in self.VNPAY_RETURN_URL:
                 errors.append("- VNPAY_RETURN_URL vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống.")
 
+            if self.EMAIL_BACKEND == "console":
+                errors.append("- EMAIL_BACKEND không được dùng 'console' khi triển khai Production.")
+
+            if self.DEMO_DATA:
+                logger.warning("=" * 80)
+                logger.warning("⚠️ CẢNH BÁO NGUY HIỂM: DEMO_DATA=True đang được bật trong môi trường Production!")
+                logger.warning("Hệ thống sẽ hiển thị đánh giá và số lượng bán giả lập nếu không tắt!")
+                logger.warning("=" * 80)
+
             if errors:
                 err_msg = (
                     "\n" + "=" * 80 + "\n"
@@ -79,6 +92,12 @@ class Settings(BaseSettings):
                 raise ValueError(err_msg)
         return self
 
+    # ---- Logging & Observability ----
+    LOG_LEVEL: str = "INFO"
+
+    # ---- Dữ liệu Demo Social Proof ----
+    DEMO_DATA: bool = False
+
     # ---- Cloudinary Image Storage ----
     # Lấy tại cloudinary.com/console
     # CẢNH BÁO: Nếu bạn từng commit key thật, hãy vào Cloudinary Console và Regenerate API Secret ngay!
@@ -86,7 +105,7 @@ class Settings(BaseSettings):
     CLOUDINARY_API_KEY: str = ""     # PHẢI đặt trong .env — xem .env.example
     CLOUDINARY_API_SECRET: str = ""  # PHẢI đặt trong .env — xem .env.example
 
-    # ---- AI ----
+    # ---- AI Stylist ----
     # auto: thử Gemini (nếu có key) -> Ollama -> bộ máy luật nội bộ
     AI_ENGINE: str = "auto"  # auto | gemini | ollama | rules
     OLLAMA_HOST: str = "http://127.0.0.1:11434"
@@ -95,6 +114,8 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash"
     GEMINI_TIMEOUT: float = 20.0
+    AI_PROMPT_MAX_PRODUCTS: int = 30
+    AI_MAX_CONCURRENCY: int = 4
 
     # ---- Bán hàng ----
     SHIPPING_FEE: int = 30000
@@ -116,6 +137,28 @@ class Settings(BaseSettings):
     TREND_REFRESH_TIMEOUT: float = 12.0
     TREND_RISING_THRESHOLD: float = 20.0
     TREND_DECLINING_THRESHOLD: float = -20.0
+    TREND_ANCHOR_KEYWORD: str = "thời trang"
+
+    # ---- Tích điểm AURA Club ----
+    LOYALTY_EARN_RATE_SILVER: float = 0.03
+    LOYALTY_EARN_RATE_GOLD: float = 0.05
+    LOYALTY_EARN_RATE_DIAMOND: float = 0.08
+
+    # ---- Hóa đơn & Đơn hàng ----
+    SELLER_NAME: str = "CÔNG TY CỔ PHẦN THỜI TRANG AURA STUDIO VIỆT NAM"
+    SELLER_TAX_CODE: str = "0317894562"
+    SELLER_ADDRESS: str = "Số 186 Hai Bà Trưng, Phường Đa Kao, Quận 1, TP. Hồ Chí Minh"
+    SELLER_HOTLINE: str = "1900 8866 (8:00 - 22:00)"
+    VAT_RATE: int = 8
+    E_INVOICE_PROVIDER: str = ""
+
+    # ---- Thông tin ngân hàng nhận thanh toán VietQR ----
+    BANK_ID: str = "MB"
+    BANK_ACCOUNT_NO: str = "0900000001"
+    BANK_ACCOUNT_NAME: str = "AURA STUDIO"
+
+    # ---- Bảo mật & Proxy ----
+    TRUSTED_PROXY_HEADERS: bool = False
 
     # ---- Email Sender ----
     EMAIL_BACKEND: str = "console"  # console | smtp | resend

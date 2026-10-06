@@ -1,17 +1,20 @@
 import datetime as dt
 import json
+import logging
 import os
 import threading
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from app.config import settings
-from app.models.schemas import Product, TrendDebugResponse, TrendItem, TrendingProduct
+from app.models.schemas import Product, TrendDebugResponse, TrendingProduct, TrendItem
 from app.services.product_service import product_service
-from app.services.text_utils import has_any, has_word, normalize, tokens
+from app.services.text_utils import has_word, normalize, tokens
 from app.services.trend_sources.base import BaseTrendSource
 from app.services.trend_sources.demo_source import DemoTrendSource
 from app.services.trend_sources.google_trends import GoogleTrendsSource
+
+logger = logging.getLogger(__name__)
 
 TRENDS_DATA_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "trends.json"
@@ -214,7 +217,7 @@ class TrendService:
                     self._recalculate_trending_products()
                     loaded = True
             except Exception as e:
-                print(f"[TrendService] Không thể đọc {TRENDS_DATA_PATH}: {e}")
+                logger.warning("[TrendService] Không thể đọc %s: %s", TRENDS_DATA_PATH, e)
 
         if not loaded:
             self._use_demo_source(save=True)
@@ -254,7 +257,7 @@ class TrendService:
             with open(TRENDS_DATA_PATH, "w", encoding="utf-8") as f:
                 json.dump(payload, f, ensure_ascii=False, indent=2)
         except Exception as e:
-            print(f"[TrendService] Không thể ghi file {TRENDS_DATA_PATH}: {e}")
+            logger.warning("[TrendService] Không thể ghi file %s: %s", TRENDS_DATA_PATH, e)
 
     # =========================================================================
     # THU THẬP VÀ PHÂN TÍCH XU HƯỚNG
@@ -289,12 +292,12 @@ class TrendService:
                         if collected_data:
                             used_source = "google_trends"
                     except Exception as err:
-                        print(f"[TrendService] Lỗi khi lấy Google Trends: {err}")
+                        logger.warning("[TrendService] Lỗi khi lấy Google Trends: %s", err)
                         collected_data = None
 
             # 2. Nếu không thành công, thử dùng cache đã lưu
             if not collected_data and self._trends_cache:
-                print("[TrendService] Nguồn chính không khả dụng, sử dụng dữ liệu Cache sẵn có.")
+                logger.info("[TrendService] Nguồn chính không khả dụng, sử dụng dữ liệu Cache sẵn có.")
                 used_source = "cached"
                 # Cập nhật lại thời gian refresh để tránh spam nguồn lỗi liên tục
                 self._last_refresh_time = now
@@ -308,7 +311,7 @@ class TrendService:
 
             # 3. Fallback cuối cùng: DemoTrendSource
             if not collected_data:
-                print("[TrendService] Kích hoạt DemoTrendSource fallback.")
+                logger.info("[TrendService] Kích hoạt DemoTrendSource fallback.")
                 demo_source = self._sources.get("demo", DemoTrendSource())
                 collected_data = demo_source.fetch_trends(self._custom_keywords)
                 used_source = "demo"

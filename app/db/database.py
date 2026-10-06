@@ -7,6 +7,8 @@ import threading
 from contextlib import contextmanager
 from typing import Any, Dict, List, Optional, Tuple
 
+from app.core.logging import log_money_event
+
 logger = logging.getLogger("aura.database")
 
 
@@ -349,7 +351,7 @@ def _migrate_users(conn: sqlite3.Connection):
             )
         conn.commit()
     except Exception as e:
-        print(f"Warning: Failed migrating users to SQLite: {e}")
+        logger.warning("Failed migrating users to SQLite: %s", e)
 
 
 def _migrate_products(conn: sqlite3.Connection):
@@ -425,7 +427,7 @@ def _migrate_products(conn: sqlite3.Connection):
 
         conn.commit()
     except Exception as e:
-        print(f"Warning: Failed migrating products to SQLite: {e}")
+        logger.warning("Failed migrating products to SQLite: %s", e)
 
 
 def _migrate_reviews(conn: sqlite3.Connection):
@@ -492,6 +494,10 @@ class DatabaseService:
         self.db_path = db_path
         init_db(self.db_path)
 
+    def init_db(self, db_path: Optional[str] = None):
+        """Khởi tạo cấu trúc bảng SQLite và seed dữ liệu nếu cần."""
+        init_db(db_path or self.db_path)
+
     def seed_reset_stock(self):
         """Khôi phục lại tồn kho chuẩn từ products.json (chỉ dùng tiện ích cho test suite hoặc script seed, không tự chạy khi khởi động)."""
         products_file = os.path.join(DATA_DIR, "products.json")
@@ -520,7 +526,7 @@ class DatabaseService:
                                 (v_stock, pid, c_name, s),
                             )
         except Exception as e:
-            print(f"Warning: Failed seed_reset_stock: {e}")
+            logger.warning("Failed seed_reset_stock: %s", e)
 
     def reset_stock(self):
         return self.seed_reset_stock()
@@ -714,6 +720,13 @@ class DatabaseService:
             expected_amount = int(order["total_amount"])
             if int(amount) != expected_amount:
                 logger.warning(f"Reject payment confirmation for order '{order_id}': amount mismatch (got {amount}, expected {expected_amount})")
+                log_money_event(
+                    "payment_rejected_amount_mismatch",
+                    order_id=order_id,
+                    user_id=order["user_id"] if "user_id" in order.keys() else None,
+                    amount=amount,
+                    extra={"expected_amount": expected_amount, "transaction_code": transaction_code},
+                )
                 return PaymentConfirmResult("invalid_amount")
 
             tx_row = conn.execute(
@@ -751,6 +764,14 @@ class DatabaseService:
 
             # Đơn thanh toán online: cộng điểm và total_spent khi chuyển sang paid
             self._award_order_loyalty_and_spent(order_id, conn=conn)
+
+            log_money_event(
+                "payment_confirmed",
+                order_id=order_id,
+                user_id=order["user_id"] if "user_id" in order.keys() else None,
+                amount=amount,
+                extra={"transaction_code": transaction_code, "payment_channel": payment_channel},
+            )
 
             return PaymentConfirmResult("success")
 
@@ -976,6 +997,17 @@ class DatabaseService:
                     )
                 )
 
+        log_money_event(
+            "order_created",
+            order_id=order_id,
+            user_id=user_id,
+            amount=quote.get("total", 0),
+            extra={
+                "points_deducted": points_to_deduct,
+                "voucher_code": voucher_code,
+                "payment_method": order_record.get("payment_method"),
+            },
+        )
         return order_id
 
     def cancel_order_atomic(self, order_id: str) -> bool:
@@ -1071,7 +1103,14 @@ class DatabaseService:
             # 5. Hoàn lượt dùng voucher
             conn.execute("DELETE FROM voucher_usages WHERE order_id = ?;", (order_id,))
 
-            return True
+        log_money_event(
+            "order_cancelled",
+            order_id=order_id,
+            user_id=order["user_id"] if (order and "user_id" in order.keys()) else None,
+            amount=order["total_amount"] if (order and "total_amount" in order.keys()) else 0,
+            extra={"refunded_points": points_used if "points_used" in locals() else 0},
+        )
+        return True
 
     def get_order_by_id(self, order_id: str) -> Optional[Dict[str, Any]]:
         conn = get_db_connection(self.db_path)
@@ -1166,7 +1205,27 @@ class DatabaseService:
                     total_reviews += count
                     total_stars += rating_val * count
 
-            avg_rating = round(total_stars / total_reviews, 1) if total_reviews > 0 else 5.0
+            avg_rating = round(total_stars / total_reviews, 1) if total_reviews > 0 else 0.0
+
+            # Tính fit_feedback từ dữ liệu thật (chỉ hiển thị nếu >= 5 đánh giá)
+            fit_feedback_summary = None
+            fit_rows = conn.execute(
+                """
+                SELECT fit_feedback, COUNT(*) as cnt
+                FROM reviews
+                WHERE product_id = ? AND fit_feedback IS NOT NULL AND TRIM(fit_feedback) != ''
+                GROUP BY fit_feedback;
+                """,
+                (product_id,)
+            ).fetchall()
+            total_fit_votes = sum(int(fr["cnt"]) for fr in fit_rows)
+            if total_fit_votes >= 5:
+                just_right_cnt = sum(
+                    int(fr["cnt"]) for fr in fit_rows
+                    if "fit" in str(fr["fit_feedback"]).lower() or "vừa" in str(fr["fit_feedback"]).lower()
+                )
+                pct = int(round((just_right_cnt / total_fit_votes) * 100))
+                fit_feedback_summary = f"{pct}% khách hàng đánh giá đúng kích cỡ"
 
             # 2. Truy vấn danh sách review chi tiết
             query = "SELECT * FROM reviews WHERE product_id = ?"
@@ -1190,7 +1249,7 @@ class DatabaseService:
                     "average_rating": avg_rating,
                     "total_reviews": total_reviews,
                     "rating_breakdown": breakdown,
-                    "fit_feedback_summary": "96% khách hàng đánh giá đúng kích cỡ"
+                    "fit_feedback_summary": fit_feedback_summary
                 },
                 "reviews": reviews_list
             }
@@ -1233,7 +1292,7 @@ class DatabaseService:
         user_id: Optional[str] = None,
         is_verified_buyer: bool = True
     ) -> Dict[str, Any]:
-        """Thêm đánh giá mới từ khách hàng và tự động cập nhật lại rating tổng sản phẩm."""
+        """Thêm đánh giá mới từ khách hàng hoặc cập nhật đánh giá cũ của chính mình; tính rating từ DB."""
         with get_db_transaction(self.db_path) as conn:
             now_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
             user_name = review_data.get("user_name", "Khách hàng AURA").strip()
@@ -1245,26 +1304,58 @@ class DatabaseService:
             purchased_color = review_data.get("purchased_color")
             fit_feedback = review_data.get("fit_feedback", "Vừa vặn")
 
-            cursor = conn.execute(
-                """
-                INSERT INTO reviews 
-                (product_id, user_id, user_name, rating, comment, height_cm, weight_kg, purchased_size, purchased_color, fit_feedback, is_verified_buyer, likes_count, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?);
-                """,
-                (product_id, user_id, user_name, rating, comment, height_cm, weight_kg, purchased_size, purchased_color, fit_feedback, 1 if is_verified_buyer else 0, now_str)
-            )
-            new_id = cursor.lastrowid
+            existing = None
+            if user_id:
+                existing = conn.execute(
+                    "SELECT id FROM reviews WHERE product_id = ? AND user_id = ?;",
+                    (product_id, user_id)
+                ).fetchone()
 
-            # Cập nhật lại rating và reviews_count của sản phẩm cha
+            if existing:
+                conn.execute(
+                    """
+                    UPDATE reviews
+                    SET user_name = ?, rating = ?, comment = ?, height_cm = ?, weight_kg = ?,
+                        purchased_size = ?, purchased_color = ?, fit_feedback = ?, is_verified_buyer = ?, created_at = ?
+                    WHERE id = ?;
+                    """,
+                    (user_name, rating, comment, height_cm, weight_kg, purchased_size, purchased_color,
+                     fit_feedback, 1 if is_verified_buyer else 0, now_str, existing["id"])
+                )
+                new_id = existing["id"]
+            else:
+                cursor = conn.execute(
+                    """
+                    INSERT INTO reviews 
+                    (product_id, user_id, user_name, rating, comment, height_cm, weight_kg, purchased_size, purchased_color, fit_feedback, is_verified_buyer, likes_count, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?);
+                    """,
+                    (product_id, user_id, user_name, rating, comment, height_cm, weight_kg, purchased_size, purchased_color, fit_feedback, 1 if is_verified_buyer else 0, now_str)
+                )
+                new_id = cursor.lastrowid
+
+            # Cập nhật lại rating và reviews_count của sản phẩm cha từ DB
             stats = conn.execute(
                 "SELECT AVG(rating) as avg_r, COUNT(*) as cnt FROM reviews WHERE product_id = ?;",
                 (product_id,)
             ).fetchone()
-            if stats:
-                conn.execute(
-                    "UPDATE products SET rating = ?, reviews_count = ? WHERE id = ?;",
-                    (round(float(stats["avg_r"]), 1), stats["cnt"], product_id)
-                )
+            avg_r = round(float(stats["avg_r"]), 1) if (stats and stats["avg_r"] is not None) else 0.0
+            cnt = int(stats["cnt"]) if (stats and stats["cnt"] is not None) else 0
+
+            conn.execute(
+                "UPDATE products SET rating = ?, reviews_count = ? WHERE id = ?;",
+                (avg_r, cnt, product_id)
+            )
+
+            # Đồng bộ in-memory
+            try:
+                from app.services.product_service import product_service
+                p = product_service.get_by_id(product_id)
+                if p:
+                    p.rating = avg_r
+                    p.reviews_count = cnt
+            except Exception:
+                pass
 
             return {
                 "id": new_id,
@@ -1286,74 +1377,95 @@ class DatabaseService:
 
     def get_tracking_timeline(self, order: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
-        Sinh ra 6 mốc hành trình vận đơn chuyên nghiệp khớp với thời gian thực tế:
-        1. ordered -> 2. confirmed -> 3. picking -> 4. in_transit -> 5. delivering -> 6. delivered
+        Chỉ hiển thị các mốc hành trình có thật theo order_status/shipping_status thực tế.
+        Không sinh mốc cộng giờ giả định. Đơn cancelled hiển thị mốc hủy.
         """
-        st = order.get("order_status", "pending_payment")
-        created_at_raw = order.get("created_at") or datetime.datetime.now().isoformat()
-        try:
-            # Parse created_at hỗ trợ cả ISO lẫn '%d/%m/%Y %H:%M'
-            if "T" in created_at_raw:
-                t0 = datetime.datetime.fromisoformat(created_at_raw)
-            else:
-                t0 = datetime.datetime.strptime(created_at_raw, "%d/%m/%Y %H:%M")
-        except Exception:
-            t0 = datetime.datetime.now() - datetime.timedelta(hours=2)
+        st = order.get("order_status", "pending")
+        ship_st = order.get("shipping_status") or "pending"
+        created_at_raw = order.get("created_at") or datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
 
-        district = order.get("district") or "Quận trung tâm"
-        province = order.get("province") or "TP. Hồ Chí Minh"
+        steps = []
+        # 1. Đặt hàng
+        steps.append({
+            "key": "ordered",
+            "title": "Đặt hàng thành công",
+            "description": f"Hệ thống đã tiếp nhận đơn hàng {order.get('order_id')}",
+            "location": "AURA Studio Online",
+            "time": created_at_raw,
+            "status": "completed",
+        })
 
-        # Định nghĩa các mốc
-        steps = [
-            {
-                "key": "ordered",
-                "title": "Đặt hàng thành công",
-                "description": f"Hệ thống đã tiếp nhận đơn hàng {order.get('order_id')}",
+        if st == "cancelled":
+            steps.append({
+                "key": "cancelled",
+                "title": "Đơn hàng đã hủy",
+                "description": "Đơn hàng đã được hủy trên hệ thống",
                 "location": "AURA Studio Online",
-                "time": t0.strftime("%d/%m/%Y %H:%M"),
-                "status": "completed"
-            },
-            {
+                "time": order.get("updated_at") or created_at_raw,
+                "status": "completed",
+            })
+            return steps
+
+        # 2. Xác nhận đơn
+        if st in ["confirmed", "shipping", "completed"]:
+            steps.append({
                 "key": "confirmed",
-                "title": "Shop xác nhận & Soạn hàng",
-                "description": "AURA Studio đã in phiếu xuất kho và kiểm tra chất lượng sản phẩm",
-                "location": "Kho tổng AURA (Tân Bình, TP.HCM)",
-                "time": (t0 + datetime.timedelta(minutes=35)).strftime("%d/%m/%Y %H:%M"),
-                "status": "completed" if st in ["confirmed", "completed"] else "current" if st == "pending_payment" else "pending"
-            },
-            {
-                "key": "picking",
-                "title": "Bàn giao Bưu cục vận chuyển",
-                "description": f"Bưu tá {order.get('carrier', 'GHN Express')} đã nhận kiện hàng và quét mã vạch",
-                "location": "Bưu cục GHN Hub Tân Bình",
-                "time": (t0 + datetime.timedelta(hours=3, minutes=10)).strftime("%d/%m/%Y %H:%M"),
-                "status": "completed" if st in ["confirmed", "completed"] else "pending"
-            },
-            {
-                "key": "in_transit",
-                "title": "Trung chuyển qua kho tổng (SOC)",
-                "description": f"Kiện hàng đang luân chuyển qua Trung tâm Phân loại hàng hóa tự động",
-                "location": f"Kho trung chuyển liên tỉnh GHN SOC - {province}",
-                "time": (t0 + datetime.timedelta(hours=14, minutes=45)).strftime("%d/%m/%Y %H:%M"),
-                "status": "completed" if st == "completed" else "current" if st == "confirmed" else "pending"
-            },
-            {
-                "key": "delivering",
-                "title": "Shipper đang giao hàng",
-                "description": f"Bưu tá đang trên đường giao hàng đến {district}, {province}. Quý khách vui lòng giữ máy!",
-                "location": f"Bưu cục phát {district}",
-                "time": (t0 + datetime.timedelta(days=1, hours=4)).strftime("%d/%m/%Y %H:%M"),
-                "status": "completed" if st == "completed" else "pending"
-            },
-            {
-                "key": "delivered",
+                "title": "Đã xác nhận đơn hàng",
+                "description": "Đơn hàng đã được xác nhận và chuẩn bị đóng gói",
+                "location": "Kho AURA Studio",
+                "time": order.get("confirmed_at") or order.get("updated_at") or created_at_raw,
+                "status": "completed",
+            })
+        elif st in ["pending", "pending_payment"]:
+            steps.append({
+                "key": "confirmed",
+                "title": "Chờ xác nhận",
+                "description": "Đang chờ thanh toán hoặc nhân viên xác nhận đơn",
+                "location": "AURA Studio Online",
+                "time": "",
+                "status": "pending",
+            })
+
+        # 3. Đang giao hàng
+        if st in ["shipping", "completed"] or ship_st in ["in_transit", "delivered"]:
+            steps.append({
+                "key": "shipping",
+                "title": "Đang giao hàng",
+                "description": "Đơn hàng đã xuất kho và đang trong quá trình vận chuyển",
+                "location": order.get("carrier") or "Đơn vị vận chuyển",
+                "time": order.get("shipped_at") or order.get("updated_at") or "",
+                "status": "completed" if st == "completed" else "current",
+            })
+        elif st == "confirmed":
+            steps.append({
+                "key": "shipping",
+                "title": "Đang chuẩn bị giao hàng",
+                "description": "Kiện hàng đang được đóng gói chờ bàn giao",
+                "location": "Kho AURA Studio",
+                "time": "",
+                "status": "pending",
+            })
+
+        # 4. Giao hàng hoàn tất
+        if st == "completed" or ship_st == "delivered":
+            steps.append({
+                "key": "completed",
                 "title": "Giao hàng thành công",
-                "description": "Kiện hàng đã được giao thành công đến tay người nhận. Cảm ơn quý khách đã tin chọn AURA Studio!",
-                "location": order.get("customer_address") or "Địa chỉ khách hàng",
-                "time": (t0 + datetime.timedelta(days=1, hours=6, minutes=20)).strftime("%d/%m/%Y %H:%M"),
-                "status": "completed" if st == "completed" else "pending"
-            },
-        ]
+                "description": "Đơn hàng đã được giao thành công đến khách hàng",
+                "location": order.get("customer_address") or "Địa chỉ nhận hàng",
+                "time": order.get("completed_at") or order.get("updated_at") or "",
+                "status": "completed",
+            })
+        elif st in ["confirmed", "shipping"]:
+            steps.append({
+                "key": "completed",
+                "title": "Chờ giao hàng",
+                "description": "Chờ người nhận kiểm tra và nhận hàng",
+                "location": order.get("customer_address") or "Địa chỉ nhận hàng",
+                "time": "",
+                "status": "pending",
+            })
+
         return steps
 
     # ==================== LOYALTY & REWARDS (Phase 3) ====================
@@ -1473,6 +1585,12 @@ class DatabaseService:
                 """,
                 (user_id, order_id, points, p_type, description, new_bal, now_str)
             )
+            log_money_event(
+                "loyalty_points_changed",
+                user_id=user_id,
+                order_id=order_id,
+                extra={"points_delta": points, "balance_after": new_bal, "type": p_type},
+            )
             return new_bal
 
     def deduct_loyalty_points(self, user_id: str, points: int, order_id: str) -> bool:
@@ -1492,6 +1610,12 @@ class DatabaseService:
                 VALUES (?, ?, ?, 'redeem', ?, ?, ?);
                 """,
                 (user_id, order_id, -points, f"Dùng {points} điểm cho đơn hàng {order_id}", new_bal, now_str)
+            )
+            log_money_event(
+                "loyalty_points_changed",
+                user_id=user_id,
+                order_id=order_id,
+                extra={"points_delta": -points, "balance_after": new_bal, "type": "redeem"},
             )
             return True
 
@@ -1645,8 +1769,10 @@ class DatabaseService:
 
     def get_profit_loss_report(self) -> Dict[str, Any]:
         """
-        Báo cáo Lãi/Lỗ dựa trên doanh thu từ các đơn hàng đã thanh toán ('paid' hoặc 'completed')
+        Báo cáo Lãi/Lỗ dựa trên doanh thu thực thu (sau voucher, điểm, combo) từ các đơn hàng
+        đã thanh toán ('paid' hoặc 'completed' KHÔNG bị hủy) phân bổ theo dòng,
         và giá vốn bình quân gia quyền (Weighted Average Cost - WAC) từ các lô nhập kho.
+        Sản phẩm chưa có lô nhập hiển thị 'chưa có giá vốn' và không tính lãi 100%.
         """
         conn = get_db_connection(self.db_path)
         try:
@@ -1663,7 +1789,7 @@ class DatabaseService:
                 if r["total_qty"] and r["total_qty"] > 0:
                     wac_map[r["product_id"]] = round(float(r["total_cost"]) / float(r["total_qty"]), 2)
 
-            # 2. Lấy tất cả order_items từ các đơn hàng đã thanh toán
+            # 2. Lấy tất cả order_items từ các đơn hàng đã thanh toán hợp lệ (không bị hủy)
             sold_items_rows = conn.execute(
                 """
                 SELECT 
@@ -1671,6 +1797,8 @@ class DatabaseService:
                     o.payment_status,
                     o.order_status,
                     o.created_at,
+                    o.total_amount,
+                    o.subtotal,
                     oi.product_id,
                     oi.product_name,
                     oi.quantity,
@@ -1678,7 +1806,9 @@ class DatabaseService:
                     oi.line_total
                 FROM orders o
                 JOIN order_items oi ON o.order_id = oi.order_id
-                WHERE o.order_status != 'cancelled' AND o.payment_status NOT IN ('refund_pending', 'refunded') AND (o.payment_status = 'paid' OR o.order_status IN ('paid', 'completed'))
+                WHERE o.order_status != 'cancelled' 
+                  AND o.payment_status NOT IN ('refund_pending', 'refunded') 
+                  AND (o.payment_status = 'paid' OR o.order_status IN ('paid', 'completed'))
                 ORDER BY o.created_at DESC;
                 """
             ).fetchall()
@@ -1688,7 +1818,9 @@ class DatabaseService:
                 """
                 SELECT COUNT(DISTINCT order_id) as cnt, COALESCE(SUM(total_amount), 0) as total_rev
                 FROM orders
-                WHERE order_status != 'cancelled' AND payment_status NOT IN ('refund_pending', 'refunded') AND (payment_status = 'paid' OR order_status IN ('paid', 'completed'));
+                WHERE order_status != 'cancelled' 
+                  AND payment_status NOT IN ('refund_pending', 'refunded') 
+                  AND (payment_status = 'paid' OR order_status IN ('paid', 'completed'));
                 """
             ).fetchone()
             total_orders = paid_orders_count["cnt"] if paid_orders_count else 0
@@ -1703,12 +1835,23 @@ class DatabaseService:
                 pid = item["product_id"]
                 pname = item["product_name"] or pid
                 qty = int(item["quantity"])
-                rev = int(item["line_total"])
-                wac = wac_map.get(pid, 0.0)
-                item_cogs = int(round(wac * qty))
+                line_total = float(item["line_total"])
+                order_subtotal = float(item["subtotal"] or line_total)
+                order_total = float(item["total_amount"] or line_total)
+
+                # Phân bổ total_amount thực thu theo tỷ lệ line_total / subtotal
+                if order_subtotal > 0:
+                    rev = int(round((line_total / order_subtotal) * order_total))
+                else:
+                    rev = int(round(line_total))
+
+                has_wac = pid in wac_map
+                wac = wac_map.get(pid)
+                item_cogs = int(round(wac * qty)) if has_wac and wac is not None else None
 
                 total_revenue += rev
-                total_cogs += item_cogs
+                if item_cogs is not None:
+                    total_cogs += item_cogs
                 total_items_sold += qty
 
                 if pid not in product_stats:
@@ -1718,28 +1861,37 @@ class DatabaseService:
                         "sold_quantity": 0,
                         "revenue": 0,
                         "cost_price_wac": wac,
-                        "cogs": 0,
-                        "profit": 0,
-                        "margin_percent": 0.0,
+                        "cost_status": "has_cost" if has_wac else "no_cost",
+                        "cost_note": "" if has_wac else "Chưa có giá vốn",
+                        "cogs": 0 if has_wac else None,
+                        "profit": 0 if has_wac else None,
+                        "margin_percent": 0.0 if has_wac else None,
                     }
 
                 product_stats[pid]["sold_quantity"] += qty
                 product_stats[pid]["revenue"] += rev
-                product_stats[pid]["cogs"] += item_cogs
+                if has_wac and item_cogs is not None:
+                    product_stats[pid]["cogs"] = (product_stats[pid]["cogs"] or 0) + item_cogs
 
             # Tính lợi nhuận và tỷ suất cho từng sản phẩm
             breakdown_list = []
-            for pid, pdata in product_stats.items():
-                pdata["profit"] = pdata["revenue"] - pdata["cogs"]
-                if pdata["revenue"] > 0:
-                    pdata["margin_percent"] = round((pdata["profit"] / pdata["revenue"]) * 100, 1)
+            for pdata in product_stats.values():
+                if pdata["cogs"] is not None:
+                    pdata["profit"] = pdata["revenue"] - pdata["cogs"]
+                    if pdata["revenue"] > 0:
+                        pdata["margin_percent"] = round((pdata["profit"] / pdata["revenue"]) * 100, 1)
+                else:
+                    pdata["profit"] = None
+                    pdata["margin_percent"] = None
                 breakdown_list.append(pdata)
 
             # Sắp xếp theo doanh thu giảm dần
             breakdown_list.sort(key=lambda x: x["revenue"], reverse=True)
 
-            gross_profit = total_revenue - total_cogs
-            profit_margin = round((gross_profit / total_revenue) * 100, 1) if total_revenue > 0 else 0.0
+            # Lợi nhuận gộp tính trên các sản phẩm đã có giá vốn
+            rev_with_cost = sum(p["revenue"] for p in breakdown_list if p["profit"] is not None)
+            gross_profit = sum(p["profit"] for p in breakdown_list if p["profit"] is not None)
+            profit_margin = round((gross_profit / rev_with_cost) * 100, 1) if rev_with_cost > 0 else 0.0
 
             # 4. Lấy 10 lô nhập kho gần nhất
             recent_batches_rows = conn.execute(
@@ -1759,6 +1911,7 @@ class DatabaseService:
                 "profit_margin_percent": profit_margin,
                 "total_paid_orders": total_orders,
                 "total_items_sold": total_items_sold,
+                "cost_method_note": "Giá vốn tính theo bình quân gia quyền (Weighted Average Cost - WAC) toàn bộ lô nhập kho.",
                 "products_breakdown": breakdown_list,
                 "recent_batches": recent_batches,
             }

@@ -18,6 +18,15 @@ def clean_state(tmp_path):
     order_service.orders_path = str(tmp_path / "orders.jsonl")
     db_service.seed_reset_stock()
     product_service._load_products()
+    from app.routers.deps import (
+        _forgot_pw_reqs, _login_ip_attempts, _login_pair_attempts,
+        _register_ip_attempts, _track_reqs,
+    )
+    _login_ip_attempts.clear()
+    _login_pair_attempts.clear()
+    _register_ip_attempts.clear()
+    _forgot_pw_reqs.clear()
+    _track_reqs.clear()
     yield
 
 

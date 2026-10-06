@@ -5,7 +5,6 @@ import smtplib
 import urllib.request
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Optional
 
 from app.config import settings
 
@@ -26,10 +25,9 @@ class ConsoleEmailSender(EmailSender):
 
     def send_reset_email(self, to_email: str, reset_link: str) -> bool:
         msg = f"[EMAIL DEV] Link đặt lại mật khẩu cho {to_email}: {reset_link}"
-        print("=" * 70)
-        print(msg)
-        print("=" * 70)
+        logger.info("======================================================================")
         logger.info(msg)
+        logger.info("======================================================================")
         return True
 
 

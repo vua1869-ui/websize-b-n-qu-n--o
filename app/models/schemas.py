@@ -1,6 +1,6 @@
 import datetime
 import re
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
@@ -33,11 +33,15 @@ class Product(BaseModel):
     original_price: int
     flash_sale: bool = False
     flash_sale_price: Optional[int] = None
+    flash_sale_start: Optional[datetime.datetime] = None
+    flash_sale_end: Optional[datetime.datetime] = None
+    is_active: bool = True
+    deleted_at: Optional[str] = None
     sold_count: int = 0
     stock_total: int = 100
     stock: int = 50
-    rating: float
-    reviews_count: int
+    rating: float = 0.0
+    reviews_count: int = 0
     location: str = "TP. Hồ Chí Minh"
     images: List[str]
     sizes: List[str]
@@ -53,9 +57,25 @@ class Product(BaseModel):
 
     @computed_field  # type: ignore[misc]
     @property
+    def is_in_flash_sale(self) -> bool:
+        if not (self.flash_sale and self.flash_sale_price):
+            return False
+        if not (self.flash_sale_start and self.flash_sale_end):
+            return False
+        now = datetime.datetime.now(datetime.timezone.utc)
+        start = self.flash_sale_start
+        end = self.flash_sale_end
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=datetime.timezone.utc)
+        if end.tzinfo is None:
+            end = end.replace(tzinfo=datetime.timezone.utc)
+        return start <= now <= end
+
+    @computed_field  # type: ignore[misc]
+    @property
     def final_price(self) -> int:
         """Giá khách thực sự phải trả (server là nguồn sự thật duy nhất)."""
-        if self.flash_sale and self.flash_sale_price:
+        if self.is_in_flash_sale and self.flash_sale_price:
             return self.flash_sale_price
         return self.price
 
@@ -131,9 +151,9 @@ class ChatMessage(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    messages: List[ChatMessage] = []  # lịch sử hội thoại (không gồm tin nhắn hiện tại)
+    messages: List[ChatMessage] = Field(default=[], max_length=20)  # tối đa 20 lượt hội thoại gần nhất
     user_message: str = Field(min_length=1, max_length=1000)
-    engine: Optional[str] = None  # None = theo cấu hình server
+    engine: Optional[str] = None  # Giữ tương thích frontend; server bỏ qua giá trị này và dùng config
     context_product_id: Optional[str] = None
 
 
@@ -429,6 +449,8 @@ class OrderTrackingResponse(BaseModel):
 # Hóa đơn điện tử E-Invoice (Phase 2)
 # ==========================================
 class InvoiceResponse(BaseModel):
+    title: str = "Phiếu thông tin đơn hàng"
+    legal_note: str = "Lưu ý: Đây là phiếu thông tin đơn hàng nội bộ, không phải hóa đơn điện tử giá trị gia tăng hợp lệ."
     invoice_number: str
     order_id: str
     issued_at: str
@@ -444,7 +466,7 @@ class InvoiceResponse(BaseModel):
     payment_method: str
     payment_status: str
     carrier: str
-    tracking_code: str
+    tracking_code: Optional[str] = "Chưa có mã vận đơn"
 
 
 # ==========================================
@@ -568,7 +590,7 @@ class UserRegisterRequest(BaseModel):
     full_name: Optional[str] = None
     email: str
     username: str
-    password: str = Field(min_length=6, max_length=100)
+    password: str = Field(min_length=8)
     confirm_password: Optional[str] = None
     phone: Optional[str] = None
 
@@ -580,9 +602,15 @@ class UserRegisterRequest(BaseModel):
                 data["name"] = data["full_name"]
             elif "name" in data and not data.get("full_name"):
                 data["full_name"] = data["name"]
-            if "confirm_password" not in data and "password" in data:
-                data["confirm_password"] = data["password"]
         return data
+
+    @model_validator(mode="after")
+    def _validate_passwords(self):
+        if len(self.password.encode("utf-8")) > 72:
+            raise ValueError("Mật khẩu không được vượt quá 72 byte")
+        if self.confirm_password is not None and self.password != self.confirm_password:
+            raise ValueError("Mật khẩu xác nhận không khớp với mật khẩu đã nhập")
+        return self
 
     @field_validator("username")
     @classmethod
@@ -687,15 +715,16 @@ class UserProfileUpdateRequest(BaseModel):
 
 class ChangePasswordRequest(BaseModel):
     old_password: str = Field(min_length=1)
-    new_password: str = Field(min_length=6, max_length=100)
+    new_password: str = Field(min_length=8)
     confirm_password: Optional[str] = None
 
-    @model_validator(mode="before")
-    @classmethod
-    def _sync(cls, data):
-        if isinstance(data, dict) and "confirm_password" not in data:
-            data["confirm_password"] = data.get("new_password")
-        return data
+    @model_validator(mode="after")
+    def _validate_passwords(self):
+        if len(self.new_password.encode("utf-8")) > 72:
+            raise ValueError("Mật khẩu không được vượt quá 72 byte")
+        if self.confirm_password is not None and self.new_password != self.confirm_password:
+            raise ValueError("Mật khẩu xác nhận không khớp với mật khẩu mới")
+        return self
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -711,19 +740,14 @@ class ForgotPasswordRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     token: str = Field(min_length=1)
-    new_password: str = Field(min_length=6, max_length=100)
+    new_password: str = Field(min_length=8)
     confirm_password: Optional[str] = None
 
-    @model_validator(mode="before")
-    @classmethod
-    def _sync(cls, data):
-        if isinstance(data, dict) and "confirm_password" not in data:
-            data["confirm_password"] = data.get("new_password")
-        return data
-
     @model_validator(mode="after")
-    def _check_passwords_match(self) -> "ResetPasswordRequest":
-        if self.confirm_password and self.new_password != self.confirm_password:
+    def _validate_passwords(self):
+        if len(self.new_password.encode("utf-8")) > 72:
+            raise ValueError("Mật khẩu không được vượt quá 72 byte")
+        if self.confirm_password is not None and self.new_password != self.confirm_password:
             raise ValueError("Mật khẩu xác nhận không khớp với mật khẩu mới")
         return self
 
@@ -736,19 +760,22 @@ class AuthResponse(BaseModel):
 
 
 class AdminProductPayload(BaseModel):
+    id: Optional[str] = None
     name: Optional[str] = None
     category: Optional[str] = None
     category_name: Optional[str] = None
     gender: str = "unisex"
-    price: Optional[int] = None
-    original_price: Optional[int] = None
+    price: Optional[int] = Field(default=None, ge=0)
+    original_price: Optional[int] = Field(default=None, ge=0)
     flash_sale: bool = False
     is_flash_sale: bool = False
-    flash_sale_price: Optional[int] = None
-    stock: int = 50
-    stock_total: int = 100
-    rating: float = 4.8
-    reviews_count: int = 0
+    flash_sale_price: Optional[int] = Field(default=None, ge=0)
+    flash_sale_start: Optional[datetime.datetime] = None
+    flash_sale_end: Optional[datetime.datetime] = None
+    stock: int = Field(default=0, ge=0)
+    stock_total: int = Field(default=0, ge=0)
+    rating: float = Field(default=0.0, ge=0.0, le=5.0)
+    reviews_count: int = Field(default=0, ge=0)
     location: str = "TP. Hồ Chí Minh"
     image: Optional[str] = None
     images: Optional[List[str]] = None
@@ -762,6 +789,40 @@ class AdminProductPayload(BaseModel):
     tags: Optional[List[str]] = None
     is_hot: bool = False
     is_new: bool = False
+
+    @model_validator(mode="after")
+    def _validate_prices(self):
+        if self.price is not None:
+            if self.original_price is not None and self.original_price < self.price:
+                raise ValueError("original_price phải lớn hơn hoặc bằng price")
+            if self.flash_sale_price is not None and self.flash_sale_price >= self.price:
+                raise ValueError("flash_sale_price phải nhỏ hơn price")
+        return self
+
+
+class AdminOrderStatusUpdate(BaseModel):
+    status: str = Field(min_length=1)
+
+
+class AdminUserRoleUpdate(BaseModel):
+    role: str = Field(min_length=1)
+
+
+class AdminUserStatusUpdate(BaseModel):
+    status: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+class CartItemRequest(BaseModel):
+    product_id: str = Field(min_length=1)
+    size: str = Field(min_length=1)
+    color: Optional[str] = None
+    quantity: int = Field(default=1, gt=0, le=99)
+    combo_token: Optional[str] = None
+
+
+class CartSyncRequest(BaseModel):
+    items: List[CartItemRequest] = Field(default_factory=list, max_length=50)
 
 
 # ==========================================
@@ -791,10 +852,12 @@ class ProfitProductBreakdown(BaseModel):
     product_name: str
     sold_quantity: int
     revenue: int
-    cost_price_wac: float
-    cogs: int
-    profit: int
-    margin_percent: float
+    cost_price_wac: Optional[float] = None
+    cogs: Optional[int] = None
+    profit: Optional[int] = None
+    margin_percent: Optional[float] = None
+    has_cost: bool = True
+    note: Optional[str] = None
 
 
 class ProfitReportResponse(BaseModel):
@@ -806,3 +869,20 @@ class ProfitReportResponse(BaseModel):
     total_items_sold: int
     products_breakdown: List[ProfitProductBreakdown] = []
     recent_batches: List[Dict[str, Any]] = []
+    calculation_method: Optional[str] = None
+
+
+class PaymentWebhookPayload(BaseModel):
+    order_id: Optional[str] = None
+    amount: Optional[int] = None
+    transaction_code: Optional[str] = None
+    channel: Optional[str] = "vietqr"
+    content: Optional[str] = None
+    transferAmount: Optional[int] = None
+    referenceCode: Optional[str] = None
+
+
+class VNPayCreatePaymentRequest(BaseModel):
+    order_id: str
+    bank_code: Optional[str] = None
+

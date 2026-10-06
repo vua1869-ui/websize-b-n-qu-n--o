@@ -1,18 +1,16 @@
-import base64
 import datetime as dt
 import hashlib
-import hmac
-import os
 import secrets
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, List, Optional, Tuple
 
 import bcrypt
+from itsdangerous import URLSafeTimedSerializer
 from sqlalchemy import func, or_
 
 from app.config import settings
 from app.db.models import PasswordResetTokenDB, UserDB
-from app.db.session import engine, get_db_session
+from app.db.session import get_db_session
 from app.models.schemas import User
 from app.services.email_sender import get_email_sender
 
@@ -36,38 +34,36 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     except Exception:
         return False
 
+# Dummy bcrypt hash để cân bằng thời gian khi user không tồn tại
+DUMMY_BCRYPT_HASH = "$2b$12$e8k6mXpT3N2c7e0p5r2s4u4e7w9y1z3a5b7c9d1e3f5g7h9i1j3k."
+
+
+def _get_serializer() -> URLSafeTimedSerializer:
+    return URLSafeTimedSerializer(settings.SECRET_KEY, salt="auth-token")
+
 
 def make_auth_token(user_id: str, role: str, token_version: int = 1, expires_in_sec: int = 86400 * 7) -> str:
-    """Tạo signed token xác thực chứa user_id, role, token_version và thời gian hết hạn (mặc định 7 ngày)."""
+    """Tạo signed token xác thực bảo mật URLSafeTimedSerializer chứa sub, role, tv, exp."""
+    s = _get_serializer()
     now = int(time.time())
-    exp = now + expires_in_sec
-    data = f"{user_id}:{role}:{token_version}:{exp}"
-    sig = hmac.new(settings.SECRET_KEY.encode(), data.encode(), hashlib.sha256).hexdigest()
-    raw = f"{data}:{sig}"
-    return base64.urlsafe_b64encode(raw.encode()).decode()
+    payload = {
+        "sub": user_id,
+        "role": role,
+        "tv": token_version,
+        "exp": now + expires_in_sec,
+    }
+    return s.dumps(payload)
 
 
-def verify_auth_token(token: str) -> Optional[Tuple[str, str, int]]:
-    """Giải mã và kiểm tra chữ ký token. Trả về (user_id, role, token_version) nếu hợp lệ."""
+def verify_auth_token(token: str, max_age: int = 86400 * 7) -> Optional[Tuple[str, str, int]]:
+    """Giải mã và kiểm tra chữ ký token qua itsdangerous. Bỏ hoàn toàn token cũ tự chế 4/5 phần."""
     try:
-        raw = base64.urlsafe_b64decode(token.encode()).decode()
-        parts = raw.split(":")
-        if len(parts) == 5:
-            user_id, role, tv_str, exp_str, sig = parts
-            if int(exp_str) < time.time():
+        s = _get_serializer()
+        data = s.loads(token, max_age=max_age)
+        if isinstance(data, dict) and "sub" in data and "role" in data:
+            if "exp" in data and data["exp"] < time.time():
                 return None
-            data = f"{user_id}:{role}:{tv_str}:{exp_str}"
-            expected_sig = hmac.new(settings.SECRET_KEY.encode(), data.encode(), hashlib.sha256).hexdigest()
-            if hmac.compare_digest(sig, expected_sig):
-                return user_id, role, int(tv_str)
-        elif len(parts) == 4:
-            user_id, role, exp_str, sig = parts
-            if int(exp_str) < time.time():
-                return None
-            data = f"{user_id}:{role}:{exp_str}"
-            expected_sig = hmac.new(settings.SECRET_KEY.encode(), data.encode(), hashlib.sha256).hexdigest()
-            if hmac.compare_digest(sig, expected_sig):
-                return user_id, role, 1
+            return str(data["sub"]), str(data["role"]), int(data.get("tv", 1))
     except Exception:
         return None
     return None
@@ -174,11 +170,14 @@ class UserService:
                 or_(func.lower(UserDB.username) == key, func.lower(UserDB.email) == key)
             ).first()
             if not u:
+                # Cân bằng thời gian chống timing-attack
+                verify_password(plain_password, DUMMY_BCRYPT_HASH)
+                return None
+            # Kiểm tra mật khẩu TRƯỚC khi báo tài khoản bị khóa
+            if not verify_password(plain_password, u.password_hash):
                 return None
             if u.status == "disabled":
                 raise ValueError("Tài khoản của bạn đã bị khóa. Vui lòng liên hệ Admin.")
-            if not verify_password(plain_password, u.password_hash):
-                return None
             return to_user_model(u)
 
     def register_user(self, name: str, email: str, username: str, password: str, phone: Optional[str] = None) -> User:
@@ -292,7 +291,7 @@ class UserService:
             u.token_version = (u.token_version or 1) + 1
             return True, "Đổi mật khẩu thành công"
 
-    def request_password_reset(self, email: str, base_url: Optional[str] = None) -> str:
+    def request_password_reset(self, email: str, base_url: Optional[str] = None, background_tasks: Optional[Any] = None) -> str:
         clean_email = email.strip().lower()
         fixed_msg = "Nếu email tồn tại trong hệ thống, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu đến email của bạn."
 
@@ -300,6 +299,17 @@ class UserService:
             u = session.query(UserDB).filter(func.lower(UserDB.email) == clean_email).first()
             if not u or u.status == "disabled":
                 return fixed_msg
+
+            # Vô hiệu hóa các token reset cũ chưa dùng của user này
+            session.query(PasswordResetTokenDB).filter(
+                PasswordResetTokenDB.user_id == u.id,
+                PasswordResetTokenDB.used == 0
+            ).update({"used": 1})
+
+            # Dọn dẹp token đã hết hạn
+            session.query(PasswordResetTokenDB).filter(
+                PasswordResetTokenDB.expires_at < time.time()
+            ).delete()
 
             raw_token = secrets.token_urlsafe(32)
             token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
@@ -315,11 +325,14 @@ class UserService:
             )
             session.add(reset_entry)
 
-        # Gửi email qua EmailSender
+        # Gửi email qua EmailSender (sử dụng BackgroundTasks nếu được cung cấp)
         sender = get_email_sender()
         effective_base_url = (base_url or settings.PUBLIC_BASE_URL).rstrip("/")
         reset_link = f"{effective_base_url}/reset-password?token={raw_token}"
-        sender.send_reset_email(clean_email, reset_link)
+        if background_tasks:
+            background_tasks.add_task(sender.send_reset_email, clean_email, reset_link)
+        else:
+            sender.send_reset_email(clean_email, reset_link)
 
         return fixed_msg
 
@@ -363,31 +376,46 @@ class UserService:
             users = session.query(UserDB).order_by(UserDB.id.asc()).all()
             return [to_user_model(u) for u in users]
 
-    def update_role(self, user_id: str, new_role: str) -> User:
+    def update_role(self, user_id: str, new_role: str, current_admin_id: Optional[str] = None) -> User:
         with get_db_session() as session:
             u = session.query(UserDB).filter(UserDB.id == user_id).first()
             if not u:
                 raise ValueError("Không tìm thấy người dùng")
-            if u.username.lower() == "admin":
+            if u.username.lower() == "admin" and new_role != "admin":
                 raise ValueError("Không thể thay đổi quyền của tài khoản Admin mặc định")
+            if current_admin_id and u.id == current_admin_id and new_role != "admin":
+                raise ValueError("Không thể tự hạ quyền của chính mình")
             if new_role not in ("admin", "user"):
                 raise ValueError("Vai trò không hợp lệ (admin hoặc user)")
+            if u.role == "admin" and new_role != "admin":
+                admin_count = session.query(func.count(UserDB.id)).filter(
+                    UserDB.role == "admin", UserDB.status != "disabled"
+                ).scalar() or 0
+                if admin_count <= 1:
+                    raise ValueError("Không thể hạ quyền Admin cuối cùng trong hệ thống")
             u.role = new_role
+            u.token_version = (u.token_version or 1) + 1
             session.flush()
             session.refresh(u)
             return to_user_model(u)
 
-    def toggle_status(self, user_id: str, is_active: Optional[bool] = None) -> User:
+    def toggle_status(self, user_id: str, is_active: Optional[bool] = None, current_admin_id: Optional[str] = None) -> User:
         with get_db_session() as session:
             u = session.query(UserDB).filter(UserDB.id == user_id).first()
             if not u:
                 raise ValueError("Không tìm thấy người dùng")
-            if u.username.lower() == "admin":
+            target_status = "active" if (is_active is True or (is_active is None and u.status != "active")) else "disabled"
+            if u.username.lower() == "admin" and target_status == "disabled":
                 raise ValueError("Không thể khóa tài khoản Admin mặc định")
-            if is_active is not None:
-                u.status = "active" if is_active else "disabled"
-            else:
-                u.status = "disabled" if u.status == "active" else "active"
+            if current_admin_id and u.id == current_admin_id and target_status == "disabled":
+                raise ValueError("Không thể tự khóa tài khoản của chính mình")
+            if u.role == "admin" and target_status == "disabled":
+                admin_count = session.query(func.count(UserDB.id)).filter(
+                    UserDB.role == "admin", UserDB.status != "disabled"
+                ).scalar() or 0
+                if admin_count <= 1:
+                    raise ValueError("Không thể khóa tài khoản Admin cuối cùng trong hệ thống")
+            u.status = target_status
             u.token_version = (u.token_version or 1) + 1
             session.flush()
             session.refresh(u)

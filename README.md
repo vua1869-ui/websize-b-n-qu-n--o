@@ -116,34 +116,46 @@ Mở file `app/services/trend_service.py`:
 - Thêm từ khóa vào danh sách `SEED_KEYWORDS`.
 - (Tùy chọn) Thêm ánh xạ từ đồng nghĩa, phong cách và danh mục vào từ điển `TREND_TAXONOMY`.
 
-## Kiểm thử
+## Kiểm thử & Chất lượng mã nguồn
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 python -m pytest tests -q
+python -m ruff check app
 ```
 
-Hơn 54 bài test tự động bao phủ:
-- Toàn bộ tính năng bán hàng cốt lõi (giá server tính, chống gian lận, tồn kho, voucher, tính size, phối đồ, chat AI, đơn hàng).
-- **12 bài test chuyên sâu cho AI Fashion Trend Detection**: chuẩn hóa điểm 0-100, nhận diện xu hướng tăng/giảm, matching sản phẩm chính xác, lọc hàng hết kho (`stock <= 0`), fallback khi nguồn lỗi, cache TTL, cá nhân hóa, API endpoints và tích hợp AI Stylist.
+Hơn **182 bài test tự động** (100% pass) bao phủ:
+- **Kiến trúc & Router**: 9 module APIRouter độc lập (`pages`, `products`, `ai`, `orders`, `payment`, `auth`, `cart`, `admin`, `loyalty`).
+- **Bảo mật & Phòng chống hồi quy**: Chống IDOR kiểm tra đơn hàng, timing attack login, IP rate limit đăng ký/đăng nhập, lọc XSS server-side, bảo vệ Host header reset password, session refresh khi đổi mật khẩu, itsdangerous session serializer.
+- **Tính trung thực dữ liệu**: Đánh giá dựa trên đơn hàng đã giao (verified buyer), chống review ảo, script xóa demo data, phân bổ doanh thu ròng và giá vốn bình quân gia quyền (WAC) trong báo cáo P&L.
+- **Tối ưu AI Stylist**: Giới hạn ngữ cảnh 30 sản phẩm dựa trên tìm kiếm ngữ nghĩa, giới hạn concurrency semaphore fallback sang bộ luật nội bộ.
+- **AI Fashion Trend Detection**: Chuẩn hóa Google Trends bằng anchor keyword, điểm xu hướng, cache TTL và matching tồn kho.
 
-## Cấu trúc
+## Cấu trúc mã nguồn
 
 ```
 app/
-  main.py                 FastAPI: route, xử lý lỗi, giới hạn tần suất gọi AI
-  config.py               Cấu hình (đọc .env)
-  models/schemas.py       Schema + ràng buộc dữ liệu
-  services/
-    product_service.py    Lọc/tìm kiếm (không dấu), danh mục, voucher, kho, Flash Sale
-    order_service.py      Tính giá, voucher, ship, combo (có chữ ký), lưu đơn
-    outfit_service.py     Phối đồ + tính size theo từng sản phẩm
-    ai_service.py         Gemini / Ollama / bộ luật nội bộ, bot Live
-    text_utils.py         Bỏ dấu tiếng Việt, khớp nguyên từ
-  data/products.json      Danh mục sản phẩm
-  data/orders.jsonl       Đơn hàng (tự tạo khi có đơn đầu tiên)
-  static/ , templates/    Giao diện
-tests/                    Test tự động
+  main.py                 FastAPI lifespan, middleware bảo mật, exception handlers & mount routers
+  config.py               Cấu hình Pydantic Settings đọc .env
+  core/
+    logging.py            Hệ thống log tập trung, che giấu SĐT/PII, log sự kiện tài chính
+  routers/
+    pages.py              Server-rendered HTML pages & SEO metadata
+    products.py           Chi tiết sản phẩm, danh mục, voucher, reviews
+    ai.py                 AI Stylist Chatbot, AI tính size, phòng Live AI
+    orders.py             Báo giá, tạo đơn, tra cứu vận đơn trung thực
+    payment.py            Cổng VNPay sandbox & webhook ngân hàng
+    auth.py               Đăng ký, đăng nhập an toàn, đổi mật khẩu, quên mật khẩu
+    cart.py               Giỏ hàng cookie & đồng bộ giỏ
+    admin.py              Bảng điều khiển quản trị, quản lý đơn, nhập xuất kho, báo cáo P&L
+    loyalty.py            Hạng thẻ & tích điểm thành viên (Bạc/Vàng/Kim Cương)
+  models/schemas.py       Pydantic v2 schemas với validation chặt chẽ
+  db/                     SQLAlchemy ORM models, session & atomic database service
+  services/               Logic nghiệp vụ (sản phẩm, đơn hàng, AI, trend, email, ảnh...)
+scripts/
+  clear_demo_social_proof.py  Script xóa dữ liệu ảo (hỗ trợ --dry-run)
+  migrate_to_db.py            Khởi tạo database và dữ liệu
+tests/                    182 kịch bản kiểm thử toàn diện
 ```
 
 ## Chỉnh sửa giao diện
@@ -156,27 +168,38 @@ npm install
 npm run build:css        # hoặc: npm run watch:css
 ```
 
-## Triển khai sản phẩm (Production Deployment Checklist)
+## Triển khai Docker & Production
 
-Trước khi đưa ứng dụng lên máy chủ Production, hãy kiểm tra và hoàn thành các mục sau:
+Ứng dụng hỗ trợ đóng gói Docker với cấu hình chuẩn bảo mật không chạy quyền root:
+
+```bash
+# Build Docker image
+docker build -t aura-studio .
+
+# Chạy container (khuyến nghị chạy 1 worker uvicorn khi dùng CSDL SQLite cục bộ)
+docker run -d -p 8000:8000 --env-file .env aura-studio
+```
+
+Khi chạy trực tiếp qua `uvicorn`, nên sử dụng:
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
+```
 
 - [ ] **Đặt `APP_ENV=production` & `DEBUG=false`** trong file `.env`.
 - [ ] **Đổi `SECRET_KEY`**: Tạo chuỗi ngẫu nhiên bằng `python -c "import secrets; print(secrets.token_hex(32))"`. Không dùng chuỗi dev mặc định.
 - [ ] **Đổi `PAYMENT_WEBHOOK_SECRET`**: Khóa bí mật khớp với cấu hình webhook thanh toán của VNPay/Ngân hàng.
-- [ ] **Cấu hình CSDL PostgreSQL**: Thay `DATABASE_URL` bằng kết nối PostgreSQL/MySQL thực tế (không dùng SQLite trên Production).
-- [ ] **Cập nhật `VNPAY_RETURN_URL`**: Trỏ về URL tên miền chính thức có `https://...` (không dùng `127.0.0.1` hay `localhost`).
+- [ ] **Cấu hình CSDL PostgreSQL**: Thay `DATABASE_URL` bằng kết nối PostgreSQL/MySQL thực tế (nếu triển khai nhiều replica).
+- [ ] **Cập nhật `PUBLIC_BASE_URL` & `VNPAY_RETURN_URL`**: Trỏ về URL tên miền chính thức có `https://...` (không dùng `127.0.0.1` hay `localhost`).
 - [ ] **Cấu hình Email Sender**: Đặt `EMAIL_BACKEND` thành `smtp` hoặc `resend`, cung cấp đầy đủ thông số gửi mail cho tính năng quên mật khẩu.
 - [ ] **Đổi mật khẩu tài khoản Admin mặc định**: Đăng nhập tài khoản `admin` ban đầu và tiến hành đổi mật khẩu mới ngay lập tức.
 - [ ] **Tắt Swagger Docs**: Khi `APP_ENV=production`, hệ thống tự động tắt `/docs`, `/redoc` và `/openapi.json` để bảo mật.
 
-## Những gì cần lưu ý trước khi bán thật
+## Những gì cần lưu ý khi vận hành thật
 
-- **Thanh toán chuyển khoản chưa tích hợp cổng thanh toán**: đơn được ghi nhận ở trạng thái `pending_payment`, bạn cần tự đối soát. Muốn thu tiền tự động cần tích hợp VNPay/MoMo/PayOS...
-- **Đơn hàng lưu ở file `orders.jsonl`**, chưa có trang quản trị, đăng nhập, hay gửi email/SMS. Lượng đơn lớn nên chuyển sang cơ sở dữ liệu (SQLite/PostgreSQL).
-- **Kho theo sản phẩm**, chưa theo từng size/màu.
-- **Ảnh/video là dữ liệu mẫu** (Unsplash). Ảnh lỗi sẽ tự hiện ảnh thay thế. Điền `video_url` trong `product_service.get_videos()` để phát video thật.
-- Phần "Live AI" là mô phỏng (host AI trả lời bình luận), không phải livestream thật.
-- Các chính sách hiển thị (đổi trả 15 ngày, cam kết chất lượng) là nội dung mẫu, hãy chỉnh cho đúng chính sách của bạn.
+- **Dữ liệu đánh giá & minh chứng xã hội**: Thiết lập `DEMO_DATA=false` trong `.env` để không hiển thị điểm đánh giá giả định khi sản phẩm chưa có review thật. Chạy `python scripts/clear_demo_social_proof.py` để xóa sạch các lượt mua và đánh giá ảo demo.
+- **Vận chuyển & GHN**: Hệ thống trả về trạng thái chuẩn "Chờ bàn giao đối tác vận chuyển" và "Chưa có mã vận đơn" khi đơn chưa được bàn giao đơn vị vận chuyển thực tế, không bịa mã vận đơn giả.
+- **Giá vốn & Báo cáo Lợi nhuận (P&L)**: Khi nhập hàng trong trang Admin, điền giá vốn nhập kho (`cost_price`). Hệ thống tính toán chính xác Giá vốn bình quân gia quyền (Weighted Average Cost - WAC) và phân bổ doanh thu ròng sau voucher để xuất báo cáo lãi/lỗ chi tiết.
+- **Đảo ngược & Xóa sản phẩm**: Xóa sản phẩm qua trang quản trị sử dụng cơ chế Soft-delete (`is_active = False`, `deleted_at = datetime.utcnow`), bảo toàn toàn vẹn lịch sử đơn hàng, đánh giá và các lô hàng nhập kho trước đó.
 
 ## Địa giới hành chính 2 cấp (Áp dụng từ 1/7/2025)
 
@@ -199,5 +222,4 @@ pip install --upgrade vietnam-provinces
 # 2. Chạy script xuất dữ liệu ra file tĩnh
 python scripts/export_locations.py
 ```
-Script sẽ tự động đồng bộ lại toàn bộ mã code, tên gọi chuẩn của Tỉnh/Thành phố và Xã/Phường vào file `app/data/vn_locations.json`.
-sout
+Script sẽ tự động đồng bộ lại toàn bộ mã code, tên gọi chuẩn của Tỉnh/Thành phố và Xã/Phường vào file `app/data/vn_locations.json`.

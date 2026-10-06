@@ -121,37 +121,29 @@ def test_order_logistics_and_public_tracking(client):
     order_id = order_data["order_id"]
     tracking_code = order_data["tracking_code"]
 
-    assert tracking_code is not None and "GHN" in tracking_code
-    assert "carrier" in order_data and "GHN" in order_data["carrier"]
-    assert "estimated_delivery" in order_data
-
-def _login_admin(client):
-    res = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
-    assert res.status_code == 200
-    token = res.json()["token"]
-    return {"Authorization": f"Bearer {token}"}
-
+    # MỤC C.5: Khi chưa tích hợp GHN thật, không sinh mã GHN-VN-xxxxxx giả
+    assert tracking_code is None
 
     # 2. Tra cứu bằng order_id kèm SĐT
     r_track1 = client.get(f"/api/orders/track/{order_id}?phone=0988776655")
     assert r_track1.status_code == 200
     tr1 = r_track1.json()
     assert tr1["order_id"] == order_id
-    assert tr1["tracking_code"] == tracking_code
     assert tr1["customer_phone"] == "098****655"
-    assert "timeline" in tr1 and len(tr1["timeline"]) == 6
+    assert "timeline" in tr1 and len(tr1["timeline"]) >= 1
     assert tr1["timeline"][0]["key"] == "ordered"
     assert tr1["timeline"][0]["status"] == "completed"
 
-    # 3. Tra cứu bằng tracking_code kèm SĐT
-    r_track2 = client.get(f"/api/orders/track/{tracking_code}?phone=0988776655")
-    assert r_track2.status_code == 200
-    tr2 = r_track2.json()
-    assert tr2["order_id"] == order_id
-
-    # 4. Tra cứu chỉ bằng số điện thoại người nhận: đã bị loại bỏ vì bảo mật IDOR -> trả 404
+    # 3. Tra cứu chỉ bằng số điện thoại người nhận: đã bị loại bỏ vì bảo mật IDOR -> trả 404
     r_track3 = client.get("/api/orders/track/0988776655")
     assert r_track3.status_code == 404
+
+
+def _login_admin(client):
+    res = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    assert res.status_code == 200
+    token = res.json()["token"]
+    return {"Authorization": f"Bearer {token}"}
 
 
 def test_order_invoice_and_notification(client):

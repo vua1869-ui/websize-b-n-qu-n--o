@@ -65,9 +65,11 @@ class ProductImportService:
         Đọc nội dung file CSV hoặc Excel (.xlsx) thành danh sách dictionary từng dòng.
         """
         lower_name = filename.lower()
+        if lower_name.endswith(".xls") and not lower_name.endswith(".xlsx"):
+            raise ValueError("Định dạng file .xls không được hỗ trợ (openpyxl không đọc được .xls). Vui lòng chuyển đổi sang .xlsx hoặc .csv.")
         if lower_name.endswith(".csv"):
             return self._parse_csv(content)
-        elif lower_name.endswith(".xlsx") or lower_name.endswith(".xls"):
+        elif lower_name.endswith(".xlsx"):
             return self._parse_excel(content)
         else:
             raise ValueError("Định dạng file không hỗ trợ. Vui lòng tải lên file .csv hoặc .xlsx")
@@ -255,8 +257,11 @@ class ProductImportService:
                 "errors": [{"row": 1, "error": "File rỗng hoặc không chứa dữ liệu hợp lệ"}],
             }
 
-        imported_products = []
-        errors = []
+        if len(rows) > 2000:
+            raise ValueError(f"File import vượt quá giới hạn tối đa 2.000 dòng (chứa {len(rows)} dòng)")
+
+        valid_items: List[Dict[str, Any]] = []
+        errors: List[Dict[str, Any]] = []
 
         for idx, row in enumerate(rows, start=2):  # Dòng 1 là tiêu đề, dữ liệu bắt đầu từ dòng 2
             norm_data, err = self.validate_and_normalize_row(row, idx)
@@ -267,24 +272,18 @@ class ProductImportService:
                     "error": err,
                 })
                 continue
+            valid_items.append(norm_data)
 
-            target_id = norm_data.get("id")
-            existing_prod = product_service.get_by_id(target_id) if target_id else None
-
+        imported_products: List[Dict[str, Any]] = []
+        if valid_items:
             try:
-                if existing_prod:
-                    # Upsert: Cập nhật sản phẩm đã tồn tại
-                    updated = product_service.update_product(target_id, norm_data)
-                    imported_products.append(updated.model_dump())
-                else:
-                    # Tạo sản phẩm mới
-                    created = product_service.create_product(norm_data)
-                    imported_products.append(created.model_dump())
+                saved = product_service.batch_import_products(valid_items)
+                imported_products = [p.model_dump() for p in saved]
             except Exception as e:
                 errors.append({
-                    "row": idx,
-                    "product_name": norm_data.get("name"),
-                    "error": f"Lỗi lưu trữ: {str(e)}",
+                    "row": 0,
+                    "product_name": "Batch Import",
+                    "error": f"Lỗi lưu trữ hàng loạt: {str(e)}",
                 })
 
         return {

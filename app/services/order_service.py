@@ -11,17 +11,20 @@ import json
 import os
 import secrets
 import threading
-import uuid
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import func, or_
 
 from app.config import settings
 from app.db.database import db_service
-from app.db.models import OrderDB, OrderItemDB
+from app.db.models import OrderDB
 from app.db.session import get_db_session
 from app.models.schemas import (
-    OrderCreateRequest, OrderItem, OrderResponse, QuoteLine, QuoteResponse,
+    OrderCreateRequest,
+    OrderItem,
+    OrderResponse,
+    QuoteLine,
+    QuoteResponse,
 )
 from app.services.product_service import product_service
 
@@ -31,6 +34,25 @@ class OrderError(Exception):
         super().__init__(message)
         self.message = message
         self.status_code = status_code
+
+
+def calculate_loyalty_earned_points(net_spent: int, tier: Optional[str] = "Silver") -> int:
+    """
+    Quy đổi tích điểm theo hạng thành viên (1 điểm = 1.000đ):
+    - silver: LOYALTY_EARN_RATE_SILVER (mặc định 3%)
+    - gold: LOYALTY_EARN_RATE_GOLD (mặc định 5%)
+    - diamond: LOYALTY_EARN_RATE_DIAMOND (mặc định 8%)
+    """
+    if net_spent <= 0:
+        return 0
+    t = (tier or "Silver").strip().lower()
+    if t == "diamond":
+        rate = getattr(settings, "LOYALTY_EARN_RATE_DIAMOND", 0.08)
+    elif t == "gold":
+        rate = getattr(settings, "LOYALTY_EARN_RATE_GOLD", 0.05)
+    else:
+        rate = getattr(settings, "LOYALTY_EARN_RATE_SILVER", 0.03)
+    return int((net_spent * rate) // 1000)
 
 
 def make_combo_token(product_ids: List[str]) -> str:
@@ -96,7 +118,7 @@ class OrderService:
                        else f"'{p.name}' đã hết hàng")
                 raise OrderError(msg, 409)
 
-        subtotal = sum(l.line_total for l in lines)
+        subtotal = sum(line_item.line_total for line_item in lines)
 
         # ---- Combo phối đồ: chỉ giảm nếu token khớp chữ ký của đúng bộ sản phẩm trong giỏ ----
         combo_discount = 0
@@ -174,9 +196,10 @@ class OrderService:
 
         total = max(0, after_combo - voucher_discount - points_discount) + shipping_fee - shipping_discount
 
-        # Tích điểm cho đơn hàng: 1 điểm cho mỗi 100.000đ thanh toán
+        # Tích điểm cho đơn hàng theo tỷ lệ hạng thành viên (1 điểm = 1.000đ)
         net_spent = max(0, after_combo - voucher_discount - points_discount)
-        points_earned = net_spent // 100000
+        user_tier = getattr(user, "tier", "Silver") if user else "Silver"
+        points_earned = calculate_loyalty_earned_points(net_spent, user_tier)
 
         return QuoteResponse(
             lines=lines,
@@ -214,8 +237,8 @@ class OrderService:
             raise OrderError("Không thể tạo mã đơn hàng duy nhất lúc này, vui lòng thử lại", 500)
 
         status = "confirmed" if req.payment_method == "cod" else "pending_payment"
-        carrier = "Giao Hàng Nhanh (GHN Express)"
-        tracking_code = f"GHN-VN-{order_id[-6:]}"
+        carrier = "Đang điều phối vận chuyển"
+        tracking_code = None  # Chưa tích hợp GHN thật: không sinh mã giả
         shipping_status = "ready_to_pick" if status == "confirmed" else "pending_confirm"
         estimated_delivery = (now + datetime.timedelta(days=3)).strftime("%d/%m/%Y")
 
@@ -296,15 +319,21 @@ class OrderService:
         qr_code_url = None
         bank_info = None
         if req.payment_method == "qr_transfer":
-            # Tạo mã VietQR chuẩn NAPAS tự động
+            bank_id = getattr(settings, "BANK_ID", "")
+            bank_acc = getattr(settings, "BANK_ACCOUNT_NO", "")
+            bank_name = getattr(settings, "BANK_ACCOUNT_NAME", "")
+            if not (bank_id and bank_acc and bank_name):
+                raise OrderError("Phương thức chuyển khoản qua QR hiện chưa sẵn sàng do chưa cấu hình thông tin ngân hàng", 400)
+            import urllib.parse
+            acc_name_quoted = urllib.parse.quote(bank_name)
             qr_code_url = (
-                f"https://img.vietqr.io/image/MB-0900000001-compact2.png"
-                f"?amount={quote.total}&addInfo=AURA%20{order_id}&accountName=AURA%20STUDIO"
+                f"https://img.vietqr.io/image/{bank_id}-{bank_acc}-compact2.png"
+                f"?amount={quote.total}&addInfo=AURA%20{order_id}&accountName={acc_name_quoted}"
             )
             bank_info = {
-                "bank_name": "MBBank (Ngân hàng Quân Đội)",
-                "account_number": "0900000001",
-                "account_name": "AURA STUDIO",
+                "bank_name": bank_id,
+                "account_number": bank_acc,
+                "account_name": bank_name,
                 "amount": str(quote.total),
                 "content": f"AURA {order_id}"
             }
@@ -408,8 +437,8 @@ class OrderService:
                         rec = json.loads(line)
                         if rec.get("status") == "cancelled":
                             continue
-                        for l in rec["quote"]["lines"]:
-                            product_service.apply_historical_sale(l["product_id"], l["quantity"])
+                        for item in rec["quote"]["lines"]:
+                            product_service.apply_historical_sale(item["product_id"], item["quantity"])
                     except Exception:
                         continue
             return
@@ -422,8 +451,8 @@ class OrderService:
                         continue
                     try:
                         q = json.loads(o.quote_json)
-                        for l in q.get("lines", []):
-                            product_service.apply_historical_sale(l["product_id"], l["quantity"])
+                        for item in q.get("lines", []):
+                            product_service.apply_historical_sale(item["product_id"], item["quantity"])
                     except Exception:
                         continue
         except Exception:
@@ -489,7 +518,7 @@ class OrderService:
                 if o.quote_json:
                     try:
                         q = json.loads(o.quote_json)
-                        needed = {l["product_id"]: l["quantity"] for l in q.get("lines", [])}
+                        needed = {item["product_id"]: item["quantity"] for item in q.get("lines", [])}
                         product_service.release_stock(needed)
                     except Exception:
                         pass

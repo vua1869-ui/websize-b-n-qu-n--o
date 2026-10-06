@@ -84,6 +84,22 @@ def test_production_env_refuses_localhost_public_base_url():
     assert "PUBLIC_BASE_URL chưa được đặt hoặc vẫn trỏ về 127.0.0.1" in str(exc_info.value)
 
 
+def test_production_env_refuses_console_email_backend():
+    """Kiểm tra APP_ENV=production từ chối EMAIL_BACKEND=console."""
+    with pytest.raises(ValueError) as exc_info:
+        Settings(
+            APP_ENV="production",
+            SECRET_KEY="valid_prod_secret_key_123456789",
+            PAYMENT_WEBHOOK_SECRET="valid_prod_webhook_secret_key_99",
+            DATABASE_URL="postgresql://user:pass@localhost:5432/aura_prod",
+            VNPAY_RETURN_URL="https://aurastudio.vn/api/payment/vnpay/return",
+            VNPAY_HASH_SECRET="valid_vnpay_hash_secret_key",
+            PUBLIC_BASE_URL="https://aurastudio.vn",
+            EMAIL_BACKEND="console"
+        )
+    assert "EMAIL_BACKEND không được dùng 'console' khi triển khai Production" in str(exc_info.value)
+
+
 def test_production_env_valid_config_passes():
     """Kiểm tra APP_ENV=production khởi động thành công khi cung cấp đầy đủ thông số an toàn."""
     s = Settings(
@@ -93,6 +109,7 @@ def test_production_env_valid_config_passes():
         DATABASE_URL="postgresql://user:pass@localhost:5432/aura_prod",
         VNPAY_RETURN_URL="https://aurastudio.vn/api/payment/vnpay/return",
         VNPAY_HASH_SECRET="valid_vnpay_hash_secret_key",
-        PUBLIC_BASE_URL="https://aurastudio.vn"
+        PUBLIC_BASE_URL="https://aurastudio.vn",
+        EMAIL_BACKEND="smtp"
     )
     assert s.APP_ENV == "production"
