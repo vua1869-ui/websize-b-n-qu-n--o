@@ -299,9 +299,6 @@
                 <h4 class="text-sm font-semibold text-[#111111] uppercase tracking-wider">Lịch sử biến động điểm</h4>
                 <p class="text-sm text-[#777777] mt-0.5">Chi tiết các lần cộng, trừ và sử dụng điểm thưởng</p>
               </div>
-              <button onclick="simulateLoyaltyBonus()" class="btn btn-outline text-sm !py-1.5 px-3 font-semibold">
-                🎁 Nhận điểm sự kiện (+50)
-              </button>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-left text-sm">
@@ -918,17 +915,7 @@
       }
     }
 
-    async function simulateLoyaltyBonus() {
-      try {
-        const res = await fetch("/api/loyalty/simulate-earn?points=50", { method: "POST" });
-        if (!res.ok) throw new Error("Không thể nhận điểm lúc này");
-        const data = await res.json();
-        alert(`Chúc mừng! Bạn đã nhận thành công ${data.points_added} điểm thưởng AURA Club.`);
-        loadLoyalty();
-      } catch (e) {
-        alert(e.message);
-      }
-    }
+
 
     // Tự động nạp
     loadOrders();

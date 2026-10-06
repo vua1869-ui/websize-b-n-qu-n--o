@@ -9,6 +9,7 @@ import hashlib
 import hmac
 import json
 import os
+import secrets
 import threading
 import uuid
 from typing import Any, Dict, List, Optional
@@ -224,7 +225,16 @@ class OrderService:
                     p.sold_count += qty
 
         now = datetime.datetime.now()
-        order_id = f"AURA-{now.strftime('%y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+        order_id = None
+        for _ in range(5):
+            hex_part = secrets.token_hex(6).upper()  # 12 ký tự hex an toàn ngẫu nhiên
+            candidate_id = f"AURA-{now.strftime('%y%m%d')}-{hex_part}"
+            if not db_service.get_order_by_id(candidate_id):
+                order_id = candidate_id
+                break
+        if not order_id:
+            product_service.release_stock(needed)
+            raise OrderError("Không thể tạo mã đơn hàng duy nhất lúc này, vui lòng thử lại", 500)
         status = "confirmed" if req.payment_method == "cod" else "pending_payment"
         carrier = "Giao Hàng Nhanh (GHN Express)"
         tracking_code = f"GHN-VN-{order_id[-6:]}"

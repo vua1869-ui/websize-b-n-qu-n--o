@@ -125,27 +125,33 @@ def test_order_logistics_and_public_tracking(client):
     assert "carrier" in order_data and "GHN" in order_data["carrier"]
     assert "estimated_delivery" in order_data
 
-    # 2. Tra cứu bằng order_id
-    r_track1 = client.get(f"/api/orders/track/{order_id}")
+def _login_admin(client):
+    res = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+    assert res.status_code == 200
+    token = res.json()["token"]
+    return {"Authorization": f"Bearer {token}"}
+
+
+    # 2. Tra cứu bằng order_id kèm SĐT
+    r_track1 = client.get(f"/api/orders/track/{order_id}?phone=0988776655")
     assert r_track1.status_code == 200
     tr1 = r_track1.json()
     assert tr1["order_id"] == order_id
     assert tr1["tracking_code"] == tracking_code
+    assert tr1["customer_phone"] == "098****655"
     assert "timeline" in tr1 and len(tr1["timeline"]) == 6
     assert tr1["timeline"][0]["key"] == "ordered"
     assert tr1["timeline"][0]["status"] == "completed"
 
-    # 3. Tra cứu bằng tracking_code
-    r_track2 = client.get(f"/api/orders/track/{tracking_code}")
+    # 3. Tra cứu bằng tracking_code kèm SĐT
+    r_track2 = client.get(f"/api/orders/track/{tracking_code}?phone=0988776655")
     assert r_track2.status_code == 200
     tr2 = r_track2.json()
     assert tr2["order_id"] == order_id
 
-    # 4. Tra cứu bằng số điện thoại người nhận
+    # 4. Tra cứu chỉ bằng số điện thoại người nhận: đã bị loại bỏ vì bảo mật IDOR -> trả 404
     r_track3 = client.get("/api/orders/track/0988776655")
-    assert r_track3.status_code == 200
-    tr3 = r_track3.json()
-    assert tr3["order_id"] == order_id
+    assert r_track3.status_code == 404
 
 
 def test_order_invoice_and_notification(client):
@@ -160,22 +166,28 @@ def test_order_invoice_and_notification(client):
     order_data = client.post("/api/orders", json=order_req).json()
     order_id = order_data["order_id"]
 
-    # 2. Lấy dữ liệu hóa đơn điện tử E-Invoice
-    r_inv = client.get(f"/api/orders/{order_id}/invoice")
+    # 2. Lấy dữ liệu hóa đơn điện tử E-Invoice (khách vãng lai cần SĐT, PII được che bớt)
+    r_inv = client.get(f"/api/orders/{order_id}/invoice?phone=0912998877")
     assert r_inv.status_code == 200
     inv = r_inv.json()
     assert "invoice_number" in inv and "INV-AURA" in inv["invoice_number"]
     assert "seller" in inv and inv["seller"]["tax_code"] == "0317894562"
     assert "buyer" in inv and inv["buyer"]["name"] == "Trần Thu Hà"
+    assert inv["buyer"]["phone"] == "091****877"
     assert "vat_rate" in inv and inv["vat_rate"] == 8
     assert inv["vat_amount"] > 0
     assert inv["total_amount"] > 0
     assert len(inv["items"]) > 0
 
-    # 3. Giả lập gửi thông báo đơn hàng qua Zalo / SMS
-    r_notify = client.post(f"/api/orders/{order_id}/send-notification?channel=zalo")
+    # 3. Giả lập gửi thông báo đơn hàng qua Zalo / SMS (yêu cầu admin, response không chứa SĐT)
+    r_unauth = client.post(f"/api/orders/{order_id}/send-notification?channel=zalo")
+    assert r_unauth.status_code in [401, 403]
+
+    admin_headers = _login_admin(client)
+    r_notify = client.post(f"/api/orders/{order_id}/send-notification?channel=zalo", headers=admin_headers)
     assert r_notify.status_code == 200
     notif = r_notify.json()
     assert notif["success"] is True
     assert notif["channel"] == "zalo"
     assert "thành công" in notif["message"].lower()
+    assert "recipient" not in notif

@@ -30,11 +30,11 @@ def test_order_success_valid_cod_order(client):
     assert res.status_code == 200
     html = res.text
 
-    # Kiểm tra các thông tin chính
+    # Kiểm tra các thông tin chính (Đơn vãng lai che bớt PII: 098****321 và tỉnh thành)
     assert order_id in html
     assert CUSTOMER["customer_name"] in html
-    assert CUSTOMER["customer_phone"].replace(" ", "") in html
-    assert "12 Phố Huế" in html
+    assert "098****321" in html
+    assert "Hà Nội" in html
     assert "Giao giờ hành chính" in html
 
     # Kiểm tra trạng thái thanh toán COD: phải ghi rõ thanh toán khi nhận hàng / chuẩn bị tiền mặt

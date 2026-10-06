@@ -185,9 +185,19 @@
 
           showAlert("Đăng nhập thành công! Đang chuyển hướng...", true);
 
+          function isSafeRedirect(url) {
+            if (!url || typeof url !== "string") return false;
+            if (!url.startsWith("/") || url.startsWith("//") || url.startsWith("/\\") || url.includes("\\")) return false;
+            for (let i = 0; i < url.length; i++) {
+              const c = url.charCodeAt(i);
+              if (c < 32 || c === 127) return false;
+            }
+            return true;
+          }
+
           const params = new URLSearchParams(window.location.search);
           let redirectUrl = params.get("redirect");
-          if (!redirectUrl) {
+          if (!isSafeRedirect(redirectUrl)) {
             redirectUrl = data.user.role === "admin" ? "/admin" : "/profile";
           }
 

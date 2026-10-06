@@ -7,7 +7,7 @@ import os
 import threading
 import time
 import urllib.request
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from fastapi import Depends, FastAPI, File, HTTPException, Query, Request, Response, UploadFile
 from fastapi.exceptions import RequestValidationError
@@ -206,6 +206,108 @@ def _check_forgot_password_rate_limit(ip: str, email: str) -> None:
 
 
 # ==========================================
+# Rate-limit cho các endpoint tra cứu công khai (Vận đơn, Hóa đơn, Thanh toán)
+# Tối đa 20 lần yêu cầu trong 60 giây cho mỗi IP
+# ==========================================
+_TRACK_WINDOW_SEC = 60  # 1 phút
+_TRACK_MAX_REQ = 20     # tối đa 20 lần/phút/IP
+_track_reqs: dict = collections.defaultdict(collections.deque)
+_track_lock = threading.Lock()
+
+
+def _check_public_track_rate_limit(request: Request) -> None:
+    """Raise HTTP 429 nếu vượt quá 20 yêu cầu tra cứu trong 1 phút từ cùng một IP."""
+    ip = request.client.host if request.client else "unknown"
+    now = time.time()
+    with _track_lock:
+        q = _track_reqs[ip]
+        while q and now - q[0] > _TRACK_WINDOW_SEC:
+            q.popleft()
+        if len(q) >= _TRACK_MAX_REQ:
+            raise HTTPException(
+                status_code=429,
+                detail="Bạn đã thực hiện quá nhiều yêu cầu tra cứu. Vui lòng thử lại sau 1 phút."
+            )
+        q.append(now)
+
+
+def safe_redirect(target: Optional[str], default: str = "/") -> str:
+    """
+    Chặn open redirect: chỉ nhận chuỗi bắt đầu bằng '/',
+    KHÔNG bắt đầu bằng '//' hay '/\\', không chứa '\\' hoặc ký tự điều khiển;
+    không hợp lệ thì dùng đường dẫn mặc định.
+    """
+    if not target or not isinstance(target, str):
+        return default
+    s = target.strip()
+    if not s.startswith("/"):
+        return default
+    if s.startswith("//") or s.startswith("/\\"):
+        return default
+    if "\\" in s:
+        return default
+    for ch in s:
+        if ord(ch) < 32 or ord(ch) == 127:
+            return default
+    return s
+
+
+def _normalize_phone(p: Optional[str]) -> str:
+    if not p:
+        return ""
+    return "".join(c for c in str(p) if c.isdigit())
+
+
+def _mask_phone(phone: Optional[str]) -> str:
+    if not phone:
+        return ""
+    clean = "".join(c for c in str(phone).strip() if c.isdigit())
+    if len(clean) >= 6:
+        return f"{clean[:3]}****{clean[-3:]}"
+    return "****"
+
+
+def _mask_address(address: Optional[str], province: Optional[str] = None) -> str:
+    if province and str(province).strip():
+        return str(province).strip()
+    if address:
+        parts = [p.strip() for p in str(address).split(",") if p.strip()]
+        if parts:
+            return parts[-1]
+    return "Việt Nam"
+
+
+def _verify_order_access(order: Dict[str, Any], user: Optional[User], phone: Optional[str]) -> Tuple[bool, bool]:
+    """
+    Xác thực quyền truy cập thông tin đơn hàng:
+    - Trả về (is_allowed, is_full_access)
+    - is_full_access=True: Chủ sở hữu đơn (user_id khớp) hoặc Admin -> thấy đầy đủ thông tin.
+    - is_full_access=False: Khách vãng lai cung cấp đúng cặp (mã đơn + SĐT đặt hàng) -> che bớt PII.
+    - is_allowed=False: Không đủ quyền hoặc sai thông tin -> trả 404 chung chung.
+    """
+    order_user_id = order.get("user_id")
+    # 1. Đơn của thành viên đã đăng ký (có user_id): CHỈ chủ đơn hoặc admin
+    if order_user_id:
+        if user and user.is_active:
+            if user.role == "admin" or str(user.id) == str(order_user_id):
+                return True, True
+        return False, False
+
+    # 2. Đơn khách vãng lai (user_id rỗng):
+    if user and user.is_active and user.role == "admin":
+        return True, True
+
+    if phone:
+        order_phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
+        clean_input = _normalize_phone(phone)
+        clean_order = _normalize_phone(order_phone)
+        if clean_input and clean_input == clean_order:
+            return True, False
+
+    return False, False
+
+
+# ==========================================
 # Xác thực & Phân quyền (Authentication & RBAC)
 # ==========================================
 def get_current_user_optional(request: Request) -> Optional[User]:
@@ -340,12 +442,13 @@ def product_detail_page(request: Request, product_id: str):
 @app.get("/login", response_class=HTMLResponse)
 def login_page(request: Request, redirect: Optional[str] = None):
     user = get_current_user_optional(request)
+    default_dest = "/admin" if (user and user.role == "admin") else "/profile"
+    safe_target = safe_redirect(redirect, default=default_dest) if redirect else default_dest
     if user and user.is_active:
-        target = redirect if redirect and redirect.startswith("/") else ("/admin" if user.role == "admin" else "/profile")
-        return RedirectResponse(url=target, status_code=302)
+        return RedirectResponse(url=safe_target, status_code=302)
     return templates.TemplateResponse(request, "login.html", {
         "app_name": settings.APP_NAME,
-        "redirect_url": redirect or "",
+        "redirect_url": safe_redirect(redirect, default="") if redirect else "",
         "version": settings.VERSION,
     })
 
@@ -385,14 +488,40 @@ def profile_page(request: Request):
 
 
 @app.get("/order-success/{order_id}", response_class=HTMLResponse)
-def order_success_page(request: Request, order_id: str):
+def order_success_page(request: Request, order_id: str, phone: Optional[str] = Query(None)):
     user = get_current_user_optional(request)
-    order = order_service.get_order_by_id(order_id)
+    from app.db.database import db_service
+    order = db_service.get_order_by_id(order_id)
+    if not order:
+        order = order_service.get_order_by_id(order_id)
     if not order:
         return RedirectResponse(url="/", status_code=302)
+
+    is_allowed, is_full = _verify_order_access(order, user, phone)
+    if not is_allowed and not order.get("user_id"):
+        cookie_phone = request.cookies.get(f"aura_order_{order_id}")
+        order_phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
+        if cookie_phone and _normalize_phone(cookie_phone) == _normalize_phone(order_phone):
+            is_allowed, is_full = True, False
+
+    if not is_allowed:
+        raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng")
+
+    display_order = dict(order)
+    if not is_full:
+        order_phone = display_order.get("customer_phone") or display_order.get("customer", {}).get("phone", "")
+        masked_phone = _mask_phone(order_phone)
+        masked_addr = _mask_address(display_order.get("customer_address"), display_order.get("province"))
+        display_order["customer_phone"] = masked_phone
+        display_order["customer_address"] = masked_addr
+        if "customer" in display_order and isinstance(display_order["customer"], dict):
+            display_order["customer"] = dict(display_order["customer"])
+            display_order["customer"]["phone"] = masked_phone
+            display_order["customer"]["address"] = masked_addr
+
     return templates.TemplateResponse(request, "order-success.html", {
         "app_name": settings.APP_NAME,
-        "order": order,
+        "order": display_order,
         "user": user,
         "version": settings.VERSION,
     })
@@ -659,8 +788,8 @@ def get_trending_products(
 
 
 @app.post("/api/trends/refresh", response_model=TrendRefreshResponse)
-def refresh_trends(force: bool = Query(True)):
-    """Endpoint nội bộ: thu thập dữ liệu mới, phân tích, chấm điểm và cập nhật cache."""
+def refresh_trends(force: bool = Query(True), _admin: User = Depends(require_admin)):
+    """Endpoint quản trị: thu thập dữ liệu mới, phân tích, chấm điểm và cập nhật cache (Yêu cầu quyền Admin)."""
     res = trend_service.refresh_trends(force=force)
     return TrendRefreshResponse(**res)
 
@@ -681,9 +810,19 @@ def quote_order(body: QuoteRequest, request: Request):
 
 
 @app.post("/api/orders", response_model=OrderResponse)
-def create_order(body: OrderCreateRequest, request: Request):
+def create_order(body: OrderCreateRequest, request: Request, response: Response):
     user = get_current_user_optional(request)
-    return order_service.create_order(body, user=user)
+    created = order_service.create_order(body, user=user)
+    order_id = getattr(created, "order_id", None) or (created.get("order_id") if isinstance(created, dict) else None)
+    if not getattr(user, "id", None) and body.customer_phone and order_id:
+        response.set_cookie(
+            key=f"aura_order_{order_id}",
+            value=body.customer_phone,
+            httponly=True,
+            max_age=3600,
+            samesite="lax",
+        )
+    return created
 
 
 # ==========================================
@@ -705,19 +844,26 @@ def _ollama_available() -> bool:
 
 
 @app.get("/api/system/status")
-def system_status():
-    engines = ["rules"]
-    if _ollama_available():
-        engines.insert(0, "ollama")
-    if settings.GEMINI_API_KEY:
-        engines.insert(0, "gemini")
+def system_status(request: Request):
+    user = get_current_user_optional(request)
+    if user and user.role == "admin":
+        engines = ["rules"]
+        if _ollama_available():
+            engines.insert(0, "ollama")
+        if settings.GEMINI_API_KEY:
+            engines.insert(0, "gemini")
+        return {
+            "status": "online",
+            "app_name": settings.APP_NAME,
+            "version": settings.VERSION,
+            "ai_engines_available": engines,
+            "total_products": len(product_service.get_all()),
+            "total_orders": order_service.count_orders(),
+        }
     return {
         "status": "online",
         "app_name": settings.APP_NAME,
         "version": settings.VERSION,
-        "ai_engines_available": engines,
-        "total_products": len(product_service.get_all()),
-        "total_orders": order_service.count_orders(),
     }
 
 
@@ -819,16 +965,23 @@ def auth_reset_password(body: ResetPasswordRequest):
 
 
 @app.get("/api/auth/orders")
-def auth_user_orders(user: User = Depends(get_current_user)):
-    all_orders = order_service.get_orders(limit=100)
-    user_orders = []
-    for o in all_orders:
-        c = o.get("customer", {})
-        if (user.phone and c.get("phone") == user.phone) or \
-           (c.get("name") and c.get("name").strip().lower() == user.full_name.strip().lower()) or \
-           (o.get("username") == user.username):
-            user_orders.append(o)
-    return user_orders
+def auth_user_orders(
+    user: User = Depends(get_current_user),
+    limit: int = Query(20, ge=1, le=50),
+    offset: int = Query(0, ge=0),
+):
+    from app.db.models import OrderDB
+    from app.db.session import get_db_session
+    with get_db_session() as session:
+        orders = (
+            session.query(OrderDB)
+            .filter(OrderDB.user_id == user.id)
+            .order_by(OrderDB.created_at.desc(), OrderDB.order_id.desc())
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+        return [order_service._format_order(o) for o in orders]
 
 
 # ==========================================
@@ -1351,9 +1504,27 @@ async def payment_webhook(request: Request):
 
 
 @app.get("/api/payment/check-status/{order_id}")
-def check_order_payment_status(order_id: str):
+def check_order_payment_status(order_id: str, request: Request, phone: Optional[str] = Query(None)):
     """Kiểm tra trạng thái thanh toán theo thời gian thực (Polling khi khách quét mã QR)."""
+    _check_public_track_rate_limit(request)
     from app.db.database import db_service
+    order = db_service.get_order_by_id(order_id)
+    if not order:
+        order = order_service.get_order_by_id(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
+
+    user = get_current_user_optional(request)
+    order_user_id = order.get("user_id")
+    if order_user_id:
+        if not user or (user.role != "admin" and str(user.id) != str(order_user_id)):
+            raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
+    else:
+        if phone:
+            order_phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
+            if _normalize_phone(phone) != _normalize_phone(order_phone):
+                raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
+
     status = db_service.get_order_payment_status(order_id)
     if not status.get("exists"):
         raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
@@ -1470,7 +1641,13 @@ def vnpay_payment_return(request: Request):
         )
         order_service.update_order_status(order_id, "confirmed")
         if is_browser_html:
-            return RedirectResponse(url=f"/order-success/{order_id}", status_code=302)
+            resp = RedirectResponse(url=f"/order-success/{order_id}", status_code=302)
+            order_data = db_service.get_order_by_id(order_id)
+            if order_data:
+                phone_val = order_data.get("customer_phone") or order_data.get("customer", {}).get("phone", "")
+                if phone_val:
+                    resp.set_cookie(f"aura_order_{order_id}", phone_val, httponly=True, max_age=3600, samesite="lax")
+            return resp
         return {
             "success": True,
             "order_id": order_id,
@@ -1644,11 +1821,12 @@ def get_product_size_chart(product_id: str):
 # Giai đoạn 2: Tra cứu Vận đơn & Logistics GHN/GHTK
 # ==========================================
 @app.get("/api/orders/track/{tracking_or_order_id}", response_model=OrderTrackingResponse)
-def track_order_shipment(tracking_or_order_id: str):
+def track_order_shipment(tracking_or_order_id: str, request: Request, phone: Optional[str] = Query(None)):
     """
     Tra cứu hành trình vận chuyển kiện hàng công khai không cần đăng nhập:
     Hỗ trợ tra cứu bằng: Mã đơn hàng (AURA-...), Mã vận đơn (GHN-..., GHTK-...), hoặc SĐT nhận hàng.
     """
+    _check_public_track_rate_limit(request)
     from app.db.database import db_service
     order = db_service.get_order_by_tracking_or_id(tracking_or_order_id)
     if not order:
@@ -1663,6 +1841,14 @@ def track_order_shipment(tracking_or_order_id: str):
             order["total_amount"] = mem_order.get("quote", {}).get("total", 0)
 
     if not order:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Không tìm thấy thông tin đơn hàng hoặc mã vận đơn '{tracking_or_order_id}'. Vui lòng kiểm tra lại!"
+        )
+
+    user = get_current_user_optional(request)
+    is_allowed, is_full = _verify_order_access(order, user, phone)
+    if not is_allowed:
         raise HTTPException(
             status_code=404,
             detail=f"Không tìm thấy thông tin đơn hàng hoặc mã vận đơn '{tracking_or_order_id}'. Vui lòng kiểm tra lại!"
@@ -1685,6 +1871,11 @@ def track_order_shipment(tracking_or_order_id: str):
     if order.get("order_status") == "completed":
         ship_status = "delivered"
 
+    raw_phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
+    raw_addr = order.get("customer_address") or order.get("customer", {}).get("address", "")
+    cust_phone = raw_phone if is_full else _mask_phone(raw_phone)
+    cust_addr = raw_addr if is_full else _mask_address(raw_addr, order.get("province"))
+
     return OrderTrackingResponse(
         order_id=order["order_id"],
         tracking_code=order.get("tracking_code") or f"GHN-VN-{order['order_id'][-6:]}",
@@ -1693,8 +1884,8 @@ def track_order_shipment(tracking_or_order_id: str):
         shipping_status_label=status_labels.get(order.get("order_status"), "Đang xử lý"),
         estimated_delivery=order.get("estimated_delivery") or "2 - 3 ngày tới",
         customer_name=order.get("customer_name") or order.get("customer", {}).get("name", "Khách hàng"),
-        customer_phone=order.get("customer_phone") or order.get("customer", {}).get("phone", ""),
-        customer_address=order.get("customer_address") or order.get("customer", {}).get("address", ""),
+        customer_phone=cust_phone,
+        customer_address=cust_addr,
         timeline=timeline,
         items=lines,
         total_amount=order.get("total_amount") or quote.get("total", 0),
@@ -1708,7 +1899,7 @@ def track_order_shipment(tracking_or_order_id: str):
 # Giai đoạn 2: Hóa đơn điện tử E-Invoice
 # ==========================================
 @app.get("/api/orders/{order_id}/invoice", response_model=InvoiceResponse)
-def get_order_invoice(order_id: str):
+def get_order_invoice(order_id: str, request: Request, phone: Optional[str] = Query(None)):
     """Lấy dữ liệu hóa đơn điện tử VAT thương mại phục vụ xem và in ấn (window.print)."""
     from app.db.database import db_service
     order = db_service.get_order_by_id(order_id)
@@ -1718,6 +1909,12 @@ def get_order_invoice(order_id: str):
             order = db_service._format_order_row(dict(order))
 
     if not order:
+        raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng để xuất hóa đơn")
+
+    _check_public_track_rate_limit(request)
+    user = get_current_user_optional(request)
+    is_allowed, is_full = _verify_order_access(order, user, phone)
+    if not is_allowed:
         raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng để xuất hóa đơn")
 
     quote = order.get("quote", {})
@@ -1749,8 +1946,8 @@ def get_order_invoice(order_id: str):
         },
         buyer={
             "name": order.get("customer_name") or order.get("customer", {}).get("name", "Khách hàng"),
-            "phone": order.get("customer_phone") or order.get("customer", {}).get("phone", ""),
-            "address": order.get("customer_address") or order.get("customer", {}).get("address", ""),
+            "phone": (order.get("customer_phone") or order.get("customer", {}).get("phone", "")) if is_full else _mask_phone(order.get("customer_phone") or order.get("customer", {}).get("phone", "")),
+            "address": (order.get("customer_address") or order.get("customer", {}).get("address", "")) if is_full else _mask_address(order.get("customer_address") or order.get("customer", {}).get("address", ""), order.get("province")),
         },
         items=quote.get("lines", []),
         subtotal=subtotal,
@@ -1767,8 +1964,12 @@ def get_order_invoice(order_id: str):
 
 
 @app.post("/api/orders/{order_id}/send-notification")
-def send_order_notification(order_id: str, channel: str = Query("zalo", enum=["zalo", "email", "sms"])):
-    """Giả lập gửi thông báo tiến độ đơn hàng tự động qua Zalo ZNS / SMS / Email."""
+def send_order_notification(
+    order_id: str,
+    channel: str = Query("zalo", enum=["zalo", "email", "sms"]),
+    _admin: User = Depends(require_admin),
+):
+    """Giả lập gửi thông báo tiến độ đơn hàng tự động qua Zalo ZNS / SMS / Email (Yêu cầu Admin)."""
     from app.db.database import db_service
     order = db_service.get_order_by_id(order_id)
     if not order:
@@ -1776,14 +1977,12 @@ def send_order_notification(order_id: str, channel: str = Query("zalo", enum=["z
     if not order:
         raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng")
 
-    phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
     cust_name = order.get("customer_name") or order.get("customer", {}).get("name", "Quý khách")
     tracking = order.get("tracking_code") or f"GHN-VN-{order_id[-6:]}"
 
     return {
         "success": True,
         "channel": channel,
-        "recipient": phone,
         "message": f"Đã gửi thông báo hành trình đơn hàng {order_id} (Vận đơn {tracking}) tới {cust_name} qua {channel.upper()} thành công!"
     }
 
@@ -1814,8 +2013,12 @@ def get_loyalty_history(request: Request, limit: int = Query(20, ge=1, le=100)):
 
 @app.post("/api/loyalty/simulate-earn")
 def simulate_loyalty_earn(points: int = Query(50, ge=1, le=1000), request: Request = None):
-    """Endpoint hỗ trợ test/demo cộng điểm thưởng nhanh cho tài khoản đang đăng nhập."""
-    user = get_current_user(request)
+    """Chỉ hoạt động khi DEBUG=True, APP_ENV!=production và là admin. Ngoài ra trả 404."""
+    if not settings.DEBUG or settings.APP_ENV.strip().lower() == "production":
+        raise HTTPException(status_code=404, detail="Endpoint không tồn tại")
+    user = get_current_user_optional(request)
+    if not user or user.role != "admin" or not user.is_active:
+        raise HTTPException(status_code=404, detail="Endpoint không tồn tại")
     new_bal = db_service.add_loyalty_points(
         user.id, points, "bonus", f"Điểm thưởng trải nghiệm sự kiện AURA (+{points} điểm)"
     )

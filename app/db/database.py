@@ -688,7 +688,7 @@ class DatabaseService:
             conn.close()
 
     def get_order_by_tracking_or_id(self, code: str) -> Optional[Dict[str, Any]]:
-        """Tra cứu đơn hàng linh hoạt bằng mã đơn (AURA-...), mã vận đơn (GHN-...), hoặc SĐT."""
+        """Tra cứu đơn hàng bằng mã đơn (AURA-...) hoặc mã vận đơn (GHN-...). Chỉ khớp chính xác."""
         conn = get_db_connection(self.db_path)
         try:
             query = code.strip()
@@ -697,14 +697,6 @@ class DatabaseService:
             if not row:
                 # 2. Tìm theo tracking_code
                 row = conn.execute("SELECT * FROM orders WHERE tracking_code = ? COLLATE NOCASE;", (query,)).fetchone()
-            if not row:
-                # 3. Tìm đơn mới nhất theo SĐT người nhận
-                clean_phone = "".join(filter(str.isdigit, query))
-                if len(clean_phone) >= 9:
-                    row = conn.execute(
-                        "SELECT * FROM orders WHERE REPLACE(REPLACE(customer_phone, ' ', ''), '-', '') LIKE ? ORDER BY created_at DESC LIMIT 1;",
-                        (f"%{clean_phone[-9:]}%",)
-                    ).fetchone()
             if not row:
                 return None
             return self._format_order_row(dict(row))

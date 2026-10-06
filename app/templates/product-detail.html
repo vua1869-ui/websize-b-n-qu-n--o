@@ -462,8 +462,9 @@
         <h2 class="text-base font-sans font-bold text-[#111111]">Tra cứu hành trình vận chuyển</h2>
         <button data-action="close-modal" data-target="tracking-modal" class="icon-btn" aria-label="Đóng">✕</button>
       </div>
-      <form id="tracking-form" class="mt-4 flex gap-2" onsubmit="event.preventDefault(); TrackingUI.doSearch();">
-        <input id="tracking-input" type="text" required placeholder="Nhập Mã đơn hoặc SĐT..." class="field flex-1 text-sm" />
+      <form id="tracking-form" class="mt-4 flex flex-col sm:flex-row gap-2" onsubmit="event.preventDefault(); TrackingUI.doSearch();">
+        <input id="tracking-input" type="text" required placeholder="Mã đơn (AURA-...) hoặc mã vận đơn..." class="field flex-1 text-sm" />
+        <input id="tracking-phone" type="tel" placeholder="Số điện thoại đặt hàng..." class="field flex-1 text-sm" />
         <button type="submit" class="btn btn-primary whitespace-nowrap">Tra cứu</button>
       </form>
       <div id="tracking-result" class="mt-5 space-y-4 hidden"></div>
