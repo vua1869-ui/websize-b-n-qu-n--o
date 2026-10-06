@@ -1,11 +1,15 @@
+import datetime
 import json
+import logging
 import os
 import threading
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from app.models.schemas import Category, Product, ProductVariant, VideoItem, Voucher
-from app.services.text_utils import has_any, has_word, normalize, tokens
+from app.services.text_utils import has_any, normalize, tokens
+
+logger = logging.getLogger(__name__)
 
 DATA_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "products.json")
 
@@ -91,11 +95,25 @@ class ProductService:
         self._products = [Product(**item) for item in data]
         self._by_id = {p.id: p for p in self._products}
         
-        # Đồng bộ ma trận biến thể tồn kho (Màu x Size) từ CSDL SQLite
+        # Đồng bộ ma trận biến thể tồn kho (Màu x Size) và số lượng tồn từ CSDL SQLite
         try:
             from app.db.database import db_service
-            db_service.reset_stock()
+            raw_db_prods = db_service.get_all_products_db()
+            db_prods = raw_db_prods if isinstance(raw_db_prods, dict) else {row["id"]: row for row in raw_db_prods}
             for p in self._products:
+                if p.id in db_prods:
+                    db_p = db_prods[p.id]
+                    if db_p.get("stock") is not None:
+                        p.stock = db_p["stock"]
+                    if db_p.get("stock_total") is not None:
+                        p.stock_total = db_p["stock_total"]
+                    if db_p.get("sold_count") is not None:
+                        p.sold_count = db_p["sold_count"]
+                    if db_p.get("rating") is not None:
+                        p.rating = db_p["rating"]
+                    if db_p.get("reviews_count") is not None:
+                        p.reviews_count = db_p["reviews_count"]
+
                 v_rows = db_service.get_product_variants(p.id)
                 if v_rows:
                     p.variants = [ProductVariant(**v) for v in v_rows]
@@ -105,7 +123,7 @@ class ProductService:
                         for c in p.colors for s in p.sizes
                     ]
         except Exception as e:
-            # Fallback nếu CSDL đang khởi tạo
+            logger.warning("[ProductService] Fallback variants nếu CSDL chưa nạp: %s", e)
             for p in self._products:
                 p.variants = [
                     ProductVariant(color=c.name, color_hex=c.hex, size=s, stock=p.stock)
@@ -124,11 +142,11 @@ class ProductService:
                 sort: Optional[str] = "popular", search: Optional[str] = None,
                 flash_sale_only: bool = False, size: Optional[str] = None,
                 color: Optional[str] = None, occasion: Optional[str] = None,
-                material: Optional[str] = None) -> List[Product]:
-        results = list(self._products)
+                material: Optional[str] = None, include_inactive: bool = False) -> List[Product]:
+        results = [p for p in self._products if (include_inactive or (getattr(p, "is_active", True) and not getattr(p, "deleted_at", None)))]
 
         if flash_sale_only or category == "flash_sale":
-            results = [p for p in results if p.flash_sale]
+            results = [p for p in results if p.is_in_flash_sale]
         if category and category not in ("all", "flash_sale"):
             results = [p for p in results if p.category == category]
         if gender and gender != "all":
@@ -172,20 +190,109 @@ class ProductService:
             results.sort(key=lambda x: (x.is_hot, x.sold_count), reverse=True)
         return results
 
-    def get_by_id(self, product_id: Optional[str]) -> Optional[Product]:
-        return self._by_id.get(product_id) if product_id else None
+    def get_by_id(self, product_id: Optional[str], include_inactive: bool = False) -> Optional[Product]:
+        if not product_id:
+            return None
+        p = self._by_id.get(product_id)
+        if not p:
+            return None
+        if not include_inactive and (not getattr(p, "is_active", True) or getattr(p, "deleted_at", None)):
+            return None
+        return p
 
-    def get_by_ids(self, product_ids: List[str]) -> List[Product]:
+    def get_by_ids(self, product_ids: List[str], include_inactive: bool = False) -> List[Product]:
         """Giữ nguyên thứ tự truyền vào, bỏ trùng và mã không tồn tại."""
         seen, out = set(), []
         for pid in product_ids:
-            if pid in self._by_id and pid not in seen:
+            p = self.get_by_id(pid, include_inactive=include_inactive)
+            if p and pid not in seen:
                 seen.add(pid)
-                out.append(self._by_id[pid])
+                out.append(p)
         return out
 
+    def semantic_search(self, query: str, limit: int = 30) -> List[Product]:
+        """
+        Tìm kiếm ngữ nghĩa thông minh phục vụ AI Stylist và gợi ý sản phẩm:
+        - Chuẩn hóa văn bản, trích xuất từ khóa, dịp sử dụng (occasions), chất liệu, danh mục.
+        - Chấm điểm độ tương đồng ngữ nghĩa kết hợp với độ phổ biến (is_hot, sold_count).
+        - Chỉ trả về các sản phẩm còn hàng (in_stock=True), tối đa limit phần tử.
+        """
+        q_norm = normalize(query.strip()) if query else ""
+        if not q_norm:
+            return [p for p in self._products if p.in_stock][:limit]
+
+        # Ưu tiên các sản phẩm đang bắt trend nếu người dùng tìm "trend", "hot trend", "xu huong", "dang hot", "thinh hanh"
+        if has_any(q_norm, ["trend", "hot trend", "xu huong", "dang hot", "thinh hanh"]):
+            try:
+                from app.services.trend_service import trend_service
+                trending_prods = [tp.product for tp in trend_service.get_trending_products(limit=limit)]
+                if trending_prods:
+                    return trending_prods
+            except Exception:
+                pass
+
+        q_tokens = [t for t in tokens(q_norm) if t not in STOPWORDS]
+
+        matched_occasions: Set[str] = set()
+        for occ, syns in OCCASION_SYNONYMS.items():
+            if any(syn in q_norm for syn in syns):
+                matched_occasions.add(occ)
+
+        target_gender = None
+        if any(w in q_norm for w in ["nu", "con gai", "phu nu", "vay", "dam", "croptop"]):
+            target_gender = "nu"
+        elif any(w in q_norm for w in ["nam", "con trai", "dan ong"]):
+            target_gender = "nam"
+
+        candidates = [p for p in self._products if p.in_stock]
+
+        def compute_score(p: Product) -> float:
+            score = 0.0
+            p_words = set(self._words.get(p.id, []))
+            
+            for qt in q_tokens:
+                if qt in p_words:
+                    score += 10.0
+                elif any(w.startswith(qt) for w in p_words):
+                    score += 5.0
+                if qt in normalize(p.name):
+                    score += 8.0
+
+            for occ in matched_occasions:
+                if occ in p.occasions:
+                    score += 15.0
+
+            if target_gender:
+                if p.gender == target_gender:
+                    score += 5.0
+                elif p.gender == "unisex":
+                    score += 2.0
+                else:
+                    score -= 10.0
+
+            if p.is_hot:
+                score += 3.0
+            score += min(5.0, (p.sold_count or 0) / 200.0)
+            return score
+
+        if q_tokens or matched_occasions or target_gender:
+            scored = [(p, compute_score(p)) for p in candidates]
+            scored.sort(key=lambda x: (x[1], x[0].is_hot, x[0].sold_count), reverse=True)
+            results = [p for p, sc in scored if sc > 0]
+            if len(results) < limit:
+                seen = {p.id for p in results}
+                for p in candidates:
+                    if p.id not in seen:
+                        results.append(p)
+                        if len(results) >= limit:
+                            break
+            return results[:limit]
+        else:
+            candidates.sort(key=lambda p: (p.is_hot, p.sold_count), reverse=True)
+            return candidates[:limit]
+
     def get_flash_sale_products(self) -> List[Product]:
-        return [p for p in self._products if p.flash_sale]
+        return [p for p in self._products if (getattr(p, "is_active", True) and not getattr(p, "deleted_at", None)) and p.is_in_flash_sale]
 
     def get_categories(self) -> List[Category]:
         counts: Dict[str, int] = {}
@@ -217,61 +324,6 @@ class ProductService:
         candidates = [p for p in self._products if p.id != product_id]
         candidates.sort(key=score, reverse=True)
         return candidates[:limit]
-
-    def semantic_search(self, query: str, limit: int = 8) -> List[Product]:
-        """Tìm theo ngữ cảnh tự nhiên, không phân biệt dấu ('do di bien mat me')."""
-        q = normalize(query)
-        toks = [t for t in tokens(query) if t not in STOPWORDS]
-        if not q:
-            return self._products[:limit]
-
-        # Ưu tiên các sản phẩm đang bắt trend nếu người dùng tìm "trend", "xu hướng", "đang hot"
-        if has_any(q, ["trend", "hot trend", "xu huong", "dang hot", "thinh hanh"]):
-            try:
-                from app.services.trend_service import trend_service
-                trending_prods = [tp.product for tp in trend_service.get_trending_products(limit=limit)]
-                if trending_prods:
-                    return trending_prods
-            except Exception:
-                pass
-
-        wanted_occasions = {
-            occ for occ, kws in OCCASION_SYNONYMS.items()
-            if any(has_word(q, kw) for kw in kws)
-        }
-
-        scored: List[Tuple[float, Product]] = []
-        for p in self._products:
-            name_n = normalize(p.name)
-            name_tokens = set(tokens(p.name))
-            tag_tokens = set(t for tag in p.tags for t in tokens(tag))
-            style_tokens = set(tokens(p.style))
-            material_tokens = set(tokens(p.material))
-            cat_tokens = set(tokens(p.category_name)) | set(p.category.split("_"))
-            score = 0.0
-            if q in name_n:
-                score += 15
-            if q in normalize(p.description):
-                score += 8
-            for t in toks:
-                if t in name_tokens:
-                    score += 5
-                if t in tag_tokens:
-                    score += 6
-                if t in style_tokens:
-                    score += 4
-                if t in material_tokens:
-                    score += 3
-                if t in cat_tokens:
-                    score += 5
-            score += 8 * len(wanted_occasions & set(p.occasions))
-            if score > 0:
-                score += p.rating / 10 + (2 if p.is_hot else 0)  # phá hòa điểm
-                scored.append((score, p))
-
-        scored.sort(key=lambda x: x[0], reverse=True)
-        results = [p for _, p in scored][:limit]
-        return results if results else self.get_all(sort="popular")[:limit]
 
     # ---------- Voucher ----------
     def get_vouchers(self) -> List[Voucher]:
@@ -360,19 +412,34 @@ class ProductService:
             "reviews_count", "location", "images", "sizes", "colors", "description", "material",
             "style", "occasions", "tags", "is_hot", "is_new"
         ]
+        disk_products = {}
+        if os.path.exists(DATA_PATH):
+            try:
+                with open(DATA_PATH, "r", encoding="utf-8") as f:
+                    disk_products = {item["id"]: item for item in json.load(f)}
+            except Exception as e:
+                logger.warning("[ProductService] Không thể đọc %s để đồng bộ: %s", DATA_PATH, e)
+
         out = []
         for p in self._products:
             d = p.model_dump()
             rec = {k: d[k] for k in raw_keys if k in d}
             if not rec.get("flash_sale"):
                 rec.pop("flash_sale_price", None)
+            # Không ghi lại runtime stock, sold_count, rating, reviews_count vào products.json
+            if p.id in disk_products:
+                orig = disk_products[p.id]
+                for field in ("stock", "sold_count", "rating", "reviews_count"):
+                    if field in orig:
+                        rec[field] = orig[field]
             out.append(rec)
         with open(DATA_PATH, "w", encoding="utf-8") as f:
             json.dump(out, f, ensure_ascii=False, indent=2)
 
         try:
-            from app.db.database import get_db_transaction
             import datetime
+
+            from app.db.database import get_db_transaction
             now_str = datetime.datetime.now().isoformat()
             with get_db_transaction() as conn:
                 for p in self._products:
@@ -423,8 +490,8 @@ class ProductService:
                             1 if p.is_hot else 0, 1 if p.is_new else 0, now_str
                         )
                     )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("[ProductService] Lỗi upsert SQLite khi lưu sản phẩm: %s", e)
 
     def create_product(self, data: dict) -> Product:
         with self._lock:
@@ -475,7 +542,7 @@ class ProductService:
                 data["flash_sale"] = bool(data["is_flash_sale"])
 
             if "rating" not in data or data["rating"] is None:
-                data["rating"] = 5.0
+                data["rating"] = 0.0
 
             if "reviews_count" not in data or data["reviews_count"] is None:
                 data["reviews_count"] = 0
@@ -546,17 +613,104 @@ class ProductService:
         with self._lock:
             if product_id not in self._by_id:
                 return False
-            self._products = [p for p in self._products if p.id != product_id]
-            self._by_id.pop(product_id, None)
-            self._words.pop(product_id, None)
+            prod = self._by_id[product_id]
+            now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            prod.is_active = False
+            prod.deleted_at = now_iso
             self._save_products_to_disk()
             try:
                 from app.db.database import get_db_transaction
                 with get_db_transaction() as conn:
-                    conn.execute("DELETE FROM products WHERE id = ?;", (product_id,))
-            except Exception:
-                pass
+                    conn.execute("UPDATE products SET is_active = 0, deleted_at = ? WHERE id = ?;", (now_iso, product_id))
+            except Exception as e:
+                logger.warning("Lỗi cập nhật xóa mềm sản phẩm %s trong CSDL: %s", product_id, e)
             return True
+
+    def batch_import_products(self, items: List[Dict[str, Any]]) -> List[Product]:
+        """
+        Nhập hoặc cập nhật hàng loạt sản phẩm:
+        - Cập nhật catalog trong bộ nhớ.
+        - Ghi lại products.json MỘT LẦN duy nhất ở cuối.
+        - Thực thi một transaction SQLite duy nhất cho toàn bộ sản phẩm.
+        """
+        with self._lock:
+            results: List[Product] = []
+            db_updates: List[Product] = []
+            for norm_data in items:
+                target_id = norm_data.get("id")
+                existing = self._by_id.get(target_id) if target_id else None
+                if existing:
+                    merged = existing.model_dump()
+                    for k, v in norm_data.items():
+                        if v is not None:
+                            merged[k] = v
+                    prod = Product(**merged)
+                    for i, it in enumerate(self._products):
+                        if it.id == target_id:
+                            self._products[i] = prod
+                            break
+                    self._by_id[target_id] = prod
+                else:
+                    if not norm_data.get("id"):
+                        prefix = "prod_"
+                        max_num = 0
+                        for p in self._products:
+                            if p.id.startswith(prefix):
+                                try:
+                                    num = int(p.id[len(prefix):])
+                                    if num > max_num:
+                                        max_num = num
+                                except ValueError:
+                                    pass
+                        norm_data["id"] = f"{prefix}{max_num + 1:03d}"
+                    prod = Product(**norm_data)
+                    self._products.append(prod)
+                    self._by_id[prod.id] = prod
+
+                parts = [prod.name, prod.description, prod.style, prod.material,
+                         prod.category_name, CATEGORY_META.get(prod.category, ("",))[0],
+                         " ".join(prod.tags), " ".join(prod.occasions)]
+                self._words[prod.id] = sorted(set(normalize(" ".join(parts)).split()))
+                results.append(prod)
+                db_updates.append(prod)
+
+            self._save_products_to_disk()
+
+            # Lưu vào SQLite trong 1 transaction duy nhất
+            try:
+                from app.db.database import get_db_transaction
+                with get_db_transaction() as conn:
+                    for p in db_updates:
+                        conn.execute(
+                            """
+                            INSERT INTO products 
+                            (id, name, category, category_name, gender, price, original_price,
+                             flash_sale, flash_sale_price, sold_count, stock, stock_total, rating, reviews_count,
+                             location, images, sizes, colors, description, material, style, occasions, tags,
+                             is_hot, is_new, is_active, deleted_at, created_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NULL, ?)
+                            ON CONFLICT(id) DO UPDATE SET
+                                name=excluded.name, category=excluded.category, category_name=excluded.category_name,
+                                gender=excluded.gender, price=excluded.price, original_price=excluded.original_price,
+                                stock=excluded.stock, stock_total=excluded.stock_total,
+                                description=excluded.description, material=excluded.material,
+                                style=excluded.style, is_active=1, deleted_at=NULL;
+                            """,
+                            (
+                                p.id, p.name, p.category, p.category_name, p.gender, p.price, p.original_price,
+                                1 if p.flash_sale else 0, p.flash_sale_price, p.sold_count, p.stock, p.stock_total,
+                                p.rating, p.reviews_count, p.location, json.dumps(p.images, ensure_ascii=False),
+                                json.dumps(p.sizes, ensure_ascii=False),
+                                json.dumps([c.model_dump() if hasattr(c, "model_dump") else c for c in p.colors], ensure_ascii=False),
+                                p.description, p.material, p.style, json.dumps(p.occasions, ensure_ascii=False),
+                                json.dumps(p.tags, ensure_ascii=False), 1 if p.is_hot else 0, 1 if p.is_new else 0,
+                                datetime.datetime.now().isoformat(),
+                            )
+                        )
+            except Exception as e:
+                logger.warning("Lỗi cập nhật lô sản phẩm vào CSDL: %s", e)
+
+            return results
 
 
 product_service = ProductService()

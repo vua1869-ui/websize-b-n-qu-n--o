@@ -1,7 +1,15 @@
 from sqlalchemy import (
-    Column, Float, ForeignKey, Integer, String, Text, UniqueConstraint,
+    Boolean,
+    Column,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship
+
 from app.db.session import Base
 
 
@@ -26,6 +34,8 @@ class UserDB(Base):
     total_spent = Column(Integer, default=0, nullable=False)
     tier = Column(String, default="Silver", nullable=False)
     created_at = Column(String, nullable=False)
+    password_changed_at = Column(Float, nullable=True)
+    token_version = Column(Integer, default=1, nullable=False)
 
 
 class OrderDB(Base):
@@ -91,8 +101,12 @@ class ProductDB(Base):
     sold_count = Column(Integer, default=0)
     stock = Column(Integer, default=50)
     stock_total = Column(Integer, default=100)
-    rating = Column(Float, default=5.0)
+    rating = Column(Float, default=0.0)
     reviews_count = Column(Integer, default=0)
+    is_active = Column(Boolean, default=True)
+    deleted_at = Column(String, nullable=True)
+    flash_sale_start = Column(String, nullable=True)
+    flash_sale_end = Column(String, nullable=True)
     location = Column(String, default="TP. Hồ Chí Minh")
     images = Column(Text, nullable=True)
     sizes = Column(Text, nullable=True)
@@ -197,3 +211,15 @@ class CartItemDB(Base):
     __table_args__ = (
         UniqueConstraint("user_id", "product_id", "size", "color", name="uq_cart_user_product_size_color"),
     )
+
+
+class PasswordResetTokenDB(Base):
+    """Bảng lưu HASH của token quên mật khẩu (dùng 1 lần, hết hạn 30 phút)."""
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    token_hash = Column(String, nullable=False, index=True)
+    expires_at = Column(Float, nullable=False)
+    used = Column(Integer, default=0, nullable=False)
+    created_at = Column(String, nullable=False)

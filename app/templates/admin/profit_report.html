@@ -223,8 +223,8 @@
           return `
             <tr class="hover:bg-noir-800/60 transition">
               <td class="py-2.5 px-4 font-medium">
-                <p class="font-semibold text-noir-100">${p.product_name}</p>
-                <p class="text-sm font-mono text-noir-400">ID: ${p.product_id}</p>
+                <p class="font-semibold text-noir-100">${esc(p.product_name)}</p>
+                <p class="text-sm font-mono text-noir-400">ID: ${esc(p.product_id)}</p>
               </td>
               <td class="py-2.5 px-4 text-center font-mono font-semibold">${p.sold_quantity}</td>
               <td class="py-2.5 px-4 text-right font-mono text-noir-300">${Math.round(p.cost_price_wac).toLocaleString("vi-VN")}đ</td>
@@ -250,16 +250,16 @@
       if (data.recent_batches && data.recent_batches.length > 0) {
         tbodyBatches.innerHTML = data.recent_batches.map(b => `
           <tr class="hover:bg-noir-800/60 transition">
-            <td class="py-2.5 px-4 font-mono font-bold text-noir-100">#${b.id}</td>
+            <td class="py-2.5 px-4 font-mono font-bold text-noir-100">#${esc(b.id)}</td>
             <td class="py-2.5 px-4 font-medium">
-              <p class="font-semibold text-noir-100">${b.product_name || b.product_id}</p>
-              <p class="text-sm font-mono text-noir-400">ID: ${b.product_id}</p>
+              <p class="font-semibold text-noir-100">${esc(b.product_name || b.product_id)}</p>
+              <p class="text-sm font-mono text-noir-400">ID: ${esc(b.product_id)}</p>
             </td>
             <td class="py-2.5 px-4 text-center font-mono font-bold text-noir-100">+${b.quantity}</td>
             <td class="py-2.5 px-4 text-right font-mono font-semibold text-noir-300">${b.cost_price.toLocaleString("vi-VN")}đ</td>
-            <td class="py-2.5 px-4 text-noir-400">${b.received_at}</td>
-            <td class="py-2.5 px-4 text-noir-400 italic">${b.note || "—"}</td>
-            <td class="py-2.5 px-4 text-right text-noir-400 font-mono">@${b.created_by || "admin"}</td>
+            <td class="py-2.5 px-4 text-noir-400">${esc(b.received_at)}</td>
+            <td class="py-2.5 px-4 text-noir-400 italic">${esc(b.note || "—")}</td>
+            <td class="py-2.5 px-4 text-right text-noir-400 font-mono">@${esc(b.created_by || "admin")}</td>
           </tr>
         `).join("");
       } else {

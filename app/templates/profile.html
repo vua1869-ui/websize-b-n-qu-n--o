@@ -299,9 +299,6 @@
                 <h4 class="text-sm font-semibold text-[#111111] uppercase tracking-wider">Lịch sử biến động điểm</h4>
                 <p class="text-sm text-[#777777] mt-0.5">Chi tiết các lần cộng, trừ và sử dụng điểm thưởng</p>
               </div>
-              <button onclick="simulateLoyaltyBonus()" class="btn btn-outline text-sm !py-1.5 px-3 font-semibold">
-                🎁 Nhận điểm sự kiện (+50)
-              </button>
             </div>
             <div class="overflow-x-auto">
               <table class="w-full text-left text-sm">
@@ -563,6 +560,8 @@
           cancelled: { label: "Đã hủy", bg: "bg-zinc-100 text-zinc-500 border-zinc-200" }
         };
 
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
         container.innerHTML = orders.map(o => {
           const st = statusMap[o.status] || { label: o.status, bg: "bg-[#FAF8F5] text-[#555555] border-[#E5E2DC]" };
           const lines = o.quote?.lines || [];
@@ -574,17 +573,17 @@
             <div class="rounded-[2px] border border-[#E5E2DC] p-5 bg-white space-y-3">
               <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#E5E2DC] pb-3">
                 <div class="flex items-center gap-2">
-                  <span class="font-mono text-sm font-semibold text-[#111111] tracking-wider">${o.order_id}</span>
-                  <span class="inline-flex rounded-[2px] px-2 py-0.5 text-sm font-medium border ${st.bg}">${st.label}</span>
+                  <span class="font-mono text-sm font-semibold text-[#111111] tracking-wider">${esc(o.order_id)}</span>
+                  <span class="inline-flex rounded-[2px] px-2 py-0.5 text-sm font-medium border ${st.bg}">${esc(st.label)}</span>
                 </div>
-                <span class="font-mono text-sm text-[#777777]">${o.created_at || ""}</span>
+                <span class="font-mono text-sm text-[#777777]">${esc(o.created_at || "")}</span>
               </div>
               
               <!-- Chi tiết các món hàng -->
               <div class="py-1 text-sm space-y-2">
                 ${lines.map(l => `
                   <div class="flex items-center justify-between">
-                    <span class="text-[#333333]">${l.name} <span class="text-[#777777]">(${l.color}, ${l.size}) × ${l.quantity}</span></span>
+                    <span class="text-[#333333]">${esc(l.name)} <span class="text-[#777777]">(${esc(l.color)}, ${esc(l.size)}) × ${esc(l.quantity)}</span></span>
                     <span class="font-medium text-[#111111]">${(l.line_total || 0).toLocaleString("vi-VN")}đ</span>
                   </div>
                 `).join("")}
@@ -594,13 +593,13 @@
               <div class="flex flex-wrap items-center justify-between gap-2 rounded-[2px] bg-[#FAF8F5] p-3 text-sm text-[#555555] border border-[#E5E2DC]">
                 <div class="flex items-center gap-1.5">
                   <span>🚚</span>
-                  <span>Vận đơn: <strong class="font-mono text-[#111111] font-semibold">${trackingCode}</strong> (${carrier})</span>
+                  <span>Vận đơn: <strong class="font-mono text-[#111111] font-semibold">${esc(trackingCode)}</strong> (${esc(carrier)})</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <button type="button" onclick="viewOrderTracking('${o.order_id}')" class="btn btn-outline btn-sm !py-1 text-sm">
+                  <button type="button" data-order-id="${esc(o.order_id)}" class="btn-view-track btn btn-outline btn-sm !py-1 text-sm">
                     Theo dõi bưu tá
                   </button>
-                  <button type="button" onclick="viewOrderInvoice('${o.order_id}')" class="btn btn-outline btn-sm !py-1 text-sm">
+                  <button type="button" data-order-id="${esc(o.order_id)}" class="btn-view-inv btn btn-outline btn-sm !py-1 text-sm">
                     Hóa đơn
                   </button>
                 </div>
@@ -613,6 +612,13 @@
             </div>
           `;
         }).join("");
+
+        container.addEventListener("click", e => {
+          const trackBtn = e.target.closest(".btn-view-track");
+          if (trackBtn) viewOrderTracking(trackBtn.dataset.orderId);
+          const invBtn = e.target.closest(".btn-view-inv");
+          if (invBtn) viewOrderInvoice(invBtn.dataset.orderId);
+        });
 
       } catch (err) {
         console.error("Lỗi tải đơn hàng:", err);
@@ -735,11 +741,11 @@
                 <div class="timeline-node font-bold ${isDone ? 'bg-[#111111] text-white border-[#111111]' : isCurr ? 'bg-white text-[#111111] border-[#111111]' : 'bg-[#FAF8F5] text-[#999999] border-[#E5E2DC]'}">${nodeIcon}</div>
                 <div class="space-y-0.5">
                   <div class="flex items-baseline justify-between gap-2">
-                    <h4 class="text-sm font-semibold ${isDone || isCurr ? 'text-[#111111]' : 'text-[#777777]'}">${st.title}</h4>
-                    <span class="text-sm font-mono text-[#888888] whitespace-nowrap">${st.time}</span>
+                    <h4 class="text-sm font-semibold ${isDone || isCurr ? 'text-[#111111]' : 'text-[#777777]'}">${esc(st.title)}</h4>
+                    <span class="text-sm font-mono text-[#888888] whitespace-nowrap">${esc(st.time)}</span>
                   </div>
-                  <p class="text-sm ${isDone || isCurr ? 'text-[#444444]' : 'text-[#888888]'}">${st.description}</p>
-                  <p class="text-sm text-[#777777]">📍 ${st.location}</p>
+                  <p class="text-sm ${isDone || isCurr ? 'text-[#444444]' : 'text-[#888888]'}">${esc(st.description)}</p>
+                  <p class="text-sm text-[#777777]">📍 ${esc(st.location)}</p>
                 </div>
               </div>
             `;
@@ -779,9 +785,9 @@
         itemsBody.innerHTML = (inv.items || []).map((it, idx) => `
           <tr class="hover:bg-[#FAF8F5] border-b border-[#E5E2DC]">
             <td class="py-2.5 px-3 text-center text-[#777777] font-mono">${idx + 1}</td>
-            <td class="py-2.5 px-3 font-medium text-[#111111]">${it.name}</td>
-            <td class="py-2.5 px-3 text-center text-[#666666]">${it.color} / ${it.size}</td>
-            <td class="py-2.5 px-3 text-center font-semibold text-[#111111]">${it.quantity}</td>
+            <td class="py-2.5 px-3 font-medium text-[#111111]">${esc(it.name)}</td>
+            <td class="py-2.5 px-3 text-center text-[#666666]">${esc(it.color)} / ${esc(it.size)}</td>
+            <td class="py-2.5 px-3 text-center font-semibold text-[#111111]">${esc(it.quantity)}</td>
             <td class="py-2.5 px-3 text-right font-mono text-[#666666]">${vnd(it.unit_price)}</td>
             <td class="py-2.5 px-3 text-right font-mono font-semibold text-[#111111]">${vnd(it.line_total)}</td>
           </tr>
@@ -894,10 +900,10 @@
               const ptsColor = isPlus ? "text-emerald-700 font-semibold" : "text-red-600 font-semibold";
               return `
                 <tr class="border-b border-[#E5E2DC] hover:bg-[#FAF8F5] transition">
-                  <td class="py-2.5 px-3 font-mono text-sm text-[#777777]">${tx.created_at || ""}</td>
-                  <td class="py-2.5 px-3 font-medium text-[#111111]">${tx.description || ""}</td>
-                  <td class="py-2.5 px-3 text-right font-mono ${ptsColor}">${ptsStr}</td>
-                  <td class="py-2.5 px-3 text-right font-mono font-semibold text-[#555555]">${tx.balance_after ?? ""}</td>
+                  <td class="py-2.5 px-3 font-mono text-sm text-[#777777]">${esc(tx.created_at || "")}</td>
+                  <td class="py-2.5 px-3 font-medium text-[#111111]">${esc(tx.description || "")}</td>
+                  <td class="py-2.5 px-3 text-right font-mono ${ptsColor}">${esc(ptsStr)}</td>
+                  <td class="py-2.5 px-3 text-right font-mono font-semibold text-[#555555]">${esc(tx.balance_after ?? "")}</td>
                 </tr>
               `;
             }).join('');
@@ -918,17 +924,7 @@
       }
     }
 
-    async function simulateLoyaltyBonus() {
-      try {
-        const res = await fetch("/api/loyalty/simulate-earn?points=50", { method: "POST" });
-        if (!res.ok) throw new Error("Không thể nhận điểm lúc này");
-        const data = await res.json();
-        alert(`Chúc mừng! Bạn đã nhận thành công ${data.points_added} điểm thưởng AURA Club.`);
-        loadLoyalty();
-      } catch (e) {
-        alert(e.message);
-      }
-    }
+
 
     // Tự động nạp
     loadOrders();

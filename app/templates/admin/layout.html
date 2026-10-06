@@ -222,6 +222,11 @@
       }
     });
 
+    // Helper: Escape HTML
+    window.esc = function(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    };
+
     // Helper: Toast Notification
     window.showToast = function(message, type = "success") {
       const container = document.getElementById("toast-container");

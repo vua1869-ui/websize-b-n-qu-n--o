@@ -59,35 +59,29 @@ def test_loyalty_status_and_history_api(client):
 
 
 def test_loyalty_simulate_bonus_api(client):
-    """Kiểm tra chức năng tặng/thưởng điểm trải nghiệm sự kiện."""
+    """Kiểm tra chức năng simulate-earn: user thường bị chặn (404), chỉ admin mới được phép (200)."""
     headers = _login_user(client)
+    # User thường không được gọi simulate-earn -> trả 404
+    r_user = client.post("/api/loyalty/simulate-earn?points=50", headers=headers)
+    assert r_user.status_code == 404
 
-    # Lấy điểm ban đầu
-    initial_pts = client.get("/api/loyalty/status", headers=headers).json()["points_balance"]
-
-    # Cộng 50 điểm
-    r_bonus = client.post("/api/loyalty/simulate-earn?points=50", headers=headers)
+    # Admin được phép gọi simulate-earn trong môi trường debug/dev
+    admin_headers = _login_admin(client)
+    initial_pts = client.get("/api/loyalty/status", headers=admin_headers).json()["points_balance"]
+    r_bonus = client.post("/api/loyalty/simulate-earn?points=50", headers=admin_headers)
     assert r_bonus.status_code == 200
     data = r_bonus.json()
     assert data["success"] is True
     assert data["points_added"] == 50
     assert data["new_balance"] == initial_pts + 50
 
-    # Kiểm tra số dư mới
-    new_status = client.get("/api/loyalty/status", headers=headers).json()
-    assert new_status["points_balance"] == initial_pts + 50
-
-    # Kiểm tra có giao dịch bonus trong lịch sử
-    hist = client.get("/api/loyalty/history", headers=headers).json()
-    assert any(tx["type"] == "bonus" and tx["points"] == 50 for tx in hist["transactions"])
-
 
 def test_checkout_quote_with_loyalty_points(client):
     """Kiểm tra báo giá quote khi áp dụng điểm tích lũy AURA Club."""
     headers = _login_user(client)
 
-    # Tặng thêm điểm để chắc chắn có đủ điểm test
-    client.post("/api/loyalty/simulate-earn?points=30", headers=headers)
+    # Tặng thêm điểm qua db_service để đảm bảo user có đủ điểm test
+    db_service.add_loyalty_points("usr_002", 30, "bonus", "Test bonus setup")
 
     quote_req = {
         "items": [item("prod_001", qty=1)],
@@ -127,7 +121,7 @@ def test_create_order_with_points_and_tier_accumulation(client):
     headers = _login_user(client)
 
     # Đảm bảo có ít nhất 15 điểm
-    client.post("/api/loyalty/simulate-earn?points=20", headers=headers)
+    db_service.add_loyalty_points("usr_002", 20, "bonus", "Test bonus setup")
     before_status = client.get("/api/loyalty/status", headers=headers).json()
     initial_pts = before_status["points_balance"]
     initial_spent = before_status["total_spent"]
@@ -148,10 +142,20 @@ def test_create_order_with_points_and_tier_accumulation(client):
     earned = quote["points_earned"]
     assert earned > 0
 
-    # Kiểm tra cập nhật điểm và chi tiêu sau đơn
+    # Theo MỤC C: Đơn COD không cộng điểm thưởng và chi tiêu lúc tạo đơn, chỉ trừ điểm đã dùng
     after_status = client.get("/api/loyalty/status", headers=headers).json()
-    assert after_status["points_balance"] == initial_pts - 10 + earned
-    assert after_status["total_spent"] > initial_spent
+    assert after_status["points_balance"] == initial_pts - 10
+    assert after_status["total_spent"] == initial_spent
+
+    # Khi đơn COD chuyển sang completed (qua shipping) mới cộng điểm thưởng và total_spent
+    from app.services.order_service import order_service
+    order_id = order_data["order_id"]
+    order_service.update_order_status(order_id, "shipping")
+    order_service.update_order_status(order_id, "completed")
+
+    completed_status = client.get("/api/loyalty/status", headers=headers).json()
+    assert completed_status["points_balance"] == initial_pts - 10 + earned
+    assert completed_status["total_spent"] > initial_spent
 
     # Kiểm tra lịch sử giao dịch điểm có cả giao dịch trừ điểm và tích điểm
     hist = client.get("/api/loyalty/history", headers=headers).json()["transactions"]

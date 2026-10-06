@@ -18,7 +18,7 @@ if sys.stdout and hasattr(sys.stdout, "reconfigure"):
         pass
 
 from app.db.session import engine, Base, get_db_session
-from app.db.models import UserDB, OrderDB, OrderItemDB
+from app.db.models import UserDB, OrderDB, OrderItemDB, PasswordResetTokenDB
 
 
 def run_migration():
@@ -28,6 +28,20 @@ def run_migration():
 
     # 1. Tạo các bảng nếu chưa có
     Base.metadata.create_all(bind=engine)
+
+    # Đảm bảo cột password_changed_at tồn tại trong bảng users (ALTER TABLE nếu CSDL cũ chưa có)
+    from sqlalchemy import inspect, text
+    inspector = inspect(engine)
+    if "users" in inspector.get_table_names():
+        columns = [c["name"] for c in inspector.get_columns("users")]
+        if "password_changed_at" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN password_changed_at FLOAT"))
+            print("Đã tự động thêm cột password_changed_at vào bảng users.")
+        if "token_version" not in columns:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE users ADD COLUMN token_version INTEGER DEFAULT 1"))
+            print("Đã tự động thêm cột token_version vào bảng users.")
 
     users_file = os.path.join(BASE_DIR, "app", "data", "users.json")
     orders_file = os.path.join(BASE_DIR, "app", "data", "orders.jsonl")

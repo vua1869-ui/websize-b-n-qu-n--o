@@ -51,7 +51,7 @@
         <div>
           <div class="flex items-center justify-between">
             <label for="password" class="block text-sm uppercase tracking-wider font-semibold text-[#111111]">Mật khẩu</label>
-            <a href="javascript:void(0)" onclick="alert('Vui lòng liên hệ quản trị viên hoặc sử dụng tài khoản của bạn.')" class="text-sm text-[#777777] hover:text-black transition">Quên mật khẩu?</a>
+            <button type="button" id="btn-forgot-password" onclick="openForgotModal()" class="text-sm text-[#777777] hover:text-black transition cursor-pointer bg-transparent border-0 p-0 hover:underline">Quên mật khẩu?</button>
           </div>
           <div class="mt-2 relative">
             <input id="password" name="password" type="password" required placeholder="••••••••"
@@ -83,6 +83,38 @@
     </div>
   </div>
 
+  <!-- Modal Quên mật khẩu -->
+  <div id="forgot-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm hidden px-4" role="dialog" aria-modal="true" aria-labelledby="forgot-modal-title">
+    <div class="bg-white border border-[#E5E2DC] rounded-[2px] p-6 sm:p-8 max-w-md w-full shadow-2xl relative" onclick="event.stopPropagation()">
+      <button type="button" onclick="closeForgotModal()" class="absolute top-4 right-4 text-[#777777] hover:text-black transition" aria-label="Đóng">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <h2 id="forgot-modal-title" class="font-sans text-xl font-bold tracking-tight text-[#111111]">Quên mật khẩu?</h2>
+      <p class="mt-1.5 text-sm text-[#666666]">
+        Nhập địa chỉ email đăng ký tài khoản. Chúng tôi sẽ gửi hướng dẫn khôi phục mật khẩu đến email của bạn.
+      </p>
+
+      <div id="forgot-alert" class="hidden my-4 rounded-[2px] p-3 text-sm font-medium border"></div>
+
+      <form id="forgot-form" class="mt-4 space-y-4">
+        <div>
+          <label for="forgot-email" class="block text-xs uppercase tracking-wider font-semibold text-[#111111]">Email tài khoản</label>
+          <input id="forgot-email" name="email" type="email" required placeholder="example@email.com"
+                 class="mt-1.5 w-full rounded-[2px] border border-[#E5E2DC] bg-white px-3.5 py-2.5 text-sm text-[#111111] outline-none transition focus:border-[#111111] placeholder:text-[#999999]" />
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <button type="button" onclick="closeForgotModal()" class="btn border border-[#E5E2DC] text-[#111111] w-1/3 text-xs uppercase tracking-widest font-semibold py-2.5 hover:bg-[#FAF8F5]">Hủy</button>
+          <button type="submit" id="forgot-submit-btn" class="btn btn-primary w-2/3 text-xs uppercase tracking-widest font-semibold py-2.5 flex justify-center items-center gap-2">
+            <span id="forgot-submit-text">Gửi yêu cầu</span>
+            <svg id="forgot-spinner" class="hidden h-4 w-4 shrink-0 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     // Password toggle
     const togglePwBtn = document.getElementById("toggle-pw-btn");
@@ -105,6 +137,7 @@
     const submitSpinner = document.getElementById("submit-spinner");
 
     function showAlert(msg, isSuccess = false) {
+      if (!alertBox) return;
       alertBox.textContent = msg;
       alertBox.className = `mb-6 rounded-[2px] p-3 text-sm font-medium border ${
         isSuccess 
@@ -114,60 +147,176 @@
       alertBox.classList.remove("hidden");
     }
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      alertBox.classList.add("hidden");
+    if (form) {
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        alertBox.classList.add("hidden");
 
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value;
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value;
 
-      if (!username || !password) {
-        showAlert("Vui lòng điền đầy đủ tên đăng nhập và mật khẩu");
-        return;
-      }
-
-      submitBtn.disabled = true;
-      submitText.textContent = "Đang xác thực...";
-      submitSpinner.classList.remove("hidden");
-
-      try {
-        const res = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password })
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-          showAlert(data.detail || "Đăng nhập thất bại");
-          submitBtn.disabled = false;
-          submitText.textContent = "Đăng nhập";
-          submitSpinner.classList.add("hidden");
+        if (!username || !password) {
+          showAlert("Vui lòng điền đầy đủ tên đăng nhập và mật khẩu");
           return;
         }
 
-        localStorage.setItem("aura_token", data.token);
-        localStorage.setItem("aura_user", JSON.stringify(data.user));
+        submitBtn.disabled = true;
+        submitText.textContent = "Đang xác thực...";
+        submitSpinner.classList.remove("hidden");
 
-        showAlert("Đăng nhập thành công! Đang chuyển hướng...", true);
+        try {
+          const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+          });
+          const data = await res.json();
 
-        const params = new URLSearchParams(window.location.search);
-        let redirectUrl = params.get("redirect");
-        if (!redirectUrl) {
-          redirectUrl = data.user.role === "admin" ? "/admin" : "/profile";
+          if (!res.ok) {
+            showAlert(data.detail || "Đăng nhập thất bại");
+            submitBtn.disabled = false;
+            submitText.textContent = "Đăng nhập";
+            submitSpinner.classList.add("hidden");
+            return;
+          }
+
+          localStorage.setItem("aura_user", JSON.stringify(data.user));
+
+          showAlert("Đăng nhập thành công! Đang chuyển hướng...", true);
+
+          function isSafeRedirect(url) {
+            if (!url || typeof url !== "string") return false;
+            if (!url.startsWith("/") || url.startsWith("//") || url.startsWith("/\\") || url.includes("\\")) return false;
+            for (let i = 0; i < url.length; i++) {
+              const c = url.charCodeAt(i);
+              if (c < 32 || c === 127) return false;
+            }
+            return true;
+          }
+
+          const params = new URLSearchParams(window.location.search);
+          let redirectUrl = params.get("redirect");
+          if (!isSafeRedirect(redirectUrl)) {
+            redirectUrl = data.user.role === "admin" ? "/admin" : "/profile";
+          }
+
+          setTimeout(() => {
+            window.location.href = redirectUrl;
+          }, 600);
+
+        } catch (err) {
+          showAlert("Lỗi kết nối máy chủ. Vui lòng kiểm tra lại mạng!");
+          submitBtn.disabled = false;
+          submitText.textContent = "Đang nhập";
+          submitSpinner.classList.add("hidden");
         }
+      });
+    }
 
-        setTimeout(() => {
-          window.location.href = redirectUrl;
-        }, 600);
+    // Forgot Password Modal Functions
+    const forgotModal = document.getElementById("forgot-modal");
+    const forgotForm = document.getElementById("forgot-form");
+    const forgotAlert = document.getElementById("forgot-alert");
+    const forgotSubmitBtn = document.getElementById("forgot-submit-btn");
+    const forgotSubmitText = document.getElementById("forgot-submit-text");
+    const forgotSpinner = document.getElementById("forgot-spinner");
+    const forgotEmail = document.getElementById("forgot-email");
 
-      } catch (err) {
-        showAlert("Lỗi kết nối máy chủ. Vui lòng kiểm tra lại mạng!");
-        submitBtn.disabled = false;
-        submitText.textContent = "Đăng nhập";
-        submitSpinner.classList.add("hidden");
+    function openForgotModal() {
+      const modal = forgotModal || document.getElementById("forgot-modal");
+      const alert = forgotAlert || document.getElementById("forgot-alert");
+      if (modal) {
+        modal.classList.remove("hidden");
+      }
+      if (alert) {
+        alert.classList.add("hidden");
+      }
+      setTimeout(() => {
+        const emailInput = forgotEmail || document.getElementById("forgot-email");
+        if (emailInput) emailInput.focus();
+      }, 50);
+    }
+
+    function closeForgotModal() {
+      const modal = forgotModal || document.getElementById("forgot-modal");
+      if (modal) {
+        modal.classList.add("hidden");
+      }
+    }
+
+    window.openForgotModal = openForgotModal;
+    window.closeForgotModal = closeForgotModal;
+
+    const forgotTrigger = document.getElementById("btn-forgot-password");
+    if (forgotTrigger) {
+      forgotTrigger.addEventListener("click", openForgotModal);
+    }
+
+    // Close when clicking modal backdrop
+    if (forgotModal) {
+      forgotModal.addEventListener("click", (e) => {
+        if (e.target === forgotModal) {
+          closeForgotModal();
+        }
+      });
+    }
+
+    // Close on Escape key
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeForgotModal();
       }
     });
+
+    if (forgotForm) {
+      forgotForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const alertEl = forgotAlert || document.getElementById("forgot-alert");
+        const btnEl = forgotSubmitBtn || document.getElementById("forgot-submit-btn");
+        const textEl = forgotSubmitText || document.getElementById("forgot-submit-text");
+        const spinEl = forgotSpinner || document.getElementById("forgot-spinner");
+        const emailEl = forgotEmail || document.getElementById("forgot-email");
+
+        if (alertEl) alertEl.classList.add("hidden");
+        const email = emailEl ? emailEl.value.trim() : "";
+        if (!email) return;
+
+        if (btnEl) btnEl.disabled = true;
+        if (textEl) textEl.textContent = "Đang gửi...";
+        if (spinEl) spinEl.classList.remove("hidden");
+
+        try {
+          const res = await fetch("/api/auth/forgot-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+          });
+          const data = await res.json();
+
+          if (alertEl) {
+            alertEl.textContent = data.message || data.detail || (res.ok ? "Đã gửi liên kết khôi phục." : "Không thể gửi yêu cầu.");
+            alertEl.className = `my-4 rounded-[2px] p-3 text-sm font-medium border ${
+              res.ok ? "bg-[#FAF8F5] text-[#111111] border-[#111111]" : "bg-red-50 text-red-700 border-red-200"
+            }`;
+            alertEl.classList.remove("hidden");
+          }
+
+          if (res.ok && emailEl) {
+            emailEl.value = "";
+          }
+        } catch (err) {
+          if (alertEl) {
+            alertEl.textContent = "Lỗi kết nối. Vui lòng thử lại!";
+            alertEl.className = "my-4 rounded-[2px] p-3 text-sm font-medium border bg-red-50 text-red-700 border-red-200";
+            alertEl.classList.remove("hidden");
+          }
+        } finally {
+          if (btnEl) btnEl.disabled = false;
+          if (textEl) textEl.textContent = "Gửi yêu cầu";
+          if (spinEl) spinEl.classList.add("hidden");
+        }
+      });
+    }
   </script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 import logging
 from typing import Any, BinaryIO, Dict, Optional, Union
+
 import cloudinary
 import cloudinary.uploader
 

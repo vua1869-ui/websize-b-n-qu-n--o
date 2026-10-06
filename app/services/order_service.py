@@ -9,18 +9,22 @@ import hashlib
 import hmac
 import json
 import os
+import secrets
 import threading
-import uuid
 from typing import Any, Dict, List, Optional
 
 from sqlalchemy import func, or_
 
 from app.config import settings
 from app.db.database import db_service
-from app.db.models import OrderDB, OrderItemDB
+from app.db.models import OrderDB
 from app.db.session import get_db_session
 from app.models.schemas import (
-    OrderCreateRequest, OrderItem, OrderResponse, QuoteLine, QuoteResponse,
+    OrderCreateRequest,
+    OrderItem,
+    OrderResponse,
+    QuoteLine,
+    QuoteResponse,
 )
 from app.services.product_service import product_service
 
@@ -30,6 +34,25 @@ class OrderError(Exception):
         super().__init__(message)
         self.message = message
         self.status_code = status_code
+
+
+def calculate_loyalty_earned_points(net_spent: int, tier: Optional[str] = "Silver") -> int:
+    """
+    Quy đổi tích điểm theo hạng thành viên (1 điểm = 1.000đ):
+    - silver: LOYALTY_EARN_RATE_SILVER (mặc định 3%)
+    - gold: LOYALTY_EARN_RATE_GOLD (mặc định 5%)
+    - diamond: LOYALTY_EARN_RATE_DIAMOND (mặc định 8%)
+    """
+    if net_spent <= 0:
+        return 0
+    t = (tier or "Silver").strip().lower()
+    if t == "diamond":
+        rate = getattr(settings, "LOYALTY_EARN_RATE_DIAMOND", 0.08)
+    elif t == "gold":
+        rate = getattr(settings, "LOYALTY_EARN_RATE_GOLD", 0.05)
+    else:
+        rate = getattr(settings, "LOYALTY_EARN_RATE_SILVER", 0.03)
+    return int((net_spent * rate) // 1000)
 
 
 def make_combo_token(product_ids: List[str]) -> str:
@@ -42,12 +65,21 @@ def _money(n: int) -> str:
     return f"{n:,}".replace(",", ".") + "đ"
 
 
+VALID_STATUS_TRANSITIONS: Dict[str, set] = {
+    "pending_payment": {"confirmed", "cancelled"},
+    "pending": {"confirmed", "cancelled"},
+    "confirmed": {"shipping", "cancelled"},
+    "shipping": {"completed", "cancelled"},
+    "completed": set(),
+    "cancelled": set(),
+}
+
+
 class OrderService:
     def __init__(self, orders_path: Optional[str] = None):
         self.orders_path = orders_path
         self._lock = threading.Lock()
         self._ensure_demo_orders()
-        self._restore_stock_from_history()
 
     def _ensure_demo_orders(self):
         """Không tự chạy migration nữa. Migration thực hiện thủ công bằng: python scripts/migrate_to_db.py"""
@@ -86,7 +118,7 @@ class OrderService:
                        else f"'{p.name}' đã hết hàng")
                 raise OrderError(msg, 409)
 
-        subtotal = sum(l.line_total for l in lines)
+        subtotal = sum(line_item.line_total for line_item in lines)
 
         # ---- Combo phối đồ: chỉ giảm nếu token khớp chữ ký của đúng bộ sản phẩm trong giỏ ----
         combo_discount = 0
@@ -155,7 +187,7 @@ class OrderService:
         if use_points > 0 and user:
             user_points = getattr(user, "points_balance", 0) or 0
             if use_points > user_points:
-                raise OrderError(f"Bạn chỉ có {user_points} điểm tích lũy, không đủ {use_points} điểm", 400)
+                raise OrderError(f"Bạn chỉ có {user_points} điểm tích lũy, không đủ {use_points} điểm", 409)
             max_payable = max(0, after_combo - voucher_discount)
             max_points_allowed = max_payable // 1000
             points_to_apply = min(use_points, max_points_allowed)
@@ -164,9 +196,10 @@ class OrderService:
 
         total = max(0, after_combo - voucher_discount - points_discount) + shipping_fee - shipping_discount
 
-        # Tích điểm cho đơn hàng: 1 điểm cho mỗi 100.000đ thanh toán
+        # Tích điểm cho đơn hàng theo tỷ lệ hạng thành viên (1 điểm = 1.000đ)
         net_spent = max(0, after_combo - voucher_discount - points_discount)
-        points_earned = net_spent // 100000
+        user_tier = getattr(user, "tier", "Silver") if user else "Silver"
+        points_earned = calculate_loyalty_earned_points(net_spent, user_tier)
 
         return QuoteResponse(
             lines=lines,
@@ -186,34 +219,33 @@ class OrderService:
 
     # ---------- Đặt hàng ----------
     def create_order(self, req: OrderCreateRequest, user: Optional[Any] = None) -> OrderResponse:
-        # Báo giá lại toàn bộ phía server
+        # 1. Báo giá lại toàn bộ phía server
         quote = self.build_quote(
             req.items, req.voucher_code, strict_voucher=True,
             use_points=req.use_points, user=user
         )
 
-        # Trừ tồn kho tạm thời trong bộ nhớ
-        needed: Dict[str, int] = {}
-        for line in quote.lines:
-            needed[line.product_id] = needed.get(line.product_id, 0) + line.quantity
-        with product_service._lock:
-            for pid, qty in needed.items():
-                p = product_service._by_id.get(pid)
-                if p:
-                    p.stock = max(0, p.stock - qty)
-                    p.sold_count += qty
-
         now = datetime.datetime.now()
-        order_id = f"AURA-{now.strftime('%y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+        order_id = None
+        for _ in range(5):
+            hex_part = secrets.token_hex(6).upper()  # 12 ký tự hex an toàn ngẫu nhiên
+            candidate_id = f"AURA-{now.strftime('%y%m%d')}-{hex_part}"
+            if not db_service.get_order_by_id(candidate_id):
+                order_id = candidate_id
+                break
+        if not order_id:
+            raise OrderError("Không thể tạo mã đơn hàng duy nhất lúc này, vui lòng thử lại", 500)
+
         status = "confirmed" if req.payment_method == "cod" else "pending_payment"
-        carrier = "Giao Hàng Nhanh (GHN Express)"
-        tracking_code = f"GHN-VN-{order_id[-6:]}"
+        carrier = "Đang điều phối vận chuyển"
+        tracking_code = None  # Chưa tích hợp GHN thật: không sinh mã giả
         shipping_status = "ready_to_pick" if status == "confirmed" else "pending_confirm"
         estimated_delivery = (now + datetime.timedelta(days=3)).strftime("%d/%m/%Y")
 
         record = {
             "order_id": order_id,
             "status": status,
+            "payment_status": "unpaid",
             "user_id": getattr(user, "id", None) if user else None,
             "carrier": carrier,
             "tracking_code": tracking_code,
@@ -236,45 +268,72 @@ class OrderService:
             "quote": quote.model_dump(),
         }
 
-        try:
-            # Lưu trực tiếp vào Database (orders + order_items)
-            db_service.save_order(record)
+        # 2. Tạo đơn hàng nguyên tử trong Database và đồng bộ bộ nhớ
+        with product_service._lock:
+            needed: Dict[str, int] = {}
+            for line in quote.lines:
+                needed[line.product_id] = needed.get(line.product_id, 0) + line.quantity
 
-            if self.orders_path:
-                try:
-                    os.makedirs(os.path.dirname(self.orders_path), exist_ok=True)
-                    with self._lock, open(self.orders_path, "a", encoding="utf-8") as f:
-                        f.write(json.dumps(record, ensure_ascii=False) + "\n")
-                except Exception:
-                    pass
+            for pid, qty in needed.items():
+                p = product_service.get_by_id(pid)
+                if not p or p.stock < qty:
+                    msg = (f"'{p.name}' chỉ còn {p.stock} sản phẩm" if p and p.stock > 0
+                           else f"'{p.name if p else pid}' đã hết hàng")
+                    raise OrderError(msg, 409)
 
-            # Xử lý trừ điểm và cộng điểm tích lũy cho người dùng
-            if user and getattr(user, "id", None):
-                if quote.points_used > 0:
-                    db_service.deduct_loyalty_points(user.id, quote.points_used, order_id)
-                net_paid = max(0, quote.subtotal - quote.combo_discount - quote.voucher_discount - quote.points_discount)
-                db_service.update_user_total_spent_and_tier(user.id, net_paid)
-                if quote.points_earned > 0:
-                    db_service.add_loyalty_points(
-                        user.id, quote.points_earned, "earn",
-                        f"Tích điểm từ đơn hàng {order_id}", order_id=order_id
-                    )
-        except Exception as e:
-            product_service.release_stock(needed)  # hoàn kho nếu không ghi được đơn
-            raise OrderError("Không thể lưu đơn hàng lúc này, vui lòng thử lại", 500)
+            items_payload = [
+                {
+                    "product_id": line.product_id,
+                    "name": line.name,
+                    "color": line.color,
+                    "size": line.size,
+                    "quantity": line.quantity,
+                    "unit_price": line.unit_price,
+                    "line_total": line.line_total,
+                }
+                for line in quote.lines
+            ]
+            db_service.create_order_atomic(
+                order_record=record,
+                items=items_payload,
+                user_id=getattr(user, "id", None) if user else None,
+                points_to_deduct=quote.points_used,
+                voucher_code=req.voucher_code
+            )
+
+            # Chỉ cập nhật tồn kho bộ nhớ SAU khi CSDL commit thành công
+            for pid, qty in needed.items():
+                p = product_service._by_id.get(pid)
+                if p:
+                    p.stock = max(0, p.stock - qty)
+                    p.sold_count += qty
+
+        if self.orders_path:
+            try:
+                os.makedirs(os.path.dirname(self.orders_path), exist_ok=True)
+                with self._lock, open(self.orders_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(record, ensure_ascii=False) + "\n")
+            except Exception:
+                pass
 
         qr_code_url = None
         bank_info = None
         if req.payment_method == "qr_transfer":
-            # Tạo mã VietQR chuẩn NAPAS tự động
+            bank_id = getattr(settings, "BANK_ID", "")
+            bank_acc = getattr(settings, "BANK_ACCOUNT_NO", "")
+            bank_name = getattr(settings, "BANK_ACCOUNT_NAME", "")
+            if not (bank_id and bank_acc and bank_name):
+                raise OrderError("Phương thức chuyển khoản qua QR hiện chưa sẵn sàng do chưa cấu hình thông tin ngân hàng", 400)
+            import urllib.parse
+            acc_name_quoted = urllib.parse.quote(bank_name)
             qr_code_url = (
-                f"https://img.vietqr.io/image/MB-0900000001-compact2.png"
-                f"?amount={quote.total}&addInfo=AURA%20{order_id}&accountName=AURA%20STUDIO"
+                f"https://img.vietqr.io/image/{bank_id}-{bank_acc}-compact2.png"
+                f"?amount={quote.total}&addInfo=AURA%20{order_id}&accountName={acc_name_quoted}"
             )
             bank_info = {
-                "bank_name": "MBBank (Ngân hàng Quân Đội)",
-                "account_number": "0900000001",
-                "account_name": "AURA STUDIO",
+                "bank_name": bank_id,
+                "account_number": bank_acc,
+                "account_name": bank_name,
                 "amount": str(quote.total),
                 "content": f"AURA {order_id}"
             }
@@ -284,7 +343,7 @@ class OrderService:
             msg = "Đặt hàng thành công! Chúng tôi sẽ liên hệ xác nhận và giao hàng sớm nhất."
 
         return OrderResponse(
-            order_id=order_id, status=status, payment_status="paid" if status == "confirmed" else "unpaid",
+            order_id=order_id, status=status, payment_status="unpaid",
             carrier=carrier, tracking_code=tracking_code, shipping_status=shipping_status,
             estimated_delivery=estimated_delivery,
             quote=quote, customer_name=req.customer_name, customer_phone=req.customer_phone,
@@ -359,7 +418,15 @@ class OrderService:
         }
 
     def _restore_stock_from_history(self):
-        """Khởi động lại server không làm 'hồi' lại hàng đã bán."""
+        """Chỉ chạy khi DB hoàn toàn trống để khôi phục tồn kho từ lịch sử."""
+        try:
+            from app.db.database import db_service
+            prods = db_service.get_all_products_db()
+            if prods:
+                return
+        except Exception:
+            pass
+
         if self.orders_path and os.path.exists(self.orders_path):
             with open(self.orders_path, "r", encoding="utf-8") as f:
                 for line in f:
@@ -370,8 +437,8 @@ class OrderService:
                         rec = json.loads(line)
                         if rec.get("status") == "cancelled":
                             continue
-                        for l in rec["quote"]["lines"]:
-                            product_service.apply_historical_sale(l["product_id"], l["quantity"])
+                        for item in rec["quote"]["lines"]:
+                            product_service.apply_historical_sale(item["product_id"], item["quantity"])
                     except Exception:
                         continue
             return
@@ -384,8 +451,8 @@ class OrderService:
                         continue
                     try:
                         q = json.loads(o.quote_json)
-                        for l in q.get("lines", []):
-                            product_service.apply_historical_sale(l["product_id"], l["quantity"])
+                        for item in q.get("lines", []):
+                            product_service.apply_historical_sale(item["product_id"], item["quantity"])
                     except Exception:
                         continue
         except Exception:
@@ -438,26 +505,40 @@ class OrderService:
                 return None
 
             old_status = o.order_status
-            o.order_status = new_status
-            if new_status == "confirmed" and o.payment_method != "cod":
-                o.payment_status = "paid"
-            if new_status == "completed":
-                o.shipping_status = "delivered"
-            elif new_status == "confirmed" and o.shipping_status in ["pending_confirm", None]:
-                o.shipping_status = "ready_to_pick"
+            if new_status == old_status:
+                return self._format_order(o)
 
-            # Nếu hủy đơn -> hoàn kho
-            if new_status == "cancelled" and old_status != "cancelled":
+            allowed = VALID_STATUS_TRANSITIONS.get(old_status, set())
+            if new_status not in allowed:
+                raise OrderError(f"Không thể chuyển trạng thái từ '{old_status}' sang '{new_status}'", 400)
+
+            if new_status == "cancelled":
+                db_service.cancel_order_atomic(order_id)
+                session.refresh(o)
                 if o.quote_json:
                     try:
                         q = json.loads(o.quote_json)
-                        needed = {l["product_id"]: l["quantity"] for l in q.get("lines", [])}
+                        needed = {item["product_id"]: item["quantity"] for item in q.get("lines", [])}
                         product_service.release_stock(needed)
                     except Exception:
                         pass
+            else:
+                o.order_status = new_status
+                if new_status == "confirmed" and o.payment_method != "cod":
+                    o.payment_status = "paid"
+                elif new_status == "shipping":
+                    o.shipping_status = "in_transit"
+                elif new_status == "completed":
+                    o.shipping_status = "delivered"
+                    if o.payment_method == "cod" or o.payment_status != "paid":
+                        o.payment_status = "paid"
+                        db_service._award_order_loyalty_and_spent(order_id)
+                elif new_status == "confirmed" and o.shipping_status in ["pending_confirm", None]:
+                    o.shipping_status = "ready_to_pick"
 
-            session.flush()
-            session.refresh(o)
+                session.flush()
+                session.refresh(o)
+
             return self._format_order(o)
 
     def get_admin_stats(self) -> dict:

@@ -2,7 +2,10 @@
 """Dịch vụ cung cấp danh mục địa giới hành chính 3 cấp của Việt Nam:
 Tỉnh/Thành phố -> Quận/Huyện -> Phường/Xã chuẩn hóa.
 """
+import logging
 from typing import Any, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 # Danh mục 63 Tỉnh/Thành phố và các Quận/Huyện, Phường/Xã tiêu biểu
 VIETNAM_GEO_DATA: Dict[str, Dict[str, List[str]]] = {
@@ -101,7 +104,8 @@ class GeoService:
 
     def _load_locations(self):
         """Nạp tĩnh và cache dữ liệu địa giới 2 cấp từ vn_locations.json vào bộ nhớ."""
-        import os, json
+        import json
+        import os
         data_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "vn_locations.json")
         if os.path.exists(data_file):
             try:
@@ -116,7 +120,7 @@ class GeoService:
                             if w_code is not None:
                                 self.ward_by_prov_and_code[(int(p_code), int(w_code))] = w
             except Exception as e:
-                print(f"[GeoService] Lỗi nạp vn_locations.json: {e}")
+                logger.warning("[GeoService] Lỗi nạp vn_locations.json: %s", e)
 
     def get_all_locations(self) -> List[Dict[str, Any]]:
         """Trả về toàn bộ danh mục 34 tỉnh/thành phố và xã/phường/đặc khu (cache sẵn)."""

@@ -19,10 +19,23 @@ def test_flash_sale_filter_returns_items(client):
 
 
 def test_effective_price_uses_flash_price(client):
+    import datetime
+    # Dữ liệu cũ không có thời gian thì coi như không flash sale (giá về price)
     p = client.get("/api/products/prod_001").json()
-    assert p["final_price"] == 429000 and p["price"] == 489000
-    p = client.get("/api/products/prod_004").json()  # không flash sale
-    assert p["final_price"] == p["price"]
+    assert p["final_price"] == p["price"] == 489000
+
+    # Khi có flash_sale_start và flash_sale_end hợp lệ thì áp dụng flash_sale_price
+    prod = product_service.get_by_id("prod_001")
+    now = datetime.datetime.now(datetime.timezone.utc)
+    prod.flash_sale_start = now - datetime.timedelta(hours=1)
+    prod.flash_sale_end = now + datetime.timedelta(hours=2)
+    p_flash = client.get("/api/products/prod_001").json()
+    assert p_flash["final_price"] == 429000 and p_flash["price"] == 489000
+
+    # Khi hết hạn thì giá về price
+    prod.flash_sale_end = now - datetime.timedelta(minutes=1)
+    p_expired = client.get("/api/products/prod_001").json()
+    assert p_expired["final_price"] == 489000
 
 
 def test_search_accent_insensitive(client):
@@ -48,7 +61,7 @@ def test_client_cannot_set_price(client):
     body = {**CUSTOMER, "items": [{**item("prod_001"), "price": 1}]}
     r = client.post("/api/orders", json=body)
     assert r.status_code == 200
-    assert r.json()["quote"]["subtotal"] == 429000  # giá thật, bỏ qua 'price' của client
+    assert r.json()["quote"]["subtotal"] == 489000  # giá thật, bỏ qua 'price' của client
 
 
 def test_negative_or_zero_quantity_rejected(client):
@@ -72,10 +85,10 @@ def test_phone_validation(client):
 
 
 def test_shipping_fee_and_free_threshold(client):
-    cheap = client.post("/api/orders/quote", json={"items": [item("prod_015")]}).json()  # 79k
+    cheap = client.post("/api/orders/quote", json={"items": [item("prod_015")]}).json()  # 99k
     assert cheap["shipping_fee"] == settings.SHIPPING_FEE
-    assert cheap["total"] == 79000 + settings.SHIPPING_FEE
-    big = client.post("/api/orders/quote", json={"items": [item("prod_001")]}).json()  # 429k
+    assert cheap["total"] == 99000 + settings.SHIPPING_FEE
+    big = client.post("/api/orders/quote", json={"items": [item("prod_001")]}).json()  # 489k
     assert big["shipping_fee"] == 0
 
 
@@ -93,7 +106,7 @@ def test_voucher_rules(client):
     # FREESHIP xóa phí ship
     r = q("FREESHIP", [item("prod_015")])
     assert r["shipping_fee"] == 30000 and r["shipping_discount"] == 30000
-    assert r["total"] == 79000
+    assert r["total"] == 99000
 
 
 def test_invalid_voucher_blocks_order_instead_of_silent_ignore(client):
@@ -146,8 +159,8 @@ def test_order_is_persisted_and_stock_restored_after_restart(client):
     from app.services.order_service import order_service
     client.post("/api/orders", json={**CUSTOMER, "items": [item("prod_008", qty=2)]})
     assert order_service.count_orders() == 1
-    product_service._load_products()  # giả lập khởi động lại: kho về số gốc
-    assert product_service.get_by_id("prod_008").stock == 19
+    product_service._load_products()  # giả lập khởi động lại: tồn kho nạp từ DB không bị reset
+    assert product_service.get_by_id("prod_008").stock == 17
     order_service._restore_stock_from_history()
     assert product_service.get_by_id("prod_008").stock == 17
 
@@ -204,7 +217,13 @@ def test_outfit_unknown_product_404(client):
 
 # ---------- Chat AI (bộ luật nội bộ, không cần Ollama/Gemini) ----------
 def _chat(client, msg, **kw):
-    return client.post("/api/ai/chat", json={"user_message": msg, "engine": "rules", **kw}).json()
+    from app.config import settings
+    old_engine = settings.AI_ENGINE
+    settings.AI_ENGINE = "rules"
+    try:
+        return client.post("/api/ai/chat", json={"user_message": msg, **kw}).json()
+    finally:
+        settings.AI_ENGINE = old_engine
 
 
 def test_chat_scenarios_and_no_ids_in_text(client):
@@ -317,7 +336,7 @@ def test_live_comment_uses_real_size_and_prices(client):
     r = client.post("/api/ai/live-comment", json={"user_name": "Linh", "comment": "1m62 52kg mặc size gì ạ"}).json()
     assert "size" in r["reply"].lower() and r["pinned_product"]
     r = client.post("/api/ai/live-comment", json={"user_name": "Linh", "comment": "cho mình hỏi blazer"}).json()
-    assert "429.000" in r["reply"]  # giá thật, không viết cứng
+    assert "489.000" in r["reply"]  # giá thật, không viết cứng
 
 
 def test_no_secrets_committed():

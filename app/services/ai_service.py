@@ -1,5 +1,7 @@
 import json
+import logging
 import re
+import threading
 import time
 import urllib.error
 import urllib.request
@@ -7,14 +9,24 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from app.config import settings
 from app.models.schemas import (
-    ChatMessage, ChatRequest, ChatResponse, LiveCommentResponse, Product,
+    ChatMessage,
+    ChatRequest,
+    ChatResponse,
+    LiveCommentResponse,
+    Product,
 )
 from app.services.outfit_service import SLOT_OF, outfit_service
 from app.services.product_service import product_service
+from app.services.season_service import (
+    clearance_candidates,
+    current_season,
+    hot_this_season,
+    suggested_discount,
+)
 from app.services.text_utils import has_any, has_word, normalize
-from app.services.season_service import (CLEARANCE_WINDOW_DAYS, clearance_candidates, current_season,
-                                          hot_this_season, suggested_discount)
 from app.services.trend_service import trend_service
+
+logger = logging.getLogger(__name__)
 
 ID_TOKEN_RE = re.compile(r"\[\[\s*(prod_\d{3})\s*\]\]")
 BARE_ID_RE = re.compile(r"\(?\b(prod_\d{3})\b\)?")
@@ -156,17 +168,22 @@ THANKS_KW = ["cam on", "thanks", "thank you", "ok cam on"]
 MIX_KW = ["phoi", "mac voi", "ket hop", "mix", "hop voi", "mac cung", "di voi"]
 
 
+
 class AIService:
     def __init__(self):
         self._down_until: Dict[str, float] = {}  # bộ nhớ đệm "engine đang lỗi"
+        self._llm_semaphore = threading.BoundedSemaphore(settings.AI_MAX_CONCURRENCY)
 
     # ================================================================== chat
     def chat(self, request: ChatRequest) -> ChatResponse:
         user_msg = request.user_message.strip()
-        engine = (request.engine or settings.AI_ENGINE or "auto").lower()
+        # Bỏ engine client gửi, luôn dùng cấu hình server
+        engine = (settings.AI_ENGINE or "auto").lower()
         if engine not in ("auto", "gemini", "ollama", "rules"):
             engine = "auto"
         context = product_service.get_by_id(request.context_product_id)
+        # Giới hạn lịch sử tối đa 20 lượt
+        messages = request.messages[-20:] if request.messages else []
 
         # Xu hướng thời trang / mùa / xả hàng: trả lời dựa trên dữ liệu thật (trend_service / tồn kho)
         t_season = normalize(user_msg)
@@ -192,12 +209,20 @@ class AIService:
         if engine in ("auto", "ollama"):
             order.append("ollama")
 
+        relevant_products = self._get_relevant_products(user_msg, messages, context)
+
         for name in order:
             if self._is_down(name):
                 continue
+
+            # Giới hạn số cuộc gọi LLM đồng thời; hết chỗ thì rơi về bộ luật ngay
+            if not self._llm_semaphore.acquire(blocking=False):
+                logger.warning("LLM concurrency limit reached (%s), falling back to rules engine", settings.AI_MAX_CONCURRENCY)
+                break
+
             try:
                 raw = (self._call_gemini if name == "gemini" else self._call_ollama)(
-                    user_msg, request.messages, context)
+                    user_msg, messages, context, relevant_products=relevant_products)
                 if not raw:
                     raise ValueError("empty reply")
                 reply, products = self._postprocess(raw)
@@ -208,7 +233,9 @@ class AIService:
                                     quick_suggestions=DEFAULT_SUGGESTIONS)
             except Exception as e:  # noqa: BLE001 - mọi lỗi mạng/LLM đều rơi về bộ luật
                 self._mark_down(name)
-                print(f"[AI] {name} không khả dụng, chuyển engine khác: {e}")
+                logger.warning("[AI] %s không khả dụng, chuyển engine khác: %s", name, e)
+            finally:
+                self._llm_semaphore.release()
 
         reply, ids = self._rules_engine(user_msg, context)
         return ChatResponse(reply=reply, engine_used="AURA Stylist (bộ luật nội bộ)",
@@ -222,11 +249,40 @@ class AIService:
         self._down_until[name] = time.time() + seconds
 
     # ------------------------------------------------------------ LLM prompt
-    def _system_prompt(self, context: Optional[Product]) -> str:
+    def _get_relevant_products(self, user_msg: str, history: List[ChatMessage],
+                               context: Optional[Product]) -> List[Product]:
+        """Chọn tối đa AI_PROMPT_MAX_PRODUCTS sản phẩm liên quan nhất dựa trên semantic search và ngữ cảnh."""
+        query_parts = [user_msg]
+        if context:
+            query_parts.append(f"{context.name} {context.category_name} {' '.join(context.occasions)}")
+
+        recent_history = history[-4:] if history else []
+        for m in recent_history:
+            found_ids = ID_TOKEN_RE.findall(m.content) + BARE_ID_RE.findall(m.content)
+            for pid in found_ids:
+                p = product_service.get_by_id(pid)
+                if p:
+                    query_parts.append(f"{p.name} {p.category_name}")
+
+        search_query = " ".join(query_parts)
+        limit = max(1, settings.AI_PROMPT_MAX_PRODUCTS)
+        candidates = product_service.semantic_search(search_query, limit=limit)
+
+        if context and context.in_stock:
+            if not any(p.id == context.id for p in candidates):
+                candidates = [context] + candidates[: limit - 1]
+
+        return candidates[:limit]
+
+    def _system_prompt(self, context: Optional[Product],
+                       relevant_products: Optional[List[Product]] = None) -> str:
+        if relevant_products is None:
+            relevant_products = product_service.semantic_search("", limit=settings.AI_PROMPT_MAX_PRODUCTS)
+
         catalog = "\n".join(
             f"- {p.name} [[{p.id}]] | {money(p.final_price)} | {p.category_name} | "
             f"dịp: {', '.join(p.occasions)} | size: {', '.join(p.sizes)}"
-            for p in product_service.get_all() if p.in_stock
+            for p in relevant_products
         )
         prompt = (
             f"Bạn là stylist AI của thương hiệu thời trang {settings.APP_NAME}. "
@@ -237,7 +293,7 @@ class AIService:
             "3. Gợi ý 2–4 món phối hợp hài hòa theo hoàn cảnh, thời tiết, dáng người khách nói.\n"
             "4. Nếu khách hỏi ngoài chủ đề thời trang/mua sắm, lịch sự đưa câu chuyện về thời trang.\n"
             "5. Chỉ dùng **đậm** và xuống dòng; không dùng tiêu đề #, bảng.\n\n"
-            f"DANH MỤC SẢN PHẨM ĐANG CÒN HÀNG:\n{catalog}\n\n"
+            f"DANH MỤC SẢN PHẨM LIÊN QUAN ĐANG CÒN HÀNG:\n{catalog}\n\n"
             f"CHÍNH SÁCH: phí ship {money(settings.SHIPPING_FEE)}, miễn phí cho đơn từ "
             f"{money(settings.FREE_SHIPPING_THRESHOLD)}; mua bộ phối đồ từ AI Stylist giảm "
             f"{settings.COMBO_DISCOUNT_PERCENT}%."
@@ -256,8 +312,9 @@ class AIService:
         return trimmed
 
     def _call_ollama(self, prompt: str, history: List[ChatMessage],
-                     context: Optional[Product]) -> Optional[str]:
-        messages = [{"role": "system", "content": self._system_prompt(context)}]
+                     context: Optional[Product],
+                     relevant_products: Optional[List[Product]] = None) -> Optional[str]:
+        messages = [{"role": "system", "content": self._system_prompt(context, relevant_products)}]
         messages += [{"role": m.role, "content": m.content} for m in self._history(history)]
         messages.append({"role": "user", "content": prompt})
         payload = {"model": settings.OLLAMA_MODEL, "messages": messages, "stream": False,
@@ -270,7 +327,8 @@ class AIService:
         return (data.get("message", {}).get("content") or "").strip()
 
     def _call_gemini(self, prompt: str, history: List[ChatMessage],
-                     context: Optional[Product]) -> Optional[str]:
+                     context: Optional[Product],
+                     relevant_products: Optional[List[Product]] = None) -> Optional[str]:
         contents: List[Dict] = []
         for m in self._history(history) + [ChatMessage(role="user", content=prompt)]:
             role = "user" if m.role == "user" else "model"
@@ -279,7 +337,7 @@ class AIService:
             else:
                 contents.append({"role": role, "parts": [{"text": m.content}]})
         payload = {
-            "systemInstruction": {"parts": [{"text": self._system_prompt(context)}]},
+            "systemInstruction": {"parts": [{"text": self._system_prompt(context, relevant_products)}]},
             "contents": contents,
             "generationConfig": {"temperature": 0.7, "maxOutputTokens": 700},
         }
@@ -469,7 +527,7 @@ class AIService:
 
         lines = [
             f"{i}. **{short_name(p)}** — {money(p.final_price)} ({tp.reason.split('•')[-1].strip() if '•' in tp.reason else tp.reason})"
-            for i, (p, tp) in enumerate(zip(picks, trending_items[:len(picks)]), 1)
+            for i, (p, tp) in enumerate(zip(picks, trending_items[:len(picks)], strict=False), 1)
         ]
 
         reply = (
@@ -520,7 +578,7 @@ class AIService:
                 if info.is_ending_soon else f"đang giữa mùa {info.collection['label']}")
         return (f"📦 **Gợi ý xả hàng tồn ({when}, chuẩn bị đón mùa {info.next_collection['label']}):**\n\n"
                 + "\n".join(lines) +
-                f"\n\n💡 Có thể đẩy nhanh bằng flash sale, mua 2 giảm thêm, hoặc mix vào set đồ combo.",
+                "\n\n💡 Có thể đẩy nhanh bằng flash sale, mua 2 giảm thêm, hoặc mix vào set đồ combo.",
                 [p.id for p in picks])
     @staticmethod
     def _match_scenario(t: str) -> Optional[Dict]:

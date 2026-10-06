@@ -400,15 +400,15 @@
         return `
           <tr class="hover:bg-noir-800/60 transition">
             <td class="py-2.5 px-4">
-              <img src="${thumb}" alt="" class="h-10 w-10 rounded-md object-cover bg-noir-800 border border-noir-700" onerror="this.src='/static/img/placeholder.svg'" />
+              <img src="${esc(thumb)}" alt="" class="h-10 w-10 rounded-md object-cover bg-noir-800 border border-noir-700" onerror="this.src='/static/img/placeholder.svg'" />
             </td>
             <td class="py-2.5 px-4 font-medium max-w-[260px]">
-              <p class="truncate font-semibold text-noir-100">${p.name}</p>
-              <p class="text-sm font-mono text-noir-400">ID: ${p.id}</p>
+              <p class="truncate font-semibold text-noir-100">${esc(p.name)}</p>
+              <p class="text-sm font-mono text-noir-400">ID: ${esc(p.id)}</p>
             </td>
             <td class="py-2.5 px-4">
-              <span class="rounded-md bg-noir-800 px-2 py-0.5 text-sm font-medium text-noir-300">${p.category}</span>
-              <span class="text-sm text-noir-400 ml-1">(${p.gender})</span>
+              <span class="rounded-md bg-noir-800 px-2 py-0.5 text-sm font-medium text-noir-300">${esc(p.category)}</span>
+              <span class="text-sm text-noir-400 ml-1">(${esc(p.gender)})</span>
             </td>
             <td class="py-2.5 px-4 font-semibold text-gold-500">
               ${p.price.toLocaleString("vi-VN")}đ
@@ -417,19 +417,36 @@
             <td class="py-2.5 px-4">${stockBadge}</td>
             <td class="py-2.5 px-4">${flashBadge}</td>
             <td class="py-2.5 px-4 text-right space-x-1">
-              <button onclick="openQuickInvModal('${p.id}', '${p.name.replace(/'/g, "\\'")}')" class="rounded-md border border-noir-700 bg-noir-800 px-2 py-1 text-sm font-semibold text-noir-100 hover:bg-noir-700 shadow-lg transition" title="Nhập thêm hàng">
+              <button data-product-id="${esc(p.id)}" data-product-name="${esc(p.name)}" class="btn-quick-inv rounded-md border border-noir-700 bg-noir-800 px-2 py-1 text-sm font-semibold text-noir-100 hover:bg-noir-700 shadow-lg transition" title="Nhập thêm hàng">
                 + Nhập kho
               </button>
-              <button onclick="openEditModal('${p.id}')" class="rounded-md border border-noir-700 bg-noir-800 px-2 py-1 text-sm font-medium text-noir-300 hover:bg-noir-700 shadow-lg transition">
+              <button data-product-id="${esc(p.id)}" class="btn-edit-prod rounded-md border border-noir-700 bg-noir-800 px-2 py-1 text-sm font-medium text-noir-300 hover:bg-noir-700 shadow-lg transition">
                 Sửa
               </button>
-              <button onclick="confirmDelete('${p.id}', '${p.name.replace(/'/g, "\\'")}')" class="rounded-md border border-noir-700 bg-noir-800 px-2 py-1 text-sm font-medium text-noir-400 hover:text-rose-400 hover:bg-noir-700 shadow-lg transition">
+              <button data-product-id="${esc(p.id)}" data-product-name="${esc(p.name)}" class="btn-del-prod rounded-md border border-noir-700 bg-noir-800 px-2 py-1 text-sm font-medium text-noir-400 hover:text-rose-400 hover:bg-noir-700 shadow-lg transition">
                 Xóa
               </button>
             </td>
           </tr>
         `;
       }).join("");
+
+      tbody.addEventListener("click", e => {
+        const invBtn = e.target.closest(".btn-quick-inv");
+        if (invBtn) {
+          openQuickInvModal(invBtn.dataset.productId, invBtn.dataset.productName);
+          return;
+        }
+        const editBtn = e.target.closest(".btn-edit-prod");
+        if (editBtn) {
+          openEditModal(editBtn.dataset.productId);
+          return;
+        }
+        const delBtn = e.target.closest(".btn-del-prod");
+        if (delBtn) {
+          confirmDelete(delBtn.dataset.productId, delBtn.dataset.productName);
+        }
+      });
 
       // Render pagination
       const start = (data.page - 1) * data.limit + 1;
@@ -702,7 +719,7 @@
 
         importErrorsBox.innerHTML = (report.errors || []).map(err => `
           <div class="p-2 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">
-            <strong>Dòng ${err.row}</strong>: ${err.error} (${err.product_name || "Sản phẩm"})
+            <strong>Dòng ${esc(err.row)}</strong>: ${esc(err.error)} (${esc(err.product_name || "Sản phẩm")})
           </div>
         `).join("");
       }

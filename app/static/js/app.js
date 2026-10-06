@@ -23,11 +23,10 @@ const U = {
     const timer = setTimeout(() => ctrl.abort(), timeout);
     try {
       const headers = body ? { 'Content-Type': 'application/json' } : {};
-      const token = localStorage.getItem('aura_token');
-      if (token) headers['Authorization'] = `Bearer ${token}`;
       const res = await fetch(url, {
         method, signal: ctrl.signal,
         headers,
+        credentials: 'same-origin',
         body: body ? JSON.stringify(body) : undefined,
       });
       let data = null;
@@ -1886,7 +1885,8 @@ const App = {
       }
 
       // Đơn hàng COD hoặc hình thức khác -> Chuyển hướng tới trang xác nhận đơn hàng thành công
-      window.location.href = `/order-success/${encodeURIComponent(order.order_id)}`;
+      const phoneParam = body.customer_phone ? `?phone=${encodeURIComponent(body.customer_phone)}` : '';
+      window.location.href = `/order-success/${encodeURIComponent(order.order_id)}${phoneParam}`;
       return;
     } catch (e) {
       this.checkoutError(e.message);
@@ -2289,7 +2289,9 @@ const TrackingUI = {
 
   async doSearch() {
     const input = U.$('#tracking-input');
+    const phoneInput = U.$('#tracking-phone');
     const code = input ? input.value.trim() : '';
+    const phone = phoneInput ? phoneInput.value.trim() : '';
     if (!code) return;
 
     const resBox = U.$('#tracking-result');
@@ -2301,8 +2303,12 @@ const TrackingUI = {
     if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Đang tìm...'; }
 
     try {
-      const data = await U.api(`/api/orders/track/${encodeURIComponent(code)}`);
+      const url = phone
+        ? `/api/orders/track/${encodeURIComponent(code)}?phone=${encodeURIComponent(phone)}`
+        : `/api/orders/track/${encodeURIComponent(code)}`;
+      const data = await U.api(url);
       this.currentOrder = data;
+      this.currentPhone = phone;
 
       // Điền thông tin kiện hàng
       U.$('#tr-code').textContent = data.tracking_code;
@@ -2385,7 +2391,8 @@ const InvoiceUI = {
   async open(orderId) {
     Modal.open('invoice-modal');
     try {
-      const inv = await U.api(`/api/orders/${encodeURIComponent(orderId)}/invoice`);
+      const phoneParam = (window.TrackingUI && window.TrackingUI.currentPhone) ? `?phone=${encodeURIComponent(window.TrackingUI.currentPhone)}` : '';
+      const inv = await U.api(`/api/orders/${encodeURIComponent(orderId)}/invoice${phoneParam}`);
       U.$('#inv-number').textContent = inv.invoice_number;
       U.$('#inv-date').textContent = inv.issued_at;
       U.$('#inv-buyer-name').textContent = inv.buyer.name;

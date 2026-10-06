@@ -172,20 +172,20 @@
 
         return `
           <tr class="hover:bg-noir-800/60 transition">
-            <td class="py-3 px-4 font-mono font-semibold text-noir-100">${o.order_id}</td>
-            <td class="py-3 px-4 text-noir-400 font-mono text-sm">${o.created_at || ""}</td>
+            <td class="py-3 px-4 font-mono font-semibold text-noir-100">${esc(o.order_id)}</td>
+            <td class="py-3 px-4 text-noir-400 font-mono text-sm">${esc(o.created_at || "")}</td>
             <td class="py-3 px-4">
-              <p class="font-semibold text-noir-100">${o.customer?.name || "N/A"}</p>
-              <p class="text-sm text-noir-400 font-mono">${o.customer?.phone || ""}</p>
+              <p class="font-semibold text-noir-100">${esc(o.customer?.name || "N/A")}</p>
+              <p class="text-sm text-noir-400 font-mono">${esc(o.customer?.phone || "")}</p>
             </td>
             <td class="py-3 px-4 font-medium text-noir-300">${itemCount} sp</td>
             <td class="py-3 px-4 font-semibold text-gold-500">${total}</td>
             <td class="py-3 px-4 text-noir-400">${o.payment_method === 'cod' ? 'COD' : 'Chuyển khoản'}</td>
             <td class="py-3 px-4">
-              <span class="inline-flex rounded-full px-2 py-0.5 text-sm font-medium border ${st.bg}">${st.label}</span>
+              <span class="inline-flex rounded-full px-2 py-0.5 text-sm font-medium border ${st.bg}">${esc(st.label)}</span>
             </td>
             <td class="py-3 px-4 text-right">
-              <button onclick="viewOrder('${o.order_id}')" class="rounded-md border border-noir-700 bg-noir-800 px-2.5 py-1 text-sm font-medium text-noir-300 hover:bg-noir-700 hover:text-gold-400 shadow-lg transition">
+              <button data-order-id="${esc(o.order_id)}" class="btn-view-order rounded-md border border-noir-700 bg-noir-800 px-2.5 py-1 text-sm font-medium text-noir-300 hover:bg-noir-700 hover:text-gold-400 shadow-lg transition">
                 Chi tiết
               </button>
             </td>
@@ -197,6 +197,11 @@
       tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-rose-400">Lỗi tải dữ liệu đơn hàng</td></tr>`;
     }
   }
+
+  tbody.addEventListener("click", e => {
+    const btn = e.target.closest(".btn-view-order");
+    if (btn) viewOrder(btn.dataset.orderId);
+  });
 
   // Filter Status Buttons
   document.querySelectorAll(".status-btn").forEach(btn => {
@@ -234,8 +239,8 @@
     document.getElementById("detail-items-list").innerHTML = lines.map(l => `
       <div class="flex items-center justify-between py-2">
         <div>
-          <p class="font-semibold text-noir-100">${l.name}</p>
-          <p class="text-sm text-noir-400">Size: ${l.size} | Màu: ${l.color} | SL: ×${l.quantity}</p>
+          <p class="font-semibold text-noir-100">${esc(l.name)}</p>
+          <p class="text-sm text-noir-400">Size: ${esc(l.size)} | Màu: ${esc(l.color)} | SL: ×${esc(l.quantity)}</p>
         </div>
         <p class="font-semibold text-noir-100">${(l.line_total || 0).toLocaleString("vi-VN")}đ</p>
       </div>

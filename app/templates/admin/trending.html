@@ -59,21 +59,21 @@
               <div class="flex items-start justify-between gap-2">
                 <div>
                   <span class="inline-flex rounded-full bg-noir-800 px-2.5 py-0.5 text-sm font-semibold text-noir-300 border border-noir-700 uppercase tracking-wider">
-                    ${t.category || "Fashion"}
+                    ${esc(t.category || "Fashion")}
                   </span>
-                  <h4 class="mt-2.5 text-base font-bold text-noir-100">${t.name}</h4>
-                  <p class="text-sm text-noir-400 mt-1 leading-relaxed">${t.description || "Xu hướng đang thịnh hành mùa này"}</p>
+                  <h4 class="mt-2.5 text-base font-bold text-noir-100">${esc(t.name)}</h4>
+                  <p class="text-sm text-noir-400 mt-1 leading-relaxed">${esc(t.description || "Xu hướng đang thịnh hành mùa này")}</p>
                 </div>
                 <div class="flex flex-col items-end shrink-0">
-                  <span class="rounded-md bg-gold-500 px-2.5 py-1 text-sm font-mono font-bold text-noir-900">${t.score || 85}</span>
-                  <span class="mt-1 font-mono text-sm font-semibold text-gold-500">${growth}</span>
+                  <span class="rounded-md bg-gold-500 px-2.5 py-1 text-sm font-mono font-bold text-noir-900">${esc(t.score || 85)}</span>
+                  <span class="mt-1 font-mono text-sm font-semibold text-gold-500">${esc(growth)}</span>
                 </div>
               </div>
 
               <!-- Tags / Keywords -->
               <div class="mt-4 flex flex-wrap gap-1.5">
                 ${keywords.map(k => `
-                  <span class="rounded-md bg-noir-800 border border-noir-700 px-2 py-0.5 text-sm font-mono text-noir-300">#${k}</span>
+                  <span class="rounded-md bg-noir-800 border border-noir-700 px-2 py-0.5 text-sm font-mono text-noir-300">#${esc(k)}</span>
                 `).join("")}
               </div>
             </div>
