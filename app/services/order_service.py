@@ -8,24 +8,30 @@ import datetime
 import hashlib
 import hmac
 import json
+import logging
 import os
 import secrets
 import threading
 from typing import Any, Dict, List, Optional
 
+logger = logging.getLogger("aura.order_service")
+
+
 from sqlalchemy import func, or_
 
 from app.config import settings
-from app.db.database import db_service
+from app.db.database import db_service, normalize_phone
 from app.db.models import OrderDB
 from app.db.session import get_db_session
 from app.models.schemas import (
+    OrderCancelRequest,
     OrderCreateRequest,
     OrderItem,
     OrderResponse,
     QuoteLine,
     QuoteResponse,
 )
+from app.services.email_sender import get_email_sender
 from app.services.product_service import product_service
 
 
@@ -111,6 +117,25 @@ class OrderService:
                 line_total=p.final_price * it.quantity, combo=False,
             ))
 
+        # Kiểm tra tồn kho từng biến thể (Màu x Size)
+        qty_by_variant: Dict[Tuple[str, str, str], int] = {}
+        for it in items:
+            key = (it.product_id, it.color, it.size)
+            qty_by_variant[key] = qty_by_variant.get(key, 0) + it.quantity
+
+        for (pid, col, sz), qty in qty_by_variant.items():
+            p = product_service.get_by_id(pid)
+            total_v_stock = sum(x.stock for x in (p.variants or []))
+            if p.variants and p.stock <= total_v_stock:
+                v = next((x for x in p.variants if x.color == col and x.size == sz), None)
+                v_stock = v.stock if v is not None else p.stock
+            else:
+                v_stock = p.stock
+            if qty > v_stock:
+                msg = (f"Phân loại '{col} - Size {sz}' của '{p.name}' chỉ còn {v_stock} sản phẩm" if v_stock > 0
+                       else f"Phân loại '{col} - Size {sz}' của '{p.name}' chỉ còn 0 sản phẩm (đã hết hàng)")
+                raise OrderError(msg, 409)
+
         for pid, qty in qty_by_product.items():
             p = product_service.get_by_id(pid)
             if qty > p.stock:
@@ -129,10 +154,16 @@ class OrderService:
         for token, idxs in groups.items():
             ids = {lines[i].product_id for i in idxs}
             if len(ids) >= 2 and make_combo_token(list(ids)) == token:
-                group_total = sum(lines[i].line_total for i in idxs)
-                combo_discount += group_total * settings.COMBO_DISCOUNT_PERCENT // 100
+                # Giới hạn combo_token chỉ giảm tối đa cho 1 set (số lượng mỗi món trong set <= 1 lần giảm)
+                seen_pids = set()
+                eligible_set_amount = 0
                 for i in idxs:
+                    pid = lines[i].product_id
+                    if pid not in seen_pids:
+                        seen_pids.add(pid)
+                        eligible_set_amount += lines[i].unit_price
                     lines[i].combo = True
+                combo_discount += eligible_set_amount * settings.COMBO_DISCOUNT_PERCENT // 100
 
         after_combo = subtotal - combo_discount
 
@@ -148,6 +179,11 @@ class OrderService:
                 if strict_voucher:
                     raise OrderError(f"Mã giảm giá '{code}' không tồn tại hoặc đã hết hạn", 400)
                 voucher_message = f"Mã '{code}' không tồn tại hoặc đã hết hạn"
+            elif v.expires_at and datetime.datetime.now() > v.expires_at:
+                msg = f"Mã giảm giá '{code}' đã hết hạn sử dụng"
+                if strict_voucher:
+                    raise OrderError(msg, 400)
+                voucher_message = msg
             elif after_combo < v.min_order:
                 msg = f"Mã {code} chỉ áp dụng cho đơn từ {_money(v.min_order)}"
                 if strict_voucher:
@@ -316,6 +352,21 @@ class OrderService:
             except Exception:
                 pass
 
+        # Gửi email xác nhận đơn (không block request nếu lỗi)
+        cust_email = getattr(req, "customer_email", None)
+        if cust_email:
+            try:
+                get_email_sender().send_order_confirmation(cust_email, {
+                    "order_id": order_id,
+                    "customer_name": req.customer_name,
+                    "customer_phone": req.customer_phone,
+                    "total_amount": quote.total,
+                    "payment_method": req.payment_method,
+                    "quote": quote.model_dump(),
+                })
+            except Exception as _email_err:  # pragma: no cover
+                logger.warning("Gửi email xác nhận đơn thất bại: %s", _email_err)
+
         qr_code_url = None
         bank_info = None
         if req.payment_method == "qr_transfer":
@@ -402,10 +453,12 @@ class OrderService:
             "discount_amount": o.discount_amount,
             "customer_name": o.customer_name,
             "customer_phone": o.customer_phone,
+            "customer_email": getattr(o, "customer_email", None),
             "customer_address": o.customer_address,
             "customer": {
                 "name": o.customer_name,
                 "phone": o.customer_phone,
+                "email": getattr(o, "customer_email", None),
                 "address": o.customer_address,
                 "province": o.province,
                 "district": o.district,
@@ -458,6 +511,65 @@ class OrderService:
         except Exception:
             pass
 
+    # ---------- Khách tự huỷ đơn ----------
+    def cancel_order_by_customer(
+        self,
+        order_id: str,
+        user: Optional[Any] = None,
+        phone: Optional[str] = None,
+        req: Optional["OrderCancelRequest"] = None,
+    ) -> dict:
+        """
+        Khách tự huỷ đơn khi chưa vận chuyển.
+        Bắt buộc kiểm tra quyền sở hữu và trạng thái trước khi gọi cancel_order_atomic.
+        Giải quyết race: forbid_if_shipping=True được truyền xuống lớp ACID, nếu admin vừa chuyển
+        sang shipping thì OrderError(409) được raise bên trong transaction.
+        """
+        order = db_service.get_order_by_id(order_id)
+        if not order:
+            raise OrderError("Đơn hàng không tồn tại", 404)
+
+        # Kiểm tra quyền: chủ đơn (user_id khớp) hoặc khớp SĐT (vãng lai)
+        order_user_id = order.get("user_id")
+        order_phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
+        if order_user_id:
+            if not user or str(getattr(user, "id", "")) != str(order_user_id):
+                raise OrderError("Đơn hàng không tồn tại hoặc bạn không có quyền huỷ", 404)
+        else:
+            phone_provided = (req and req.phone) or phone
+            if not phone_provided or normalize_phone(phone_provided) != normalize_phone(order_phone):
+                raise OrderError("Đơn hàng không tồn tại hoặc SĐT không khớp", 404)
+
+        # Chỉ cho phép huỷ khi đơn chưa vận chuyển
+        current_status = order.get("order_status") or order.get("status", "")
+        if current_status in ("shipping", "completed"):
+            raise OrderError("Đơn hàng đã chuyển sang vận chuyển, không thể huỷ", 409)
+        if current_status == "cancelled":
+            raise OrderError("Đơn hàng đã được huỷ trước đó", 409)
+
+        # Gọi cancel_order_atomic với race guard được đảm bảo bằng khóa in-memory
+        with product_service._lock:
+            # forbid_if_shipping=True: transaction sẽ check lại bên trong và raise 409 nếu admin
+            # vừa commit shipping trước khi khoá được acquire
+            cancelled = db_service.cancel_order_atomic(order_id, forbid_if_shipping=True)
+            if not cancelled:
+                raise OrderError("Đơn hàng không thể huỷ lúc này", 409)
+
+            # Hoàn kho in-memory SAU khi DB commit thành công
+            refreshed = db_service.get_order_by_id(order_id)
+            if refreshed:
+                try:
+                    q = refreshed.get("quote") or {}
+                    if not q and refreshed.get("quote_json"):
+                        q = json.loads(refreshed["quote_json"])
+                    needed = {item["product_id"]: item["quantity"] for item in q.get("lines", [])}
+                    product_service.release_stock(needed)
+                except Exception:
+                    pass
+
+        refreshed = db_service.get_order_by_id(order_id)
+        return refreshed or {"order_id": order_id, "order_status": "cancelled"}
+
     def count_orders(self) -> int:
         if self.orders_path is not None:
             if os.path.exists(self.orders_path):
@@ -468,8 +580,8 @@ class OrderService:
             return session.query(func.count(OrderDB.order_id)).scalar() or 0
 
     # ---------- Quản lý đơn hàng Admin ----------
-    def get_orders(self, status: Optional[str] = None, search: Optional[str] = None,
-                   limit: int = 50, offset: int = 0) -> List[dict]:
+    def get_orders(self, status: Optional[str] = None, payment_status: Optional[str] = None,
+                   search: Optional[str] = None, limit: int = 50, offset: int = 0) -> List[dict]:
         self._ensure_demo_orders()
         with get_db_session() as session:
             query = session.query(OrderDB)
@@ -478,6 +590,9 @@ class OrderService:
                     query = query.filter(or_(OrderDB.order_status == "pending", OrderDB.order_status == "pending_payment"))
                 else:
                     query = query.filter(OrderDB.order_status == status)
+
+            if payment_status and payment_status != "all":
+                query = query.filter(OrderDB.payment_status == payment_status)
 
             if search and search.strip():
                 s = f"%{search.strip().lower()}%"
@@ -499,47 +614,55 @@ class OrderService:
             return self._format_order(o) if o else None
 
     def update_order_status(self, order_id: str, new_status: str) -> Optional[dict]:
-        with get_db_session() as session:
-            o = session.query(OrderDB).filter(OrderDB.order_id == order_id).first()
-            if not o:
-                return None
+        with product_service._lock:
+            with get_db_session() as session:
+                o = session.query(OrderDB).filter(OrderDB.order_id == order_id).first()
+                if not o:
+                    return None
 
-            old_status = o.order_status
-            if new_status == old_status:
-                return self._format_order(o)
+                old_status = o.order_status
+                if new_status == old_status:
+                    return self._format_order(o)
 
-            allowed = VALID_STATUS_TRANSITIONS.get(old_status, set())
-            if new_status not in allowed:
-                raise OrderError(f"Không thể chuyển trạng thái từ '{old_status}' sang '{new_status}'", 400)
+                # Không cho phép chuyển từ cancelled sang shipping (race: khách huỷ trước, admin commit sau)
+                if old_status == "cancelled" and new_status == "shipping":
+                    raise OrderError(
+                        f"Đơn hàng đã bị huỷ, không thể chuyển sang '{new_status}'",
+                        409,
+                    )
 
-            if new_status == "cancelled":
-                db_service.cancel_order_atomic(order_id)
-                session.refresh(o)
-                if o.quote_json:
-                    try:
-                        q = json.loads(o.quote_json)
-                        needed = {item["product_id"]: item["quantity"] for item in q.get("lines", [])}
-                        product_service.release_stock(needed)
-                    except Exception:
-                        pass
-            else:
-                o.order_status = new_status
-                if new_status == "confirmed" and o.payment_method != "cod":
-                    o.payment_status = "paid"
-                elif new_status == "shipping":
-                    o.shipping_status = "in_transit"
-                elif new_status == "completed":
-                    o.shipping_status = "delivered"
-                    if o.payment_method == "cod" or o.payment_status != "paid":
+                allowed = VALID_STATUS_TRANSITIONS.get(old_status, set())
+                if new_status not in allowed:
+                    raise OrderError(f"Không thể chuyển trạng thái từ '{old_status}' sang '{new_status}'", 400)
+
+                if new_status == "cancelled":
+                    db_service.cancel_order_atomic(order_id)
+                    session.refresh(o)
+                    if o.quote_json:
+                        try:
+                            q = json.loads(o.quote_json)
+                            needed = {item["product_id"]: item["quantity"] for item in q.get("lines", [])}
+                            product_service.release_stock(needed)
+                        except Exception:
+                            pass
+                else:
+                    o.order_status = new_status
+                    if new_status == "confirmed" and o.payment_method != "cod":
                         o.payment_status = "paid"
-                        db_service._award_order_loyalty_and_spent(order_id)
-                elif new_status == "confirmed" and o.shipping_status in ["pending_confirm", None]:
-                    o.shipping_status = "ready_to_pick"
+                    elif new_status == "shipping":
+                        o.shipping_status = "in_transit"
+                    elif new_status == "completed":
+                        o.shipping_status = "delivered"
+                        if o.payment_method == "cod" or o.payment_status != "paid":
+                            o.payment_status = "paid"
+                            db_service._award_order_loyalty_and_spent(order_id)
+                    elif new_status == "confirmed" and o.shipping_status in ["pending_confirm", None]:
+                        o.shipping_status = "ready_to_pick"
 
-                session.flush()
-                session.refresh(o)
+                    session.flush()
+                    session.refresh(o)
 
-            return self._format_order(o)
+                return self._format_order(o)
 
     def get_admin_stats(self) -> dict:
         self._ensure_demo_orders()

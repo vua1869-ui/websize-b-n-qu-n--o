@@ -43449,5 +43449,2879 @@
     "tags": [],
     "is_hot": false,
     "is_new": false
+  },
+  {
+    "id": "prod_800",
+    "name": "Áo Thun Test Admin Demo",
+    "category": "ao-thun",
+    "category_name": "Sản phẩm",
+    "gender": "unisex",
+    "price": 299000,
+    "original_price": 350000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 50,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://example.com/test.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm test tự động",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Minimalism",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "test",
+      "demo",
+      "cotton"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_801",
+    "name": "Áo Thun Graphic Test 1",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 199000,
+    "original_price": 199000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 60,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://res.cloudinary.com/test/img1.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      },
+      {
+        "name": "Trắng",
+        "hex": "#ffffff"
+      }
+    ],
+    "description": "Áo Thun Graphic Test 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố",
+      "Đi chơi"
+    ],
+    "tags": [
+      "cotton",
+      "graphic"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_802",
+    "name": "Quần Tây Dáng Suông Test 2",
+    "category": "quan_tay",
+    "category_name": "Quần Tây & Short",
+    "gender": "nam",
+    "price": 399000,
+    "original_price": 399000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 40,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://res.cloudinary.com/test/img2.jpg"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      },
+      {
+        "name": "Xám",
+        "hex": "#71717a"
+      }
+    ],
+    "description": "Quần Tây Dáng Suông Test 2",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Công sở",
+      "Đi làm"
+    ],
+    "tags": [
+      "quần tây",
+      "thanh lịch"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_803",
+    "name": "Sản phẩm Hợp lệ 1",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 250000,
+    "original_price": 250000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 30,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/1.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm Hợp lệ 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Công sở"
+    ],
+    "tags": [
+      "basic"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_804",
+    "name": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 650000,
+    "original_price": 650000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 10,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/new.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "blazer"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_805",
+    "name": "Váy Lụa Excel Test 1",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 420000,
+    "original_price": 420000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 35,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/excel.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng",
+        "hex": "#ffffff"
+      },
+      {
+        "name": "Be",
+        "hex": "#f5f5dc"
+      }
+    ],
+    "description": "Váy Lụa Excel Test 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dự tiệc"
+    ],
+    "tags": [
+      "lụa",
+      "sang trọng"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_806",
+    "name": "Áo Khoác Dạ Excel Test 2",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 890000,
+    "original_price": 890000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 20,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Nâu",
+        "hex": "#8b5a2b"
+      },
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Áo Khoác Dạ Excel Test 2",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Thu đông"
+    ],
+    "tags": [
+      "dạ",
+      "ấm áp"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_807",
+    "name": "Sản phẩm Thử Nghiệm Nhập Lô",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 200000,
+    "original_price": 200000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 20,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm Thử Nghiệm Nhập Lô",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Hiện đại",
+    "occasions": [],
+    "tags": [],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_808",
+    "name": "Sản phẩm Tính Giá Vốn BQGQ",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "unisex",
+    "price": 300000,
+    "original_price": 300000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 0,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm Tính Giá Vốn BQGQ",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Hiện đại",
+    "occasions": [],
+    "tags": [],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_809",
+    "name": "Áo Thun Test Admin Demo",
+    "category": "ao-thun",
+    "category_name": "Sản phẩm",
+    "gender": "unisex",
+    "price": 299000,
+    "original_price": 350000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 50,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://example.com/test.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm test tự động",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Minimalism",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "test",
+      "demo",
+      "cotton"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_810",
+    "name": "Áo Thun Graphic Test 1",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 199000,
+    "original_price": 199000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 60,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://res.cloudinary.com/test/img1.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      },
+      {
+        "name": "Trắng",
+        "hex": "#ffffff"
+      }
+    ],
+    "description": "Áo Thun Graphic Test 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố",
+      "Đi chơi"
+    ],
+    "tags": [
+      "cotton",
+      "graphic"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_811",
+    "name": "Quần Tây Dáng Suông Test 2",
+    "category": "quan_tay",
+    "category_name": "Quần Tây & Short",
+    "gender": "nam",
+    "price": 399000,
+    "original_price": 399000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 40,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://res.cloudinary.com/test/img2.jpg"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      },
+      {
+        "name": "Xám",
+        "hex": "#71717a"
+      }
+    ],
+    "description": "Quần Tây Dáng Suông Test 2",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Công sở",
+      "Đi làm"
+    ],
+    "tags": [
+      "quần tây",
+      "thanh lịch"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_812",
+    "name": "Sản phẩm Hợp lệ 1",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 250000,
+    "original_price": 250000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 30,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/1.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm Hợp lệ 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Công sở"
+    ],
+    "tags": [
+      "basic"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_813",
+    "name": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 650000,
+    "original_price": 650000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 10,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/new.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "blazer"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_814",
+    "name": "Váy Lụa Excel Test 1",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 420000,
+    "original_price": 420000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 35,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/excel.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng",
+        "hex": "#ffffff"
+      },
+      {
+        "name": "Be",
+        "hex": "#f5f5dc"
+      }
+    ],
+    "description": "Váy Lụa Excel Test 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dự tiệc"
+    ],
+    "tags": [
+      "lụa",
+      "sang trọng"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_815",
+    "name": "Áo Khoác Dạ Excel Test 2",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 890000,
+    "original_price": 890000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 20,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Nâu",
+        "hex": "#8b5a2b"
+      },
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Áo Khoác Dạ Excel Test 2",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Thu đông"
+    ],
+    "tags": [
+      "dạ",
+      "ấm áp"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_816",
+    "name": "Sản phẩm Thử Nghiệm Nhập Lô",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 200000,
+    "original_price": 200000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 20,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm Thử Nghiệm Nhập Lô",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Hiện đại",
+    "occasions": [],
+    "tags": [],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_817",
+    "name": "Sản phẩm Tính Giá Vốn BQGQ",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "unisex",
+    "price": 300000,
+    "original_price": 300000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 0,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm Tính Giá Vốn BQGQ",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Hiện đại",
+    "occasions": [],
+    "tags": [],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_818",
+    "name": "Áo Thun Test Admin Demo",
+    "category": "ao-thun",
+    "category_name": "Sản phẩm",
+    "gender": "unisex",
+    "price": 299000,
+    "original_price": 350000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 50,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://example.com/test.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm test tự động",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Minimalism",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "test",
+      "demo",
+      "cotton"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_819",
+    "name": "Áo Thun Graphic Test 1",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 199000,
+    "original_price": 199000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 60,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://res.cloudinary.com/test/img1.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      },
+      {
+        "name": "Trắng",
+        "hex": "#ffffff"
+      }
+    ],
+    "description": "Áo Thun Graphic Test 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố",
+      "Đi chơi"
+    ],
+    "tags": [
+      "cotton",
+      "graphic"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_820",
+    "name": "Quần Tây Dáng Suông Test 2",
+    "category": "quan_tay",
+    "category_name": "Quần Tây & Short",
+    "gender": "nam",
+    "price": 399000,
+    "original_price": 399000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 40,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://res.cloudinary.com/test/img2.jpg"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      },
+      {
+        "name": "Xám",
+        "hex": "#71717a"
+      }
+    ],
+    "description": "Quần Tây Dáng Suông Test 2",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Công sở",
+      "Đi làm"
+    ],
+    "tags": [
+      "quần tây",
+      "thanh lịch"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_821",
+    "name": "Sản phẩm Hợp lệ 1",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 250000,
+    "original_price": 250000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 30,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/1.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm Hợp lệ 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Công sở"
+    ],
+    "tags": [
+      "basic"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_822",
+    "name": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 650000,
+    "original_price": 650000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 10,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/new.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "blazer"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_823",
+    "name": "Váy Lụa Excel Test 1",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 420000,
+    "original_price": 420000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 35,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/excel.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng",
+        "hex": "#ffffff"
+      },
+      {
+        "name": "Be",
+        "hex": "#f5f5dc"
+      }
+    ],
+    "description": "Váy Lụa Excel Test 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dự tiệc"
+    ],
+    "tags": [
+      "lụa",
+      "sang trọng"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_824",
+    "name": "Áo Khoác Dạ Excel Test 2",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 890000,
+    "original_price": 890000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 20,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Nâu",
+        "hex": "#8b5a2b"
+      },
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Áo Khoác Dạ Excel Test 2",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Thu đông"
+    ],
+    "tags": [
+      "dạ",
+      "ấm áp"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_825",
+    "name": "Sản phẩm Thử Nghiệm Nhập Lô",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 200000,
+    "original_price": 200000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 20,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm Thử Nghiệm Nhập Lô",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Hiện đại",
+    "occasions": [],
+    "tags": [],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_826",
+    "name": "Sản phẩm Tính Giá Vốn BQGQ",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "unisex",
+    "price": 300000,
+    "original_price": 300000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 0,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm Tính Giá Vốn BQGQ",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Hiện đại",
+    "occasions": [],
+    "tags": [],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_827",
+    "name": "Áo Thun Test Admin Demo",
+    "category": "ao-thun",
+    "category_name": "Sản phẩm",
+    "gender": "unisex",
+    "price": 299000,
+    "original_price": 350000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 50,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://example.com/test.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm test tự động",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Minimalism",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "test",
+      "demo",
+      "cotton"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_828",
+    "name": "Áo Thun Graphic Test 1",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 199000,
+    "original_price": 199000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 60,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://res.cloudinary.com/test/img1.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      },
+      {
+        "name": "Trắng",
+        "hex": "#ffffff"
+      }
+    ],
+    "description": "Áo Thun Graphic Test 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố",
+      "Đi chơi"
+    ],
+    "tags": [
+      "cotton",
+      "graphic"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_829",
+    "name": "Quần Tây Dáng Suông Test 2",
+    "category": "quan_tay",
+    "category_name": "Quần Tây & Short",
+    "gender": "nam",
+    "price": 399000,
+    "original_price": 399000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 40,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://res.cloudinary.com/test/img2.jpg"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      },
+      {
+        "name": "Xám",
+        "hex": "#71717a"
+      }
+    ],
+    "description": "Quần Tây Dáng Suông Test 2",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Công sở",
+      "Đi làm"
+    ],
+    "tags": [
+      "quần tây",
+      "thanh lịch"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_830",
+    "name": "Sản phẩm Hợp lệ 1",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 250000,
+    "original_price": 250000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 30,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/1.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm Hợp lệ 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Công sở"
+    ],
+    "tags": [
+      "basic"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_831",
+    "name": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 650000,
+    "original_price": 650000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 10,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/new.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "blazer"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_832",
+    "name": "Váy Lụa Excel Test 1",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 420000,
+    "original_price": 420000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 35,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/excel.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng",
+        "hex": "#ffffff"
+      },
+      {
+        "name": "Be",
+        "hex": "#f5f5dc"
+      }
+    ],
+    "description": "Váy Lụa Excel Test 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dự tiệc"
+    ],
+    "tags": [
+      "lụa",
+      "sang trọng"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_833",
+    "name": "Áo Khoác Dạ Excel Test 2",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 890000,
+    "original_price": 890000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 20,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Nâu",
+        "hex": "#8b5a2b"
+      },
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Áo Khoác Dạ Excel Test 2",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Thu đông"
+    ],
+    "tags": [
+      "dạ",
+      "ấm áp"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_834",
+    "name": "Sản phẩm Thử Nghiệm Nhập Lô",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 200000,
+    "original_price": 200000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 20,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm Thử Nghiệm Nhập Lô",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Hiện đại",
+    "occasions": [],
+    "tags": [],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_835",
+    "name": "Sản phẩm Tính Giá Vốn BQGQ",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "unisex",
+    "price": 300000,
+    "original_price": 300000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 0,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm Tính Giá Vốn BQGQ",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Hiện đại",
+    "occasions": [],
+    "tags": [],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_836",
+    "name": "Áo Thun Test Admin Demo",
+    "category": "ao-thun",
+    "category_name": "Sản phẩm",
+    "gender": "unisex",
+    "price": 299000,
+    "original_price": 350000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 50,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://example.com/test.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm test tự động",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Minimalism",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "test",
+      "demo",
+      "cotton"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_837",
+    "name": "Áo Thun Graphic Test 1",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 199000,
+    "original_price": 199000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 60,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://res.cloudinary.com/test/img1.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      },
+      {
+        "name": "Trắng",
+        "hex": "#ffffff"
+      }
+    ],
+    "description": "Áo Thun Graphic Test 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố",
+      "Đi chơi"
+    ],
+    "tags": [
+      "cotton",
+      "graphic"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_838",
+    "name": "Quần Tây Dáng Suông Test 2",
+    "category": "quan_tay",
+    "category_name": "Quần Tây & Short",
+    "gender": "nam",
+    "price": 399000,
+    "original_price": 399000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 40,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://res.cloudinary.com/test/img2.jpg"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      },
+      {
+        "name": "Xám",
+        "hex": "#71717a"
+      }
+    ],
+    "description": "Quần Tây Dáng Suông Test 2",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Công sở",
+      "Đi làm"
+    ],
+    "tags": [
+      "quần tây",
+      "thanh lịch"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_839",
+    "name": "Sản phẩm Hợp lệ 1",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 250000,
+    "original_price": 250000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 30,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/1.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm Hợp lệ 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Công sở"
+    ],
+    "tags": [
+      "basic"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_840",
+    "name": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 650000,
+    "original_price": 650000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 10,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/new.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "blazer"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_841",
+    "name": "Váy Lụa Excel Test 1",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 420000,
+    "original_price": 420000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 35,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/excel.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng",
+        "hex": "#ffffff"
+      },
+      {
+        "name": "Be",
+        "hex": "#f5f5dc"
+      }
+    ],
+    "description": "Váy Lụa Excel Test 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dự tiệc"
+    ],
+    "tags": [
+      "lụa",
+      "sang trọng"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_842",
+    "name": "Áo Khoác Dạ Excel Test 2",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 890000,
+    "original_price": 890000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 20,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Nâu",
+        "hex": "#8b5a2b"
+      },
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Áo Khoác Dạ Excel Test 2",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Thu đông"
+    ],
+    "tags": [
+      "dạ",
+      "ấm áp"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_843",
+    "name": "Sản phẩm Thử Nghiệm Nhập Lô",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 200000,
+    "original_price": 200000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 20,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm Thử Nghiệm Nhập Lô",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Hiện đại",
+    "occasions": [],
+    "tags": [],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_844",
+    "name": "Sản phẩm Tính Giá Vốn BQGQ",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "unisex",
+    "price": 300000,
+    "original_price": 300000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 0,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm Tính Giá Vốn BQGQ",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Hiện đại",
+    "occasions": [],
+    "tags": [],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_845",
+    "name": "Áo Thun Test Admin Demo",
+    "category": "ao-thun",
+    "category_name": "Sản phẩm",
+    "gender": "unisex",
+    "price": 299000,
+    "original_price": 350000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 50,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://example.com/test.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm test tự động",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Minimalism",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "test",
+      "demo",
+      "cotton"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_846",
+    "name": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 650000,
+    "original_price": 650000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 10,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/new.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "blazer"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_847",
+    "name": "Áo Thun Test Admin Demo",
+    "category": "ao-thun",
+    "category_name": "Sản phẩm",
+    "gender": "unisex",
+    "price": 299000,
+    "original_price": 350000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 50,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://example.com/test.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm test tự động",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Minimalism",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "test",
+      "demo",
+      "cotton"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_848",
+    "name": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 650000,
+    "original_price": 650000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 10,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/new.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "blazer"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_849",
+    "name": "Áo Thun Test Admin Demo",
+    "category": "ao-thun",
+    "category_name": "Sản phẩm",
+    "gender": "unisex",
+    "price": 299000,
+    "original_price": 350000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 50,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://example.com/test.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm test tự động",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Minimalism",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "test",
+      "demo",
+      "cotton"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_850",
+    "name": "Áo Thun Graphic Test 1",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 199000,
+    "original_price": 199000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 60,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://res.cloudinary.com/test/img1.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      },
+      {
+        "name": "Trắng",
+        "hex": "#ffffff"
+      }
+    ],
+    "description": "Áo Thun Graphic Test 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố",
+      "Đi chơi"
+    ],
+    "tags": [
+      "cotton",
+      "graphic"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_851",
+    "name": "Quần Tây Dáng Suông Test 2",
+    "category": "quan_tay",
+    "category_name": "Quần Tây & Short",
+    "gender": "nam",
+    "price": 399000,
+    "original_price": 399000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 40,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://res.cloudinary.com/test/img2.jpg"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      },
+      {
+        "name": "Xám",
+        "hex": "#71717a"
+      }
+    ],
+    "description": "Quần Tây Dáng Suông Test 2",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Công sở",
+      "Đi làm"
+    ],
+    "tags": [
+      "quần tây",
+      "thanh lịch"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_852",
+    "name": "Sản phẩm Hợp lệ 1",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 250000,
+    "original_price": 250000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 30,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/1.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm Hợp lệ 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Công sở"
+    ],
+    "tags": [
+      "basic"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_853",
+    "name": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 650000,
+    "original_price": 650000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 10,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/new.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "blazer"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_854",
+    "name": "Váy Lụa Excel Test 1",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 420000,
+    "original_price": 420000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 35,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/excel.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng",
+        "hex": "#ffffff"
+      },
+      {
+        "name": "Be",
+        "hex": "#f5f5dc"
+      }
+    ],
+    "description": "Váy Lụa Excel Test 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dự tiệc"
+    ],
+    "tags": [
+      "lụa",
+      "sang trọng"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_855",
+    "name": "Áo Khoác Dạ Excel Test 2",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 890000,
+    "original_price": 890000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 20,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Nâu",
+        "hex": "#8b5a2b"
+      },
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Áo Khoác Dạ Excel Test 2",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Thu đông"
+    ],
+    "tags": [
+      "dạ",
+      "ấm áp"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_856",
+    "name": "Sản phẩm Thử Nghiệm Nhập Lô",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 200000,
+    "original_price": 200000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 20,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm Thử Nghiệm Nhập Lô",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Hiện đại",
+    "occasions": [],
+    "tags": [],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_857",
+    "name": "Sản phẩm Tính Giá Vốn BQGQ",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "unisex",
+    "price": 300000,
+    "original_price": 300000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 0,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm Tính Giá Vốn BQGQ",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Hiện đại",
+    "occasions": [],
+    "tags": [],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_858",
+    "name": "Áo Thun Test Admin Demo",
+    "category": "ao-thun",
+    "category_name": "Sản phẩm",
+    "gender": "unisex",
+    "price": 299000,
+    "original_price": 350000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 50,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://example.com/test.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm test tự động",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Minimalism",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "test",
+      "demo",
+      "cotton"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_859",
+    "name": "Áo Thun Graphic Test 1",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 199000,
+    "original_price": 199000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 60,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://res.cloudinary.com/test/img1.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      },
+      {
+        "name": "Trắng",
+        "hex": "#ffffff"
+      }
+    ],
+    "description": "Áo Thun Graphic Test 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố",
+      "Đi chơi"
+    ],
+    "tags": [
+      "cotton",
+      "graphic"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_860",
+    "name": "Quần Tây Dáng Suông Test 2",
+    "category": "quan_tay",
+    "category_name": "Quần Tây & Short",
+    "gender": "nam",
+    "price": 399000,
+    "original_price": 399000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 40,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://res.cloudinary.com/test/img2.jpg"
+    ],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      },
+      {
+        "name": "Xám",
+        "hex": "#71717a"
+      }
+    ],
+    "description": "Quần Tây Dáng Suông Test 2",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Công sở",
+      "Đi làm"
+    ],
+    "tags": [
+      "quần tây",
+      "thanh lịch"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_861",
+    "name": "Sản phẩm Hợp lệ 1",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 250000,
+    "original_price": 250000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 30,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/1.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm Hợp lệ 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Công sở"
+    ],
+    "tags": [
+      "basic"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_862",
+    "name": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 650000,
+    "original_price": 650000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 10,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/new.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Sản phẩm ĐÃ ĐƯỢC UPSERT THÀNH CÔNG",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "blazer"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_863",
+    "name": "Váy Lụa Excel Test 1",
+    "category": "vay_dam",
+    "category_name": "Váy & Đầm",
+    "gender": "nu",
+    "price": 420000,
+    "original_price": 420000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 35,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://test.com/excel.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng",
+        "hex": "#ffffff"
+      },
+      {
+        "name": "Be",
+        "hex": "#f5f5dc"
+      }
+    ],
+    "description": "Váy Lụa Excel Test 1",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Dự tiệc"
+    ],
+    "tags": [
+      "lụa",
+      "sang trọng"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_864",
+    "name": "Áo Khoác Dạ Excel Test 2",
+    "category": "ao_khoac",
+    "category_name": "Áo Khoác & Len",
+    "gender": "unisex",
+    "price": 890000,
+    "original_price": 890000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 20,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [],
+    "sizes": [
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Nâu",
+        "hex": "#8b5a2b"
+      },
+      {
+        "name": "Đen",
+        "hex": "#18181b"
+      }
+    ],
+    "description": "Áo Khoác Dạ Excel Test 2",
+    "material": "Cotton & Linen cao cấp",
+    "style": "Hiện đại",
+    "occasions": [
+      "Thu đông"
+    ],
+    "tags": [
+      "dạ",
+      "ấm áp"
+    ],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_865",
+    "name": "Sản phẩm Thử Nghiệm Nhập Lô",
+    "category": "ao_thun",
+    "category_name": "Áo Thun & Polo",
+    "gender": "unisex",
+    "price": 200000,
+    "original_price": 200000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 20,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm Thử Nghiệm Nhập Lô",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Hiện đại",
+    "occasions": [],
+    "tags": [],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_866",
+    "name": "Sản phẩm Tính Giá Vốn BQGQ",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "unisex",
+    "price": 300000,
+    "original_price": 300000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 0,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm Tính Giá Vốn BQGQ",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Hiện đại",
+    "occasions": [],
+    "tags": [],
+    "is_hot": false,
+    "is_new": false
   }
 ]

@@ -7,6 +7,7 @@ from app.config import settings
 from app.db.database import db_service
 from app.models.schemas import (
     InvoiceResponse,
+    OrderCancelRequest,
     OrderCreateRequest,
     OrderResponse,
     OrderTrackingResponse,
@@ -22,7 +23,7 @@ from app.routers.deps import (
     require_admin,
     verify_order_access,
 )
-from app.services.order_service import order_service
+from app.services.order_service import OrderError, order_service
 
 router = APIRouter(tags=["orders"])
 
@@ -211,6 +212,29 @@ def get_order_invoice(order_id: str, request: Request, phone: Optional[str] = Qu
         carrier=carrier,
         tracking_code=tracking_code,
     )
+
+
+
+@router.post("/api/orders/{order_id}/cancel")
+def cancel_order_by_customer(order_id: str, body: OrderCancelRequest, request: Request):
+    """
+    Khách tự huỷ đơn trước khi vận chuyển.
+    - Đơn đã thanh toán -> chuyển refund_pending.
+    - Race giữa huỷ và admin chuyển shipping được xử lý bằng lock + transaction.
+    """
+    user = get_current_user_optional(request)
+    try:
+        result = order_service.cancel_order_by_customer(
+            order_id, user=user, req=body
+        )
+        order_status = result.get("order_status") or result.get("status", "cancelled")
+        payment_status = result.get("payment_status", "")
+        msg = "Đơn hàng đã được huỷ thành công."
+        if payment_status == "refund_pending":
+            msg += " Số tiền thanh toán sẽ được hoàn lại trong 3-5 ngày làm việc."
+        return {"success": True, "order_id": order_id, "order_status": order_status, "message": msg}
+    except OrderError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.message)
 
 
 @router.post("/api/orders/{order_id}/send-notification")

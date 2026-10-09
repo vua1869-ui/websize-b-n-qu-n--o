@@ -273,9 +273,15 @@ USERNAME_RE = re.compile(r"^[a-zA-Z0-9_.]{3,30}$")
 EMAIL_RE = re.compile(r"^[^<>\s@]+@[^<>\s@]+\.[^<>\s@]+$")
 
 
+class OrderCancelRequest(BaseModel):
+    phone: Optional[str] = None
+    reason: Optional[str] = Field(default=None, max_length=250)
+
+
 class OrderCreateRequest(BaseModel):
     customer_name: str = Field(min_length=2, max_length=80)
     customer_phone: str
+    customer_email: Optional[str] = Field(default=None, max_length=120)
     customer_address: Optional[str] = Field(default=None, max_length=250)
     customer_note: Optional[str] = Field(default=None, max_length=300)
     province_code: Optional[Union[int, str]] = None
@@ -297,6 +303,18 @@ class OrderCreateRequest(BaseModel):
         if "<" in v or ">" in v:
             raise ValueError("Tên khách hàng không được chứa ký tự < hoặc >")
         return v
+
+    @field_validator("customer_email")
+    @classmethod
+    def _validate_customer_email(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v = v.strip()
+        if not v:
+            return None
+        if not EMAIL_RE.match(v):
+            raise ValueError("Email không hợp lệ (ví dụ: customer@example.com)")
+        return v.lower()
 
     @field_validator("customer_note", "specific_address", "customer_address")
     @classmethod
@@ -787,6 +805,7 @@ class AdminProductPayload(BaseModel):
     occasion: Optional[str] = None
     occasions: Optional[List[str]] = None
     tags: Optional[List[str]] = None
+    variants: Optional[List[ProductVariant]] = None
     is_hot: bool = False
     is_new: bool = False
 
@@ -831,6 +850,8 @@ class CartSyncRequest(BaseModel):
 class InventoryBatchCreate(BaseModel):
     quantity: int = Field(gt=0, description="Số lượng nhập kho, phải lớn hơn 0")
     cost_price: int = Field(ge=0, description="Giá vốn nhập đơn vị (VNĐ)")
+    color: Optional[str] = Field(default=None, description="Màu sắc biến thể (nếu nhập theo biến thể)")
+    size: Optional[str] = Field(default=None, description="Kích thước biến thể (nếu nhập theo biến thể)")
     note: Optional[str] = Field(default="", max_length=500)
 
 
@@ -838,6 +859,8 @@ class InventoryBatchItem(BaseModel):
     id: int
     product_id: str
     product_name: Optional[str] = None
+    color: Optional[str] = None
+    size: Optional[str] = None
     quantity: int
     cost_price: int
     received_at: str
@@ -885,4 +908,5 @@ class PaymentWebhookPayload(BaseModel):
 class VNPayCreatePaymentRequest(BaseModel):
     order_id: str
     bank_code: Optional[str] = None
+    phone: Optional[str] = None
 

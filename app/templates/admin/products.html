@@ -294,6 +294,21 @@
         <p id="quick-inv-pname" class="mt-1 font-bold text-noir-100 text-sm">...</p>
       </div>
 
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm font-semibold text-noir-300 uppercase tracking-wider">Màu sắc</label>
+          <select id="quick-inv-color" class="mt-1 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3 py-2 text-sm text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800">
+            <option value="">-- Tất cả màu --</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-noir-300 uppercase tracking-wider">Kích cỡ</label>
+          <select id="quick-inv-size" class="mt-1 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3 py-2 text-sm text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800">
+            <option value="">-- Tất cả size --</option>
+          </select>
+        </div>
+      </div>
+
       <div>
         <label class="block text-sm font-semibold text-noir-300 uppercase tracking-wider">Số lượng nhập <span class="text-gold-500">*</span></label>
         <input type="number" id="quick-inv-qty" required min="1" placeholder="50"
@@ -741,6 +756,31 @@
     document.getElementById("quick-inv-qty").value = "";
     document.getElementById("quick-inv-cost").value = "";
     document.getElementById("quick-inv-note").value = "";
+
+    const colorSelect = document.getElementById("quick-inv-color");
+    const sizeSelect = document.getElementById("quick-inv-size");
+
+    const prod = currentProducts.find(p => p.id === pid);
+    if (prod) {
+      const colors = prod.colors || [];
+      let colorOpts = '<option value="">-- Tất cả màu (chia đều) --</option>';
+      colors.forEach(c => {
+        const cName = typeof c === "object" ? c.name : c;
+        colorOpts += `<option value="${esc(cName)}">${esc(cName)}</option>`;
+      });
+      colorSelect.innerHTML = colorOpts;
+
+      const sizes = prod.sizes || [];
+      let sizeOpts = '<option value="">-- Tất cả size (chia đều) --</option>';
+      sizes.forEach(s => {
+        sizeOpts += `<option value="${esc(s)}">${esc(s)}</option>`;
+      });
+      sizeSelect.innerHTML = sizeOpts;
+    } else {
+      colorSelect.innerHTML = '<option value="">-- Tất cả màu --</option>';
+      sizeSelect.innerHTML = '<option value="">-- Tất cả size --</option>';
+    }
+
     quickInvModal.classList.remove("hidden");
   };
 
@@ -751,6 +791,8 @@
   quickInvForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const pid = document.getElementById("quick-inv-pid").value;
+    const color = document.getElementById("quick-inv-color").value.trim();
+    const size = document.getElementById("quick-inv-size").value.trim();
     const qty = parseInt(document.getElementById("quick-inv-qty").value);
     const cost = parseInt(document.getElementById("quick-inv-cost").value);
     const note = document.getElementById("quick-inv-note").value.trim();
@@ -760,14 +802,18 @@
     submitBtn.textContent = "Đang lưu...";
 
     try {
+      const payload = {
+        quantity: qty,
+        cost_price: cost,
+        note: note
+      };
+      if (color) payload.color = color;
+      if (size) payload.size = size;
+
       const res = await fetch(`/api/admin/products/${pid}/inventory`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          quantity: qty,
-          cost_price: cost,
-          note: note
-        })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (!res.ok) {

@@ -1,7 +1,8 @@
+import datetime
 import time
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 
 from app.db.database import db_service
 from app.models.schemas import (
@@ -16,7 +17,7 @@ from app.models.schemas import (
     VoucherCheckRequest,
     VoucherCheckResponse,
 )
-from app.routers.deps import get_current_user
+from app.routers.deps import check_voucher_validate_rate_limit, get_current_user
 from app.services.geo_service import geo_service
 from app.services.product_service import product_service
 from app.services.size_chart_service import size_chart_service
@@ -89,10 +90,13 @@ def get_vouchers():
 
 
 @router.post("/api/vouchers/validate", response_model=VoucherCheckResponse)
-def validate_voucher(body: VoucherCheckRequest):
+def validate_voucher(body: VoucherCheckRequest, request: Request):
+    check_voucher_validate_rate_limit(request)
     v = product_service.get_voucher(body.code)
     if not v:
         return VoucherCheckResponse(valid=False, message=f"Mã '{body.code.strip().upper()}' không tồn tại")
+    if v.expires_at and datetime.datetime.now() > v.expires_at:
+        return VoucherCheckResponse(valid=False, message=f"Mã '{v.code}' đã hết hạn sử dụng")
     if body.subtotal < v.min_order:
         return VoucherCheckResponse(
             valid=False, message=f"Mã {v.code} áp dụng cho đơn từ {_vnd(v.min_order)}"

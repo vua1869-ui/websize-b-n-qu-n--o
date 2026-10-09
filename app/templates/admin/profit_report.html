@@ -77,39 +77,87 @@
       <span class="rounded-full bg-noir-800 px-3 py-1 text-sm font-mono text-noir-300 border border-noir-700">ACID Transaction</span>
     </div>
 
-    <form id="inventory-form" class="grid grid-cols-1 gap-4 sm:grid-cols-4">
-      <div class="sm:col-span-1">
+    <form id="inventory-form" class="grid grid-cols-1 gap-4 sm:grid-cols-6">
+      <div class="sm:col-span-2">
         <label class="block text-sm uppercase tracking-wider font-semibold text-noir-300">Chọn sản phẩm <span class="text-gold-500">*</span></label>
-        <select id="inv-product-id" required class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3 py-2 text-sm text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800">
+        <select id="inv-product-id" required onchange="onProductSelectChange()" class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3 py-2 text-sm text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800">
           <option value="">-- Đang nạp danh sách sản phẩm --</option>
         </select>
       </div>
 
       <div class="sm:col-span-1">
-        <label class="block text-sm uppercase tracking-wider font-semibold text-noir-300">Số lượng nhập <span class="text-gold-500">*</span></label>
+        <label class="block text-sm uppercase tracking-wider font-semibold text-noir-300">Màu sắc</label>
+        <select id="inv-color" class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3 py-2 text-sm text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800">
+          <option value="">-- Tất cả màu --</option>
+        </select>
+      </div>
+
+      <div class="sm:col-span-1">
+        <label class="block text-sm uppercase tracking-wider font-semibold text-noir-300">Kích cỡ (Size)</label>
+        <select id="inv-size" class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3 py-2 text-sm text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800">
+          <option value="">-- Tất cả size --</option>
+        </select>
+      </div>
+
+      <div class="sm:col-span-1">
+        <label class="block text-sm uppercase tracking-wider font-semibold text-noir-300">Số lượng <span class="text-gold-500">*</span></label>
         <input type="number" id="inv-quantity" required min="1" placeholder="50"
                class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2 text-sm text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50" />
       </div>
 
       <div class="sm:col-span-1">
-        <label class="block text-sm uppercase tracking-wider font-semibold text-noir-300">Giá vốn nhập (VNĐ/sp) <span class="text-gold-500">*</span></label>
+        <label class="block text-sm uppercase tracking-wider font-semibold text-noir-300">Giá vốn (VNĐ/sp) <span class="text-gold-500">*</span></label>
         <input type="number" id="inv-cost-price" required min="0" step="1000" placeholder="150000"
                class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2 text-sm text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50" />
       </div>
 
-      <div class="sm:col-span-1">
+      <div class="sm:col-span-6">
         <label class="block text-sm uppercase tracking-wider font-semibold text-noir-300">Ghi chú lô hàng</label>
         <input type="text" id="inv-note" placeholder="Nhà may Sài Gòn đợt 1..."
                class="mt-1.5 w-full rounded-md border border-noir-700 bg-noir-800/60 px-3.5 py-2 text-sm text-noir-100 outline-none transition focus:border-gold-500 focus:bg-noir-800 focus:ring-1 focus:ring-gold-500/50" />
       </div>
 
-      <div class="sm:col-span-4 flex justify-end">
+      <div class="sm:col-span-6 flex justify-end">
         <button type="submit" id="inv-submit-btn" class="flex items-center gap-2 rounded-md bg-gold-500 px-5 py-2.5 text-sm font-semibold uppercase tracking-wider text-noir-900 shadow-lg transition hover:bg-gold-400">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
           <span>Nhập kho ngay</span>
         </button>
       </div>
     </form>
+  </div>
+
+  <!-- 2.5 CẢNH BÁO BIẾN THỂ SẮP HẾT HÀNG (STOCK <= 5) -->
+  <div class="rounded-lg border border-amber-900/50 bg-noir-900 shadow-lg overflow-hidden glass-card">
+    <div class="flex items-center justify-between border-b border-noir-700 p-4 bg-amber-950/20">
+      <div class="flex items-center gap-2">
+        <span class="flex h-2.5 w-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+        <h3 class="text-sm font-bold text-amber-400">Cảnh Báo Biến Thể Sắp Hết Hàng (Tồn &le; 5 sp)</h3>
+      </div>
+      <button onclick="loadLowStockVariants()" class="rounded-md border border-noir-700 bg-noir-800 px-3 py-1.5 text-sm font-medium text-noir-300 hover:bg-noir-700 hover:text-amber-400 transition shadow-lg">
+        Làm mới cảnh báo
+      </button>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm">
+        <thead class="bg-noir-800 border-b border-noir-700 text-noir-400 uppercase tracking-wider text-sm">
+          <tr>
+            <th class="py-3 px-4 font-semibold">Sản phẩm</th>
+            <th class="py-3 px-4 font-semibold">Màu sắc</th>
+            <th class="py-3 px-4 font-semibold">Size</th>
+            <th class="py-3 px-4 font-semibold">Mã SKU</th>
+            <th class="py-3 px-4 font-semibold text-center">Tồn biến thể</th>
+            <th class="py-3 px-4 font-semibold text-center">Tổng kho SP</th>
+            <th class="py-3 px-4 font-semibold text-right">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody id="low-stock-variants-tbody" class="divide-y divide-noir-700 text-noir-100">
+          <tr>
+            <td colspan="7" class="py-6 text-center text-noir-400">Đang quét các biến thể tồn kho thấp...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- 3. BẢNG PHÂN TÍCH LÃI/LỖ THEO TỪNG SẢN PHẨM -->
@@ -159,6 +207,7 @@
           <tr>
             <th class="py-3 px-4 font-semibold">Mã lô</th>
             <th class="py-3 px-4 font-semibold">Sản phẩm</th>
+            <th class="py-3 px-4 font-semibold">Phân loại</th>
             <th class="py-3 px-4 font-semibold text-center">Số lượng</th>
             <th class="py-3 px-4 font-semibold text-right">Giá vốn đơn vị</th>
             <th class="py-3 px-4 font-semibold">Thời gian nhập</th>
@@ -168,7 +217,7 @@
         </thead>
         <tbody id="batches-tbody" class="divide-y divide-noir-700 text-noir-100">
           <tr>
-            <td colspan="7" class="py-8 text-center text-noir-400">Đang nạp lịch sử lô hàng...</td>
+            <td colspan="8" class="py-8 text-center text-noir-400">Đang nạp lịch sử lô hàng...</td>
           </tr>
         </tbody>
       </table>
@@ -198,6 +247,95 @@
       }
     } catch (e) {
       console.error("Lỗi nạp sản phẩm:", e);
+    }
+  }
+
+  function onProductSelectChange() {
+    const pid = document.getElementById("inv-product-id").value;
+    const colorSelect = document.getElementById("inv-color");
+    const sizeSelect = document.getElementById("inv-size");
+
+    if (!pid) {
+      colorSelect.innerHTML = '<option value="">-- Tất cả màu --</option>';
+      sizeSelect.innerHTML = '<option value="">-- Tất cả size --</option>';
+      return;
+    }
+
+    const prod = productsCache.find(p => p.id === pid);
+    if (!prod) return;
+
+    // Render options màu
+    const colors = prod.colors || [];
+    let colorOpts = '<option value="">-- Tất cả màu (chia đều) --</option>';
+    colors.forEach(c => {
+      const cName = typeof c === "object" ? c.name : c;
+      colorOpts += `<option value="${esc(cName)}">${esc(cName)}</option>`;
+    });
+    colorSelect.innerHTML = colorOpts;
+
+    // Render options size
+    const sizes = prod.sizes || [];
+    let sizeOpts = '<option value="">-- Tất cả size (chia đều) --</option>';
+    sizes.forEach(s => {
+      sizeOpts += `<option value="${esc(s)}">${esc(s)}</option>`;
+    });
+    sizeSelect.innerHTML = sizeOpts;
+  }
+
+  function prefillQuickBatch(pid, color, size) {
+    const select = document.getElementById("inv-product-id");
+    select.value = pid;
+    onProductSelectChange();
+    if (color) document.getElementById("inv-color").value = color;
+    if (size) document.getElementById("inv-size").value = size;
+    document.getElementById("inv-quantity").focus();
+    window.scrollTo({ top: document.getElementById("inventory-form").offsetTop - 100, behavior: 'smooth' });
+  }
+
+  async function loadLowStockVariants() {
+    try {
+      const res = await fetch("/api/admin/variants/low-stock?threshold=5");
+      if (!res.ok) return;
+      const variants = await res.json();
+      const tbody = document.getElementById("low-stock-variants-tbody");
+      if (!variants || variants.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-emerald-400 font-medium">✓ Tuyệt vời! Tất cả các biến thể đều có tồn kho an toàn (&gt; 5 sản phẩm).</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = variants.map(v => {
+        const isOut = v.stock === 0;
+        return `
+          <tr class="hover:bg-noir-800/60 transition ${isOut ? 'bg-rose-950/20' : ''}">
+            <td class="py-2.5 px-4 font-medium">
+              <p class="font-semibold text-noir-100">${esc(v.product_name)}</p>
+              <p class="text-sm font-mono text-noir-400">ID: ${esc(v.product_id)}</p>
+            </td>
+            <td class="py-2.5 px-4">
+              <span class="inline-flex items-center gap-1.5 font-medium text-noir-200">
+                <span class="h-3 w-3 rounded-full border border-noir-600" style="background-color: ${esc(v.color_hex || '#000000')}"></span>
+                ${esc(v.color)}
+              </span>
+            </td>
+            <td class="py-2.5 px-4 font-mono font-semibold text-noir-100">${esc(v.size)}</td>
+            <td class="py-2.5 px-4 font-mono text-sm text-noir-400">${esc(v.sku || '—')}</td>
+            <td class="py-2.5 px-4 text-center">
+              <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-bold font-mono ${isOut ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}">
+                ${v.stock} sp
+              </span>
+            </td>
+            <td class="py-2.5 px-4 text-center font-mono text-noir-300">${v.total_product_stock} sp</td>
+            <td class="py-2.5 px-4 text-right">
+              <button onclick="prefillQuickBatch('${esc(v.product_id)}', '${esc(v.color)}', '${esc(v.size)}')"
+                      class="rounded bg-gold-500/10 border border-gold-500/30 px-2.5 py-1 text-xs font-semibold text-gold-400 hover:bg-gold-500 hover:text-noir-900 transition">
+                + Nhập lô ngay
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join("");
+    } catch (e) {
+      console.error("Lỗi nạp biến thể tồn thấp:", e);
     }
   }
 
@@ -248,22 +386,28 @@
       // Render Lịch sử các lô nhập kho gần đây
       const tbodyBatches = document.getElementById("batches-tbody");
       if (data.recent_batches && data.recent_batches.length > 0) {
-        tbodyBatches.innerHTML = data.recent_batches.map(b => `
-          <tr class="hover:bg-noir-800/60 transition">
-            <td class="py-2.5 px-4 font-mono font-bold text-noir-100">#${esc(b.id)}</td>
-            <td class="py-2.5 px-4 font-medium">
-              <p class="font-semibold text-noir-100">${esc(b.product_name || b.product_id)}</p>
-              <p class="text-sm font-mono text-noir-400">ID: ${esc(b.product_id)}</p>
-            </td>
-            <td class="py-2.5 px-4 text-center font-mono font-bold text-noir-100">+${b.quantity}</td>
-            <td class="py-2.5 px-4 text-right font-mono font-semibold text-noir-300">${b.cost_price.toLocaleString("vi-VN")}đ</td>
-            <td class="py-2.5 px-4 text-noir-400">${esc(b.received_at)}</td>
-            <td class="py-2.5 px-4 text-noir-400 italic">${esc(b.note || "—")}</td>
-            <td class="py-2.5 px-4 text-right text-noir-400 font-mono">@${esc(b.created_by || "admin")}</td>
-          </tr>
-        `).join("");
+        tbodyBatches.innerHTML = data.recent_batches.map(b => {
+          const variantText = (b.color || b.size)
+            ? `${esc(b.color || "Tất cả")} - ${esc(b.size || "Tất cả")}`
+            : "Toàn bộ SP";
+          return `
+            <tr class="hover:bg-noir-800/60 transition">
+              <td class="py-2.5 px-4 font-mono font-bold text-noir-100">#${esc(b.id)}</td>
+              <td class="py-2.5 px-4 font-medium">
+                <p class="font-semibold text-noir-100">${esc(b.product_name || b.product_id)}</p>
+                <p class="text-sm font-mono text-noir-400">ID: ${esc(b.product_id)}</p>
+              </td>
+              <td class="py-2.5 px-4 font-mono text-xs text-gold-400">${variantText}</td>
+              <td class="py-2.5 px-4 text-center font-mono font-bold text-noir-100">+${b.quantity}</td>
+              <td class="py-2.5 px-4 text-right font-mono font-semibold text-noir-300">${b.cost_price.toLocaleString("vi-VN")}đ</td>
+              <td class="py-2.5 px-4 text-noir-400">${esc(b.received_at)}</td>
+              <td class="py-2.5 px-4 text-noir-400 italic">${esc(b.note || "—")}</td>
+              <td class="py-2.5 px-4 text-right text-noir-400 font-mono">@${esc(b.created_by || "admin")}</td>
+            </tr>
+          `;
+        }).join("");
       } else {
-        tbodyBatches.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-noir-400">Chưa có lô hàng nhập kho nào được ghi nhận</td></tr>`;
+        tbodyBatches.innerHTML = `<tr><td colspan="8" class="py-8 text-center text-noir-400">Chưa có lô hàng nhập kho nào được ghi nhận</td></tr>`;
       }
 
     } catch (e) {
@@ -275,6 +419,8 @@
   document.getElementById("inventory-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const pid = document.getElementById("inv-product-id").value;
+    const color = document.getElementById("inv-color").value.trim();
+    const size = document.getElementById("inv-size").value.trim();
     const qty = parseInt(document.getElementById("inv-quantity").value);
     const cost = parseInt(document.getElementById("inv-cost-price").value);
     const note = document.getElementById("inv-note").value.trim();
@@ -289,14 +435,18 @@
     btn.innerHTML = "Đang xử lý...";
 
     try {
+      const payload = {
+        quantity: qty,
+        cost_price: cost,
+        note: note
+      };
+      if (color) payload.color = color;
+      if (size) payload.size = size;
+
       const res = await fetch(`/api/admin/products/${pid}/inventory`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          quantity: qty,
-          cost_price: cost,
-          note: note
-        })
+        body: JSON.stringify(payload)
       });
 
       const resData = await res.json();
@@ -311,6 +461,7 @@
       document.getElementById("inv-note").value = "";
       loadProfitReport();
       loadProductsForSelect();
+      loadLowStockVariants();
     } catch (err) {
       showToast("Lỗi kết nối máy chủ", "error");
     } finally {
@@ -321,5 +472,6 @@
 
   loadProductsForSelect();
   loadProfitReport();
+  loadLowStockVariants();
 </script>
 {% endblock %}

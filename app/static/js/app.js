@@ -1342,11 +1342,36 @@ const App = {
   /* ---------- Giỏ hàng ---------- */
   sanitizeCart() {
     const cat = this.state.catalog;
+    let modified = false;
+    let hasOutOfStock = false;
     this.state.cart = this.state.cart.filter(l => {
       const p = cat[l.product_id];
-      return p ? (p.sizes.includes(l.size) && p.colors.some(c => c.name === l.color) && l.quantity > 0) : l.quantity > 0;
+      if (!p) return l.quantity > 0;
+      const validSize = p.sizes.includes(l.size);
+      const validColor = p.colors.some(c => c.name === l.color);
+      if (!validSize || !validColor || l.quantity <= 0) {
+        modified = true;
+        return false;
+      }
+
+      // Kiểm tra tồn kho theo từng biến thể
+      const variants = p.variants || [];
+      const v = variants.find(x => x.color === l.color && x.size === l.size);
+      const variantStock = v ? v.stock : p.stock;
+      if (variantStock <= 0) {
+        hasOutOfStock = true;
+      } else if (l.quantity > variantStock) {
+        l.quantity = variantStock;
+        modified = true;
+      }
+      return true;
     });
     this.saveCart();
+    if (hasOutOfStock) {
+      setTimeout(() => {
+        U.toast('Giỏ hàng có sản phẩm hiện đã hết hàng, vui lòng kiểm tra lại!', 'error');
+      }, 800);
+    }
   },
 
   saveCart() { U.store.set('aura_cart_v2', this.state.cart); this.updateBadges(); },
@@ -1358,8 +1383,13 @@ const App = {
     U.$$('.wishlist-badge').forEach(b => { b.textContent = w; b.classList.toggle('hidden', !w); b.classList.toggle('flex', !!w); });
   },
 
-  qtyInCart(pid, exceptIdx = -1) {
-    return this.state.cart.reduce((s, l, i) => s + (l.product_id === pid && i !== exceptIdx ? l.quantity : 0), 0);
+  qtyInCart(pid, exceptIdx = -1, color = null, size = null) {
+    return this.state.cart.reduce((s, l, i) => {
+      if (i === exceptIdx || l.product_id !== pid) return s;
+      if (color && l.color !== color) return s;
+      if (size && l.size !== size) return s;
+      return s + l.quantity;
+    }, 0);
   },
 
   /** Trả true nếu thêm thành công. */
@@ -1370,12 +1400,23 @@ const App = {
       p = this.state.catalog[pid];
     }
     if (!p) { U.toast('Không tìm thấy sản phẩm', 'error'); return false; }
+
+    const variants = p.variants || [];
+    const v = variants.find(x => x.color === color && x.size === size);
+    const variantStock = v ? v.stock : p.stock;
+
+    if (variantStock <= 0) {
+      U.toast(`Phân loại '${color} - Size ${size}' đã hết hàng`, 'error');
+      return false;
+    }
+
     const cart = this.state.cart;
     const line = cart.find(l => l.product_id === pid && l.size === size && l.color === color && (l.combo_token || null) === comboToken);
     const have = line ? line.quantity : 0;
-    const add = Math.min(qty, Math.min(p.stock - this.qtyInCart(pid), CFG.maxQty - have));
+    const haveVariantTotal = this.qtyInCart(pid, -1, color, size);
+    const add = Math.min(qty, Math.min(variantStock - haveVariantTotal, CFG.maxQty - have));
     if (add <= 0) {
-      U.toast(p.stock <= 0 ? 'Sản phẩm đã hết hàng' : 'Đã đạt số lượng tối đa có thể mua', 'error');
+      U.toast(variantStock <= 0 ? `Phân loại '${color} - Size ${size}' đã hết hàng` : `Đã đạt giới hạn tồn kho có thể mua (${variantStock} sản phẩm)`, 'error');
       return false;
     }
     if (line) line.quantity += add;
@@ -1383,7 +1424,7 @@ const App = {
     this.saveCart();
     this.refreshCart();
     if (open) Modal.open('cart-drawer');
-    if (!silent) U.toast(add < qty ? `Chỉ thêm được ${add} sản phẩm (giới hạn tồn kho)` : 'Đã thêm vào giỏ hàng');
+    if (!silent) U.toast(add < qty ? `Chỉ thêm được ${add} sản phẩm (tồn kho còn lại)` : 'Đã thêm vào giỏ hàng');
     return true;
   },
 
@@ -1393,8 +1434,14 @@ const App = {
     const p = this.state.catalog[l.product_id];
     const next = l.quantity + delta;
     if (next <= 0) return this.removeLine(idx);
-    if (next > CFG.maxQty || this.qtyInCart(l.product_id, idx) + next > p.stock) {
-      U.toast(next > CFG.maxQty ? `Tối đa ${CFG.maxQty} sản phẩm mỗi phân loại` : `Chỉ còn ${p.stock} sản phẩm`, 'error');
+
+    const variants = (p && p.variants) || [];
+    const v = variants.find(x => x.color === l.color && x.size === l.size);
+    const variantStock = v ? v.stock : (p ? p.stock : 99);
+    const otherInCart = this.qtyInCart(l.product_id, idx, l.color, l.size);
+
+    if (next > CFG.maxQty || otherInCart + next > variantStock) {
+      U.toast(next > CFG.maxQty ? `Tối đa ${CFG.maxQty} sản phẩm mỗi phân loại` : `Phân loại này chỉ còn ${variantStock} sản phẩm`, 'error');
       return;
     }
     l.quantity = next;
@@ -1465,6 +1512,8 @@ const App = {
       return;
     }
 
+    let hasVariantInventoryError = false;
+
     box.innerHTML = cart.map((l, i) => {
       let p = this.state.catalog[l.product_id];
       if (!p && window.__PRODUCT_DATA__ && window.__PRODUCT_DATA__.id === l.product_id) {
@@ -1487,10 +1536,20 @@ const App = {
           </div>
         </div>`;
       }
+
+      const variants = p.variants || [];
+      const v = variants.find(x => x.color === l.color && x.size === l.size);
+      const variantStock = v ? v.stock : p.stock;
+      const isOutOfStock = variantStock <= 0;
+      const isOverStock = l.quantity > variantStock;
+      if (isOutOfStock || isOverStock) {
+        hasVariantInventoryError = true;
+      }
+
       const ql = q && q.lines[i];
       const opt = (arr, cur) => arr.map(v => `<option value="${U.esc(v)}" ${v === cur ? 'selected' : ''}>${U.esc(v)}</option>`).join('');
       return `
-      <div class="flex gap-3 border-b border-[#E5E2DC] py-3 text-sm">
+      <div class="flex gap-3 border-b border-[#E5E2DC] py-3 text-sm ${isOutOfStock ? 'opacity-80 bg-rose-50/40 p-2 rounded' : ''}">
         ${U.img(p.images[0], p.name, 'h-20 w-16 flex-shrink-0 rounded-[2px] bg-[#F2EFE9] object-cover')}
         <div class="flex min-w-0 flex-1 flex-col justify-between">
           <div>
@@ -1503,6 +1562,8 @@ const App = {
               <select data-cart-variant="color" data-idx="${i}" aria-label="Màu" class="max-w-[120px] rounded-[2px] border border-[#E5E2DC] bg-white px-2 py-0.5 text-sm">${opt(p.colors.map(c => c.name), l.color)}</select>
               ${ql && ql.combo ? `<span class="rounded-[2px] border border-[#111111] px-1.5 py-0.5 text-sm font-semibold text-[#111111]">Combo -${CFG.combo}%</span>` : ''}
             </div>
+            ${isOutOfStock ? `<div class="mt-1 text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-200">⚠️ Màu ${U.esc(l.color)} - Size ${U.esc(l.size)} đã hết hàng!</div>` : ''}
+            ${!isOutOfStock && isOverStock ? `<div class="mt-1 text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">⚠️ Vượt tồn kho (chỉ còn ${variantStock} sp)!</div>` : ''}
           </div>
           <div class="mt-2 flex items-center justify-between">
             <span class="text-sm font-semibold text-[#111111]">${U.vnd(p.final_price)}</span>
@@ -1516,8 +1577,9 @@ const App = {
       </div>`;
     }).join('');
 
-    if (this.state.quoteError) {
-      errEl.textContent = this.state.quoteError; errEl.classList.remove('hidden');
+    if (this.state.quoteError || hasVariantInventoryError) {
+      errEl.textContent = this.state.quoteError || "Giỏ hàng có món đã hết hàng hoặc vượt tồn kho. Vui lòng điều chỉnh trước khi thanh toán.";
+      errEl.classList.remove('hidden');
       U.$('#cart-summary').innerHTML = '';
       U.$('#cart-freeship').classList.add('hidden');
       btn.disabled = true;
@@ -1835,6 +1897,7 @@ const App = {
     const body = {
       customer_name: (U.$('#co-name')?.value ?? '').trim(),
       customer_phone: (U.$('#co-phone')?.value ?? '').trim(),
+      customer_email: (U.$('#co-email')?.value ?? '').trim() || null,
       customer_address: fullAddress,
       province_code: provCode,
       province_name: provName,
@@ -1851,6 +1914,8 @@ const App = {
     if (!/^(?:0|\+?84)\d{9}$/.test(body.customer_phone.replace(/[\s.\-]/g, ''))) return this.checkoutError('Số điện thoại không hợp lệ (ví dụ: 0987654321)');
     if (body.customer_address.length < 8) return this.checkoutError('Vui lòng nhập địa chỉ nhận hàng đầy đủ');
 
+    if (this._isSubmittingOrder) return;
+    this._isSubmittingOrder = true;
     btn.disabled = true; btn.textContent = 'Đang xử lý...';
     try {
       const order = await U.api('/api/orders', { method: 'POST', body });
@@ -1891,7 +1956,7 @@ const App = {
     } catch (e) {
       this.checkoutError(e.message);
       this.refreshCart(); // tồn kho/giá có thể đã đổi
-    } finally { btn.disabled = false; btn.textContent = 'Đặt hàng'; }
+    } finally { this._isSubmittingOrder = false; btn.disabled = false; btn.textContent = 'Đặt hàng ngay'; }
   },
 
   checkoutError(msg) { const el = U.$('#co-error'); if (!el) return; el.textContent = msg; el.classList.remove('hidden'); },

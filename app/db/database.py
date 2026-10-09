@@ -24,6 +24,16 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__
 _lock = threading.RLock()
 
 
+def normalize_phone(p: Optional[str]) -> str:
+    """Chuẩn hóa số điện thoại về dạng số thuần túy (loại bỏ khoảng trắng, dấu cộng, v.v.)."""
+    if not p:
+        return ""
+    digits = "".join(c for c in str(p) if c.isdigit())
+    if digits.startswith("84") and len(digits) > 9:
+        digits = "0" + digits[2:]
+    return digits
+
+
 def get_db_connection(db_path: str = DB_PATH) -> sqlite3.Connection:
     """Tạo kết nối SQLite có hỗ trợ row_factory và bật WAL mode cho hiệu năng cao."""
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
@@ -125,6 +135,7 @@ CREATE TABLE IF NOT EXISTS orders (
     user_id TEXT,
     customer_name TEXT NOT NULL,
     customer_phone TEXT NOT NULL,
+    customer_email TEXT,
     customer_address TEXT NOT NULL,
     province TEXT,
     district TEXT,
@@ -213,6 +224,8 @@ CREATE INDEX IF NOT EXISTS idx_loyalty_user ON loyalty_transactions(user_id);
 CREATE TABLE IF NOT EXISTS inventory_batches (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     product_id TEXT NOT NULL,
+    color TEXT,
+    size TEXT,
     quantity INTEGER NOT NULL,
     cost_price INTEGER NOT NULL,
     received_at TEXT NOT NULL,
@@ -222,10 +235,27 @@ CREATE TABLE IF NOT EXISTS inventory_batches (
 );
 CREATE INDEX IF NOT EXISTS idx_inventory_batches_pid ON inventory_batches(product_id);
 
+CREATE TABLE IF NOT EXISTS vouchers (
+    code TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    value INTEGER NOT NULL DEFAULT 0,
+    max_discount INTEGER,
+    min_order INTEGER NOT NULL DEFAULT 0,
+    badge TEXT NOT NULL DEFAULT 'AURA',
+    expire_in TEXT NOT NULL DEFAULT 'Còn hiệu lực',
+    expires_at TEXT,
+    max_uses INTEGER,
+    max_uses_per_user INTEGER,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS voucher_usages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     voucher_code TEXT NOT NULL,
     user_id TEXT,
+    phone TEXT,
     order_id TEXT NOT NULL,
     created_at TEXT NOT NULL
 );
@@ -294,6 +324,18 @@ def init_db(db_path: str = DB_PATH):
             if review_count == 0:
                 _migrate_reviews(conn)
 
+            # Tự động cập nhật cột phone cho voucher_usages nếu thiếu
+            vu_cols = [c["name"] for c in conn.execute("PRAGMA table_info(voucher_usages);").fetchall()]
+            if "phone" not in vu_cols:
+                conn.execute("ALTER TABLE voucher_usages ADD COLUMN phone TEXT;")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_voucher_usages_phone ON voucher_usages(phone);")
+            conn.commit()
+
+            # Seed bảng vouchers nếu chưa có dữ liệu
+            voucher_count = conn.execute("SELECT COUNT(*) FROM vouchers;").fetchone()[0]
+            if voucher_count == 0:
+                _migrate_vouchers(conn)
+
             # Chỉ khởi tạo điểm thưởng demo cho user usr_002 (Tiến Anh) khi ở môi trường dev
             from app.config import settings
             if getattr(settings, "APP_ENV", "dev").strip().lower() == "dev":
@@ -316,6 +358,9 @@ def init_db(db_path: str = DB_PATH):
                         VALUES ('usr_002', 'AURA-260320-DEMO2', -30, 'redeem', 'Dùng 30 điểm giảm giá đơn hàng AURA-260320-DEMO2', 120, ?);
                     """, (t2,))
                     conn.commit()
+
+            # Đồng bộ cấu trúc lô hàng và biến thể tồn kho (Single Source of Truth)
+            _migrate_sync_variants_and_products_stock(conn)
         finally:
             conn.close()
 
@@ -407,13 +452,27 @@ def _migrate_products(conn: sqlite3.Connection):
                 ),
             )
 
+            def_color_name = (colors[0].get("name") if isinstance(colors[0], dict) else str(colors[0])) if colors else ""
+            has_s = "S" in sizes
+            has_m = "M" in sizes
+            s_alloc = min(3, max(1, total_stock - 1)) if (has_s and has_m and total_stock > 1) else 0
+
             for c_idx, c in enumerate(colors):
                 c_name = c.get("name") if isinstance(c, dict) else str(c)
                 c_hex = c.get("hex", "#000000") if isinstance(c, dict) else "#000000"
                 for s_idx, s in enumerate(sizes):
-                    # Giả lập thực tế: một số phân loại size hiếm (như màu phụ hoặc size cuối) hết hàng để test UI
-                    is_sold_out = (c_idx == len(colors) - 1 and s_idx == len(sizes) - 1 and len(sizes) > 2)
-                    v_stock = 0 if is_sold_out else total_stock
+                    if c_name == def_color_name:
+                        if has_s and has_m:
+                            if s == "S":
+                                v_stock = s_alloc
+                            elif s == "M":
+                                v_stock = total_stock - s_alloc
+                            else:
+                                v_stock = 0
+                        else:
+                            v_stock = total_stock if (s == sizes[0]) else 0
+                    else:
+                        v_stock = 0
                     v_sku = f"{pid}-{c_name[:2].upper()}-{s}".replace(" ", "")
 
                     conn.execute(
@@ -487,6 +546,104 @@ def _migrate_reviews(conn: sqlite3.Connection):
     conn.commit()
 
 
+def _migrate_vouchers(conn: sqlite3.Connection):
+    """Seed danh sách voucher chuẩn từ AVAILABLE_VOUCHERS vào bảng vouchers trong CSDL."""
+    now_str = datetime.datetime.now().isoformat()
+    default_vouchers = [
+        ("FREESHIP", "Miễn phí vận chuyển toàn quốc", "shipping", 0, None, 0, "Freeship", "Còn hiệu lực", None, 1000, 5, 1, now_str),
+        ("AURA50K", "Ưu đãi đơn từ 299K", "amount", 50000, None, 299000, "AURA STUDIO", "Trong tháng này", None, 500, 1, 1, now_str),
+        ("LIVE20", "Độc quyền từ phòng Live AI", "percent", 20, 100000, 199000, "Live AI", "Trong tháng này", None, 200, 1, 1, now_str),
+        ("AURA10", "Khách mới trải nghiệm AI Stylist", "percent", 10, 50000, 150000, "Khách mới", "30 ngày", None, 500, 1, 1, now_str),
+        ("STAYWITHUS", "Quà tặng giữ chân khách hàng - Giảm 5%", "percent", 5, 100000, 100000, "Tri ân 5%", "Hôm nay", None, 300, 1, 1, now_str),
+    ]
+    for row in default_vouchers:
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO vouchers 
+            (code, title, kind, value, max_discount, min_order, badge, expire_in, expires_at, max_uses, max_uses_per_user, is_active, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """,
+            row
+        )
+    conn.commit()
+
+
+def _migrate_sync_variants_and_products_stock(conn: sqlite3.Connection):
+    """
+    Migration & Invariant enforcer:
+    1. Đảm bảo bảng inventory_batches có cột color, size.
+    2. Đảm bảo mọi sản phẩm đều có các bản ghi biến thể tương ứng trong product_variants.
+    3. Thiết lập Single Source of Truth: products.stock = SUM(product_variants.stock).
+    """
+    try:
+        # 1. Cập nhật cột color, size cho inventory_batches và customer_email cho orders nếu thiếu
+        ib_cols = [c["name"] for c in conn.execute("PRAGMA table_info(inventory_batches);").fetchall()]
+        if "color" not in ib_cols:
+            conn.execute("ALTER TABLE inventory_batches ADD COLUMN color TEXT;")
+        if "size" not in ib_cols:
+            conn.execute("ALTER TABLE inventory_batches ADD COLUMN size TEXT;")
+
+        orders_cols = [c["name"] for c in conn.execute("PRAGMA table_info(orders);").fetchall()]
+        if "customer_email" not in orders_cols:
+            conn.execute("ALTER TABLE orders ADD COLUMN customer_email TEXT;")
+
+        # 2. Rà soát tất cả sản phẩm
+        prods = conn.execute("SELECT id, colors, sizes, stock, stock_total FROM products;").fetchall()
+        now_str = datetime.datetime.now().isoformat()
+
+        for p in prods:
+            pid = p["id"]
+            var_count = conn.execute("SELECT COUNT(*) FROM product_variants WHERE product_id = ?;", (pid,)).fetchone()[0]
+            if var_count == 0:
+                try:
+                    c_list = json.loads(p["colors"]) if p["colors"] else []
+                except Exception:
+                    c_list = []
+                try:
+                    s_list = json.loads(p["sizes"]) if p["sizes"] else []
+                except Exception:
+                    s_list = []
+
+                if not c_list:
+                    c_list = [{"name": "Tiêu chuẩn", "hex": "#000000"}]
+                if not s_list:
+                    s_list = ["Freesize"]
+
+                num_vars = max(1, len(c_list) * len(s_list))
+                base_stock = p["stock"] if p["stock"] is not None else 10
+                per_var = base_stock // num_vars
+                rem = base_stock % num_vars
+
+                var_idx = 0
+                for c in c_list:
+                    c_name = c.get("name") if isinstance(c, dict) else str(c)
+                    c_hex = c.get("hex", "#000000") if isinstance(c, dict) else "#000000"
+                    for s in s_list:
+                        s_str = str(s)
+                        v_stock = per_var + (rem if var_idx == 0 else 0)
+                        v_sku = f"{pid}-{c_name[:2].upper()}-{s_str}".replace(" ", "")
+                        conn.execute(
+                            """
+                            INSERT OR IGNORE INTO product_variants 
+                            (product_id, color, color_hex, size, stock, sku, created_at)
+                            VALUES (?, ?, ?, ?, ?, ?, ?);
+                            """,
+                            (pid, c_name, c_hex, s_str, max(0, v_stock), v_sku, now_str),
+                        )
+                        var_idx += 1
+
+        # 3. Đồng bộ Single Source of Truth: products.stock = SUM(product_variants.stock)
+        conn.execute("""
+            UPDATE products 
+            SET stock = COALESCE((
+                SELECT SUM(stock) FROM product_variants WHERE product_id = products.id
+            ), 0);
+        """)
+        conn.commit()
+    except Exception as e:
+        logger.warning("Lỗi migrate sync variants & stock: %s", e)
+
+
 class DatabaseService:
     """Tập trung các hàm thao tác CSDL chuẩn hóa (ACID, chống Race Condition)."""
 
@@ -512,24 +669,115 @@ class DatabaseService:
                     total_stock = p.get("stock", 50)
                     colors = p.get("colors") or []
                     sizes = p.get("sizes") or []
-                    conn.execute(
-                        "UPDATE products SET stock = ?, sold_count = ? WHERE id = ?;",
-                        (total_stock, p.get("sold_count", 0), pid),
-                    )
+                    def_color_name = (colors[0].get("name") if isinstance(colors[0], dict) else str(colors[0])) if colors else ""
+                    has_s = "S" in sizes
+                    has_m = "M" in sizes
+                    s_alloc = min(3, max(1, total_stock - 1)) if (has_s and has_m and total_stock > 1) else 0
+
                     for c_idx, c in enumerate(colors):
                         c_name = c.get("name") if isinstance(c, dict) else str(c)
                         for s_idx, s in enumerate(sizes):
-                            is_sold_out = (c_idx == len(colors) - 1 and s_idx == len(sizes) - 1 and len(sizes) > 2)
-                            v_stock = 0 if is_sold_out else total_stock
+                            if c_name == def_color_name:
+                                if has_s and has_m:
+                                    if s == "S":
+                                        v_stock = s_alloc
+                                    elif s == "M":
+                                        v_stock = total_stock - s_alloc
+                                    else:
+                                        v_stock = 0
+                                else:
+                                    v_stock = total_stock if (s == sizes[0]) else 0
+                            else:
+                                v_stock = 0
                             conn.execute(
                                 "UPDATE product_variants SET stock = ? WHERE product_id = ? AND color = ? AND size = ?;",
                                 (v_stock, pid, c_name, s),
                             )
+                    # Thiết lập products.stock = SUM(product_variants.stock)
+                    conn.execute(
+                        "UPDATE products SET stock = (SELECT COALESCE(SUM(stock), 0) FROM product_variants WHERE product_id = ?), sold_count = ? WHERE id = ?;",
+                        (pid, p.get("sold_count", 0), pid),
+                    )
         except Exception as e:
             logger.warning("Failed seed_reset_stock: %s", e)
 
     def reset_stock(self):
         return self.seed_reset_stock()
+
+    def get_voucher(self, code: str) -> Optional[Any]:
+        if not code:
+            return None
+        code = code.strip().upper()
+        conn = get_db_connection(self.db_path)
+        try:
+            row = conn.execute("SELECT * FROM vouchers WHERE code = ? AND is_active = 1;", (code,)).fetchone()
+            if not row:
+                return None
+            from app.models.schemas import Voucher
+            data = dict(row)
+            if data.get("expires_at"):
+                try:
+                    data["expires_at"] = datetime.datetime.fromisoformat(data["expires_at"])
+                except Exception:
+                    pass
+            return Voucher(**data)
+        finally:
+            conn.close()
+
+    def get_all_vouchers(self) -> List[Any]:
+        conn = get_db_connection(self.db_path)
+        try:
+            rows = conn.execute("SELECT * FROM vouchers WHERE is_active = 1;").fetchall()
+            from app.models.schemas import Voucher
+            out = []
+            for r in rows:
+                data = dict(r)
+                if data.get("expires_at"):
+                    try:
+                        data["expires_at"] = datetime.datetime.fromisoformat(data["expires_at"])
+                    except Exception:
+                        pass
+                out.append(Voucher(**data))
+            return out
+        finally:
+            conn.close()
+
+    def save_voucher(self, v: Any) -> None:
+        conn = get_db_connection(self.db_path)
+        try:
+            exp_str = v.expires_at.isoformat() if isinstance(getattr(v, "expires_at", None), datetime.datetime) else getattr(v, "expires_at", None)
+            now_str = datetime.datetime.now().isoformat()
+            code = v.code.strip().upper()
+            conn.execute(
+                """
+                INSERT INTO vouchers 
+                (code, title, kind, value, max_discount, min_order, badge, expire_in, expires_at, max_uses, max_uses_per_user, is_active, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+                ON CONFLICT(code) DO UPDATE SET
+                    title=excluded.title, kind=excluded.kind, value=excluded.value,
+                    max_discount=excluded.max_discount, min_order=excluded.min_order,
+                    badge=excluded.badge, expire_in=excluded.expire_in,
+                    expires_at=excluded.expires_at, max_uses=excluded.max_uses,
+                    max_uses_per_user=excluded.max_uses_per_user, is_active=1;
+                """,
+                (
+                    code, v.title, v.kind, v.value, v.max_discount, v.min_order,
+                    v.badge, v.expire_in, exp_str, v.max_uses, v.max_uses_per_user, now_str
+                )
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    def reset_vouchers(self) -> None:
+        conn = get_db_connection(self.db_path)
+        try:
+            conn.execute("DELETE FROM vouchers;")
+            conn.execute("DELETE FROM voucher_usages;")
+            conn.commit()
+            _migrate_vouchers(conn)
+        finally:
+            conn.close()
 
     def get_product_by_id(self, product_id: str) -> Optional[Dict[str, Any]]:
         conn = get_db_connection(self.db_path)
@@ -713,8 +961,51 @@ class DatabaseService:
             if not order:
                 return PaymentConfirmResult("not_found")
 
+            # 1. Kiểm tra tính Idempotent: Giao dịch này cho đơn hàng này đã từng xử lý chưa
+            tx_row = conn.execute(
+                "SELECT id, order_id, status FROM payment_transactions WHERE transaction_code = ? AND order_id = ?;",
+                (transaction_code, order_id)
+            ).fetchone()
+            if tx_row:
+                return PaymentConfirmResult("already_paid")
+
+            # 2. Xử lý đơn cancelled mà nhận tiền
             if order["order_status"] == "cancelled":
-                logger.warning(f"Reject payment confirmation for cancelled order '{order_id}'")
+                now_str = datetime.datetime.now().isoformat()
+                conn.execute(
+                    """
+                    UPDATE orders 
+                    SET payment_status = 'refund_pending'
+                    WHERE order_id = ?;
+                    """,
+                    (order_id,),
+                )
+                conn.execute(
+                    """
+                    INSERT OR IGNORE INTO payment_transactions
+                    (order_id, transaction_code, amount, payment_channel, status, payload_json, created_at)
+                    VALUES (?, ?, ?, ?, 'unmatched_or_cancelled', ?, ?);
+                    """,
+                    (
+                        order_id,
+                        transaction_code,
+                        amount,
+                        payment_channel,
+                        json.dumps({"verified_at": now_str, "amount": amount, "reason": "order_cancelled_received_payment"}, ensure_ascii=False),
+                        now_str,
+                    ),
+                )
+                logger.warning(
+                    "CẢNH BÁO HOÀN TIỀN ADMIN: Đơn hàng '%s' nhận thanh toán %s đ khi đã hủy! Đã ghi nhận transaction '%s' (unmatched_or_cancelled) và chuyển payment_status='refund_pending'",
+                    order_id, amount, transaction_code,
+                )
+                log_money_event(
+                    "payment_received_on_cancelled_order",
+                    order_id=order_id,
+                    user_id=order["user_id"] if "user_id" in order.keys() else None,
+                    amount=amount,
+                    extra={"transaction_code": transaction_code, "action": "refund_pending", "payment_channel": payment_channel},
+                )
                 return PaymentConfirmResult("cancelled")
 
             expected_amount = int(order["total_amount"])
@@ -729,22 +1020,32 @@ class DatabaseService:
                 )
                 return PaymentConfirmResult("invalid_amount")
 
-            tx_row = conn.execute(
-                "SELECT id, order_id FROM payment_transactions WHERE transaction_code = ? AND order_id = ?;",
-                (transaction_code, order_id)
-            ).fetchone()
-            if order["payment_status"] == "paid" or tx_row:
+            if order["payment_status"] == "paid":
                 return PaymentConfirmResult("already_paid")
 
             now_str = datetime.datetime.now().isoformat()
-            conn.execute(
-                """
-                UPDATE orders 
-                SET payment_status = 'paid', order_status = 'confirmed', shipping_status = 'ready_to_pick', paid_at = ?
-                WHERE order_id = ?;
-                """,
-                (now_str, order_id),
-            )
+            current_status = order["order_status"]
+
+            # 3. Cập nhật trạng thái: Đơn shipping/completed chỉ cập nhật payment_status + paid_at, KHÔNG ghi đè order_status/shipping_status
+            if current_status in ("shipping", "completed", "confirmed"):
+                conn.execute(
+                    """
+                    UPDATE orders 
+                    SET payment_status = 'paid', paid_at = ?
+                    WHERE order_id = ?;
+                    """,
+                    (now_str, order_id),
+                )
+            else:
+                # Chỉ đơn pending_payment mới chuyển sang confirmed và ready_to_pick
+                conn.execute(
+                    """
+                    UPDATE orders 
+                    SET payment_status = 'paid', order_status = 'confirmed', shipping_status = 'ready_to_pick', paid_at = ?
+                    WHERE order_id = ?;
+                    """,
+                    (now_str, order_id),
+                )
 
             conn.execute(
                 """
@@ -770,7 +1071,7 @@ class DatabaseService:
                 order_id=order_id,
                 user_id=order["user_id"] if "user_id" in order.keys() else None,
                 amount=amount,
-                extra={"transaction_code": transaction_code, "payment_channel": payment_channel},
+                extra={"transaction_code": transaction_code, "payment_channel": payment_channel, "previous_order_status": current_status},
             )
 
             return PaymentConfirmResult("success")
@@ -881,8 +1182,8 @@ class DatabaseService:
                     avail = p_row["stock"] if p_row else 0
                     raise OrderError(f"Sản phẩm '{p_row['name'] if p_row else pid}' chỉ còn {avail} sản phẩm", 409)
                 conn.execute(
-                    "UPDATE products SET stock = stock - ?, sold_count = sold_count + ? WHERE id = ?;",
-                    (qty, qty, pid)
+                    "UPDATE products SET stock = (SELECT COALESCE(SUM(stock), 0) FROM product_variants WHERE product_id = ?), sold_count = sold_count + ? WHERE id = ?;",
+                    (pid, qty, pid)
                 )
 
             # 3. Trừ điểm thưởng trực tiếp trong DB (nếu có dùng điểm)
@@ -904,45 +1205,76 @@ class DatabaseService:
                 )
 
             # 4. Kiểm tra và ghi nhận voucher_usages
+            customer = order_record.get("customer", {})
+            phone_raw = customer.get("phone")
+            norm_phone = normalize_phone(phone_raw) if phone_raw else None
+
             if voucher_code:
                 code_upper = voucher_code.strip().upper()
                 from app.services.product_service import product_service
                 v = product_service.get_voucher(code_upper)
-                if v:
-                    if v.expires_at and datetime.datetime.now() > v.expires_at:
-                        raise OrderError(f"Mã giảm giá '{code_upper}' đã hết hạn sử dụng", 400)
-                    if v.max_uses is not None:
-                        total_used = conn.execute("SELECT COUNT(*) FROM voucher_usages WHERE voucher_code = ?;", (code_upper,)).fetchone()[0]
-                        if total_used >= v.max_uses:
-                            raise OrderError(f"Mã giảm giá '{code_upper}' đã hết lượt sử dụng trên hệ thống", 400)
-                    if v.max_uses_per_user is not None and user_id:
+                if not v:
+                    raise OrderError(f"Mã giảm giá '{code_upper}' không tồn tại hoặc đã hết hạn", 400)
+
+                # 4.1 Kiểm tra hạn sử dụng (expires_at)
+                if v.expires_at and datetime.datetime.now() > v.expires_at:
+                    raise OrderError(f"Mã giảm giá '{code_upper}' đã hết hạn sử dụng", 400)
+
+                # 4.2 Kiểm tra đơn hàng tối thiểu (min_order)
+                quote = order_record.get("quote", {})
+                after_combo = quote.get("subtotal", 0) - quote.get("combo_discount", 0)
+                if v.min_order and after_combo < v.min_order:
+                    raise OrderError(f"Mã giảm giá '{code_upper}' chỉ áp dụng cho đơn từ {v.min_order:,}đ", 400)
+
+                # 4.3 Kiểm tra giới hạn lượt dùng toàn hệ thống (max_uses)
+                if v.max_uses is not None:
+                    total_used = conn.execute("SELECT COUNT(*) FROM voucher_usages WHERE voucher_code = ?;", (code_upper,)).fetchone()[0]
+                    if total_used >= v.max_uses:
+                        raise OrderError(f"Mã giảm giá '{code_upper}' đã hết lượt sử dụng trên hệ thống", 400)
+
+                # 4.4 Kiểm tra lượt dùng theo user_id HOẶC SĐT chuẩn hoá (guest)
+                if v.max_uses_per_user is not None:
+                    if user_id and norm_phone:
+                        user_used = conn.execute(
+                            "SELECT COUNT(*) FROM voucher_usages WHERE voucher_code = ? AND (user_id = ? OR phone = ?);",
+                            (code_upper, user_id, norm_phone)
+                        ).fetchone()[0]
+                    elif user_id:
                         user_used = conn.execute(
                             "SELECT COUNT(*) FROM voucher_usages WHERE voucher_code = ? AND user_id = ?;",
                             (code_upper, user_id)
                         ).fetchone()[0]
-                        if user_used >= v.max_uses_per_user:
-                            raise OrderError(f"Bạn đã sử dụng hết {v.max_uses_per_user} lượt cho mã giảm giá '{code_upper}'", 400)
-                    conn.execute(
-                        """
-                        INSERT INTO voucher_usages (voucher_code, user_id, order_id, created_at)
-                        VALUES (?, ?, ?, ?);
-                        """,
-                        (code_upper, user_id, order_id, now_str)
-                    )
+                    elif norm_phone:
+                        user_used = conn.execute(
+                            "SELECT COUNT(*) FROM voucher_usages WHERE voucher_code = ? AND phone = ?;",
+                            (code_upper, norm_phone)
+                        ).fetchone()[0]
+                    else:
+                        user_used = 0
+
+                    if user_used >= v.max_uses_per_user:
+                        raise OrderError(f"Bạn đã sử dụng hết {v.max_uses_per_user} lượt cho mã giảm giá '{code_upper}'", 400)
+
+                conn.execute(
+                    """
+                    INSERT INTO voucher_usages (voucher_code, user_id, phone, order_id, created_at)
+                    VALUES (?, ?, ?, ?, ?);
+                    """,
+                    (code_upper, user_id, norm_phone, order_id, now_str)
+                )
 
             # 5. Lưu đơn hàng vào bảng orders
-            customer = order_record.get("customer", {})
             quote = order_record.get("quote", {})
             conn.execute(
                 """
                 INSERT INTO orders (
-                    order_id, user_id, customer_name, customer_phone, customer_address,
+                    order_id, user_id, customer_name, customer_phone, customer_email, customer_address,
                     province, district, ward, specific_address, customer_note,
                     payment_method, payment_status, order_status, carrier, tracking_code,
                     shipping_status, estimated_delivery, total_amount, subtotal, shipping_fee,
                     discount_amount, voucher_code, quote_json, loyalty_awarded, created_at
                 ) VALUES (
-                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?,
                     ?, ?, ?, ?, ?,
                     ?, ?, ?, ?, ?,
                     ?, ?, ?, ?, ?,
@@ -954,6 +1286,7 @@ class DatabaseService:
                     user_id,
                     customer.get("name"),
                     customer.get("phone"),
+                    customer.get("email"),
                     customer.get("address"),
                     customer.get("province"),
                     customer.get("district"),
@@ -978,7 +1311,8 @@ class DatabaseService:
             )
 
             # 6. Lưu order_items
-            for line in quote.get("lines", []):
+            item_lines = quote.get("lines") or items
+            for line in item_lines:
                 conn.execute(
                     """
                     INSERT INTO order_items (
@@ -987,13 +1321,13 @@ class DatabaseService:
                     """,
                     (
                         order_id,
-                        line["product_id"],
-                        line["name"],
-                        line["color"],
-                        line["size"],
-                        line["quantity"],
-                        line["unit_price"],
-                        line["line_total"],
+                        line.get("product_id"),
+                        line.get("name") or line.get("product_name", ""),
+                        line.get("color"),
+                        line.get("size"),
+                        line.get("quantity", 1),
+                        line.get("unit_price") or line.get("price", 0),
+                        line.get("line_total") or (line.get("price", 0) * line.get("quantity", 1)),
                     )
                 )
 
@@ -1010,7 +1344,7 @@ class DatabaseService:
         )
         return order_id
 
-    def cancel_order_atomic(self, order_id: str) -> bool:
+    def cancel_order_atomic(self, order_id: str, forbid_if_shipping: bool = False) -> bool:
         """
         Hủy đơn hàng nguyên tử (ACID Transaction):
         - Cập nhật order_status = 'cancelled' (và payment_status = 'refund_pending' nếu đã thanh toán).
@@ -1019,11 +1353,21 @@ class DatabaseService:
         - Thu hồi điểm đã cộng cho đơn đó (nếu đã từng cộng).
         - Trừ total_spent đã cộng và tính lại tier.
         - Hoàn lượt sử dụng voucher.
+        - forbid_if_shipping=True: từ chối nếu đơn đã chuyển sang shipping/completed (race guard cho khách tự huỷ).
         """
+        # Import locally to avoid circular import; OrderError is defined in order_service
+        from app.services.order_service import OrderError  # noqa: PLC0415
         with get_db_transaction(self.db_path) as conn:
             order = conn.execute("SELECT * FROM orders WHERE order_id = ?;", (order_id,)).fetchone()
-            if not order or order["order_status"] == "cancelled":
+            if not order:
                 return False
+            if order["order_status"] == "cancelled":
+                return False
+            if forbid_if_shipping and order["order_status"] in ("shipping", "completed"):
+                raise OrderError(
+                    "Đơn hàng đã chuyển sang vận chuyển, không thể hủy lúc này",
+                    409,
+                )
 
             # 1. Cập nhật trạng thái
             new_payment_status = "refund_pending" if order["payment_status"] == "paid" else order["payment_status"]
@@ -1051,8 +1395,8 @@ class DatabaseService:
                     (qty, pid, col, sz)
                 )
                 conn.execute(
-                    "UPDATE products SET stock = stock + ?, sold_count = max(0, sold_count - ?) WHERE id = ?;",
-                    (qty, qty, pid)
+                    "UPDATE products SET stock = (SELECT COALESCE(SUM(stock), 0) FROM product_variants WHERE product_id = ?), sold_count = max(0, sold_count - ?) WHERE id = ?;",
+                    (pid, qty, pid)
                 )
 
             # 3. Hoàn điểm đã dùng (loại 'refund')
@@ -1144,12 +1488,14 @@ class DatabaseService:
         res["customer"] = {
             "name": res["customer_name"],
             "phone": res["customer_phone"],
+            "email": res.get("customer_email"),
             "address": res["customer_address"],
             "province": res.get("province"),
             "district": res.get("district"),
             "ward": res.get("ward"),
             "note": res.get("customer_note"),
         }
+        res["customer_email"] = res.get("customer_email")
         res["status"] = res["order_status"]
         if not res.get("carrier"):
             res["carrier"] = "Giao Hàng Nhanh (GHN Express)"
@@ -1179,6 +1525,23 @@ class DatabaseService:
                 "is_paid": row["payment_status"] == "paid",
                 "paid_at": row["paid_at"],
             }
+        finally:
+            conn.close()
+
+    def get_refund_pending_orders(self) -> List[Dict[str, Any]]:
+        """Lấy danh sách các đơn hàng cần hoàn tiền (payment_status = 'refund_pending')."""
+        conn = get_db_connection(self.db_path)
+        try:
+            rows = conn.execute(
+                """
+                SELECT o.*, pt.transaction_code, pt.amount as paid_amount, pt.payment_channel, pt.status as tx_status
+                FROM orders o
+                LEFT JOIN payment_transactions pt ON o.order_id = pt.order_id
+                WHERE o.payment_status = 'refund_pending'
+                ORDER BY o.created_at DESC;
+                """
+            ).fetchall()
+            return [self._format_order_row(dict(r)) for r in rows]
         finally:
             conn.close()
 
@@ -1657,12 +2020,17 @@ class DatabaseService:
         product_id: str,
         quantity: int,
         cost_price: int,
+        color: Optional[str] = None,
+        size: Optional[str] = None,
         note: Optional[str] = None,
         created_by: Optional[str] = None
     ) -> Dict[str, Any]:
         """
-        Nhập kho theo lô hàng: Lưu bản ghi vào inventory_batches và tăng tồn kho
-        sản phẩm cha trong CSDL một cách nguyên tử (Atomic transaction).
+        Nhập thêm hàng cho sản phẩm:
+        - Nguồn sự thật: Tăng tồn kho bảng `product_variants`.
+        - Cập nhật tồn kho sản phẩm cha: products.stock = SUM(product_variants.stock).
+        - Ghi nhật ký vào `inventory_batches` (có color, size).
+        - Đồng bộ in-memory cache product_service.
         """
         if quantity <= 0:
             raise ValueError("Số lượng nhập kho phải lớn hơn 0")
@@ -1670,40 +2038,97 @@ class DatabaseService:
             raise ValueError("Giá vốn nhập kho không được âm")
 
         with get_db_transaction(self.db_path) as conn:
-            prod = conn.execute("SELECT id, name, stock, stock_total FROM products WHERE id = ?;", (product_id,)).fetchone()
+            prod = conn.execute("SELECT id, name, stock, stock_total, colors, sizes FROM products WHERE id = ?;", (product_id,)).fetchone()
             if not prod:
                 raise ValueError(f"Không tìm thấy sản phẩm với mã '{product_id}'")
 
             now_str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
-            cur = conn.execute(
-                """
-                INSERT INTO inventory_batches (product_id, quantity, cost_price, received_at, note, created_by)
-                VALUES (?, ?, ?, ?, ?, ?);
-                """,
-                (product_id, quantity, cost_price, now_str, note or "", created_by or "admin")
-            )
-            batch_id = cur.lastrowid
+            now_iso = datetime.datetime.now().isoformat()
 
-            # Tăng tồn kho sản phẩm cha
+            # 1. Cập nhật tồn kho biến thể
+            if color and size:
+                v_row = conn.execute(
+                    "SELECT id FROM product_variants WHERE product_id = ? AND color = ? AND size = ?;",
+                    (product_id, color, size)
+                ).fetchone()
+                if v_row:
+                    conn.execute(
+                        "UPDATE product_variants SET stock = stock + ? WHERE product_id = ? AND color = ? AND size = ?;",
+                        (quantity, product_id, color, size)
+                    )
+                else:
+                    sku = f"{product_id}-{color[:2].upper()}-{size}".replace(" ", "")
+                    conn.execute(
+                        """
+                        INSERT INTO product_variants (product_id, color, color_hex, size, stock, sku, created_at)
+                        VALUES (?, ?, '#000000', ?, ?, ?, ?);
+                        """,
+                        (product_id, color, size, quantity, sku, now_iso)
+                    )
+            else:
+                # Không chọn phân loại cụ thể -> phân bổ cho các biến thể hiện có
+                variants = conn.execute(
+                    "SELECT id FROM product_variants WHERE product_id = ? ORDER BY id ASC;",
+                    (product_id,)
+                ).fetchall()
+                if variants:
+                    per_v = quantity // len(variants)
+                    rem = quantity % len(variants)
+                    for idx, v in enumerate(variants):
+                        add_q = per_v + (rem if idx == 0 else 0)
+                        conn.execute(
+                            "UPDATE product_variants SET stock = stock + ? WHERE id = ?;",
+                            (add_q, v["id"])
+                        )
+                else:
+                    sku = f"{product_id}-DEF"
+                    conn.execute(
+                        """
+                        INSERT INTO product_variants (product_id, color, color_hex, size, stock, sku, created_at)
+                        VALUES (?, 'Mặc định', '#000000', 'Freesize', ?, ?, ?);
+                        """,
+                        (product_id, quantity, sku, now_iso)
+                    )
+
+            # 2. Đồng bộ tồn kho cha từ tổng biến thể (Single Source of Truth)
             conn.execute(
                 """
                 UPDATE products 
-                SET stock = stock + ?, stock_total = stock_total + ?
+                SET stock = (SELECT COALESCE(SUM(stock), 0) FROM product_variants WHERE product_id = ?),
+                    stock_total = stock_total + ?
                 WHERE id = ?;
                 """,
-                (quantity, quantity, product_id)
+                (product_id, quantity, product_id)
             )
 
-            new_stock = prod["stock"] + quantity
-            new_stock_total = prod["stock_total"] + quantity
+            updated_p = conn.execute("SELECT stock, stock_total FROM products WHERE id = ?;", (product_id,)).fetchone()
+            new_stock = updated_p["stock"] if updated_p else prod["stock"] + quantity
+            new_stock_total = updated_p["stock_total"] if updated_p else prod["stock_total"] + quantity
 
-            # Đồng bộ in-memory product_service nếu có
+            # 3. Ghi vào inventory_batches (có color, size)
+            cur = conn.execute(
+                """
+                INSERT INTO inventory_batches (product_id, color, size, quantity, cost_price, received_at, note, created_by)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+                """,
+                (product_id, color or None, size or None, quantity, cost_price, now_str, note or "", created_by or "admin")
+            )
+            batch_id = cur.lastrowid
+
+            # 4. Đồng bộ in-memory product_service nếu có
             try:
                 from app.services.product_service import product_service
                 mem_prod = product_service.get_by_id(product_id)
                 if mem_prod:
                     mem_prod.stock = new_stock
                     mem_prod.stock_total = new_stock_total
+                    v_rows = conn.execute(
+                        "SELECT id, product_id, color, color_hex, size, stock, sku FROM product_variants WHERE product_id = ? ORDER BY id ASC;",
+                        (product_id,)
+                    ).fetchall()
+                    if v_rows:
+                        from app.models.schemas import ProductVariant
+                        mem_prod.variants = [ProductVariant(**dict(vr)) for vr in v_rows]
             except Exception:
                 pass
 
@@ -1711,6 +2136,8 @@ class DatabaseService:
                 "id": batch_id,
                 "product_id": product_id,
                 "product_name": prod["name"],
+                "color": color or None,
+                "size": size or None,
                 "quantity": quantity,
                 "cost_price": cost_price,
                 "received_at": now_str,
@@ -1745,6 +2172,25 @@ class DatabaseService:
                     """,
                     (limit,)
                 ).fetchall()
+            return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+    def get_low_stock_variants(self, threshold: int = 5) -> List[Dict[str, Any]]:
+        """Lấy danh sách các biến thể có tồn kho <= threshold để cảnh báo nhập hàng."""
+        conn = get_db_connection(self.db_path)
+        try:
+            rows = conn.execute(
+                """
+                SELECT pv.id, pv.product_id, pv.color, pv.color_hex, pv.size, pv.stock, pv.sku,
+                       p.name as product_name, p.price, p.category, p.stock as total_product_stock
+                FROM product_variants pv
+                JOIN products p ON pv.product_id = p.id
+                WHERE pv.stock <= ?
+                ORDER BY pv.stock ASC, p.name ASC;
+                """,
+                (threshold,)
+            ).fetchall()
             return [dict(r) for r in rows]
         finally:
             conn.close()
@@ -1917,6 +2363,106 @@ class DatabaseService:
             }
         finally:
             conn.close()
+
+    def _row_to_voucher(self, row: Optional[sqlite3.Row]):
+        if not row:
+            return None
+        from app.models.schemas import Voucher
+        expires_at = None
+        if row["expires_at"]:
+            try:
+                expires_at = datetime.datetime.fromisoformat(row["expires_at"])
+            except Exception:
+                pass
+        return Voucher(
+            code=row["code"],
+            title=row["title"],
+            kind=row["kind"],
+            value=row["value"],
+            max_discount=row["max_discount"],
+            min_order=row["min_order"],
+            badge=row["badge"],
+            expire_in=row["expire_in"],
+            expires_at=expires_at,
+            max_uses=row["max_uses"],
+            max_uses_per_user=row["max_uses_per_user"],
+        )
+
+    def get_voucher(self, code: Optional[str]):
+        """Lấy thông tin voucher từ CSDL SQLite."""
+        if not code:
+            return None
+        code = code.strip().upper()
+        conn = get_db_connection(self.db_path)
+        try:
+            row = conn.execute("SELECT * FROM vouchers WHERE code = ? AND is_active = 1;", (code,)).fetchone()
+            return self._row_to_voucher(row)
+        finally:
+            conn.close()
+
+    def get_all_vouchers(self) -> List[Any]:
+        """Lấy danh sách tất cả voucher đang active từ CSDL SQLite."""
+        conn = get_db_connection(self.db_path)
+        try:
+            rows = conn.execute("SELECT * FROM vouchers WHERE is_active = 1 ORDER BY created_at ASC;").fetchall()
+            return [self._row_to_voucher(r) for r in rows if r]
+        finally:
+            conn.close()
+
+    def save_voucher(self, voucher: Any):
+        """Thêm hoặc cập nhật voucher trong CSDL."""
+        now_str = datetime.datetime.now().isoformat()
+        if hasattr(voucher, "model_dump"):
+            v_dict = voucher.model_dump()
+        elif isinstance(voucher, dict):
+            v_dict = voucher
+        else:
+            v_dict = voucher.__dict__
+
+        expires_at_val = v_dict.get("expires_at")
+        if isinstance(expires_at_val, datetime.datetime):
+            expires_at_val = expires_at_val.isoformat()
+
+        with get_db_transaction(self.db_path) as conn:
+            conn.execute(
+                """
+                INSERT INTO vouchers 
+                (code, title, kind, value, max_discount, min_order, badge, expire_in, expires_at, max_uses, max_uses_per_user, is_active, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+                ON CONFLICT(code) DO UPDATE SET
+                    title = excluded.title,
+                    kind = excluded.kind,
+                    value = excluded.value,
+                    max_discount = excluded.max_discount,
+                    min_order = excluded.min_order,
+                    badge = excluded.badge,
+                    expire_in = excluded.expire_in,
+                    expires_at = excluded.expires_at,
+                    max_uses = excluded.max_uses,
+                    max_uses_per_user = excluded.max_uses_per_user,
+                    is_active = excluded.is_active;
+                """,
+                (
+                    v_dict.get("code", "").upper().strip(),
+                    v_dict.get("title", ""),
+                    v_dict.get("kind", "amount"),
+                    v_dict.get("value", 0),
+                    v_dict.get("max_discount"),
+                    v_dict.get("min_order", 0),
+                    v_dict.get("badge", "AURA"),
+                    v_dict.get("expire_in", "Còn hiệu lực"),
+                    expires_at_val,
+                    v_dict.get("max_uses"),
+                    v_dict.get("max_uses_per_user"),
+                    now_str,
+                )
+            )
+
+    def reset_vouchers(self):
+        """Reset bảng vouchers và seed lại dữ liệu mặc định."""
+        with get_db_transaction(self.db_path) as conn:
+            conn.execute("DELETE FROM vouchers;")
+            _migrate_vouchers(conn)
 
 
 db_service = DatabaseService()

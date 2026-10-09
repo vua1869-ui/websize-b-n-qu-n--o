@@ -91,6 +91,12 @@ def admin_stats(_admin: User = Depends(require_admin)):
     stats["products_in_stock"] = sum(1 for p in all_products if p.stock > 10)
     stats["products_low_stock"] = sum(1 for p in all_products if 0 < p.stock <= 10)
     stats["products_out_of_stock"] = sum(1 for p in all_products if p.stock == 0)
+
+    # Thống kê chi tiết biến thể tồn kho
+    low_vars = db_service.get_low_stock_variants(threshold=5)
+    stats["variants_low_stock"] = len(low_vars)
+    stats["variants_out_of_stock"] = sum(1 for v in low_vars if v["stock"] == 0)
+
     stats["total_users"] = len(user_service.get_all_users())
     return stats
 
@@ -294,6 +300,8 @@ def admin_add_inventory_batch(
             product_id=product_id,
             quantity=body.quantity,
             cost_price=body.cost_price,
+            color=body.color,
+            size=body.size,
             note=body.note,
             created_by=_admin.username,
         )
@@ -314,6 +322,14 @@ def admin_get_inventory_batches(
     return db_service.get_inventory_batches(product_id=product_id, limit=limit)
 
 
+@router.get("/api/admin/variants/low-stock")
+def admin_low_stock_variants(
+    threshold: int = Query(5, ge=0, le=50),
+    _admin: User = Depends(require_admin),
+):
+    return db_service.get_low_stock_variants(threshold=threshold)
+
+
 @router.get("/api/admin/reports/profit", response_model=ProfitReportResponse)
 def admin_profit_report(_admin: User = Depends(require_admin)):
     return db_service.get_profit_loss_report()
@@ -322,12 +338,19 @@ def admin_profit_report(_admin: User = Depends(require_admin)):
 @router.get("/api/admin/orders")
 def admin_get_orders(
     status: Optional[str] = Query(None),
+    payment_status: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     _admin: User = Depends(require_admin),
 ):
-    return order_service.get_orders(status=status, search=search, limit=limit, offset=offset)
+    return order_service.get_orders(status=status, payment_status=payment_status, search=search, limit=limit, offset=offset)
+
+
+@router.get("/api/admin/orders/refund-pending")
+def admin_get_refund_pending_orders(_admin: User = Depends(require_admin)):
+    """Lấy danh sách các đơn hàng cần hoàn tiền (payment_status = 'refund_pending') cho admin/kế toán."""
+    return db_service.get_refund_pending_orders()
 
 
 @router.put("/api/admin/orders/{order_id}/status")

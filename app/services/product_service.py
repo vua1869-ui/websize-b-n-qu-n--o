@@ -57,15 +57,15 @@ STOPWORDS = {
 
 AVAILABLE_VOUCHERS = [
     Voucher(code="FREESHIP", title="Miễn phí vận chuyển toàn quốc", kind="shipping",
-            min_order=0, badge="Freeship", expire_in="Còn hiệu lực"),
+            min_order=0, badge="Freeship", expire_in="Còn hiệu lực", max_uses=1000, max_uses_per_user=5),
     Voucher(code="AURA50K", title="Ưu đãi đơn từ 299K", kind="amount", value=50000,
-            min_order=299000, badge="AURA STUDIO", expire_in="Trong tháng này"),
+            min_order=299000, badge="AURA STUDIO", expire_in="Trong tháng này", max_uses=500, max_uses_per_user=1),
     Voucher(code="LIVE20", title="Độc quyền từ phòng Live AI", kind="percent", value=20,
-            max_discount=100000, min_order=199000, badge="Live AI", expire_in="Trong tháng này"),
+            max_discount=100000, min_order=199000, badge="Live AI", expire_in="Trong tháng này", max_uses=200, max_uses_per_user=1),
     Voucher(code="AURA10", title="Khách mới trải nghiệm AI Stylist", kind="percent", value=10,
-            max_discount=50000, min_order=150000, badge="Khách mới", expire_in="30 ngày"),
+            max_discount=50000, min_order=150000, badge="Khách mới", expire_in="30 ngày", max_uses=500, max_uses_per_user=1),
     Voucher(code="STAYWITHUS", title="Quà tặng giữ chân khách hàng - Giảm 5%", kind="percent", value=5,
-            max_discount=100000, min_order=100000, badge="Tri ân 5%", expire_in="Hôm nay"),
+            max_discount=100000, min_order=100000, badge="Tri ân 5%", expire_in="Hôm nay", max_uses=300, max_uses_per_user=1),
 ]
 
 VN_UTC_OFFSET_MS = 7 * 3600 * 1000
@@ -327,12 +327,26 @@ class ProductService:
 
     # ---------- Voucher ----------
     def get_vouchers(self) -> List[Voucher]:
+        try:
+            from app.db.database import db_service
+            db_list = db_service.get_all_vouchers()
+            if db_list:
+                return db_list
+        except Exception:
+            pass
         return AVAILABLE_VOUCHERS
 
     def get_voucher(self, code: Optional[str]) -> Optional[Voucher]:
         if not code:
             return None
         code = code.strip().upper()
+        try:
+            from app.db.database import db_service
+            db_v = db_service.get_voucher(code)
+            if db_v:
+                return db_v
+        except Exception:
+            pass
         return next((v for v in AVAILABLE_VOUCHERS if v.code == code), None)
 
     # ---------- Kho hàng ----------
@@ -560,6 +574,16 @@ class ProductService:
                 data["tags"] = []
 
             new_prod = Product(**data)
+
+            # Đồng bộ vào SQLite (bảng products và product_variants)
+            try:
+                from app.db.database import get_db_transaction
+                with get_db_transaction() as conn:
+                    self._save_product_db(conn, new_prod)
+                    self._sync_product_variants_db(conn, new_prod)
+            except Exception as e:
+                logger.warning("Lỗi lưu sản phẩm mới %s vào CSDL: %s", new_prod.id, e)
+
             self._products.append(new_prod)
             self._by_id[new_prod.id] = new_prod
 
@@ -570,6 +594,96 @@ class ProductService:
 
             self._save_products_to_disk()
             return new_prod
+
+    def _save_product_db(self, conn, p: Product):
+        now_iso = datetime.datetime.now().isoformat()
+        conn.execute(
+            """
+            INSERT INTO products 
+            (id, name, category, category_name, gender, price, original_price,
+             flash_sale, flash_sale_price, sold_count, stock, stock_total, rating, reviews_count,
+             location, images, sizes, colors, description, material, style, occasions, tags,
+             is_hot, is_new, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                name=excluded.name, category=excluded.category, category_name=excluded.category_name,
+                gender=excluded.gender, price=excluded.price, original_price=excluded.original_price,
+                stock=excluded.stock, stock_total=excluded.stock_total,
+                description=excluded.description, material=excluded.material,
+                style=excluded.style;
+            """,
+            (
+                p.id, p.name, p.category, p.category_name, p.gender, p.price, p.original_price,
+                1 if p.flash_sale else 0, p.flash_sale_price, p.sold_count, p.stock, p.stock_total,
+                p.rating, p.reviews_count, p.location, json.dumps(p.images, ensure_ascii=False),
+                json.dumps(p.sizes, ensure_ascii=False),
+                json.dumps([c.model_dump() if hasattr(c, "model_dump") else c for c in p.colors], ensure_ascii=False),
+                p.description, p.material, p.style, json.dumps(p.occasions, ensure_ascii=False),
+                json.dumps(p.tags, ensure_ascii=False), 1 if p.is_hot else 0, 1 if p.is_new else 0,
+                now_iso,
+            )
+        )
+
+    def _sync_product_variants_db(self, conn, p: Product):
+        """Đồng bộ bảng product_variants trong SQLite cho sản phẩm và cập nhật p.stock = SUM(variants.stock)."""
+        now_str = datetime.datetime.now().isoformat()
+        if not p.variants:
+            c_list = p.colors or [{"name": "Tiêu chuẩn", "hex": "#000000"}]
+            s_list = p.sizes or ["Freesize"]
+            base_stock = p.stock if p.stock is not None else 10
+            def_c_name = c_list[0].name if hasattr(c_list[0], "name") else (c_list[0].get("name") if isinstance(c_list[0], dict) else str(c_list[0]))
+            has_s = "S" in s_list
+            has_m = "M" in s_list
+            s_alloc = min(3, max(1, base_stock - 1)) if (has_s and has_m and base_stock > 1) else 0
+            var_list = []
+            for c in c_list:
+                c_name = c.name if hasattr(c, "name") else (c.get("name") if isinstance(c, dict) else str(c))
+                c_hex = c.hex if hasattr(c, "hex") else (c.get("hex", "#000000") if isinstance(c, dict) else "#000000")
+                for s in s_list:
+                    s_str = str(s)
+                    if c_name == def_c_name:
+                        if has_s and has_m:
+                            if s_str == "S":
+                                v_st = s_alloc
+                            elif s_str == "M":
+                                v_st = base_stock - s_alloc
+                            else:
+                                v_st = 0
+                        else:
+                            v_st = base_stock if (s_str == str(s_list[0])) else 0
+                    else:
+                        v_st = 0
+                    sku = f"{p.id}-{c_name[:2].upper()}-{s_str}".replace(" ", "")
+                    var_list.append(ProductVariant(color=c_name, color_hex=c_hex, size=s_str, stock=max(0, v_st), sku=sku))
+            p.variants = var_list
+
+        for v in p.variants:
+            c_name = v.color
+            c_hex = v.color_hex or "#000000"
+            s_str = v.size
+            sku = v.sku or f"{p.id}-{c_name[:2].upper()}-{s_str}".replace(" ", "")
+            conn.execute(
+                """
+                INSERT INTO product_variants (product_id, color, color_hex, size, stock, sku, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(product_id, color, size) DO UPDATE SET
+                    stock = excluded.stock, sku = excluded.sku;
+                """,
+                (p.id, c_name, c_hex, s_str, v.stock, sku, now_str)
+            )
+
+        # Tính lại tổng tồn kho theo SSOT
+        conn.execute(
+            """
+            UPDATE products 
+            SET stock = (SELECT COALESCE(SUM(stock), 0) FROM product_variants WHERE product_id = ?)
+            WHERE id = ?;
+            """,
+            (p.id, p.id)
+        )
+        row = conn.execute("SELECT stock FROM products WHERE id = ?;", (p.id,)).fetchone()
+        if row:
+            p.stock = row["stock"]
 
     def update_product(self, product_id: str, data: dict) -> Product:
         with self._lock:
@@ -593,7 +707,36 @@ class ProductService:
             if not merged.get("category_name"):
                 merged["category_name"] = CATEGORY_META.get(merged.get("category", p.category), (p.category_name, ""))[0]
 
+            if "variants" in data and data["variants"] is not None:
+                v_objs = []
+                for v in data["variants"]:
+                    if isinstance(v, dict):
+                        v_objs.append(ProductVariant(**v))
+                    else:
+                        v_objs.append(v)
+                merged["variants"] = v_objs
+            elif "stock" in data:
+                new_st = int(data["stock"])
+                if merged.get("variants"):
+                    v_list = [ProductVariant(**v) if isinstance(v, dict) else v for v in merged["variants"]]
+                    if v_list:
+                        v_list[0].stock = new_st
+                        for extra_v in v_list[1:]:
+                            extra_v.stock = 0
+                    merged["variants"] = v_list
+                else:
+                    merged["variants"] = None
+
             updated_prod = Product(**merged)
+
+            # Đồng bộ vào SQLite (bảng products và product_variants)
+            try:
+                from app.db.database import get_db_transaction
+                with get_db_transaction() as conn:
+                    self._save_product_db(conn, updated_prod)
+                    self._sync_product_variants_db(conn, updated_prod)
+            except Exception as e:
+                logger.warning("Lỗi cập nhật sản phẩm %s vào CSDL: %s", product_id, e)
 
             for i, item in enumerate(self._products):
                 if item.id == product_id:
@@ -631,7 +774,7 @@ class ProductService:
         Nhập hoặc cập nhật hàng loạt sản phẩm:
         - Cập nhật catalog trong bộ nhớ.
         - Ghi lại products.json MỘT LẦN duy nhất ở cuối.
-        - Thực thi một transaction SQLite duy nhất cho toàn bộ sản phẩm.
+        - Thực thi một transaction SQLite duy nhất cho toàn bộ sản phẩm và biến thể.
         """
         with self._lock:
             results: List[Product] = []
@@ -644,6 +787,25 @@ class ProductService:
                     for k, v in norm_data.items():
                         if v is not None:
                             merged[k] = v
+                    if "variants" in norm_data and norm_data["variants"] is not None:
+                        v_objs = []
+                        for v in norm_data["variants"]:
+                            if isinstance(v, dict):
+                                v_objs.append(ProductVariant(**v))
+                            else:
+                                v_objs.append(v)
+                        merged["variants"] = v_objs
+                    elif "stock" in norm_data:
+                        new_st = int(norm_data["stock"])
+                        if merged.get("variants"):
+                            v_list = [ProductVariant(**v) if isinstance(v, dict) else v for v in merged["variants"]]
+                            if v_list:
+                                v_list[0].stock = new_st
+                                for extra_v in v_list[1:]:
+                                    extra_v.stock = 0
+                            merged["variants"] = v_list
+                        else:
+                            merged["variants"] = None
                     prod = Product(**merged)
                     for i, it in enumerate(self._products):
                         if it.id == target_id:
@@ -681,32 +843,8 @@ class ProductService:
                 from app.db.database import get_db_transaction
                 with get_db_transaction() as conn:
                     for p in db_updates:
-                        conn.execute(
-                            """
-                            INSERT INTO products 
-                            (id, name, category, category_name, gender, price, original_price,
-                             flash_sale, flash_sale_price, sold_count, stock, stock_total, rating, reviews_count,
-                             location, images, sizes, colors, description, material, style, occasions, tags,
-                             is_hot, is_new, is_active, deleted_at, created_at)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, NULL, ?)
-                            ON CONFLICT(id) DO UPDATE SET
-                                name=excluded.name, category=excluded.category, category_name=excluded.category_name,
-                                gender=excluded.gender, price=excluded.price, original_price=excluded.original_price,
-                                stock=excluded.stock, stock_total=excluded.stock_total,
-                                description=excluded.description, material=excluded.material,
-                                style=excluded.style, is_active=1, deleted_at=NULL;
-                            """,
-                            (
-                                p.id, p.name, p.category, p.category_name, p.gender, p.price, p.original_price,
-                                1 if p.flash_sale else 0, p.flash_sale_price, p.sold_count, p.stock, p.stock_total,
-                                p.rating, p.reviews_count, p.location, json.dumps(p.images, ensure_ascii=False),
-                                json.dumps(p.sizes, ensure_ascii=False),
-                                json.dumps([c.model_dump() if hasattr(c, "model_dump") else c for c in p.colors], ensure_ascii=False),
-                                p.description, p.material, p.style, json.dumps(p.occasions, ensure_ascii=False),
-                                json.dumps(p.tags, ensure_ascii=False), 1 if p.is_hot else 0, 1 if p.is_new else 0,
-                                datetime.datetime.now().isoformat(),
-                            )
-                        )
+                        self._save_product_db(conn, p)
+                        self._sync_product_variants_db(conn, p)
             except Exception as e:
                 logger.warning("Lỗi cập nhật lô sản phẩm vào CSDL: %s", e)
 
