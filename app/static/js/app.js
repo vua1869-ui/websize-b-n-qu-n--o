@@ -1912,11 +1912,14 @@ const App = {
     };
     if (body.customer_name.length < 2) return this.checkoutError('Vui lòng nhập họ tên người nhận');
     if (!/^(?:0|\+?84)\d{9}$/.test(body.customer_phone.replace(/[\s.\-]/g, ''))) return this.checkoutError('Số điện thoại không hợp lệ (ví dụ: 0987654321)');
+    if (body.customer_email && !/^[^<>\s@]+@[^<>\s@]+\.[^<>\s@]+$/.test(body.customer_email)) {
+      return this.checkoutError('Email không hợp lệ (ví dụ: customer@example.com)');
+    }
     if (body.customer_address.length < 8) return this.checkoutError('Vui lòng nhập địa chỉ nhận hàng đầy đủ');
 
     if (this._isSubmittingOrder) return;
     this._isSubmittingOrder = true;
-    btn.disabled = true; btn.textContent = 'Đang xử lý...';
+    if (btn) { btn.disabled = true; btn.textContent = 'Đang xử lý...'; }
     try {
       const order = await U.api('/api/orders', { method: 'POST', body });
       U.store.set('aura_customer', { 
@@ -1956,7 +1959,10 @@ const App = {
     } catch (e) {
       this.checkoutError(e.message);
       this.refreshCart(); // tồn kho/giá có thể đã đổi
-    } finally { this._isSubmittingOrder = false; btn.disabled = false; btn.textContent = 'Đặt hàng ngay'; }
+    } finally {
+      this._isSubmittingOrder = false;
+      if (btn) { btn.disabled = false; btn.textContent = 'Đặt hàng ngay'; }
+    }
   },
 
   checkoutError(msg) { const el = U.$('#co-error'); if (!el) return; el.textContent = msg; el.classList.remove('hidden'); },

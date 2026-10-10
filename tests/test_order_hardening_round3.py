@@ -238,9 +238,8 @@ class TestCustomerCancel:
         Tồn kho không bị lệch: tổng stock = stock_ban_đầu.
         """
         phone = "0922333444"
-        order_id = self._make_order(client, phone=phone)
-
         stock_before = product_service.get_by_id("prod_001").stock
+        order_id = self._make_order(client, phone=phone)
 
         barrier = threading.Barrier(2)
         results = {}

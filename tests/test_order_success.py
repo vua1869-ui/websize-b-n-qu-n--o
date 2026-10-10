@@ -112,12 +112,8 @@ def test_vnpay_return_redirects_browser_to_order_success(client):
     assert res.headers["location"] == f"/order-success/{order_id}"
 
 
-def test_tracking_route_redirects(client):
-    """GET /tracking?code=... chuyển hướng về /?tracking=..."""
-    res = client.get("/tracking?code=GHN-VN-123456", follow_redirects=False)
-    assert res.status_code == 302
-    assert res.headers["location"] == "/?tracking=GHN-VN-123456"
-
-    res_empty = client.get("/tracking", follow_redirects=False)
-    assert res_empty.status_code == 302
-    assert res_empty.headers["location"] == "/?tracking="
+def test_tracking_page_renders(client):
+    """GET /tracking trả về trang tra cứu đơn hàng công khai (200 OK)."""
+    res = client.get("/tracking", follow_redirects=False)
+    assert res.status_code == 200
+    assert "Tra cứu đơn hàng" in res.text

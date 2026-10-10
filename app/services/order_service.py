@@ -288,9 +288,11 @@ class OrderService:
             "shipping_status": shipping_status,
             "estimated_delivery": estimated_delivery,
             "created_at": now.isoformat(timespec="seconds"),
+            "customer_email": getattr(req, "customer_email", None),
             "customer": {
                 "name": req.customer_name,
                 "phone": req.customer_phone,
+                "email": getattr(req, "customer_email", None),
                 "address": req.customer_address,
                 "province": getattr(req, "province_name", None) or getattr(req, "province", None),
                 "district": getattr(req, "district", None),
@@ -398,6 +400,7 @@ class OrderService:
             carrier=carrier, tracking_code=tracking_code, shipping_status=shipping_status,
             estimated_delivery=estimated_delivery,
             quote=quote, customer_name=req.customer_name, customer_phone=req.customer_phone,
+            customer_email=getattr(req, "customer_email", None),
             customer_address=req.customer_address, payment_method=req.payment_method,
             created_at=now.strftime("%d/%m/%Y %H:%M"), message=msg,
             qr_code_url=qr_code_url, bank_info=bank_info,
@@ -529,16 +532,16 @@ class OrderService:
         if not order:
             raise OrderError("Đơn hàng không tồn tại", 404)
 
-        # Kiểm tra quyền: chủ đơn (user_id khớp) hoặc khớp SĐT (vãng lai)
+        # Kiểm tra quyền: chủ đơn (user_id khớp) hoặc khớp SĐT
         order_user_id = order.get("user_id")
         order_phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
-        if order_user_id:
-            if not user or str(getattr(user, "id", "")) != str(order_user_id):
-                raise OrderError("Đơn hàng không tồn tại hoặc bạn không có quyền huỷ", 404)
-        else:
-            phone_provided = (req and req.phone) or phone
-            if not phone_provided or normalize_phone(phone_provided) != normalize_phone(order_phone):
-                raise OrderError("Đơn hàng không tồn tại hoặc SĐT không khớp", 404)
+        phone_provided = (req and req.phone) or phone
+
+        is_owner = bool(user and order_user_id and str(getattr(user, "id", "")) == str(order_user_id))
+        phone_matches = bool(phone_provided and order_phone and normalize_phone(phone_provided) == normalize_phone(order_phone))
+
+        if not (is_owner or phone_matches):
+            raise OrderError("Đơn hàng không tồn tại hoặc SĐT không khớp", 404)
 
         # Chỉ cho phép huỷ khi đơn chưa vận chuyển
         current_status = order.get("order_status") or order.get("status", "")

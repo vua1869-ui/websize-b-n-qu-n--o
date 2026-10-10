@@ -1286,7 +1286,7 @@ class DatabaseService:
                     user_id,
                     customer.get("name"),
                     customer.get("phone"),
-                    customer.get("email"),
+                    customer.get("email") or order_record.get("customer_email"),
                     customer.get("address"),
                     customer.get("province"),
                     customer.get("district"),

@@ -376,6 +376,7 @@ class OrderResponse(BaseModel):
     quote: QuoteResponse
     customer_name: str
     customer_phone: str
+    customer_email: Optional[str] = None
     customer_address: str
     payment_method: str
     created_at: str
