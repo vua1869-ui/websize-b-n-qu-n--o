@@ -180,21 +180,34 @@ docker build -t aura-studio .
 docker run -d -p 8000:8000 --env-file .env aura-studio
 ```
 
-Khi chạy trực tiếp qua `uvicorn`, nên sử dụng:
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1
-```
+## Checklist Go-Live Triển Khai Thực Tế
 
-- [ ] **Đặt `APP_ENV=production` & `DEBUG=false`** trong file `.env`.
-- [ ] **Đổi `SECRET_KEY`**: Tạo chuỗi ngẫu nhiên bằng `python -c "import secrets; print(secrets.token_hex(32))"`. Không dùng chuỗi dev mặc định.
-- [ ] **Đổi `PAYMENT_WEBHOOK_SECRET`**: Khóa bí mật khớp với cấu hình webhook thanh toán của VNPay/Ngân hàng.
-- [ ] **Cấu hình CSDL PostgreSQL**: Thay `DATABASE_URL` bằng kết nối PostgreSQL/MySQL thực tế (nếu triển khai nhiều replica).
-- [ ] **Cập nhật `PUBLIC_BASE_URL` & `VNPAY_RETURN_URL`**: Trỏ về URL tên miền chính thức có `https://...` (không dùng `127.0.0.1` hay `localhost`).
-- [ ] **Cấu hình Email Sender**: Đặt `EMAIL_BACKEND` thành `smtp` hoặc `resend`, cung cấp đầy đủ thông số gửi mail cho tính năng quên mật khẩu.
-- [ ] **Đổi mật khẩu tài khoản Admin mặc định**: Đăng nhập tài khoản `admin` ban đầu và tiến hành đổi mật khẩu mới ngay lập tức.
-- [ ] **Tắt Swagger Docs**: Khi `APP_ENV=production`, hệ thống tự động tắt `/docs`, `/redoc` và `/openapi.json` để bảo mật.
+Trước khi đưa hệ thống vào vận hành chính thức (Go-Live), bắt buộc hoàn thành các bước kiểm tra sau:
 
-## Những gì cần lưu ý khi vận hành thật
+- [ ] **1. Cài đặt thư viện cố định phiên bản**:
+  `pip install -r requirements.txt` (đã ghim chính xác `==` toàn bộ thư viện, bao gồm `sentry-sdk`, `fastapi`, `uvicorn`, `pydantic`, `sqlalchemy`).
+- [ ] **2. Biến môi trường & Bảo mật**:
+  - `APP_ENV=production` & `DEBUG=false` trong file `.env`.
+  - **Tắt demo data**: `DEMO_DATA=false` (hệ thống **từ chối khởi động** nếu `DEMO_DATA=true` trong production).
+  - **Đổi `SECRET_KEY`**: Tạo chuỗi bảo mật ngẫu nhiên `python -c "import secrets; print(secrets.token_hex(32))"`. Hệ thống từ chối khởi động nếu dùng secret mặc định hoặc dưới 16 ký tự.
+  - **Đổi `PAYMENT_WEBHOOK_SECRET`**: Khóa bí mật webhook VNPay/Ngân hàng (tối thiểu 16 ký tự).
+  - Cập nhật `PUBLIC_BASE_URL` và `VNPAY_RETURN_URL` sang domain HTTPS thật (không dùng `127.0.0.1` hay `localhost`).
+  - Đổi mật khẩu tài khoản quản trị `admin` mặc định ngay trong trang quản trị.
+- [ ] **3. Reverse Proxy (Caddy / Nginx)**:
+  - Cấu hình HTTPS tự động qua [deploy/Caddyfile](file:///c:/Users/lenk/Downloads/fashion_ai_store/deploy/Caddyfile) hoặc [deploy/nginx.conf](file:///c:/Users/lenk/Downloads/fashion_ai_store/deploy/nginx.conf).
+  - Giới hạn kích thước Request Body tối đa **5MB** (`request_body { max_size 5MB }` / `client_max_body_size 5M;`).
+  - Cấu hình timeout kết nối/phản hồi 60 giây và chuyển tiếp đầy đủ header `X-Request-ID`, `X-Real-IP`, `X-Forwarded-Proto`.
+- [ ] **4. Giám sát & Báo lỗi (Sentry & Request-ID Tracing)**:
+  - Khai báo biến `SENTRY_DSN` trong `.env` để tự động kích hoạt Sentry theo dõi lỗi ngoại lệ thời gian thực.
+  - Hệ thống tự động gán và ghi nhận `X-Request-ID` trong toàn bộ dòng log và HTTP response headers để dễ dàng tra cứu sự cố.
+- [ ] **5. Health Check định kỳ**:
+  - Endpoint `/healthz` tự động kiểm tra kết nối CSDL và trả về `status: ok` (HTTP 200) hoặc `status: unhealthy` (HTTP 503). Dùng để tích hợp với Docker / Kubernetes liveness probe hoặc Uptime Kuma.
+- [ ] **6. Sao lưu CSDL tự động (ACID Online Backup)**:
+  - Thiết lập Cron chạy [scripts/backup.py](file:///c:/Users/lenk/Downloads/fashion_ai_store/scripts/backup.py) hoặc [scripts/backup.sh](file:///c:/Users/lenk/Downloads/fashion_ai_store/scripts/backup.sh) định kỳ mỗi 6 giờ hoặc hàng ngày.
+  - Sử dụng chuẩn `sqlite3 .backup` (không copy file thô), tự động giữ **15 bản sao lưu mới nhất**, và đẩy ra nơi lưu trữ ngoài máy chủ qua biến `REMOTE_BACKUP_DIR` hoặc `OFFSITE_COMMAND`.
+  - Phục hồi khi có sự cố bằng [scripts/restore.py](file:///c:/Users/lenk/Downloads/fashion_ai_store/scripts/restore.py) (kèm kiểm tra `PRAGMA integrity_check`).
+- [ ] **7. Tự động bảo mật Swagger Docs**:
+  - Khi `APP_ENV=production`, hệ thống tự động tắt `/docs`, `/redoc` và `/openapi.json`.
 
 - **Dữ liệu đánh giá & minh chứng xã hội**: Thiết lập `DEMO_DATA=false` trong `.env` để không hiển thị điểm đánh giá giả định khi sản phẩm chưa có review thật. Chạy `python scripts/clear_demo_social_proof.py` để xóa sạch các lượt mua và đánh giá ảo demo.
 - **Vận chuyển & GHN**: Hệ thống trả về trạng thái chuẩn "Chờ bàn giao đối tác vận chuyển" và "Chưa có mã vận đơn" khi đơn chưa được bàn giao đơn vị vận chuyển thực tế, không bịa mã vận đơn giả.

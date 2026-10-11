@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Phiếu Giao Hàng A6 - {{ order_id }} | AURA STUDIO</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    /* Reset & Base */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #09090b;
+      background-color: #09090b;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Screen Container Preview */
+    @media screen {
+      body {
+        padding: 30px 15px;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: #09090b;
+      }
+
+      .action-toolbar {
+        width: 105mm;
+        margin-bottom: 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.2s ease;
+      }
+
+      .btn-primary {
+        background: #d4af37;
+        color: #09090b;
+        border: 1px solid #d4af37;
+      }
+      .btn-primary:hover {
+        background: #e5c158;
+      }
+
+      .btn-secondary {
+        background: #27272a;
+        color: #d4d4d8;
+        border: 1px solid #3f3f46;
+      }
+      .btn-secondary:hover {
+        background: #3f3f46;
+        color: #ffffff;
+      }
+
+      .a6-sheet {
+        width: 105mm;
+        min-height: 148mm;
+        background: #ffffff;
+        color: #09090b;
+        padding: 6mm 7mm;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7);
+        border-radius: 4px;
+        position: relative;
+      }
+    }
+
+    /* Print Format: Chuẩn khổ A6 (105mm x 148mm) */
+    @page {
+      size: A6 portrait;
+      margin: 4mm 5mm;
+    }
+
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        font-size: 9.5px;
+        line-height: 1.25;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      .a6-sheet {
+        width: 105mm;
+        min-height: 148mm;
+        max-width: 105mm;
+        padding: 2mm 3mm;
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 auto;
+      }
+
+      * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+    }
+
+    /* Print Component Styles */
+    .a6-sheet {
+      font-size: 9.5px;
+      line-height: 1.3;
+    }
+
+    /* Header */
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1.5px solid #000;
+      padding-bottom: 5px;
+      margin-bottom: 5px;
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #000;
+    }
+
+    .brand-sub {
+      font-size: 8px;
+      color: #444;
+      margin-top: 1px;
+    }
+
+    .order-meta {
+      text-align: right;
+    }
+
+    .order-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 800;
+      color: #000;
+    }
+
+    .order-date {
+      font-size: 8px;
+      color: #555;
+    }
+
+    /* Shipping Route / Carrier */
+    .carrier-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f4f4f5;
+      border: 1px dashed #71717a;
+      border-radius: 3px;
+      padding: 3px 6px;
+      margin-bottom: 6px;
+      font-size: 8.5px;
+    }
+
+    .carrier-box strong {
+      font-size: 9px;
+      color: #000;
+    }
+
+    /* Addresses Grid */
+    .address-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 5px;
+      margin-bottom: 6px;
+    }
+
+    .info-card {
+      border: 1px solid #d4d4d8;
+      border-radius: 4px;
+      padding: 5px 7px;
+      background: #fafafa;
+    }
+
+    .info-card.recipient {
+      border: 1.5px solid #000;
+      background: #ffffff;
+    }
+
+    .info-label {
+      font-size: 8px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #71717a;
+      margin-bottom: 2px;
+    }
+
+    .recipient .info-label {
+      color: #000;
+    }
+
+    .customer-name {
+      font-size: 11px;
+      font-weight: 800;
+      color: #000;
+    }
+
+    /* KHÔNG CHE SĐT - Nổi bật số điện thoại */
+    .customer-phone {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 900;
+      color: #000;
+      letter-spacing: 0.5px;
+      margin: 1px 0;
+      display: inline-block;
+      background: #f4f4f5;
+      padding: 1px 4px;
+      border-radius: 2px;
+      border: 1px solid #e4e4e7;
+    }
+
+    .customer-address {
+      font-size: 9px;
+      font-weight: 500;
+      color: #18181b;
+      margin-top: 2px;
+      line-height: 1.35;
+    }
+
+    /* KHỐI NỔI BẬT TIỀN THU HỘ COD (BẮT BUỘC) */
+    .cod-section {
+      margin: 6px 0;
+      padding: 6px 8px;
+      border: 2.5px solid #000;
+      border-radius: 5px;
+      text-align: center;
+      background: #fbfbfb;
+    }
+
+    .cod-section.is-cod-active {
+      background: #ffffff;
+      border: 3px solid #000000;
+      box-shadow: inset 0 0 0 1px #000;
+    }
+
+    .cod-header {
+      font-size: 9.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #000;
+    }
+
+    .cod-amount-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 21px;
+      font-weight: 900;
+      color: #000000;
+      letter-spacing: -0.5px;
+      margin: 2px 0;
+      line-height: 1.1;
+    }
+
+    .cod-instruction {
+      font-size: 8.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #000;
+      letter-spacing: 0.3px;
+    }
+
+    .cod-badge-paid {
+      display: inline-block;
+      font-size: 9px;
+      font-weight: 800;
+      color: #15803d;
+      background: #dcfce7;
+      padding: 2px 6px;
+      border-radius: 3px;
+      border: 1px solid #86efac;
+      margin-top: 2px;
+    }
+
+    /* Items Table */
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6px 0;
+      font-size: 8.5px;
+    }
+
+    .items-table th {
+      background: #f4f4f5;
+      border-top: 1px solid #000;
+      border-bottom: 1px solid #000;
+      padding: 3px 4px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 8px;
+      text-transform: uppercase;
+    }
+
+    .items-table td {
+      padding: 3px 4px;
+      border-bottom: 1px dashed #e4e4e7;
+      vertical-align: top;
+    }
+
+    .items-table .text-center { text-align: center; }
+    .items-table .text-right { text-align: right; }
+    .item-name { font-weight: 600; color: #000; }
+    .item-variant { font-size: 7.5px; color: #52525b; }
+
+    /* Totals & Notes */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 4px;
+      font-size: 8px;
+    }
+
+    .notes-box {
+      border: 1px solid #e4e4e7;
+      border-radius: 3px;
+      padding: 4px 6px;
+      background: #fafafa;
+    }
+
+    .notes-box strong {
+      display: block;
+      font-size: 8px;
+      text-transform: uppercase;
+      margin-bottom: 1px;
+    }
+
+    .internal-note-box {
+      margin-top: 3px;
+      border-top: 1px dashed #d4d4d8;
+      padding-top: 2px;
+      color: #b45309;
+      font-weight: 600;
+    }
+
+    .calc-box {
+      text-align: right;
+    }
+
+    .calc-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1px;
+      color: #52525b;
+    }
+
+    .calc-row.total-row {
+      font-size: 10px;
+      font-weight: 800;
+      color: #000;
+      border-top: 1px solid #000;
+      padding-top: 2px;
+      margin-top: 2px;
+    }
+
+    /* Footer Signatures */
+    .signature-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      padding-top: 4px;
+      border-top: 1px solid #000;
+      font-size: 8px;
+      text-align: center;
+    }
+
+    .sig-col {
+      width: 45%;
+    }
+
+    .sig-title {
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .sig-space {
+      height: 24px;
+    }
+
+    .sig-sub {
+      font-size: 7px;
+      color: #71717a;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Screen Actions Bar (Ẩn khi in ấn) -->
+  <div class="action-toolbar no-print">
+    <a href="/admin/orders" class="btn btn-secondary">
+      ← Quay lại đơn hàng
+    </a>
+    <button onclick="window.print()" class="btn btn-primary" id="btn-print">
+      🖨️ In Phiếu Khổ A6 (Ctrl+P)
+    </button>
+  </div>
+
+  <!-- Nội dung in chuẩn khổ A6 (105mm x 148mm) -->
+  <div class="a6-sheet" id="print-sheet">
+
+    <!-- Header: Thương hiệu & Mã đơn -->
+    <div class="header-row">
+      <div>
+        <h1 class="brand-title">AURA STUDIO</h1>
+        <p class="brand-sub">Hotline: 0901.888.999 • aurastudio.vn</p>
+      </div>
+      <div class="order-meta">
+        <div class="order-code">{{ order_id }}</div>
+        <div class="order-date">Ngày đặt: {{ created_at }}</div>
+      </div>
+    </div>
+
+    <!-- Đơn vị vận chuyển -->
+    <div class="carrier-box">
+      <div>ĐVVC: <strong>{{ carrier }}</strong></div>
+      <div>Vận đơn: <strong style="font-family: 'JetBrains Mono', monospace;">{{ tracking_code if tracking_code else order_id }}</strong></div>
+    </div>
+
+    <!-- Người nhận: KHÔNG CHE SỐ ĐIỆN THOẠI -->
+    <div class="address-grid">
+      <div class="info-card recipient">
+        <div class="info-label">NGƯỜI NHẬN:</div>
+        <div class="customer-name">{{ customer_name }}</div>
+        <!-- SĐT ĐẦY ĐỦ, KHÔNG BỊ MASK/CHE -->
+        <div class="customer-phone" id="print-customer-phone">{{ customer_phone }}</div>
+        <div class="customer-address">{{ customer_address }}</div>
+      </div>
+    </div>
+
+    <!-- KHỐI NỔI BẬT TIỀN THU HỘ COD -->
+    <div class="cod-section {% if is_cod %}is-cod-active{% endif %}" id="print-cod-box">
+      <div class="cod-header">TIỀN THU HỘ (COD)</div>
+      <div class="cod-amount-display" id="print-cod-amount">
+        {% if is_cod %}
+          {{ "{:,}".format(cod_amount).replace(",", ".") }} VNĐ
+        {% else %}
+          0 VNĐ
+        {% endif %}
+      </div>
+      <div class="cod-instruction">
+        {% if is_cod %}
+          NGƯỜI NHẬN THANH TOÁN TIỀN KHI NHẬN HÀNG
+        {% else %}
+          <span class="cod-badge-paid">ĐÃ THANH TOÁN ONLINE • KHÔNG THU TIỀN</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Danh sách sản phẩm -->
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width: 55%;">Sản phẩm</th>
+          <th class="text-center" style="width: 15%;">SL</th>
+          <th class="text-right" style="width: 30%;">Thành tiền</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+        <tr>
+          <td>
+            <div class="item-name">{{ item.name }}</div>
+            <div class="item-variant">Size: {{ item.size or '-' }} | Màu: {{ item.color or '-' }}</div>
+          </td>
+          <td class="text-center font-bold">×{{ item.quantity }}</td>
+          <td class="text-right font-mono">{{ "{:,}".format(item.line_total or (item.unit_price * item.quantity)).replace(",", ".") }}đ</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Tóm tắt tài chính & Ghi chú -->
+    <div class="summary-grid">
+      <div class="notes-box">
+        <strong>Ghi chú đơn hàng:</strong>
+        <div>{{ customer_note if customer_note else "Cho khách xem hàng trước khi nhận." }}</div>
+        {% if internal_note %}
+        <div class="internal-note-box">
+          [Nội bộ: {{ internal_note }}]
+        </div>
+        {% endif %}
+      </div>
+      <div class="calc-box">
+        <div class="calc-row">
+          <span>Tiền hàng:</span>
+          <span class="font-mono">{{ "{:,}".format(subtotal).replace(",", ".") }}đ</span>
+        </div>
+        {% if discount_amount > 0 %}
+        <div class="calc-row">
+          <span>Giảm giá:</span>
+          <span class="font-mono">-{{ "{:,}".format(discount_amount).replace(",", ".") }}đ</span>
+        </div>
+        {% endif %}
+        <div class="calc-row">
+          <span>Phí ship:</span>
+          <span class="font-mono">{{ "{:,}".format(shipping_fee).replace(",", ".") }}đ</span>
+        </div>
+        <div class="calc-row total-row">
+          <span>Tổng đơn:</span>
+          <span class="font-mono">{{ "{:,}".format(total_amount).replace(",", ".") }}đ</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chữ ký xác nhận giao hàng -->
+    <div class="signature-row">
+      <div class="sig-col">
+        <div class="sig-title">Bên gửi hàng</div>
+        <div class="sig-space"></div>
+        <div class="sig-sub">AURA Studio đóng gói</div>
+      </div>
+      <div class="sig-col">
+        <div class="sig-title">Người nhận hàng</div>
+        <div class="sig-space"></div>
+        <div class="sig-sub">(Ký & ghi rõ họ tên)</div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

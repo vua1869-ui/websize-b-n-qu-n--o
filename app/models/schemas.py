@@ -381,6 +381,7 @@ class OrderResponse(BaseModel):
     payment_method: str
     created_at: str
     message: str
+    internal_note: Optional[str] = None
     qr_code_url: Optional[str] = None
     bank_info: Optional[Dict[str, str]] = None
 
@@ -822,6 +823,11 @@ class AdminProductPayload(BaseModel):
 
 class AdminOrderStatusUpdate(BaseModel):
     status: str = Field(min_length=1)
+    internal_note: Optional[str] = None
+
+
+class AdminOrderNoteUpdate(BaseModel):
+    internal_note: Optional[str] = None
 
 
 class AdminUserRoleUpdate(BaseModel):
@@ -894,6 +900,8 @@ class ProfitReportResponse(BaseModel):
     products_breakdown: List[ProfitProductBreakdown] = []
     recent_batches: List[Dict[str, Any]] = []
     calculation_method: Optional[str] = None
+    from_date: Optional[str] = None
+    to_date: Optional[str] = None
 
 
 class PaymentWebhookPayload(BaseModel):

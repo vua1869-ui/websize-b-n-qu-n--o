@@ -65,6 +65,7 @@ class OrderDB(Base):
     discount_amount = Column(Integer, default=0, nullable=False)
     voucher_code = Column(String, nullable=True)
     quote_json = Column(Text, nullable=True)
+    internal_note = Column(Text, nullable=True)
     paid_at = Column(String, nullable=True)
     created_at = Column(String, nullable=False, index=True)
 
@@ -255,3 +256,24 @@ class VoucherUsageDB(Base):
     phone = Column(String, nullable=True, index=True)
     order_id = Column(String, nullable=False, index=True)
     created_at = Column(String, nullable=False)
+
+
+class AuditLogDB(Base):
+    __tablename__ = "audit_log"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    admin_id = Column(String, nullable=True, index=True)
+    action = Column(String, nullable=False, index=True)
+    hanh_dong = Column(String, nullable=True)
+    target_type = Column(String, nullable=True)
+    target_id = Column(String, nullable=True)
+    target = Column(String, nullable=True)
+    doi_tuong = Column(String, nullable=True)
+    before_state = Column(Text, nullable=True)
+    truoc = Column(Text, nullable=True)
+    after_state = Column(Text, nullable=True)
+    sau = Column(Text, nullable=True)
+    ip_address = Column(String, nullable=True)
+    ip = Column(String, nullable=True)
+    created_at = Column(String, nullable=False, index=True)
+    thoi_gian = Column(String, nullable=True)

@@ -471,6 +471,7 @@ class OrderService:
             },
             "payment_method": o.payment_method,
             "quote": quote,
+            "internal_note": getattr(o, "internal_note", None),
         }
 
     def _restore_stock_from_history(self):
@@ -583,8 +584,16 @@ class OrderService:
             return session.query(func.count(OrderDB.order_id)).scalar() or 0
 
     # ---------- Quản lý đơn hàng Admin ----------
-    def get_orders(self, status: Optional[str] = None, payment_status: Optional[str] = None,
-                   search: Optional[str] = None, limit: int = 50, offset: int = 0) -> List[dict]:
+    def get_orders(
+        self,
+        status: Optional[str] = None,
+        payment_status: Optional[str] = None,
+        search: Optional[str] = None,
+        limit: int = 50,
+        offset: int = 0,
+        from_date: Optional[str] = None,
+        to_date: Optional[str] = None,
+    ) -> List[dict]:
         self._ensure_demo_orders()
         with get_db_session() as session:
             query = session.query(OrderDB)
@@ -596,6 +605,15 @@ class OrderService:
 
             if payment_status and payment_status != "all":
                 query = query.filter(OrderDB.payment_status == payment_status)
+
+            if from_date and str(from_date).strip():
+                query = query.filter(OrderDB.created_at >= str(from_date).strip())
+
+            if to_date and str(to_date).strip():
+                td = str(to_date).strip()
+                if len(td) == 10:
+                    td += "T23:59:59"
+                query = query.filter(OrderDB.created_at <= td)
 
             if search and search.strip():
                 s = f"%{search.strip().lower()}%"
@@ -616,15 +634,30 @@ class OrderService:
             o = session.query(OrderDB).filter(OrderDB.order_id == order_id).first()
             return self._format_order(o) if o else None
 
-    def update_order_status(self, order_id: str, new_status: str) -> Optional[dict]:
+    def update_order_internal_note(self, order_id: str, internal_note: Optional[str]) -> Optional[dict]:
+        with get_db_session() as session:
+            o = session.query(OrderDB).filter(OrderDB.order_id == order_id).first()
+            if not o:
+                return None
+            o.internal_note = internal_note
+            session.flush()
+            session.refresh(o)
+            return self._format_order(o)
+
+    def update_order_status(self, order_id: str, new_status: str, internal_note: Optional[str] = None) -> Optional[dict]:
         with product_service._lock:
             with get_db_session() as session:
                 o = session.query(OrderDB).filter(OrderDB.order_id == order_id).first()
                 if not o:
                     return None
 
+                if internal_note is not None:
+                    o.internal_note = internal_note
+
                 old_status = o.order_status
                 if new_status == old_status:
+                    session.flush()
+                    session.refresh(o)
                     return self._format_order(o)
 
                 # Không cho phép chuyển từ cancelled sang shipping (race: khách huỷ trước, admin commit sau)

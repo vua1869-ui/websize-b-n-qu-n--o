@@ -1,0 +1,2 @@
+# Caddyfile symlink/entrypoint - xem cấu hình chi tiết tại deploy/Caddyfile
+import deploy/Caddyfile

@@ -155,6 +155,7 @@ CREATE TABLE IF NOT EXISTS orders (
     discount_amount INTEGER DEFAULT 0,
     voucher_code TEXT,
     quote_json TEXT,
+    internal_note TEXT,
     loyalty_awarded INTEGER DEFAULT 0,
     paid_at TEXT,
     created_at TEXT NOT NULL
@@ -262,6 +263,29 @@ CREATE TABLE IF NOT EXISTS voucher_usages (
 CREATE INDEX IF NOT EXISTS idx_voucher_usages_code ON voucher_usages(voucher_code);
 CREATE INDEX IF NOT EXISTS idx_voucher_usages_user ON voucher_usages(user_id);
 CREATE INDEX IF NOT EXISTS idx_voucher_usages_order ON voucher_usages(order_id);
+
+CREATE TABLE IF NOT EXISTS audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    admin_id TEXT,
+    action TEXT NOT NULL,
+    hanh_dong TEXT,
+    target_type TEXT,
+    target_id TEXT,
+    target TEXT,
+    doi_tuong TEXT,
+    before_state TEXT,
+    truoc TEXT,
+    after_state TEXT,
+    sau TEXT,
+    ip_address TEXT,
+    ip TEXT,
+    created_at TEXT NOT NULL,
+    thoi_gian TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_audit_log_admin ON audit_log(admin_id);
+CREATE INDEX IF NOT EXISTS idx_audit_log_action ON audit_log(action);
+CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log(created_at);
+CREATE VIEW IF NOT EXISTS audit_logs AS SELECT * FROM audit_log;
 """
 
 
@@ -306,6 +330,37 @@ def init_db(db_path: str = DB_PATH):
                 conn.execute("ALTER TABLE orders ADD COLUMN estimated_delivery TEXT;")
             if "loyalty_awarded" not in order_cols:
                 conn.execute("ALTER TABLE orders ADD COLUMN loyalty_awarded INTEGER DEFAULT 0;")
+            if "internal_note" not in order_cols:
+                conn.execute("ALTER TABLE orders ADD COLUMN internal_note TEXT;")
+            conn.commit()
+
+            # Đảm bảo bảng audit_log và view audit_logs tồn tại
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS audit_log (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    admin_id TEXT,
+                    action TEXT NOT NULL,
+                    hanh_dong TEXT,
+                    target_type TEXT,
+                    target_id TEXT,
+                    target TEXT,
+                    doi_tuong TEXT,
+                    before_state TEXT,
+                    truoc TEXT,
+                    after_state TEXT,
+                    sau TEXT,
+                    ip_address TEXT,
+                    ip TEXT,
+                    created_at TEXT NOT NULL,
+                    thoi_gian TEXT
+                );
+                """
+            )
+            try:
+                conn.execute("CREATE VIEW IF NOT EXISTS audit_logs AS SELECT * FROM audit_log;")
+            except Exception:
+                pass
             conn.commit()
 
             conn.execute("CREATE INDEX IF NOT EXISTS idx_orders_tracking ON orders(tracking_code);")
@@ -898,8 +953,8 @@ class DatabaseService:
                 (order_id, user_id, customer_name, customer_phone, customer_address,
                  province, district, ward, specific_address, customer_note,
                  payment_method, payment_status, order_status, carrier, tracking_code, shipping_status, estimated_delivery,
-                 total_amount, subtotal, shipping_fee, discount_amount, voucher_code, quote_json, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 total_amount, subtotal, shipping_fee, discount_amount, voucher_code, quote_json, internal_note, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     order_id,
@@ -925,6 +980,7 @@ class DatabaseService:
                     quote.get("discount_amount", 0) or quote.get("voucher_discount", 0) + quote.get("combo_discount", 0),
                     quote.get("voucher_code"),
                     json.dumps(quote, ensure_ascii=False),
+                    order_data.get("internal_note"),
                     order_data.get("created_at") or now.isoformat(timespec="seconds"),
                 ),
             )
@@ -1272,13 +1328,13 @@ class DatabaseService:
                     province, district, ward, specific_address, customer_note,
                     payment_method, payment_status, order_status, carrier, tracking_code,
                     shipping_status, estimated_delivery, total_amount, subtotal, shipping_fee,
-                    discount_amount, voucher_code, quote_json, loyalty_awarded, created_at
+                    discount_amount, voucher_code, quote_json, internal_note, loyalty_awarded, created_at
                 ) VALUES (
                     ?, ?, ?, ?, ?, ?,
                     ?, ?, ?, ?, ?,
                     ?, ?, ?, ?, ?,
                     ?, ?, ?, ?, ?,
-                    ?, ?, ?, 0, ?
+                    ?, ?, ?, ?, 0, ?
                 );
                 """,
                 (
@@ -1306,6 +1362,7 @@ class DatabaseService:
                     (quote.get("voucher_discount", 0) or 0) + (quote.get("combo_discount", 0) or 0) + (quote.get("points_discount", 0) or 0),
                     quote.get("voucher_code"),
                     json.dumps(quote, ensure_ascii=False),
+                    order_record.get("internal_note"),
                     now_str,
                 )
             )
@@ -1505,6 +1562,7 @@ class DatabaseService:
             res["shipping_status"] = "ready_to_pick" if res["status"] in ["confirmed", "completed"] else "pending_confirm"
         if not res.get("estimated_delivery"):
             res["estimated_delivery"] = "2 - 3 ngày tới"
+        res["internal_note"] = res.get("internal_note")
         return res
 
     def get_order_payment_status(self, order_id: str) -> Dict[str, Any]:
@@ -2213,12 +2271,17 @@ class DatabaseService:
         finally:
             conn.close()
 
-    def get_profit_loss_report(self) -> Dict[str, Any]:
+    def get_profit_loss_report(
+        self,
+        from_date: Optional[str] = None,
+        to_date: Optional[str] = None,
+    ) -> Dict[str, Any]:
         """
         Báo cáo Lãi/Lỗ dựa trên doanh thu thực thu (sau voucher, điểm, combo) từ các đơn hàng
         đã thanh toán ('paid' hoặc 'completed' KHÔNG bị hủy) phân bổ theo dòng,
         và giá vốn bình quân gia quyền (Weighted Average Cost - WAC) từ các lô nhập kho.
         Sản phẩm chưa có lô nhập hiển thị 'chưa có giá vốn' và không tính lãi 100%.
+        Có hỗ trợ lọc theo khoảng ngày (from_date / to_date).
         """
         conn = get_db_connection(self.db_path)
         try:
@@ -2235,9 +2298,35 @@ class DatabaseService:
                 if r["total_qty"] and r["total_qty"] > 0:
                     wac_map[r["product_id"]] = round(float(r["total_cost"]) / float(r["total_qty"]), 2)
 
+            # Xây dựng điều kiện lọc theo ngày (tương thích ISO và YYYY-MM-DD)
+            where_order_items = [
+                "o.order_status != 'cancelled'",
+                "o.payment_status NOT IN ('refund_pending', 'refunded')",
+                "(o.payment_status = 'paid' OR o.order_status IN ('paid', 'completed'))"
+            ]
+            where_paid_orders = [
+                "order_status != 'cancelled'",
+                "payment_status NOT IN ('refund_pending', 'refunded')",
+                "(payment_status = 'paid' OR order_status IN ('paid', 'completed'))"
+            ]
+            filter_params: List[Any] = []
+
+            if from_date and str(from_date).strip():
+                fd_str = str(from_date).strip()
+                where_order_items.append("o.created_at >= ?")
+                where_paid_orders.append("created_at >= ?")
+                filter_params.append(fd_str)
+
+            if to_date and str(to_date).strip():
+                td_str = str(to_date).strip()
+                if len(td_str) == 10:
+                    td_str += "T23:59:59"
+                where_order_items.append("o.created_at <= ?")
+                where_paid_orders.append("created_at <= ?")
+                filter_params.append(td_str)
+
             # 2. Lấy tất cả order_items từ các đơn hàng đã thanh toán hợp lệ (không bị hủy)
-            sold_items_rows = conn.execute(
-                """
+            sold_items_query = f"""
                 SELECT 
                     o.order_id,
                     o.payment_status,
@@ -2252,23 +2341,18 @@ class DatabaseService:
                     oi.line_total
                 FROM orders o
                 JOIN order_items oi ON o.order_id = oi.order_id
-                WHERE o.order_status != 'cancelled' 
-                  AND o.payment_status NOT IN ('refund_pending', 'refunded') 
-                  AND (o.payment_status = 'paid' OR o.order_status IN ('paid', 'completed'))
+                WHERE {' AND '.join(where_order_items)}
                 ORDER BY o.created_at DESC;
-                """
-            ).fetchall()
+            """
+            sold_items_rows = conn.execute(sold_items_query, tuple(filter_params)).fetchall()
 
             # Thống kê số đơn hàng đã thanh toán
-            paid_orders_count = conn.execute(
-                """
+            paid_orders_query = f"""
                 SELECT COUNT(DISTINCT order_id) as cnt, COALESCE(SUM(total_amount), 0) as total_rev
                 FROM orders
-                WHERE order_status != 'cancelled' 
-                  AND payment_status NOT IN ('refund_pending', 'refunded') 
-                  AND (payment_status = 'paid' OR order_status IN ('paid', 'completed'));
-                """
-            ).fetchone()
+                WHERE {' AND '.join(where_paid_orders)};
+            """
+            paid_orders_count = conn.execute(paid_orders_query, tuple(filter_params)).fetchone()
             total_orders = paid_orders_count["cnt"] if paid_orders_count else 0
 
             # 3. Phân rã theo từng sản phẩm
@@ -2360,6 +2444,8 @@ class DatabaseService:
                 "cost_method_note": "Giá vốn tính theo bình quân gia quyền (Weighted Average Cost - WAC) toàn bộ lô nhập kho.",
                 "products_breakdown": breakdown_list,
                 "recent_batches": recent_batches,
+                "from_date": from_date,
+                "to_date": to_date,
             }
         finally:
             conn.close()
@@ -2458,11 +2544,127 @@ class DatabaseService:
                 )
             )
 
-    def reset_vouchers(self):
-        """Reset bảng vouchers và seed lại dữ liệu mặc định."""
+    def update_order_internal_note(self, order_id: str, internal_note: Optional[str]) -> bool:
+        """Cập nhật ghi chú nội bộ (internal_note) cho đơn hàng."""
         with get_db_transaction(self.db_path) as conn:
-            conn.execute("DELETE FROM vouchers;")
-            _migrate_vouchers(conn)
+            cursor = conn.execute(
+                "UPDATE orders SET internal_note = ? WHERE order_id = ?;",
+                (internal_note, order_id),
+            )
+            return cursor.rowcount > 0
+
+    def log_audit(
+        self,
+        admin_id: Optional[str],
+        action: str,
+        target_type: str,
+        target_id: Optional[str] = None,
+        before_state: Any = None,
+        after_state: Any = None,
+        ip_address: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Ghi nhật ký kiểm toán (audit log) cho các hành động quản trị nhạy cảm:
+        đổi giá, xoá sản phẩm, huỷ đơn, đổi trạng thái, khoá user.
+        """
+        action_vn_map = {
+            "change_price": "đổi giá",
+            "delete_product": "xoá sản phẩm",
+            "cancel_order": "huỷ đơn",
+            "update_status": "đổi trạng thái",
+            "lock_user": "khoá user",
+            "unlock_user": "mở khoá user",
+            "update_role": "đổi quyền user",
+        }
+        hanh_dong = action_vn_map.get(action, action)
+        target = f"{target_type}:{target_id}" if target_id else target_type
+
+        def _to_json_str(val: Any) -> Optional[str]:
+            if val is None:
+                return None
+            if isinstance(val, str):
+                return val
+            try:
+                return json.dumps(val, ensure_ascii=False)
+            except Exception:
+                return str(val)
+
+        before_str = _to_json_str(before_state)
+        after_str = _to_json_str(after_state)
+        now_str = datetime.datetime.now().isoformat(timespec="seconds")
+        ip_clean = (ip_address or "").strip() or "127.0.0.1"
+
+        with get_db_transaction(self.db_path) as conn:
+            cursor = conn.execute(
+                """
+                INSERT INTO audit_log
+                (admin_id, action, hanh_dong, target_type, target_id, target, doi_tuong,
+                 before_state, truoc, after_state, sau, ip_address, ip, created_at, thoi_gian)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                """,
+                (
+                    str(admin_id) if admin_id else None,
+                    action,
+                    hanh_dong,
+                    target_type,
+                    target_id,
+                    target,
+                    target,
+                    before_str,
+                    before_str,
+                    after_str,
+                    after_str,
+                    ip_clean,
+                    ip_clean,
+                    now_str,
+                    now_str,
+                ),
+            )
+            log_id = cursor.lastrowid
+
+        return {
+            "id": log_id,
+            "admin_id": str(admin_id) if admin_id else None,
+            "action": action,
+            "hanh_dong": hanh_dong,
+            "target_type": target_type,
+            "target_id": target_id,
+            "target": target,
+            "before_state": before_str,
+            "after_state": after_str,
+            "ip_address": ip_clean,
+            "ip": ip_clean,
+            "created_at": now_str,
+            "thoi_gian": now_str,
+        }
+
+    def get_audit_logs(
+        self,
+        action: Optional[str] = None,
+        target_type: Optional[str] = None,
+        admin_id: Optional[str] = None,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
+        conn = get_db_connection(self.db_path)
+        try:
+            query = "SELECT * FROM audit_log WHERE 1=1"
+            params: List[Any] = []
+            if action and action.strip():
+                query += " AND (action = ? OR hanh_dong = ?)"
+                params.extend([action.strip(), action.strip()])
+            if target_type and target_type.strip():
+                query += " AND target_type = ?"
+                params.append(target_type.strip())
+            if admin_id and admin_id.strip():
+                query += " AND admin_id = ?"
+                params.append(admin_id.strip())
+            query += " ORDER BY id DESC LIMIT ? OFFSET ?;"
+            params.extend([limit, offset])
+            rows = conn.execute(query, tuple(params)).fetchall()
+            return [dict(r) for r in rows]
+        finally:
+            conn.close()
 
 
 db_service = DatabaseService()

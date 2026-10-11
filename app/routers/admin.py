@@ -1,5 +1,9 @@
+import codecs
+import csv
+import io
 import math
-from typing import List, Optional
+import time
+from typing import Any, Dict, List, Optional
 
 from fastapi import (
     APIRouter,
@@ -8,12 +12,14 @@ from fastapi import (
     HTTPException,
     Query,
     Request,
+    Response,
     UploadFile,
 )
 from fastapi.responses import HTMLResponse
 
 from app.db.database import db_service
 from app.models.schemas import (
+    AdminOrderNoteUpdate,
     AdminOrderStatusUpdate,
     AdminProductPayload,
     AdminUserRoleUpdate,
@@ -25,6 +31,7 @@ from app.models.schemas import (
 )
 from app.routers.deps import (
     base_context,
+    get_client_ip,
     require_admin,
     require_admin_page,
     templates,
@@ -58,6 +65,54 @@ def admin_products_page(request: Request, admin: User = Depends(require_admin_pa
 def admin_orders_page(request: Request, admin: User = Depends(require_admin_page)):
     ctx = base_context(request, user=admin, current_page="orders")
     return templates.TemplateResponse(request, "admin/orders.html", ctx)
+
+
+@router.get("/admin/orders/{order_id}/print", response_class=HTMLResponse)
+def admin_order_print_page(order_id: str, request: Request, admin: User = Depends(require_admin_page)):
+    order = db_service.get_order_by_id(order_id)
+    if not order:
+        order = order_service.get_order_by_id(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy đơn hàng '{order_id}' để in phiếu")
+
+    # Đảm bảo KHÔNG che SĐT, KHÔNG che địa chỉ cho admin
+    cust_phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
+    cust_name = order.get("customer_name") or order.get("customer", {}).get("name", "Khách hàng")
+    cust_addr = order.get("customer_address") or order.get("customer", {}).get("address", "")
+    cust_note = order.get("customer_note") or order.get("customer", {}).get("note", "")
+
+    # Nổi bật tiền COD
+    is_cod = (order.get("payment_method") == "cod") and (order.get("payment_status") != "paid")
+    total_amount = order.get("total_amount") or order.get("quote", {}).get("total", 0)
+    cod_amount = total_amount if is_cod else 0
+
+    quote = order.get("quote", {})
+    items = quote.get("lines") or order.get("items") or []
+
+    ctx = base_context(
+        request,
+        user=admin,
+        order=order,
+        order_id=order.get("order_id") or order_id,
+        customer_phone=cust_phone,
+        customer_name=cust_name,
+        customer_address=cust_addr,
+        customer_note=cust_note,
+        is_cod=is_cod,
+        cod_amount=cod_amount,
+        items=items,
+        total_amount=total_amount,
+        subtotal=order.get("subtotal") or quote.get("subtotal", 0),
+        shipping_fee=order.get("shipping_fee") or quote.get("shipping_fee", 0),
+        discount_amount=order.get("discount_amount") or quote.get("discount_amount", 0),
+        created_at=order.get("created_at") or "",
+        payment_method=order.get("payment_method"),
+        payment_status=order.get("payment_status"),
+        carrier=order.get("carrier") or "Giao Hàng Nhanh (GHN Express)",
+        tracking_code=order.get("tracking_code") or "",
+        internal_note=order.get("internal_note") or "",
+    )
+    return templates.TemplateResponse(request, "admin/order_print.html", ctx)
 
 
 @router.get("/admin/users", response_class=HTMLResponse)
@@ -134,20 +189,52 @@ def admin_create_product(body: AdminProductPayload, _admin: User = Depends(requi
 def admin_update_product(
     product_id: str,
     body: AdminProductPayload,
+    request: Request,
     _admin: User = Depends(require_admin),
 ):
+    old_prod = product_service.get_by_id(product_id, include_inactive=True)
+    old_price = old_prod.price if old_prod else None
     data = body.model_dump(exclude_unset=True)
     updated = product_service.update_product(product_id, data)
     if not updated:
         raise HTTPException(status_code=404, detail="Không tìm thấy sản phẩm để cập nhật")
+
+    # Ghi nhật ký kiểm toán (audit log) nếu có đổi giá
+    new_price = getattr(updated, "price", None)
+    if old_price is not None and new_price is not None and old_price != new_price:
+        db_service.log_audit(
+            admin_id=str(_admin.id),
+            action="change_price",
+            target_type="product",
+            target_id=product_id,
+            before_state={"price": old_price},
+            after_state={"price": new_price},
+            ip_address=get_client_ip(request),
+        )
     return updated
 
 
 @router.delete("/api/admin/products/{product_id}")
-def admin_delete_product(product_id: str, _admin: User = Depends(require_admin)):
+def admin_delete_product(
+    product_id: str,
+    request: Request,
+    _admin: User = Depends(require_admin),
+):
+    old_prod = product_service.get_by_id(product_id, include_inactive=True)
     ok = product_service.delete_product(product_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Không tìm thấy sản phẩm để xóa")
+
+    # Ghi nhật ký kiểm toán (audit log) xóa sản phẩm
+    db_service.log_audit(
+        admin_id=str(_admin.id),
+        action="delete_product",
+        target_type="product",
+        target_id=product_id,
+        before_state={"is_active": getattr(old_prod, "is_active", True) if old_prod else True},
+        after_state={"is_active": False, "deleted": True},
+        ip_address=get_client_ip(request),
+    )
     return {"success": True, "message": f"Đã xóa sản phẩm {product_id} thành công"}
 
 
@@ -331,8 +418,118 @@ def admin_low_stock_variants(
 
 
 @router.get("/api/admin/reports/profit", response_model=ProfitReportResponse)
-def admin_profit_report(_admin: User = Depends(require_admin)):
-    return db_service.get_profit_loss_report()
+def admin_profit_report(
+    from_date: Optional[str] = Query(None),
+    to_date: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    _admin: User = Depends(require_admin),
+):
+    f_date = from_date or start_date
+    t_date = to_date or end_date
+    return db_service.get_profit_loss_report(from_date=f_date, to_date=t_date)
+
+
+@router.get("/api/admin/orders/export")
+def admin_export_orders(
+    status: Optional[str] = Query(None),
+    from_date: Optional[str] = Query(None),
+    to_date: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    _admin: User = Depends(require_admin),
+):
+    """
+    Xuất danh sách đơn hàng sang định dạng CSV (UTF-8 BOM),
+    hỗ trợ lọc theo trạng thái và khoảng ngày.
+    Chống triệt để lỗ hổng CSV/Formula Injection bằng cách thêm dấu ' trước ô bắt đầu bằng =, +, -, @.
+    """
+    f_date = from_date or start_date
+    t_date = to_date or end_date
+    orders = order_service.get_orders(
+        status=status,
+        from_date=f_date,
+        to_date=t_date,
+        limit=10000,
+        offset=0,
+    )
+
+    def sanitize_csv_cell(val: Any) -> str:
+        if val is None:
+            return ""
+        s = str(val)
+        stripped = s.lstrip()
+        if stripped and stripped[0] in ("=", "+", "-", "@"):
+            return "'" + s
+        return s
+
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL)
+
+    headers = [
+        "Mã đơn hàng",
+        "Thời gian đặt",
+        "Khách hàng",
+        "Số điện thoại",
+        "Email",
+        "Địa chỉ",
+        "Tỉnh/Thành",
+        "Phương thức thanh toán",
+        "Trạng thái thanh toán",
+        "Trạng thái đơn hàng",
+        "Tiền thu hộ COD",
+        "Tổng tiền",
+        "Tiền hàng",
+        "Phí vận chuyển",
+        "Giảm giá",
+        "Ghi chú khách hàng",
+        "Ghi chú nội bộ",
+    ]
+    writer.writerow([sanitize_csv_cell(h) for h in headers])
+
+    for o in orders:
+        is_cod = (o.get("payment_method") == "cod") and (o.get("payment_status") != "paid")
+        total_amt = o.get("total_amount", 0)
+        cod_amt = total_amt if is_cod else 0
+
+        cust_phone = o.get("customer_phone") or o.get("customer", {}).get("phone") or ""
+        cust_name = o.get("customer_name") or o.get("customer", {}).get("name") or ""
+        cust_email = o.get("customer_email") or o.get("customer", {}).get("email") or ""
+        cust_addr = o.get("customer_address") or o.get("customer", {}).get("address") or ""
+        cust_province = o.get("province") or o.get("customer", {}).get("province") or ""
+        cust_note = o.get("customer_note") or o.get("customer", {}).get("note") or ""
+
+        row = [
+            sanitize_csv_cell(o.get("order_id")),
+            sanitize_csv_cell(o.get("created_at")),
+            sanitize_csv_cell(cust_name),
+            sanitize_csv_cell(cust_phone),
+            sanitize_csv_cell(cust_email),
+            sanitize_csv_cell(cust_addr),
+            sanitize_csv_cell(cust_province),
+            sanitize_csv_cell("COD" if o.get("payment_method") == "cod" else ("VNPay" if o.get("payment_method") == "vnpay" else "Chuyển khoản QR")),
+            sanitize_csv_cell(o.get("payment_status")),
+            sanitize_csv_cell(o.get("status") or o.get("order_status")),
+            sanitize_csv_cell(cod_amt),
+            sanitize_csv_cell(total_amt),
+            sanitize_csv_cell(o.get("subtotal")),
+            sanitize_csv_cell(o.get("shipping_fee")),
+            sanitize_csv_cell(o.get("discount_amount")),
+            sanitize_csv_cell(cust_note),
+            sanitize_csv_cell(o.get("internal_note")),
+        ]
+        writer.writerow(row)
+
+    csv_bytes = codecs.BOM_UTF8 + output.getvalue().encode("utf-8")
+    filename = f"orders_export_{time.strftime('%Y%m%d_%H%M%S')}.csv"
+    return Response(
+        content=csv_bytes,
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Type": "text/csv; charset=utf-8",
+        },
+    )
 
 
 @router.get("/api/admin/orders")
@@ -340,11 +537,25 @@ def admin_get_orders(
     status: Optional[str] = Query(None),
     payment_status: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
+    from_date: Optional[str] = Query(None),
+    to_date: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
     _admin: User = Depends(require_admin),
 ):
-    return order_service.get_orders(status=status, payment_status=payment_status, search=search, limit=limit, offset=offset)
+    f_date = from_date or start_date
+    t_date = to_date or end_date
+    return order_service.get_orders(
+        status=status,
+        payment_status=payment_status,
+        search=search,
+        limit=limit,
+        offset=offset,
+        from_date=f_date,
+        to_date=t_date,
+    )
 
 
 @router.get("/api/admin/orders/refund-pending")
@@ -357,6 +568,7 @@ def admin_get_refund_pending_orders(_admin: User = Depends(require_admin)):
 def admin_update_order_status(
     order_id: str,
     body: AdminOrderStatusUpdate,
+    request: Request,
     _admin: User = Depends(require_admin),
 ):
     valid_statuses = ["pending_payment", "confirmed", "shipping", "completed", "cancelled"]
@@ -365,7 +577,35 @@ def admin_update_order_status(
             status_code=400,
             detail=f"Trạng thái không hợp lệ. Phải thuộc: {', '.join(valid_statuses)}",
         )
-    updated = order_service.update_order_status(order_id, body.status)
+    old_order = order_service.get_order_by_id(order_id)
+    old_status = (old_order.get("status") or old_order.get("order_status")) if old_order else None
+
+    updated = order_service.update_order_status(order_id, body.status, internal_note=body.internal_note)
+    if not updated:
+        raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng")
+
+    # Ghi nhật ký kiểm toán (audit log) huỷ đơn hoặc đổi trạng thái
+    action = "cancel_order" if body.status == "cancelled" else "update_status"
+    db_service.log_audit(
+        admin_id=str(_admin.id),
+        action=action,
+        target_type="order",
+        target_id=order_id,
+        before_state={"order_status": old_status},
+        after_state={"order_status": body.status},
+        ip_address=get_client_ip(request),
+    )
+    return updated
+
+
+@router.put("/api/admin/orders/{order_id}/internal-note")
+@router.put("/api/admin/orders/{order_id}/note")
+def admin_update_order_internal_note(
+    order_id: str,
+    body: AdminOrderNoteUpdate,
+    _admin: User = Depends(require_admin),
+):
+    updated = order_service.update_order_internal_note(order_id, body.internal_note)
     if not updated:
         raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng")
     return updated
@@ -383,14 +623,27 @@ def admin_get_users(_admin: User = Depends(require_admin)):
 def admin_update_user_role(
     user_id: str,
     body: AdminUserRoleUpdate,
+    request: Request,
     current_admin: User = Depends(require_admin),
 ):
+    old_user = user_service.get_by_id(user_id)
+    old_role = old_user.role if old_user else None
     try:
         updated = user_service.update_role(user_id, body.role, current_admin_id=str(current_admin.id))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     if not updated:
         raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+
+    db_service.log_audit(
+        admin_id=str(current_admin.id),
+        action="update_role",
+        target_type="user",
+        target_id=user_id,
+        before_state={"role": old_role},
+        after_state={"role": updated.role},
+        ip_address=get_client_ip(request),
+    )
     return updated
 
 
@@ -398,6 +651,7 @@ def admin_update_user_role(
 def admin_update_user_status(
     user_id: str,
     body: AdminUserStatusUpdate,
+    request: Request,
     current_admin: User = Depends(require_admin),
 ):
     is_active = body.is_active
@@ -406,13 +660,45 @@ def admin_update_user_status(
     if is_active is None:
         raise HTTPException(status_code=400, detail="Thiếu trường is_active hoặc status")
 
+    old_user = user_service.get_by_id(user_id)
+    old_status = old_user.status if old_user else None
+
     try:
         updated = user_service.toggle_status(user_id, bool(is_active), current_admin_id=str(current_admin.id))
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
     if not updated:
         raise HTTPException(status_code=404, detail="Không tìm thấy người dùng")
+
+    action = "lock_user" if updated.status == "disabled" else "update_status"
+    db_service.log_audit(
+        admin_id=str(current_admin.id),
+        action=action,
+        target_type="user",
+        target_id=user_id,
+        before_state={"status": old_status, "is_active": old_status == "active"},
+        after_state={"status": updated.status, "is_active": updated.is_active},
+        ip_address=get_client_ip(request),
+    )
     return updated
+
+
+@router.get("/api/admin/audit-logs")
+def admin_get_audit_logs(
+    action: Optional[str] = Query(None),
+    target_type: Optional[str] = Query(None),
+    admin_id: Optional[str] = Query(None),
+    limit: int = Query(100, ge=1, le=500),
+    offset: int = Query(0, ge=0),
+    _admin: User = Depends(require_admin),
+):
+    return db_service.get_audit_logs(
+        action=action,
+        target_type=target_type,
+        admin_id=admin_id,
+        limit=limit,
+        offset=offset,
+    )
 
 
 # ==========================================

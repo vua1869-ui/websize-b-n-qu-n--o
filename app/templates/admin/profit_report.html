@@ -162,14 +162,24 @@
 
   <!-- 3. BẢNG PHÂN TÍCH LÃI/LỖ THEO TỪNG SẢN PHẨM -->
   <div class="rounded-lg border border-noir-700 bg-noir-900 shadow-lg overflow-hidden glass-card">
-    <div class="flex items-center justify-between border-b border-noir-700 p-4">
+    <div class="flex flex-wrap items-center justify-between border-b border-noir-700 p-4 gap-3">
       <div>
         <h3 class="text-sm font-bold text-noir-100">Báo Cáo Hiệu Quả Lợi Nhuận Theo Sản Phẩm</h3>
         <p class="text-sm text-noir-400">Doanh thu trừ Giá vốn bình quân gia quyền (WAC)</p>
       </div>
-      <button onclick="loadProfitReport()" class="rounded-md border border-noir-700 bg-noir-800 px-3 py-1.5 text-sm font-medium text-noir-300 hover:bg-noir-700 hover:text-gold-400 transition shadow-lg">
-        Làm mới
-      </button>
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-1.5 text-xs text-noir-300">
+          <label for="profit-from-date">Từ:</label>
+          <input type="date" id="profit-from-date" class="rounded border border-noir-700 bg-noir-800 px-2 py-1 text-xs text-noir-100 outline-none focus:border-gold-500">
+        </div>
+        <div class="flex items-center gap-1.5 text-xs text-noir-300">
+          <label for="profit-to-date">Đến:</label>
+          <input type="date" id="profit-to-date" class="rounded border border-noir-700 bg-noir-800 px-2 py-1 text-xs text-noir-100 outline-none focus:border-gold-500">
+        </div>
+        <button onclick="loadProfitReport()" class="rounded-md border border-noir-700 bg-noir-800 px-3 py-1.5 text-sm font-medium text-noir-300 hover:bg-noir-700 hover:text-gold-400 transition shadow-lg">
+          Lọc báo cáo
+        </button>
+      </div>
     </div>
 
     <div class="overflow-x-auto">
@@ -341,7 +351,14 @@
 
   async function loadProfitReport() {
     try {
-      const res = await fetch("/api/admin/reports/profit");
+      const fromVal = document.getElementById("profit-from-date")?.value;
+      const toVal = document.getElementById("profit-to-date")?.value;
+      const params = new URLSearchParams();
+      if (fromVal) params.append("from_date", fromVal);
+      if (toVal) params.append("to_date", toVal);
+      const url = "/api/admin/reports/profit" + (params.toString() ? "?" + params.toString() : "");
+
+      const res = await fetch(url);
       if (!res.ok) return;
       const data = await res.json();
 
