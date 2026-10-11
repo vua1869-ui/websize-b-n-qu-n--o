@@ -249,8 +249,9 @@ def send_order_notification(
     if not order:
         raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng")
 
-    return {
-        "success": True,
-        "channel": channel,
-        "message": f"Đã gửi thông báo tiến độ đơn hàng {order_id} thành công qua {channel.upper()}",
-    }
+    # These channels need external provider integrations. Do not report a
+    # successful send until a provider has actually accepted the message.
+    raise HTTPException(
+        status_code=501,
+        detail=f"Kênh {channel.upper()} chưa được tích hợp gửi thông báo.",
+    )

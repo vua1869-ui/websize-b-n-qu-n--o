@@ -2,7 +2,7 @@ import logging
 import os
 
 from typing import Optional
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
@@ -21,6 +21,18 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def _parse_debug_value(cls, value):
+        """Accept common environment labels while keeping DEBUG a boolean."""
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"release", "prod", "production", "off", "no"}:
+                return False
+            if normalized in {"debug", "dev", "development", "on", "yes"}:
+                return True
+        return value
 
     APP_NAME: str = "AURA STUDIO"
     VERSION: str = "2.1.0"

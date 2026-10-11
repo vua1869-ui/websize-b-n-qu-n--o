@@ -171,15 +171,11 @@ def test_order_invoice_and_notification(client):
     assert inv["total_amount"] > 0
     assert len(inv["items"]) > 0
 
-    # 3. Giả lập gửi thông báo đơn hàng qua Zalo / SMS (yêu cầu admin, response không chứa SĐT)
+    # 3. Zalo is not integrated; the API must not claim a message was sent.
     r_unauth = client.post(f"/api/orders/{order_id}/send-notification?channel=zalo")
     assert r_unauth.status_code in [401, 403]
 
     admin_headers = _login_admin(client)
     r_notify = client.post(f"/api/orders/{order_id}/send-notification?channel=zalo", headers=admin_headers)
-    assert r_notify.status_code == 200
-    notif = r_notify.json()
-    assert notif["success"] is True
-    assert notif["channel"] == "zalo"
-    assert "thành công" in notif["message"].lower()
-    assert "recipient" not in notif
+    assert r_notify.status_code == 501
+    assert "chưa được tích hợp" in r_notify.json()["detail"]
