@@ -292,7 +292,7 @@
                 <td class="py-3 font-mono font-semibold text-noir-100">${esc(o.order_id)}</td>
                 <td class="py-3 font-medium text-noir-200">${esc(o.customer?.name || "Khách hàng")}</td>
                 <td class="py-3 font-semibold text-gold-500">${(o.quote?.total || 0).toLocaleString("vi-VN")}đ</td>
-                <td class="py-3 text-noir-400">${o.payment_method === 'cod' ? 'COD' : 'Chuyển khoản'}</td>
+                <td class="py-3 text-noir-400">${o.payment_method === 'cod' ? 'COD' : (o.payment_method === 'momo' ? 'MoMo' : (o.payment_method === 'vnpay' ? 'VNPay' : 'VietQR'))}</td>
                 <td class="py-3 text-right">
                   <span class="inline-flex rounded-full px-2 py-0.5 text-sm font-medium border ${st.bg}">${esc(st.label)}</span>
                 </td>

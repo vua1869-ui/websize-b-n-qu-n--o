@@ -72,7 +72,7 @@
               <div class="flex flex-wrap items-center gap-2">
                 <h3 class="text-sm font-bold uppercase tracking-wider text-[#111111]">Đã thanh toán thành công</h3>
                 <span class="inline-flex items-center rounded-[2px] border border-[#111111] bg-white px-2 py-0.5 text-sm font-semibold text-[#111111] uppercase tracking-wider">
-                  {{ 'Cổng VNPay' if order.payment_method == 'vnpay' else ('Chuyển khoản VietQR' if order.payment_method == 'qr_transfer' else order.payment_method | upper) }}
+                  {{ 'Ví MoMo' if order.payment_method == 'momo' else ('Cổng VNPay' if order.payment_method == 'vnpay' else ('Chuyển khoản VietQR' if order.payment_method == 'qr_transfer' else order.payment_method | upper)) }}
                 </span>
               </div>
               <p class="mt-1 text-sm text-neutral-600 leading-relaxed">
