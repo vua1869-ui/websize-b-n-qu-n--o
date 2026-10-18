@@ -133,29 +133,8 @@
 
   <!-- ================= MODALS & DRAWERS ================= -->
 
-  <!-- Chat AI Drawer -->
-  <div id="chat-drawer" class="drawer hidden" data-modal role="dialog" aria-modal="true" aria-label="Trợ lý Stylist AI">
-    <div class="drawer-panel">
-      <div class="flex items-center justify-between border-b border-[#E5E2DC] px-5 py-4">
-        <div>
-          <h2 class="text-sm font-bold uppercase tracking-wider text-[#111111]">AURA Stylist AI</h2>
-          <p class="text-sm text-[#777777]">Tư vấn chọn đồ, phối set, chọn size</p>
-        </div>
-        <button data-action="close-modal" data-target="chat-drawer" class="icon-btn" aria-label="Đóng">✕</button>
-      </div>
-      <div id="chat-context" class="hidden px-4 pt-3"></div>
-      <div id="chat-suggestions" class="no-scrollbar flex gap-2 overflow-x-auto border-b border-[#E5E2DC] bg-[#FAF8F5] px-4 py-2"></div>
-      <div id="chat-messages" class="flex-1 space-y-3 overflow-y-auto p-4 bg-[#FAF8F5]" aria-live="polite"></div>
-      <form id="chat-form" class="border-t border-[#E5E2DC] bg-white p-3.5" autocomplete="off">
-        <div class="flex items-center gap-2">
-          <label for="chat-input" class="sr-only">Nhập câu hỏi</label>
-          <input id="chat-input" type="text" maxlength="1000" placeholder="Hỏi Stylist AI (đi phỏng vấn mặc gì?)..."
-                 class="min-w-0 flex-1 field text-sm" />
-          <button id="chat-send" type="submit" class="btn btn-primary">Gửi</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  <!-- Chat AI Drawer & Floating Widget -->
+  {% include "components/ai_stylist_widget.html" %}
 
   <!-- Giỏ hàng Drawer -->
   <div id="cart-drawer" class="drawer hidden" data-modal role="dialog" aria-modal="true" aria-label="Giỏ hàng">

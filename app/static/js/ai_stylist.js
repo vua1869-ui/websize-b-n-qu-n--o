@@ -328,4 +328,9 @@ Object.assign(Actions, {
   'outfit-add': () => AIStylist.addOutfit(),
 });
 
-document.addEventListener('DOMContentLoaded', () => AIStylist.init());
+document.addEventListener('DOMContentLoaded', () => {
+  AIStylist.init();
+  if (new URLSearchParams(window.location.search).get('ai') === 'open') {
+    AIStylist.open();
+  }
+});

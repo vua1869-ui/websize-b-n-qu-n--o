@@ -187,10 +187,14 @@
             </button>
           </div>
 
-          <div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <button data-action="open-outfit" data-product-id="{{ product.id }}"
                     class="h-11 sm:h-12 w-full flex items-center justify-center px-4 !text-sm font-semibold tracking-wider border border-[#D5D2CC] text-[#111111] bg-white hover:border-[#111111] rounded-[2px] transition">
-              ✨ AI Phối trọn bộ cùng món này (giảm {{ combo_percent }}%)
+              ✨ AI Phối trọn bộ (-{{ combo_percent }}%)
+            </button>
+            <button data-action="consult" data-id="{{ product.id }}"
+                    class="h-11 sm:h-12 w-full flex items-center justify-center gap-1.5 px-4 !text-sm font-semibold tracking-wider border border-violet-300 bg-violet-50 text-violet-900 hover:bg-violet-100 rounded-[2px] transition">
+              💬 Hỏi Stylist AI về món này
             </button>
           </div>
         </div>
@@ -333,6 +337,9 @@
       </div>
     </div>
   </div>
+
+  <!-- Chat AI Drawer & Floating Widget -->
+  {% include "components/ai_stylist_widget.html" %}
 
   <!-- AI tính size Modal -->
   <div id="size-modal" class="modal hidden" data-modal role="dialog" aria-modal="true" aria-label="AI tính size">

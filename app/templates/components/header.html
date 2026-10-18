@@ -94,6 +94,11 @@
         <span class="absolute -top-3 left-0 text-sm text-red-600 font-bold">-50%</span>
         SALE
       </a>
+      <button type="button" data-action="open-chat" class="group flex items-center gap-1.5 py-2 text-[#111111] hover:text-black transition focus:outline-none">
+        <span class="inline-flex h-5 items-center justify-center rounded-full bg-[#111111] px-1.5 text-[10px] font-bold text-white group-hover:scale-105 transition">AI</span>
+        <span>STYLIST AI</span>
+        <span class="h-1.5 w-1.5 rounded-full bg-violet-600 animate-pulse"></span>
+      </button>
     </nav>
 
     <!-- RIGHT SECTION: SEARCH BAR + ACCOUNT + CART -->
@@ -111,6 +116,12 @@
           </svg>
         </button>
       </form>
+
+      <!-- Stylist AI Quick Button -->
+      <button type="button" data-action="open-chat" class="flex items-center gap-1.5 rounded-full border border-[#D5D2CC] bg-[#FAF8F5] px-3 py-1.5 text-xs font-bold text-[#111111] hover:bg-white hover:border-[#111111] transition shadow-xs" title="Mở Trợ lý Stylist AI" aria-label="Trợ lý Stylist AI">
+        <span class="text-violet-600 text-sm">✨</span>
+        <span class="hidden sm:inline">Stylist AI</span>
+      </button>
 
       <!-- Account Icon Button -->
       {% if user %}

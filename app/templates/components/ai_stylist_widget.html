@@ -1,0 +1,48 @@
+<!-- ═══════════════════════════════════════════════════════════════════════════
+     AURA STYLIST AI - FLOATING WIDGET & CHAT DRAWER
+     ═══════════════════════════════════════════════════════════════════════════ -->
+
+<!-- Floating Stylist AI Widget Button (FAB) -->
+<div id="ai-stylist-fab-root" class="ai-stylist-fab-container no-print" role="region" aria-label="Trợ lý Stylist AI">
+  <button type="button" data-action="open-chat" class="ai-stylist-fab-btn" aria-label="Mở Trợ lý Stylist AI 24/7">
+    <div class="ai-stylist-fab-icon-wrap" aria-hidden="true">
+      <span>✨</span>
+      <span class="ai-pulse-dot">
+        <span class="ping"></span>
+        <span class="dot"></span>
+      </span>
+    </div>
+    <div class="ai-stylist-fab-text text-left">
+      <div class="text-xs font-bold leading-tight tracking-wider uppercase text-white flex items-center gap-1">
+        Stylist AI <span class="rounded bg-violet-600/60 px-1 py-0.2 text-[9px] font-semibold">24/7</span>
+      </div>
+      <div class="text-[11px] text-gray-300 leading-none mt-0.5">Tư vấn chọn đồ &amp; size</div>
+    </div>
+  </button>
+</div>
+
+<!-- Chat AI Drawer -->
+<div id="chat-drawer" class="drawer hidden" data-modal role="dialog" aria-modal="true" aria-label="Trợ lý Stylist AI">
+  <div class="drawer-panel">
+    <div class="flex items-center justify-between border-b border-[#E5E2DC] px-5 py-4">
+      <div>
+        <h2 class="text-sm font-bold uppercase tracking-wider text-[#111111] flex items-center gap-1.5">
+          <span class="text-violet-600">✨</span> AURA Stylist AI
+        </h2>
+        <p class="text-xs text-[#777777]">Tư vấn chọn đồ, phối set, chọn size thông minh</p>
+      </div>
+      <button data-action="close-modal" data-target="chat-drawer" class="icon-btn" aria-label="Đóng">✕</button>
+    </div>
+    <div id="chat-context" class="hidden px-4 pt-3"></div>
+    <div id="chat-suggestions" class="no-scrollbar flex gap-2 overflow-x-auto border-b border-[#E5E2DC] bg-[#FAF8F5] px-4 py-2"></div>
+    <div id="chat-messages" class="flex-1 space-y-3 overflow-y-auto p-4 bg-[#FAF8F5]" aria-live="polite"></div>
+    <form id="chat-form" class="border-t border-[#E5E2DC] bg-white p-3.5" autocomplete="off">
+      <div class="flex items-center gap-2">
+        <label for="chat-input" class="sr-only">Nhập câu hỏi</label>
+        <input id="chat-input" type="text" maxlength="1000" placeholder="Hỏi Stylist AI (đi phỏng vấn mặc gì?)..."
+               class="min-w-0 flex-1 field text-sm" />
+        <button id="chat-send" type="submit" class="btn btn-primary !py-2 !px-4">Gửi</button>
+      </div>
+    </form>
+  </div>
+</div>

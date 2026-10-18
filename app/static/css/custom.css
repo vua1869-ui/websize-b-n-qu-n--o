@@ -586,6 +586,41 @@ input[type="email"], input[type="number"], input[type="tel"], select, textarea {
   --sidebar-w: 260px;
 }
 
+.ai-global-launcher {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 6rem;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #111111;
+  border-radius: 999px;
+  background: #111111;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+.ai-global-launcher:hover {
+  background: #333333;
+  transform: translateY(-2px);
+}
+.ai-global-launcher-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+@media (max-width: 640px) {
+  .ai-global-launcher {
+    right: 1rem;
+    bottom: 5.5rem;
+    padding: 0.75rem 0.9rem;
+  }
+}
+
 /* Base styles for Customer navigation items */
 .customer-nav-item {
   display: flex;
@@ -1152,3 +1187,220 @@ group[open] .group-open\:rotate-180, details[open] .group-open\:rotate-180 { tra
 @media (min-width: 640px) {
   .sm\:\!text-sm { font-size: 0.875rem !important; line-height: 1.5 !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CORE MODALS, DRAWERS & AI STYLIST WIDGET
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Modal Base */
+.modal {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1000 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1rem !important;
+  background-color: rgba(0, 0, 0, 0.45) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  animation: auraFadeIn 0.2s ease-out;
+}
+.modal.hidden {
+  display: none !important;
+}
+.modal-panel {
+  position: relative !important;
+  max-height: 92vh !important;
+  width: 100% !important;
+  overflow-y: auto !important;
+  border-radius: 4px !important;
+  border: 1px solid #E5E2DC !important;
+  background-color: #FFFFFF !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.08) !important;
+  animation: auraScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Drawer Base (Slide-in panel) */
+.drawer {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 1050 !important;
+  background-color: rgba(0, 0, 0, 0.45) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  animation: auraFadeIn 0.2s ease-out;
+}
+.drawer.hidden {
+  display: none !important;
+}
+.drawer-panel {
+  position: absolute !important;
+  inset-block: 0 !important;
+  right: 0 !important;
+  display: flex !important;
+  width: 100% !important;
+  max-width: 440px !important;
+  flex-direction: column !important;
+  background-color: #FFFFFF !important;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15) !important;
+  border-left: 1px solid #E5E2DC !important;
+  animation: auraSlideLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* AI Chips & Suggestions */
+.chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+  white-space: nowrap !important;
+  border-radius: 9999px !important;
+  border: 1px solid #E5E2DC !important;
+  background-color: #FFFFFF !important;
+  padding: 0.4rem 0.85rem !important;
+  font-size: 0.8125rem !important;
+  font-weight: 500 !important;
+  color: #111111 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+.chip:hover {
+  border-color: #111111 !important;
+  background-color: #FAF8F5 !important;
+  transform: translateY(-1px) !important;
+}
+.chip-on {
+  border-color: #111111 !important;
+  background-color: #111111 !important;
+  color: #FAF8F5 !important;
+}
+
+/* Common form field & icon button */
+.icon-btn {
+  display: inline-flex !important;
+  height: 2rem !important;
+  width: 2rem !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 4px !important;
+  background-color: #F5F5F5 !important;
+  color: #555555 !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+.icon-btn:hover {
+  background-color: #E5E2DC !important;
+  color: #111111 !important;
+}
+
+/* Floating Stylist AI Widget Button (FAB) */
+.ai-stylist-fab-container {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  z-index: 999 !important;
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.18));
+}
+
+.ai-stylist-fab-btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.65rem !important;
+  border-radius: 9999px !important;
+  background: #111111 !important;
+  color: #FFFFFF !important;
+  padding: 0.65rem 1.15rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  cursor: pointer !important;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  outline: none !important;
+  user-select: none !important;
+}
+.ai-stylist-fab-btn:hover {
+  background: #000000 !important;
+  transform: translateY(-2px) scale(1.03) !important;
+  box-shadow: 0 16px 28px rgba(0, 0, 0, 0.28) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+.ai-stylist-fab-btn:active {
+  transform: translateY(0) scale(0.97) !important;
+}
+
+.ai-stylist-fab-icon-wrap {
+  position: relative !important;
+  display: flex !important;
+  height: 2.25rem !important;
+  width: 2.25rem !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 9999px !important;
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+  color: #FFFFFF !important;
+  font-size: 1.05rem !important;
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.4) !important;
+}
+
+.ai-pulse-dot {
+  position: absolute !important;
+  top: -2px !important;
+  right: -2px !important;
+  display: flex !important;
+  height: 0.65rem !important;
+  width: 0.65rem !important;
+}
+.ai-pulse-dot .ping {
+  position: absolute !important;
+  display: inline-flex !important;
+  height: 100% !important;
+  width: 100% !important;
+  border-radius: 9999px !important;
+  background-color: #a855f7 !important;
+  opacity: 0.75 !important;
+  animation: auraPing 1.5s cubic-bezier(0, 0, 0.2, 1) infinite !important;
+}
+.ai-pulse-dot .dot {
+  position: relative !important;
+  display: inline-flex !important;
+  height: 0.65rem !important;
+  width: 0.65rem !important;
+  border-radius: 9999px !important;
+  background-color: #8b5cf6 !important;
+  border: 1.5px solid #111111 !important;
+}
+
+/* Keyframe animations */
+@keyframes auraFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes auraScaleUp {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes auraSlideLeft {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes auraPing {
+  75%, 100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Hide text label on mobile screens to save space while keeping easy tap */
+@media (max-width: 639.98px) {
+  .ai-stylist-fab-btn {
+    padding: 0.5rem !important;
+    gap: 0 !important;
+  }
+  .ai-stylist-fab-text {
+    display: none !important;
+  }
+  .ai-stylist-fab-container {
+    bottom: 18px !important;
+    right: 18px !important;
+  }
+}
+

@@ -47777,5 +47777,85 @@
     "tags": [],
     "is_hot": false,
     "is_new": false
+  },
+  {
+    "id": "prod_902",
+    "name": "Sản Phẩm Audit 8642fe",
+    "category": "ao_so_mi",
+    "category_name": "Áo Sơ Mi",
+    "gender": "nam",
+    "price": 380000,
+    "original_price": 300000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 20,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80"
+    ],
+    "sizes": [
+      "M",
+      "L"
+    ],
+    "colors": [
+      {
+        "name": "Trắng",
+        "hex": "#ffffff"
+      }
+    ],
+    "description": "Sản Phẩm Audit 8642fe",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Hiện đại",
+    "occasions": [],
+    "tags": [],
+    "is_hot": false,
+    "is_new": false
+  },
+  {
+    "id": "prod_903",
+    "name": "Áo Thun Test Admin Demo",
+    "category": "ao-thun",
+    "category_name": "Sản phẩm",
+    "gender": "unisex",
+    "price": 299000,
+    "original_price": 350000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 50,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://example.com/test.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm test tự động",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Minimalism",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "test",
+      "demo",
+      "cotton"
+    ],
+    "is_hot": false,
+    "is_new": false
   }
 ]
