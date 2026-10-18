@@ -18,6 +18,7 @@ from app.routers.deps import (
     get_current_user_optional,
     normalize_phone,
     require_admin,
+    verify_order_access,
 )
 from app.services.order_service import order_service
 from app.services.vnpay_service import vnpay_service
@@ -28,6 +29,7 @@ router = APIRouter(tags=["payment"])
 class VNPayCreatePaymentRequest(BaseModel):
     order_id: str
     bank_code: Optional[str] = None
+    phone: Optional[str] = None
 
 
 def check_simulate_enabled():
@@ -87,10 +89,22 @@ async def payment_webhook(
     )
     if res == "not_found":
         raise HTTPException(status_code=404, detail=f"Không tìm thấy đơn hàng '{order_id}'")
-    elif res == "cancelled":
-        raise HTTPException(status_code=400, detail=f"Đơn hàng '{order_id}' đã bị hủy, không thể xác nhận thanh toán")
+    elif res in ("cancelled", "refund_pending"):
+        return {
+            "success": False,
+            "order_id": order_id,
+            "status": "refund_pending",
+            "message": f"Đơn hàng '{order_id}' đã bị hủy trước đó. Giao dịch đã được ghi nhận vào danh sách cần hoàn tiền (refund_pending).",
+        }
     elif res == "invalid_amount":
         raise HTTPException(status_code=400, detail=f"Số tiền thanh toán ({amount}) không khớp với giá trị đơn hàng")
+    elif res == "already_paid":
+        return {
+            "success": True,
+            "order_id": order_id,
+            "already_paid": True,
+            "message": f"Giao dịch cho đơn {order_id} đã được xác nhận thanh toán trước đó (idempotent).",
+        }
     return {"success": True, "order_id": order_id, "message": f"Đã xác nhận thanh toán đơn {order_id} thành công!"}
 
 
@@ -109,9 +123,14 @@ def check_order_payment_status(order_id: str, request: Request, phone: Optional[
         if not user or (user.role != "admin" and str(user.id) != str(order_user_id)):
             raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
     else:
-        if phone:
+        # Đơn vãng lai: Admin có quyền xem, người dùng khác bắt buộc cung cấp SĐT khớp với đơn
+        if not (user and user.role == "admin"):
+            cookie_phone = request.cookies.get(f"aura_order_{order_id}")
+            check_phone = phone or cookie_phone
+            if not check_phone:
+                raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại hoặc cần cung cấp số điện thoại xác thực")
             order_phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
-            if normalize_phone(phone) != normalize_phone(order_phone):
+            if normalize_phone(check_phone) != normalize_phone(order_phone):
                 raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
 
     status = db_service.get_order_payment_status(order_id)
@@ -151,6 +170,14 @@ def vnpay_create_payment_url(body: VNPayCreatePaymentRequest, request: Request):
         order = order_service.get_order_by_id(body.order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
+
+    # Kiểm tra quyền sở hữu đơn hàng
+    user = get_current_user_optional(request)
+    cookie_phone = request.cookies.get(f"aura_order_{body.order_id}")
+    phone_to_check = body.phone or cookie_phone
+    is_allowed, _ = verify_order_access(order, user, phone_to_check)
+    if not is_allowed:
+        raise HTTPException(status_code=403, detail="Bạn không có quyền truy cập hoặc thanh toán đơn hàng này")
 
     amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
     client_ip = request.client.host if request.client else "127.0.0.1"
@@ -243,21 +270,27 @@ def vnpay_payment_return(request: Request):
             transaction_code=transaction_no,
             payment_channel="vnpay",
         )
-        if confirm_res == "cancelled":
+        if confirm_res in ("cancelled", "refund_pending"):
             if is_browser_html:
                 return HTMLResponse(
                     content=f"""
                     <div style="font-family:sans-serif;text-align:center;padding:50px;">
                         <h2 style="color:#e11d48;">Đơn hàng đã bị hủy</h2>
-                        <p>Đơn hàng <strong>{safe_order_id}</strong> đã bị hủy trước đó.</p>
+                        <p>Đơn hàng <strong>{safe_order_id}</strong> đã bị hủy trước đó. Hệ thống đã ghi nhận thanh toán chờ hoàn tiền cho quý khách.</p>
                         <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
                     </div>
                     """,
-                    status_code=400,
+                    status_code=200,
                 )
-            raise HTTPException(status_code=400, detail="Đơn hàng đã bị hủy")
+            return {
+                "success": False,
+                "order_id": order_id,
+                "status": "refund_pending",
+                "message": "Đơn hàng đã bị hủy, thanh toán được ghi nhận để hoàn tiền",
+            }
 
-        order_service.update_order_status(order_id, "confirmed")
+        if order.get("order_status") == "pending_payment" or order.get("status") == "pending_payment":
+            order_service.update_order_status(order_id, "confirmed")
         if is_browser_html:
             resp = RedirectResponse(url=f"/order-success/{order_id}", status_code=302)
             phone_val = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
@@ -348,10 +381,11 @@ async def vnpay_ipn(request: Request):
             return {"RspCode": "04", "Message": "Invalid amount"}
         elif confirm_res == "not_found":
             return {"RspCode": "01", "Message": "Order not found"}
-        elif confirm_res == "cancelled":
-            return {"RspCode": "02", "Message": "Order cancelled"}
+        elif confirm_res in ("cancelled", "refund_pending"):
+            return {"RspCode": "02", "Message": "Order cancelled, payment marked for refund"}
 
-        order_service.update_order_status(order_id, "confirmed")
+        if order.get("order_status") == "pending_payment" or order.get("status") == "pending_payment":
+            order_service.update_order_status(order_id, "confirmed")
         return {"RspCode": "00", "Message": "Confirm Success"}
     else:
         return {"RspCode": "00", "Message": "Payment failed acknowledged"}

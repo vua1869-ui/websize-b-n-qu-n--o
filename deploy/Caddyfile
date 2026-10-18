@@ -1,0 +1,62 @@
+# ==============================================================================
+# Caddyfile - AURA STUDIO Reverse Proxy Configuration (Production)
+# ==============================================================================
+# Đặc điểm:
+# - Tự động quản lý chứng chỉ SSL/TLS Let's Encrypt (HTTPS tự động).
+# - Giới hạn kích thước Request Body: tối đa 5MB (chống tấn công DoS/OOM upload).
+# - Cấu hình timeout và header bảo mật, chuyển tiếp X-Request-ID, IP thực tế.
+# ==============================================================================
+
+aurastudio.vn, www.aurastudio.vn {
+    # Tự động nén dữ liệu Zstandard & Gzip
+    encode zstd gzip
+
+    # 1. Giới hạn kích thước Request Body tối đa 5MB
+    request_body {
+        max_size 5MB
+    }
+
+    # 2. Header bảo mật phía Proxy
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "same-origin"
+        -Server
+    }
+
+    # 3. Phục vụ file tĩnh trực tiếp (tối ưu hiệu năng)
+    handle_path /static/* {
+        root * /app/app/static
+        file_server
+    }
+
+    # 4. Reverse proxy chuyển tiếp về ứng dụng FastAPI / Uvicorn
+    handle {
+        reverse_proxy 127.0.0.1:8000 {
+            # Thiết lập timeout: kết nối 10s, đọc header 60s, phản hồi 60s
+            transport http {
+                dial_timeout 10s
+                response_header_timeout 60s
+                read_timeout 60s
+                write_timeout 60s
+            }
+
+            # Header chuyển tiếp tới backend FastAPI
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Request-ID {header.X-Request-ID}
+        }
+    }
+
+    # Logging access chuẩn JSON
+    log {
+        output file /var/log/caddy/aura_access.log {
+            roll_size 50mb
+            roll_keep 10
+        }
+        format json
+    }
+}

@@ -46,10 +46,10 @@ def test_muc_a_confirm_payment_rejects_cancelled_order(client):
     res = db_service.confirm_payment(order_id, total, "TX-CANCEL-1", "vietqr")
     assert res == "cancelled"
 
-    # Kiểm tra trạng thái vẫn giữ nguyên là cancelled
+    # Kiểm tra trạng thái vẫn giữ nguyên là cancelled, payment_status chuyển sang refund_pending
     order = db_service.get_order_by_id(order_id)
     assert order["order_status"] == "cancelled"
-    assert order["payment_status"] == "unpaid"
+    assert order["payment_status"] == "refund_pending"
 
 
 def test_muc_a_confirm_payment_rejects_amount_mismatch(client):

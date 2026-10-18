@@ -237,7 +237,7 @@
       }`;
       el.innerHTML = `
         <span>${isSuccess ? "✓" : "✕"}</span>
-        <span>${message}</span>
+        <span>${window.esc(message)}</span>
       `;
       container.appendChild(el);
       requestAnimationFrame(() => {

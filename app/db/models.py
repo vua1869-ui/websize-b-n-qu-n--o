@@ -45,6 +45,7 @@ class OrderDB(Base):
     user_id = Column(String, index=True, nullable=True)
     customer_name = Column(String, nullable=False)
     customer_phone = Column(String, nullable=False)
+    customer_email = Column(String, nullable=True)
     customer_address = Column(String, nullable=False)
     province = Column(String, nullable=True)
     district = Column(String, nullable=True)
@@ -64,6 +65,7 @@ class OrderDB(Base):
     discount_amount = Column(Integer, default=0, nullable=False)
     voucher_code = Column(String, nullable=True)
     quote_json = Column(Text, nullable=True)
+    internal_note = Column(Text, nullable=True)
     paid_at = Column(String, nullable=True)
     created_at = Column(String, nullable=False, index=True)
 
@@ -188,6 +190,8 @@ class InventoryBatchDB(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     product_id = Column(String, ForeignKey("products.id", ondelete="CASCADE"), nullable=False, index=True)
+    color = Column(String, nullable=True)
+    size = Column(String, nullable=True)
     quantity = Column(Integer, nullable=False)
     cost_price = Column(Integer, nullable=False)
     received_at = Column(String, nullable=False)
@@ -223,3 +227,53 @@ class PasswordResetTokenDB(Base):
     expires_at = Column(Float, nullable=False)
     used = Column(Integer, default=0, nullable=False)
     created_at = Column(String, nullable=False)
+
+
+class VoucherDB(Base):
+    __tablename__ = "vouchers"
+
+    code = Column(String, primary_key=True)
+    title = Column(String, nullable=False)
+    kind = Column(String, nullable=False)
+    value = Column(Integer, default=0, nullable=False)
+    max_discount = Column(Integer, nullable=True)
+    min_order = Column(Integer, default=0, nullable=False)
+    badge = Column(String, default="AURA", nullable=False)
+    expire_in = Column(String, default="Còn hiệu lực", nullable=False)
+    expires_at = Column(String, nullable=True)
+    max_uses = Column(Integer, nullable=True)
+    max_uses_per_user = Column(Integer, nullable=True)
+    is_active = Column(Integer, default=1, nullable=False)
+    created_at = Column(String, nullable=False)
+
+
+class VoucherUsageDB(Base):
+    __tablename__ = "voucher_usages"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    voucher_code = Column(String, nullable=False, index=True)
+    user_id = Column(String, nullable=True, index=True)
+    phone = Column(String, nullable=True, index=True)
+    order_id = Column(String, nullable=False, index=True)
+    created_at = Column(String, nullable=False)
+
+
+class AuditLogDB(Base):
+    __tablename__ = "audit_log"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    admin_id = Column(String, nullable=True, index=True)
+    action = Column(String, nullable=False, index=True)
+    hanh_dong = Column(String, nullable=True)
+    target_type = Column(String, nullable=True)
+    target_id = Column(String, nullable=True)
+    target = Column(String, nullable=True)
+    doi_tuong = Column(String, nullable=True)
+    before_state = Column(Text, nullable=True)
+    truoc = Column(Text, nullable=True)
+    after_state = Column(Text, nullable=True)
+    sau = Column(Text, nullable=True)
+    ip_address = Column(String, nullable=True)
+    ip = Column(String, nullable=True)
+    created_at = Column(String, nullable=False, index=True)
+    thoi_gian = Column(String, nullable=True)

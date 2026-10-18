@@ -44,32 +44,54 @@ def mask_sensitive_data(data: Dict[str, Any]) -> Dict[str, Any]:
     return masked
 
 
+import contextvars
+
+request_id_ctx: contextvars.ContextVar[str] = contextvars.ContextVar("request_id", default="")
+
+
+class RequestIdFilter(logging.Filter):
+    """Filter tự động gắn request_id từ ContextVar vào mỗi LogRecord."""
+    def filter(self, record: logging.LogRecord) -> bool:
+        if not hasattr(record, "request_id") or not record.request_id:
+            record.request_id = request_id_ctx.get() or "-"
+        return True
+
+
 class SimpleFormatter(logging.Formatter):
-    """Formatter chuẩn dòng đơn giản, che bớt số điện thoại trong message."""
+    """Formatter chuẩn dòng đơn giản, che bớt số điện thoại trong message và hiển thị Request-ID."""
     def format(self, record: logging.LogRecord) -> str:
+        if not hasattr(record, "request_id") or not record.request_id:
+            record.request_id = request_id_ctx.get() or "-"
         msg = super().format(record)
         return PHONE_RE.sub(r"\1\2****\4", msg)
 
 
 def setup_logging():
-    """Cấu hình logging tập trung theo LOG_LEVEL."""
+    """Cấu hình logging tập trung theo LOG_LEVEL kèm Request-ID."""
     log_level = getattr(logging, (settings.LOG_LEVEL or "INFO").upper(), logging.INFO)
     root_logger = logging.getLogger()
     root_logger.setLevel(log_level)
+
+    req_filter = RequestIdFilter()
+    root_logger.addFilter(req_filter)
+
+    formatter = SimpleFormatter(
+        fmt="[%(asctime)s] [%(levelname)s] [%(name)s] [%(request_id)s]: %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
 
     # Tránh gắn thêm handler nếu đã có
     if not root_logger.handlers:
         handler = logging.StreamHandler(sys.stdout)
         handler.setLevel(log_level)
-        formatter = SimpleFormatter(
-            fmt="[%(asctime)s] [%(levelname)s] [%(name)s]: %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S"
-        )
+        handler.addFilter(req_filter)
         handler.setFormatter(formatter)
         root_logger.addHandler(handler)
     else:
         for handler in root_logger.handlers:
             handler.setLevel(log_level)
+            handler.addFilter(req_filter)
+            handler.setFormatter(formatter)
 
 
 def get_logger(name: str = "aura") -> logging.Logger:

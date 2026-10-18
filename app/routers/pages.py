@@ -182,9 +182,68 @@ def order_success_page(request: Request, order_id: str, phone: Optional[str] = Q
 
 
 @router.get("/tracking", response_class=HTMLResponse)
-def tracking_page(request: Request, code: Optional[str] = None):
-    url = f"/?tracking={code}" if code else "/?tracking="
-    return RedirectResponse(url=url, status_code=302)
+def tracking_page(
+    request: Request,
+    code: Optional[str] = Query(None),
+    phone: Optional[str] = Query(None),
+):
+    """
+    Trang theo dõi đơn hàng công khai.
+    Yêu cầu khớp cả mã đơn và số điện thoại để xem chi tiết.
+    """
+    user = get_current_user_optional(request)
+
+    # Hiển thị form tìm kiếm nếu chưa nhập code
+    if not code:
+        ctx = base_context(request, user=user, order=None, error=None)
+        return templates.TemplateResponse(request, "tracking.html", ctx)
+
+    order = db_service.get_order_by_tracking_or_id(code.strip())
+    if not order:
+        mem = order_service.get_order_by_id(code.strip())
+        if mem:
+            order = db_service._format_order_row(dict(mem))
+
+    if not order:
+        ctx = base_context(request, user=user, order=None,
+                           error="Không tìm thấy đơn hàng. Vui lòng kiểm tra lại mã đơn.")
+        return templates.TemplateResponse(request, "tracking.html", ctx)
+
+    is_allowed, is_full = verify_order_access(order, user, phone)
+    if not is_allowed:
+        ctx = base_context(request, user=user, order=None,
+                           error="Số điện thoại không khớp với đơn hàng. Vui lòng nhập đúng SĐT đặt hàng.")
+        return templates.TemplateResponse(request, "tracking.html", ctx)
+
+    display_order = dict(order)
+    if not is_full:
+        raw_phone = display_order.get("customer_phone") or display_order.get("customer", {}).get("phone", "")
+        raw_addr = display_order.get("customer_address") or display_order.get("customer", {}).get("address", "")
+        masked_phone_str = mask_phone(raw_phone)
+        masked_addr_str = mask_address(raw_addr, display_order.get("province"))
+        display_order["customer_phone"] = masked_phone_str
+        display_order["customer_address"] = masked_addr_str
+        if "customer" in display_order and isinstance(display_order["customer"], dict):
+            display_order["customer"] = dict(display_order["customer"])
+            display_order["customer"]["phone"] = masked_phone_str
+            display_order["customer"]["address"] = masked_addr_str
+
+    timeline = db_service.get_tracking_timeline(display_order)
+
+    # Cho phép hủy nếu đơn chưa shipping
+    can_cancel = display_order.get("order_status") not in ("shipping", "completed", "cancelled")
+
+    ctx = base_context(
+        request,
+        user=user,
+        order=display_order,
+        timeline=timeline,
+        can_cancel=can_cancel,
+        error=None,
+        searched_code=code,
+        searched_phone=phone or "",
+    )
+    return templates.TemplateResponse(request, "tracking.html", ctx)
 
 
 @router.get("/403", response_class=HTMLResponse)
