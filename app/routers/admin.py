@@ -1,5 +1,6 @@
 import codecs
 import csv
+import datetime as dt
 import io
 import math
 import time
@@ -37,11 +38,13 @@ from app.routers.deps import (
     templates,
 )
 from app.services.image_service import image_service
+from app.services.momo_service import momo_service
 from app.services.order_service import order_service
 from app.services.product_import_service import product_import_service
 from app.services.product_service import product_service
 from app.services.trend_service import trend_service
 from app.services.user_service import user_service
+from app.services.vnpay_service import vnpay_service
 
 router = APIRouter(tags=["admin"])
 
@@ -562,6 +565,121 @@ def admin_get_orders(
 def admin_get_refund_pending_orders(_admin: User = Depends(require_admin)):
     """Lấy danh sách các đơn hàng cần hoàn tiền (payment_status = 'refund_pending') cho admin/kế toán."""
     return db_service.get_refund_pending_orders()
+
+
+@router.post("/api/admin/orders/{order_id}/process-refund")
+def admin_process_order_refund(
+    order_id: str,
+    request: Request,
+    _admin: User = Depends(require_admin),
+):
+    """
+    Xử lý hoàn tiền tự động qua Cổng thanh toán (VNPay / MoMo) cho đơn hàng.
+    Cập nhật payment_status thành 'refunded' khi thành công.
+    """
+    order = db_service.get_order_by_id(order_id)
+    if not order:
+        order = order_service.get_order_by_id(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng")
+
+    payment_status = order.get("payment_status")
+    if payment_status == "refunded":
+        raise HTTPException(status_code=400, detail="Đơn hàng này đã được hoàn tiền trước đó")
+    if payment_status not in ("refund_pending", "paid"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Chỉ có thể hoàn tiền cho đơn hàng có trạng thái 'refund_pending' hoặc 'paid' (trạng thái hiện tại: {payment_status})",
+        )
+
+    # Lấy thông tin giao dịch thanh toán gốc
+    tx = db_service.get_order_payment_transaction(order_id)
+    payment_channel = (tx.get("payment_channel") if tx else None) or order.get("payment_method") or "vnpay"
+    payment_channel = payment_channel.lower()
+
+    amount = int(order.get("total_amount") or (tx.get("amount") if tx else 0) or 0)
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Số tiền hoàn không hợp lệ (nhỏ hơn hoặc bằng 0)")
+
+    refund_code = None
+    refund_res = {}
+
+    if payment_channel == "vnpay":
+        trans_no = (tx.get("transaction_code") if tx else None) or f"VNPAY-{order_id}"
+        # Lấy ngày giao dịch ban đầu (YYYYMMDDHHMMSS)
+        trans_date = None
+        if tx and tx.get("created_at"):
+            try:
+                dt_obj = dt.datetime.fromisoformat(tx["created_at"])
+                trans_date = dt_obj.strftime("%Y%m%d%H%M%S")
+            except Exception:
+                trans_date = None
+
+        refund_res = vnpay_service.refund(
+            order_id=order_id,
+            trans_no=trans_no,
+            amount=amount,
+            trans_date=trans_date,
+            create_by=_admin.username,
+            client_ip=get_client_ip(request),
+            order_desc=f"Hoan tien don hang {order_id}",
+        )
+        if not refund_res.get("success"):
+            err_msg = refund_res.get("message") or "Cổng VNPay từ chối xử lý hoàn tiền"
+            raise HTTPException(status_code=400, detail=f"Lỗi hoàn tiền VNPay: {err_msg}")
+        refund_code = refund_res.get("refund_trans_id") or f"VNPAY-REF-{order_id}"
+
+    elif payment_channel == "momo":
+        trans_id = (tx.get("transaction_code") if tx else None) or order_id
+        refund_res = momo_service.refund(
+            order_id=order_id,
+            trans_id=str(trans_id),
+            amount=amount,
+            description=f"Hoan tien don hang {order_id}",
+        )
+        if not refund_res.get("success"):
+            err_msg = refund_res.get("message") or "Cổng MoMo từ chối xử lý hoàn tiền"
+            raise HTTPException(status_code=400, detail=f"Lỗi hoàn tiền MoMo: {err_msg}")
+        refund_code = refund_res.get("refund_trans_id") or f"MOMO-REF-{order_id}"
+
+    else:
+        # Kênh thủ công (VietQR, Chuyển khoản ngân hàng, COD tiền mặt): Xác nhận admin đã hoàn tất chuyển trả cho khách
+        refund_code = f"MANUAL-{int(time.time())}"
+        refund_res = {
+            "success": True,
+            "refund_trans_id": refund_code,
+            "message": f"Xác nhận hoàn tiền thủ công qua {payment_channel.upper()}",
+            "refunded_by": _admin.username,
+        }
+
+    # Cập nhật trạng thái payment_status = 'refunded' và lưu vào payment_transactions
+    db_service.mark_order_refunded(
+        order_id=order_id,
+        refund_tx_code=refund_code,
+        amount=amount,
+        payment_channel=payment_channel,
+        payload=refund_res,
+    )
+
+    db_service.log_audit(
+        admin_id=str(_admin.id),
+        action="refund_order",
+        target_type="order",
+        target_id=order_id,
+        before_state={"payment_status": payment_status},
+        after_state={"payment_status": "refunded", "refund_code": refund_code, "channel": payment_channel},
+        ip_address=get_client_ip(request),
+    )
+
+    return {
+        "success": True,
+        "order_id": order_id,
+        "payment_status": "refunded",
+        "amount": amount,
+        "payment_channel": payment_channel,
+        "refund_trans_id": refund_code,
+        "message": f"Đã hoàn tiền {amount:,.0f}đ thành công cho đơn hàng {order_id} qua {payment_channel.upper()}",
+    }
 
 
 @router.put("/api/admin/orders/{order_id}/status")

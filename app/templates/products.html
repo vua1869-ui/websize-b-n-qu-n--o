@@ -19,6 +19,17 @@
 
   <div class="main-content-layout flex flex-col flex-1">
 
+  <!-- Nút Quay Lại -->
+  <div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 2xl:px-16 pt-3 pb-2">
+    <a href="/" onclick="if (window.history.length > 1) { window.history.back(); return false; }"
+       class="aura-back-btn group" title="Quay lại" aria-label="Quay lại">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+      </svg>
+      <span>Quay lại</span>
+    </a>
+  </div>
+
   <!-- 2. CATEGORY & SORT SUBBAR (Top horizontal filter tabs & sort options) -->
   <div class="bg-white border-b border-[#E5E5E5] py-3.5 px-4 sm:px-6 lg:px-10 2xl:px-16">
     <div class="mx-auto max-w-[1600px] flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -215,6 +226,13 @@
             <label class="flex items-center gap-2 p-2 border border-[#E5E2DC] rounded-[2px] cursor-pointer hover:bg-[#FAF8F5]">
               <input type="radio" name="payment_method" value="vnpay" class="accent-[#111111]" />
               <span>Cổng thanh toán VNPay (ATM / Visa / QR)</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 border border-[#E5E2DC] rounded-[2px] cursor-pointer hover:bg-[#FAF8F5]">
+              <input type="radio" name="payment_method" value="momo" class="accent-[#111111]" />
+              <span class="flex items-center gap-2">
+                <span>Ví điện tử MoMo (App MoMo / QR Code)</span>
+                <span class="rounded bg-[#a50064] px-1.5 py-0.5 text-[10px] font-bold text-white tracking-wide">MoMo</span>
+              </span>
             </label>
           </div>
         </fieldset>

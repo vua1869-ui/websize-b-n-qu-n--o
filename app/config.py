@@ -50,12 +50,22 @@ class Settings(BaseSettings):
     # Database connection string (SQLite mặc định, chuyển sang PostgreSQL khi production)
     DATABASE_URL: str = f"sqlite:///{DEFAULT_DB_PATH}"
 
-    # ---- Cổng thanh toán VNPay Sandbox ----
+    # ---- Cổng thanh toán VNPay Sandbox & Refund ----
     # Lấy tại VNPay Merchant Portal (sandbox dùng được ngay, xem tài liệu VNPay)
     VNPAY_TMN_CODE: str = ""
     VNPAY_HASH_SECRET: str = ""  # PHẢI đặt trong .env — xem .env.example
     VNPAY_URL: str = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
     VNPAY_RETURN_URL: str = "http://127.0.0.1:8000/api/payment/vnpay/return"
+    VNPAY_API_URL: str = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction"
+
+    # ---- Cổng thanh toán MoMo Sandbox & Refund (MoMo v2 Gateway API) ----
+    MOMO_PARTNER_CODE: str = "MOMO"
+    MOMO_ACCESS_KEY: str = "F8BBA842ECF85"
+    MOMO_SECRET_KEY: str = "K951B6PE1waDMi640xX08PD3vg6EkVlz"
+    MOMO_API_URL: str = "https://test-payment.momo.vn/v2/gateway/api/create"
+    MOMO_REFUND_URL: str = "https://test-payment.momo.vn/v2/gateway/api/refund"
+    MOMO_RETURN_URL: str = "http://127.0.0.1:8000/api/payment/momo/return"
+    MOMO_IPN_URL: str = "http://127.0.0.1:8000/api/payment/momo/ipn"
 
     # Domain public chính thức của hệ thống (dùng dựng link reset mật khẩu an toàn, không phụ thuộc Host header)
     PUBLIC_BASE_URL: str = "http://127.0.0.1:8000"
@@ -66,7 +76,7 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _validate_production(self) -> "Settings":
-        """Nếu APP_ENV là production: bắt buộc các khóa secret phải được đổi, không dùng SQLite hay 127.0.0.1, từ chối DEMO_DATA=True."""
+        """Nếu APP_ENV là production: bắt buộc các khóa secret phải được đổi, không dùng SQLite hay 127.0.0.1."""
         if self.APP_ENV.strip().lower() == "production":
             errors = []
             default_secrets = {
@@ -95,8 +105,13 @@ class Settings(BaseSettings):
             if "sqlite" in self.DATABASE_URL.lower():
                 errors.append("- DATABASE_URL vẫn dùng SQLite. Khi triển khai Production bắt buộc sử dụng cơ sở dữ liệu như PostgreSQL.")
 
-            if "127.0.0.1" in self.VNPAY_RETURN_URL or "localhost" in self.VNPAY_RETURN_URL:
+            is_vnpay_localhost = not self.VNPAY_RETURN_URL or "127.0.0.1" in self.VNPAY_RETURN_URL or "localhost" in self.VNPAY_RETURN_URL.lower()
+            if is_vnpay_localhost:
                 errors.append("- VNPAY_RETURN_URL vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống.")
+
+            is_momo_localhost = not self.MOMO_RETURN_URL or "127.0.0.1" in self.MOMO_RETURN_URL or "localhost" in self.MOMO_RETURN_URL.lower()
+            if is_momo_localhost:
+                errors.append("- MOMO_RETURN_URL vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống.")
 
             if self.EMAIL_BACKEND == "console":
                 errors.append("- EMAIL_BACKEND không được dùng 'console' khi triển khai Production.")

@@ -1952,6 +1952,22 @@ const App = {
         }
       }
 
+      // Nếu khách chọn Thanh toán qua MoMo -> Chuyển hướng sang MoMo
+      if (body.payment_method === 'momo') {
+        try {
+          const payRes = await U.api('/api/payment/momo/create-payment-url', {
+            method: 'POST',
+            body: { order_id: order.order_id }
+          });
+          if (payRes && payRes.payment_url) {
+            window.location.href = payRes.payment_url;
+            return;
+          }
+        } catch (payErr) {
+          console.error('Lỗi tạo URL thanh toán MoMo:', payErr);
+        }
+      }
+
       // Đơn hàng COD hoặc hình thức khác -> Chuyển hướng tới trang xác nhận đơn hàng thành công
       const phoneParam = body.customer_phone ? `?phone=${encodeURIComponent(body.customer_phone)}` : '';
       window.location.href = `/order-success/${encodeURIComponent(order.order_id)}${phoneParam}`;
@@ -1976,6 +1992,7 @@ const App = {
 
     const isQr = o.payment_method === 'qr_transfer';
     const isVNPay = o.payment_method === 'vnpay';
+    const isMoMo = o.payment_method === 'momo';
     const isPaid = o.payment_status === 'paid' || o.status === 'confirmed';
 
     let paymentHtml = '';
@@ -2064,6 +2081,10 @@ const App = {
                       class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 px-3.5 py-1.5 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
                 <span>💳 Thanh toán qua VNPay</span>
               </button>
+              <button type="button" data-action="pay-momo" data-order-id="${U.esc(o.order_id)}"
+                      class="inline-flex items-center gap-1.5 rounded-lg bg-[#a50064] hover:bg-[#850050] px-3.5 py-1.5 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
+                <span>💳 Thanh toán qua MoMo</span>
+              </button>
               <button type="button" data-action="simulate-payment" data-order-id="${U.esc(o.order_id)}"
                       class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 px-3.5 py-1.5 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
                 <span>⚡ Giả lập Chuyển khoản thành công (Test Webhook)</span>
@@ -2111,6 +2132,45 @@ const App = {
           `}
         </div>
       </div>`;
+    } else if (isMoMo) {
+      paymentHtml = `
+      <div id="momo-container" class="my-4 rounded-2xl border border-pink-200 bg-pink-50/50 p-4 text-left shadow-sm">
+        <div class="flex items-center justify-between border-b border-pink-100 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-[#a50064] text-white font-bold text-sm">M</span>
+            <div>
+              <h3 class="text-sm font-bold text-[#a50064] uppercase tracking-wide">Ví điện tử MoMo</h3>
+              <p class="text-sm text-zinc-500">Quét mã QR • Ứng dụng MoMo • Thẻ ATM / Visa</p>
+            </div>
+          </div>
+          <span class="rounded bg-pink-100 px-2 py-0.5 text-sm font-bold text-[#a50064]">MoMo Sandbox</span>
+        </div>
+
+        <div id="payment-status-box" class="mt-4 rounded-xl border ${isPaid ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-pink-200 bg-white text-pink-900'} p-3.5 text-center">
+          ${isPaid ? `
+            <div class="flex items-center justify-center gap-2 text-sm font-bold text-emerald-800">
+              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-sm">✓</span>
+              <span>ĐÃ XÁC NHẬN THANH TOÁN MOMO THÀNH CÔNG!</span>
+            </div>
+            <p class="mt-1 text-sm text-emerald-700">Đơn hàng đã được thanh toán và đang được xử lý.</p>
+          ` : `
+            <div class="flex items-center justify-center gap-2 text-sm font-bold text-[#a50064]">
+              <span class="flex h-2.5 w-2.5 relative">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#a50064]"></span>
+              </span>
+              <span id="payment-status-text">Đang chờ bạn hoàn tất thanh toán trên MoMo...</span>
+            </div>
+            <p class="mt-1 text-sm text-zinc-500">Nhấn nút bên dưới để chuyển sang cổng MoMo nếu trình duyệt chưa tự chuyển.</p>
+            <div class="mt-3 flex flex-wrap gap-2 justify-center">
+              <button type="button" data-action="pay-momo" data-order-id="${U.esc(o.order_id)}"
+                      class="inline-flex items-center gap-1.5 rounded-lg bg-[#a50064] hover:bg-[#850050] px-4 py-2 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
+                <span>💳 Thanh toán qua MoMo ngay</span>
+              </button>
+            </div>
+          `}
+        </div>
+      </div>`;
     }
 
     U.$('#success-body').innerHTML = `
@@ -2119,7 +2179,7 @@ const App = {
         <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
       </div>
       <h2 class="text-base sm:text-lg font-bold text-zinc-900" id="success-title">
-        ${isPaid ? 'Đặt hàng & Thanh toán thành công!' : (isVNPay ? 'Đã ghi nhận đơn • Vui lòng thanh toán VNPay' : (isQr ? 'Đã ghi nhận đơn • Vui lòng chuyển khoản' : 'Đặt hàng thành công!'))}
+        ${isPaid ? 'Đặt hàng & Thanh toán thành công!' : (isMoMo ? 'Đã ghi nhận đơn • Vui lòng thanh toán MoMo' : (isVNPay ? 'Đã ghi nhận đơn • Vui lòng thanh toán VNPay' : (isQr ? 'Đã ghi nhận đơn • Vui lòng chuyển khoản' : 'Đặt hàng thành công!')))}
       </h2>
       <p class="text-sm text-zinc-500 mt-0.5">Mã đơn hàng: <b class="font-mono text-brand-600">${U.esc(o.order_id)}</b></p>
       
@@ -2128,7 +2188,7 @@ const App = {
       <div class="my-3 space-y-1.5 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3.5 text-left text-sm">
         <div class="flex justify-between gap-3"><span class="text-zinc-500">Người nhận</span><b class="text-right text-zinc-800">${U.esc(o.customer_name)} (${U.esc(o.customer_phone)})</b></div>
         <div class="flex justify-between gap-3"><span class="text-zinc-500">Địa chỉ giao</span><span class="text-right font-medium text-zinc-800">${U.esc(o.customer_address)}</span></div>
-        <div class="flex justify-between gap-3"><span class="text-zinc-500">Hình thức</span><b>${isVNPay ? 'VNPay Sandbox' : (isQr ? 'Chuyển khoản VietQR' : 'Thanh toán khi nhận hàng (COD)')}</b></div>
+        <div class="flex justify-between gap-3"><span class="text-zinc-500">Hình thức</span><b>${isMoMo ? 'Ví điện tử MoMo' : (isVNPay ? 'VNPay Sandbox' : (isQr ? 'Chuyển khoản VietQR' : 'Thanh toán khi nhận hàng (COD)'))}</b></div>
         ${this.summaryRows(q)}
       </div>
 
@@ -2141,7 +2201,7 @@ const App = {
     Modal.open('success-modal');
 
     // Bắt đầu Polling kiểm tra trạng thái thanh toán tự động nếu chưa thanh toán
-    if ((isQr || isVNPay) && !isPaid) {
+    if ((isQr || isVNPay || isMoMo) && !isPaid) {
       this._pollTimer = setInterval(async () => {
         try {
           const res = await U.api(`/api/payment/check-status/${encodeURIComponent(o.order_id)}`);
@@ -2636,6 +2696,25 @@ Object.assign(Actions, {
     } catch (e) {
       U.toast(e.message || 'Lỗi khi tạo liên kết thanh toán VNPay', 'error');
       if (btn) { btn.disabled = false; btn.textContent = '💳 Thanh toán qua VNPay'; }
+    }
+  },
+  'pay-momo': async (d, btn) => {
+    if (!d.orderId) return;
+    try {
+      if (btn) { btn.disabled = true; btn.textContent = 'Đang chuyển tới MoMo...'; }
+      U.toast('Đang tạo liên kết thanh toán MoMo...');
+      const res = await U.api('/api/payment/momo/create-payment-url', {
+        method: 'POST',
+        body: { order_id: d.orderId }
+      });
+      if (res && res.payment_url) {
+        window.location.href = res.payment_url;
+      } else {
+        throw new Error('Không nhận được liên kết thanh toán từ máy chủ');
+      }
+    } catch (e) {
+      U.toast(e.message || 'Lỗi khi tạo liên kết thanh toán MoMo', 'error');
+      if (btn) { btn.disabled = false; btn.textContent = '💳 Thanh toán qua MoMo'; }
     }
   },
   'simulate-payment': async (d, btn) => {

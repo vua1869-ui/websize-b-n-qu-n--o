@@ -259,6 +259,48 @@ body {
   letter-spacing: 0.06em;
 }
 
+/* ─── Back Button (Nút quay lại - Đen + Vàng hoàng kim) ─── */
+.aura-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  min-height: 38px;
+  border-radius: 2px !important;
+  background-color: #111111 !important;
+  color: #FAF8F5 !important;
+  border: 1px solid rgba(212, 175, 55, 0.55) !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-decoration: none !important;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  white-space: nowrap;
+}
+.aura-back-btn svg {
+  width: 1rem;
+  height: 1rem;
+  color: #D4AF37 !important;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+.aura-back-btn:hover {
+  background-color: #000000 !important;
+  border-color: #D4AF37 !important;
+  color: #D4AF37 !important;
+  box-shadow: 0 2px 10px rgba(212, 175, 55, 0.25);
+}
+.aura-back-btn:hover svg {
+  transform: translateX(-3px);
+  color: #D4AF37 !important;
+}
+.aura-back-btn:active {
+  transform: scale(0.96);
+}
+
 /* ─── Form Fields (COS Style) ─── */
 .field, input[type="text"], input[type="search"], input[type="password"],
 input[type="email"], input[type="number"], input[type="tel"], select, textarea {

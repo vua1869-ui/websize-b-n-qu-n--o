@@ -1603,6 +1603,74 @@ class DatabaseService:
         finally:
             conn.close()
 
+    def get_order_payment_transaction(self, order_id: str) -> Optional[Dict[str, Any]]:
+        """Lấy thông tin giao dịch thanh toán thành công gần nhất của đơn hàng."""
+        conn = get_db_connection(self.db_path)
+        try:
+            row = conn.execute(
+                """
+                SELECT * FROM payment_transactions
+                WHERE order_id = ? AND status IN ('success', 'unmatched_or_cancelled')
+                ORDER BY id DESC LIMIT 1;
+                """,
+                (order_id,)
+            ).fetchone()
+            if not row:
+                return None
+            return dict(row)
+        finally:
+            conn.close()
+
+    def mark_order_refunded(
+        self,
+        order_id: str,
+        refund_tx_code: str,
+        amount: int,
+        payment_channel: str = "vnpay",
+        payload: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        """Đánh dấu đơn hàng đã được hoàn tiền thành công (payment_status = 'refunded') và lưu vết vào payment_transactions."""
+        with get_db_transaction(self.db_path) as conn:
+            order = conn.execute("SELECT order_id, user_id, payment_status FROM orders WHERE order_id = ?;", (order_id,)).fetchone()
+            if not order:
+                return False
+
+            now_str = datetime.datetime.now().isoformat()
+            conn.execute(
+                """
+                UPDATE orders
+                SET payment_status = 'refunded'
+                WHERE order_id = ?;
+                """,
+                (order_id,)
+            )
+
+            tx_code_to_save = refund_tx_code if refund_tx_code.startswith("REFUND-") else f"REFUND-{refund_tx_code}"
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO payment_transactions
+                (order_id, transaction_code, amount, payment_channel, status, payload_json, created_at)
+                VALUES (?, ?, ?, ?, 'refunded', ?, ?);
+                """,
+                (
+                    order_id,
+                    tx_code_to_save,
+                    amount,
+                    payment_channel,
+                    json.dumps(payload or {}, ensure_ascii=False),
+                    now_str,
+                )
+            )
+
+            log_money_event(
+                "order_refunded",
+                order_id=order_id,
+                user_id=order["user_id"] if "user_id" in order.keys() else None,
+                amount=amount,
+                extra={"refund_tx_code": tx_code_to_save, "payment_channel": payment_channel},
+            )
+            return True
+
     # ==================== REVIEWS & SOCIAL PROOF ====================
 
     def get_product_reviews(self, product_id: str, rating_filter: Optional[int] = None, limit: int = 50) -> Dict[str, Any]:

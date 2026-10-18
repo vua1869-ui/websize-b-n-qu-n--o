@@ -3,6 +3,21 @@
 {% block title %}Quản lý đơn hàng{% endblock %}
 {% block header_title %}Quản lý & Điều phối đơn hàng{% endblock %}
 
+{% block header_actions %}
+<div class="flex items-center gap-2.5">
+  <span class="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-noir-800/80 border border-noir-700 px-3 py-1 text-sm font-medium text-noir-300">
+    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+    <span>Tự động (20s)</span>
+  </span>
+  <button id="btn-manual-refresh" type="button" class="inline-flex items-center gap-1.5 rounded-md border border-noir-700 bg-noir-800 px-3 py-1.5 text-sm font-medium text-noir-200 hover:bg-noir-700 hover:text-gold-400 transition shadow cursor-pointer" title="Làm mới danh sách đơn hàng ngay lập tức">
+    <svg class="order-refresh-icon h-4 w-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+    </svg>
+    <span>Làm mới</span>
+  </button>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="space-y-6">
 
@@ -28,6 +43,12 @@
 
       <!-- Action Buttons -->
       <div class="flex items-center gap-2">
+        <button id="btn-manual-refresh-inline" type="button" class="inline-flex items-center gap-1.5 rounded-md border border-noir-700 bg-noir-800 px-3.5 py-1.5 text-sm font-medium text-noir-200 hover:bg-noir-700 hover:text-gold-400 transition shadow cursor-pointer" title="Làm mới danh sách đơn">
+          <svg class="order-refresh-icon h-4 w-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
+          <span>Làm mới</span>
+        </button>
         <button id="btn-export-csv" class="inline-flex items-center gap-1.5 rounded-md border border-noir-700 bg-noir-800 px-3.5 py-1.5 text-sm font-medium text-noir-200 hover:bg-noir-700 hover:text-gold-400 transition shadow">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.5V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
           Xuất file CSV
@@ -120,6 +141,30 @@
         </div>
       </div>
 
+      <!-- Thông tin thanh toán & Hoàn tiền -->
+      <div id="detail-payment-container" class="rounded-md border border-noir-700 bg-noir-800 p-4 text-sm space-y-2">
+        <div class="flex justify-between items-center text-noir-300">
+          <span>Phương thức thanh toán:</span>
+          <span id="detail-payment-method" class="font-medium text-noir-100"></span>
+        </div>
+        <div class="flex justify-between items-center text-noir-300">
+          <span>Trạng thái thanh toán:</span>
+          <span id="detail-payment-status" class="font-medium"></span>
+        </div>
+        <!-- Hộp hoàn tiền tự động khi payment_status === 'refund_pending' -->
+        <div id="detail-refund-box" class="hidden mt-3 pt-3 border-t border-rose-500/20 bg-rose-500/5 p-3 rounded border border-rose-500/30">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <p class="font-semibold text-rose-400 text-sm">⚠️ Đơn hàng chờ hoàn tiền</p>
+              <p class="text-xs text-noir-400 mt-0.5">Gọi API hoàn tiền tự động về tài khoản khách qua cổng thanh toán.</p>
+            </div>
+            <button id="btn-modal-process-refund" type="button" class="rounded-md bg-rose-600 hover:bg-rose-500 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition">
+              Hoàn tiền ngay
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Ghi chú nội bộ -->
       <div class="rounded-md border border-noir-700 bg-noir-800 p-4 text-sm">
         <label class="block text-sm uppercase tracking-wider font-semibold text-noir-300 mb-1.5">Ghi chú nội bộ (Chỉ Admin thấy):</label>
@@ -171,8 +216,21 @@
     cancelled: { label: "Đã hủy", bg: "bg-rose-500/10 text-rose-400 border-rose-500/20" }
   };
 
-  async function loadOrders() {
-    tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-noir-400">Đang nạp danh sách đơn hàng...</td></tr>`;
+  let knownOrderIds = null;
+  let isRefreshing = false;
+  let refreshTimer = null;
+  const REFRESH_INTERVAL_MS = 20000;
+
+  async function loadOrders(isBackground = false) {
+    if (isRefreshing) return;
+    isRefreshing = true;
+
+    const refreshIcons = document.querySelectorAll(".order-refresh-icon");
+    refreshIcons.forEach(icon => icon.classList.add("animate-spin"));
+
+    if (!isBackground && (!currentOrders || currentOrders.length === 0)) {
+      tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-noir-400">Đang nạp danh sách đơn hàng...</td></tr>`;
+    }
 
     let url = `/api/admin/orders?limit=100`;
     if (activeStatus !== "all") url += `&status=${encodeURIComponent(activeStatus)}`;
@@ -181,7 +239,20 @@
 
     try {
       const res = await fetch(url);
-      currentOrders = await res.json();
+      const newOrders = await res.json();
+
+      // Phát hiện đơn hàng mới so với lần fetch trước
+      if (knownOrderIds !== null && Array.isArray(newOrders)) {
+        const freshOrders = newOrders.filter(o => !knownOrderIds.has(o.order_id));
+        if (freshOrders.length > 0) {
+          showToast(`🛒 Có ${freshOrders.length} đơn hàng mới!`, "success");
+        }
+      }
+
+      if (Array.isArray(newOrders)) {
+        knownOrderIds = new Set(newOrders.map(o => o.order_id));
+        currentOrders = newOrders;
+      }
 
       if (!currentOrders || currentOrders.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-noir-400">Không tìm thấy đơn hàng nào phù hợp</td></tr>`;
@@ -194,6 +265,18 @@
         const itemCount = lines.reduce((sum, l) => sum + (l.quantity || 1), 0);
         const total = (o.quote?.total || 0).toLocaleString("vi-VN") + "đ";
 
+        const payMethodLabel = o.payment_method === 'cod' ? 'COD' : (o.payment_method === 'momo' ? 'MoMo' : (o.payment_method === 'vnpay' ? 'VNPay' : 'VietQR'));
+        let payStatusBadge = '';
+        if (o.payment_status === 'paid') {
+          payStatusBadge = '<span class="inline-block text-[11px] font-semibold text-emerald-400">Đã thanh toán</span>';
+        } else if (o.payment_status === 'refund_pending') {
+          payStatusBadge = '<span class="inline-block text-[11px] font-bold text-rose-400 animate-pulse">⚠️ Chờ hoàn tiền</span>';
+        } else if (o.payment_status === 'refunded') {
+          payStatusBadge = '<span class="inline-block text-[11px] font-semibold text-purple-400">Đã hoàn tiền</span>';
+        } else {
+          payStatusBadge = '<span class="inline-block text-[11px] text-noir-400">Chưa thanh toán</span>';
+        }
+
         return `
           <tr class="hover:bg-noir-800/60 transition">
             <td class="py-3 px-4 font-mono font-semibold text-noir-100">${esc(o.order_id)}</td>
@@ -204,11 +287,19 @@
             </td>
             <td class="py-3 px-4 font-medium text-noir-300">${itemCount} sp</td>
             <td class="py-3 px-4 font-semibold text-gold-500">${total}</td>
-            <td class="py-3 px-4 text-noir-400">${o.payment_method === 'cod' ? 'COD' : 'Chuyển khoản'}</td>
+            <td class="py-3 px-4">
+              <div class="text-noir-200 font-medium">${payMethodLabel}</div>
+              <div>${payStatusBadge}</div>
+            </td>
             <td class="py-3 px-4">
               <span class="inline-flex rounded-full px-2 py-0.5 text-sm font-medium border ${st.bg}">${esc(st.label)}</span>
             </td>
             <td class="py-3 px-4 text-right whitespace-nowrap space-x-1">
+              ${o.payment_status === 'refund_pending' ? `
+                <button data-order-id="${esc(o.order_id)}" class="btn-refund-order rounded-md border border-rose-500/40 bg-rose-500/10 px-2.5 py-1 text-sm font-semibold text-rose-400 hover:bg-rose-500 hover:text-white shadow-lg transition" title="Xử lý hoàn tiền trực tuyến">
+                  Hoàn tiền
+                </button>
+              ` : ''}
               <a href="/admin/orders/${esc(o.order_id)}/print" target="_blank" class="inline-flex rounded-md border border-noir-700 bg-noir-800 px-2.5 py-1 text-sm font-medium text-noir-300 hover:bg-noir-700 hover:text-gold-400 shadow-lg transition">
                 In A6
               </a>
@@ -220,12 +311,28 @@
         `;
       }).join("");
 
+      if (!isBackground) {
+        showToast("Đã cập nhật danh sách đơn hàng!");
+      }
+
     } catch (e) {
-      tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-rose-400">Lỗi tải dữ liệu đơn hàng</td></tr>`;
+      if (!isBackground) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-rose-400">Lỗi tải dữ liệu đơn hàng</td></tr>`;
+      }
+    } finally {
+      isRefreshing = false;
+      refreshIcons.forEach(icon => {
+        setTimeout(() => icon.classList.remove("animate-spin"), 350);
+      });
     }
   }
 
   tbody.addEventListener("click", e => {
+    const refundBtn = e.target.closest(".btn-refund-order");
+    if (refundBtn) {
+      triggerRefundOrder(refundBtn.dataset.orderId);
+      return;
+    }
     const btn = e.target.closest(".btn-view-order");
     if (btn) viewOrder(btn.dataset.orderId);
   });
@@ -296,9 +403,77 @@
     document.getElementById("detail-shipping").textContent = (q.shipping_fee || 0).toLocaleString("vi-VN") + "đ";
     document.getElementById("detail-total").textContent = (q.total || 0).toLocaleString("vi-VN") + "đ";
 
+    // Cập nhật phương thức & trạng thái thanh toán
+    const payMethodMap = {
+      cod: 'Thanh toán khi nhận hàng (COD)',
+      vnpay: 'Cổng thanh toán VNPay (Sandbox / Thẻ ATM / QR)',
+      momo: 'Ví điện tử MoMo (Sandbox / QR / App)',
+      vietqr: 'Chuyển khoản VietQR',
+      qr_transfer: 'Chuyển khoản VietQR'
+    };
+    document.getElementById("detail-payment-method").textContent = payMethodMap[o.payment_method] || o.payment_method || 'Chưa xác định';
+
+    const payStatusEl = document.getElementById("detail-payment-status");
+    const refundBox = document.getElementById("detail-refund-box");
+    if (o.payment_status === 'paid') {
+      payStatusEl.textContent = 'Đã thanh toán (paid)';
+      payStatusEl.className = 'font-semibold text-emerald-400';
+      refundBox.classList.add('hidden');
+    } else if (o.payment_status === 'refund_pending') {
+      payStatusEl.textContent = 'Chờ hoàn tiền (refund_pending)';
+      payStatusEl.className = 'font-bold text-rose-400 animate-pulse';
+      refundBox.classList.remove('hidden');
+    } else if (o.payment_status === 'refunded') {
+      payStatusEl.textContent = 'Đã hoàn tiền (refunded)';
+      payStatusEl.className = 'font-semibold text-purple-400';
+      refundBox.classList.add('hidden');
+    } else {
+      payStatusEl.textContent = 'Chưa thanh toán (unpaid)';
+      payStatusEl.className = 'font-medium text-noir-400';
+      refundBox.classList.add('hidden');
+    }
+
     document.getElementById("update-status-select").value = o.status;
     modal.classList.remove("hidden");
   };
+
+  async function triggerRefundOrder(orderId) {
+    const o = currentOrders.find(x => x.order_id === orderId) || activeOrder;
+    const channelName = o && o.payment_method ? (o.payment_method === 'momo' ? 'MoMo' : (o.payment_method === 'vnpay' ? 'VNPay' : o.payment_method.toUpperCase())) : 'Cổng thanh toán';
+    const amountStr = o && o.quote && o.quote.total ? o.quote.total.toLocaleString('vi-VN') + 'đ' : '';
+
+    if (!confirm(`Xác nhận thực hiện HOÀN TIỀN ${amountStr} cho đơn hàng "${orderId}" qua cổng ${channelName}?`)) {
+      return;
+    }
+
+    try {
+      showToast(`Đang gửi yêu cầu hoàn tiền qua ${channelName}...`);
+      const res = await fetch(`/api/admin/orders/${encodeURIComponent(orderId)}/process-refund`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.detail || "Không thể thực hiện hoàn tiền", "error");
+        return;
+      }
+      showToast(data.message || `Đã hoàn tiền đơn hàng ${orderId} thành công!`);
+      if (modal && !modal.classList.contains("hidden")) {
+        modal.classList.add("hidden");
+      }
+      loadOrders();
+    } catch (err) {
+      showToast("Lỗi kết nối máy chủ khi hoàn tiền", "error");
+    }
+  }
+
+  // Nút hoàn tiền trong Modal
+  const btnModalRefund = document.getElementById("btn-modal-process-refund");
+  if (btnModalRefund) {
+    btnModalRefund.addEventListener("click", () => {
+      if (activeOrder) triggerRefundOrder(activeOrder.order_id);
+    });
+  }
 
   document.getElementById("close-order-modal").addEventListener("click", () => {
     modal.classList.add("hidden");
@@ -355,6 +530,49 @@
     }
   });
 
-  loadOrders();
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    refreshTimer = setInterval(() => {
+      // Dừng việc tự động fetch khi tab trình duyệt không active
+      if (document.visibilityState === "visible") {
+        // Nếu admin đang mở modal chi tiết đơn hàng, tạm dừng fetch ngầm để không ghi đè dữ liệu
+        if (modal && !modal.classList.contains("hidden")) {
+          return;
+        }
+        loadOrders(true);
+      }
+    }, REFRESH_INTERVAL_MS);
+  }
+
+  function stopAutoRefresh() {
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
+  }
+
+  // Tạm dừng khi chuyển tab, kích hoạt lại ngay khi quay lại tab
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      loadOrders(true);
+      startAutoRefresh();
+    } else {
+      stopAutoRefresh();
+    }
+  });
+
+  // Nút Làm mới thủ công
+  document.getElementById("btn-manual-refresh")?.addEventListener("click", () => {
+    loadOrders(false);
+    startAutoRefresh();
+  });
+  document.getElementById("btn-manual-refresh-inline")?.addEventListener("click", () => {
+    loadOrders(false);
+    startAutoRefresh();
+  });
+
+  // Khởi động
+  loadOrders(false);
+  startAutoRefresh();
 </script>
 {% endblock %}

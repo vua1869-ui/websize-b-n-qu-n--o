@@ -3,6 +3,21 @@
 {% block title %}Quản lý người dùng{% endblock %}
 {% block header_title %}Quản lý tài khoản & Phân quyền (RBAC){% endblock %}
 
+{% block header_actions %}
+<div class="flex items-center gap-2.5">
+  <span class="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-noir-800/80 border border-noir-700 px-3 py-1 text-sm font-medium text-noir-300">
+    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+    <span>Tự động (20s)</span>
+  </span>
+  <button id="btn-manual-refresh" type="button" class="inline-flex items-center gap-1.5 rounded-md border border-noir-700 bg-noir-800 px-3 py-1.5 text-sm font-medium text-noir-200 hover:bg-noir-700 hover:text-gold-400 transition shadow cursor-pointer" title="Làm mới danh sách tài khoản ngay lập tức">
+    <svg class="user-refresh-icon h-4 w-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+    </svg>
+    <span>Làm mới</span>
+  </button>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="space-y-6">
 
@@ -14,9 +29,17 @@
       <svg class="absolute left-3 top-2.5 h-4 w-4 shrink-0 text-noir-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
     </div>
 
-    <div class="flex items-center gap-2 text-sm font-medium text-noir-400">
-      <svg class="h-4 w-4 shrink-0 text-gold-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
-      <span>RBAC: Phân quyền trực tiếp Admin & User</span>
+    <div class="flex items-center gap-3">
+      <button id="btn-manual-refresh-inline" type="button" class="inline-flex sm:hidden items-center gap-1.5 rounded-md border border-noir-700 bg-noir-800 px-3 py-1.5 text-sm font-medium text-noir-200 hover:bg-noir-700 hover:text-gold-400 transition shadow cursor-pointer">
+        <svg class="user-refresh-icon h-4 w-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+        </svg>
+        <span>Làm mới</span>
+      </button>
+      <div class="flex items-center gap-2 text-sm font-medium text-noir-400">
+        <svg class="h-4 w-4 shrink-0 text-gold-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg>
+        <span>RBAC: Phân quyền trực tiếp Admin & User</span>
+      </div>
     </div>
   </div>
 
@@ -54,14 +77,54 @@
   const tbody = document.getElementById("users-tbody");
   const searchInput = document.getElementById("user-search");
 
-  async function loadUsers() {
-    tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-noir-400">Đang nạp danh sách tài khoản...</td></tr>`;
+  let knownUserIds = null;
+  let isRefreshing = false;
+  let refreshTimer = null;
+  const REFRESH_INTERVAL_MS = 20000;
+
+  async function loadUsers(isBackground = false) {
+    if (isRefreshing) return;
+    isRefreshing = true;
+
+    const refreshIcons = document.querySelectorAll(".user-refresh-icon");
+    refreshIcons.forEach(icon => icon.classList.add("animate-spin"));
+
+    if (!isBackground && (!allUsers || allUsers.length === 0)) {
+      tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-noir-400">Đang nạp danh sách tài khoản...</td></tr>`;
+    }
+
     try {
       const res = await fetch("/api/admin/users");
-      allUsers = await res.json();
+      const freshUsers = await res.json();
+
+      // Phát hiện tài khoản mới đăng ký so với lần fetch trước
+      if (knownUserIds !== null && Array.isArray(freshUsers)) {
+        const newlyRegistered = freshUsers.filter(u => !knownUserIds.has(String(u.id)));
+        if (newlyRegistered.length > 0) {
+          showToast(`👤 Có ${newlyRegistered.length} tài khoản mới đăng ký!`, "success");
+        }
+      }
+
+      if (Array.isArray(freshUsers)) {
+        knownUserIds = new Set(freshUsers.map(u => String(u.id)));
+        allUsers = freshUsers;
+      }
+
       renderUsers();
+
+      if (!isBackground) {
+        showToast("Đã cập nhật danh sách người dùng!");
+      }
+
     } catch (e) {
-      tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-rose-400">Lỗi tải dữ liệu người dùng</td></tr>`;
+      if (!isBackground) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-rose-400">Lỗi tải dữ liệu người dùng</td></tr>`;
+      }
+    } finally {
+      isRefreshing = false;
+      refreshIcons.forEach(icon => {
+        setTimeout(() => icon.classList.remove("animate-spin"), 350);
+      });
     }
   }
 
@@ -200,8 +263,47 @@
     }
   };
 
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    refreshTimer = setInterval(() => {
+      // Dừng việc tự động fetch khi tab trình duyệt không active
+      if (document.visibilityState === "visible") {
+        loadUsers(true);
+      }
+    }, REFRESH_INTERVAL_MS);
+  }
+
+  function stopAutoRefresh() {
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
+  }
+
+  // Tạm dừng khi chuyển tab, kích hoạt lại ngay khi quay lại tab
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      loadUsers(true);
+      startAutoRefresh();
+    } else {
+      stopAutoRefresh();
+    }
+  });
+
+  // Nút Làm mới thủ công
+  document.getElementById("btn-manual-refresh")?.addEventListener("click", () => {
+    loadUsers(false);
+    startAutoRefresh();
+  });
+  document.getElementById("btn-manual-refresh-inline")?.addEventListener("click", () => {
+    loadUsers(false);
+    startAutoRefresh();
+  });
+
   searchInput.addEventListener("input", renderUsers);
 
-  loadUsers();
+  // Khởi động
+  loadUsers(false);
+  startAutoRefresh();
 </script>
 {% endblock %}

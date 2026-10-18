@@ -3,6 +3,21 @@
 {% block title %}Tổng quan hệ thống{% endblock %}
 {% block header_title %}Bảng điều khiển Tổng quan (Dashboard){% endblock %}
 
+{% block header_actions %}
+<div class="flex items-center gap-2.5">
+  <span class="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-noir-800/80 border border-noir-700 px-3 py-1 text-sm font-medium text-noir-300">
+    <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+    <span>Tự động (20s)</span>
+  </span>
+  <button id="btn-manual-refresh" type="button" class="inline-flex items-center gap-1.5 rounded-md border border-noir-700 bg-noir-800 px-3 py-1.5 text-sm font-medium text-noir-200 hover:bg-noir-700 hover:text-gold-400 transition shadow cursor-pointer" title="Làm mới dữ liệu ngay lập tức">
+    <svg id="refresh-icon" class="h-4 w-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.75">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+    </svg>
+    <span>Làm mới</span>
+  </button>
+</div>
+{% endblock %}
+
 {% block content %}
 <div class="space-y-6">
 
@@ -203,12 +218,44 @@
 
 {% block scripts %}
 <script>
-  async function loadDashboard() {
+  let prevTotalOrders = null;
+  let prevTotalUsers = null;
+  let isFirstLoad = true;
+  let isRefreshing = false;
+  let refreshTimer = null;
+  const REFRESH_INTERVAL_MS = 20000;
+
+  async function loadDashboard(isBackground = false) {
+    if (isRefreshing) return;
+    isRefreshing = true;
+
+    const refreshIcon = document.getElementById("refresh-icon");
+    if (refreshIcon) refreshIcon.classList.add("animate-spin");
+
     try {
       // 1. Lấy thống kê tổng quan
       const resStats = await fetch("/api/admin/stats");
       if (resStats.ok) {
         const stats = await resStats.json();
+        const currentOrders = stats.total_orders || 0;
+        const currentUsers = stats.total_users || 0;
+
+        // Phát hiện đơn hàng / tài khoản mới xuất hiện so với lần fetch trước
+        if (!isFirstLoad) {
+          if (prevTotalOrders !== null && currentOrders > prevTotalOrders) {
+            const diff = currentOrders - prevTotalOrders;
+            showToast(`🛒 Có ${diff} đơn hàng mới!`, "success");
+          }
+          if (prevTotalUsers !== null && currentUsers > prevTotalUsers) {
+            const diffUsers = currentUsers - prevTotalUsers;
+            showToast(`👤 Có ${diffUsers} tài khoản mới đăng ký!`, "success");
+          }
+        }
+
+        prevTotalOrders = currentOrders;
+        prevTotalUsers = currentUsers;
+        isFirstLoad = false;
+
         document.getElementById("stat-revenue").textContent = (stats.total_revenue || 0).toLocaleString("vi-VN") + "đ";
         document.getElementById("stat-orders").textContent = stats.total_orders || 0;
         document.getElementById("stat-products").textContent = stats.total_products || 500;
@@ -219,13 +266,13 @@
         const lowS = stats.products_low_stock || 0;
         const outS = stats.products_out_of_stock || 0;
 
-        document.getElementById("stock-in").textContent = \`\${inS} sp\`;
-        document.getElementById("stock-low").textContent = \`\${lowS} sp\`;
-        document.getElementById("stock-out").textContent = \`\${outS} sp\`;
+        document.getElementById("stock-in").textContent = `${inS} sp`;
+        document.getElementById("stock-low").textContent = `${lowS} sp`;
+        document.getElementById("stock-out").textContent = `${outS} sp`;
 
-        document.getElementById("bar-stock-in").style.width = \`\${Math.min(100, Math.round(inS / totalP * 100))}%\`;
-        document.getElementById("bar-stock-low").style.width = \`\${Math.min(100, Math.round(lowS / totalP * 100))}%\`;
-        document.getElementById("bar-stock-out").style.width = \`\${Math.min(100, Math.round(outS / totalP * 100))}%\`;
+        document.getElementById("bar-stock-in").style.width = `${Math.min(100, Math.round(inS / totalP * 100))}%`;
+        document.getElementById("bar-stock-low").style.width = `${Math.min(100, Math.round(lowS / totalP * 100))}%`;
+        document.getElementById("bar-stock-out").style.width = `${Math.min(100, Math.round(outS / totalP * 100))}%`;
 
         // Render Recent Orders
         const tbody = document.getElementById("recent-orders-tbody");
@@ -240,20 +287,20 @@
         if (stats.recent_orders && stats.recent_orders.length > 0) {
           tbody.innerHTML = stats.recent_orders.map(o => {
             const st = statusMap[o.status] || { label: o.status, bg: "bg-noir-800 text-noir-300 border-noir-600" };
-            return \`
+            return `
               <tr class="hover:bg-noir-800 transition">
-                <td class="py-3 font-mono font-semibold text-noir-100">\${esc(o.order_id)}</td>
-                <td class="py-3 font-medium text-noir-200">\${esc(o.customer?.name || "Khách hàng")}</td>
-                <td class="py-3 font-semibold text-gold-500">\${(o.quote?.total || 0).toLocaleString("vi-VN")}đ</td>
-                <td class="py-3 text-noir-400">\${o.payment_method === 'cod' ? 'COD' : 'Chuyển khoản'}</td>
+                <td class="py-3 font-mono font-semibold text-noir-100">${esc(o.order_id)}</td>
+                <td class="py-3 font-medium text-noir-200">${esc(o.customer?.name || "Khách hàng")}</td>
+                <td class="py-3 font-semibold text-gold-500">${(o.quote?.total || 0).toLocaleString("vi-VN")}đ</td>
+                <td class="py-3 text-noir-400">${o.payment_method === 'cod' ? 'COD' : (o.payment_method === 'momo' ? 'MoMo' : (o.payment_method === 'vnpay' ? 'VNPay' : 'VietQR'))}</td>
                 <td class="py-3 text-right">
-                  <span class="inline-flex rounded-full px-2 py-0.5 text-sm font-medium border \${st.bg}">\${esc(st.label)}</span>
+                  <span class="inline-flex rounded-full px-2 py-0.5 text-sm font-medium border ${st.bg}">${esc(st.label)}</span>
                 </td>
               </tr>
-            \`;
+            `;
           }).join("");
         } else {
-          tbody.innerHTML = \`<tr><td colspan="5" class="py-6 text-center text-noir-400">Chưa có đơn hàng nào</td></tr>\`;
+          tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-noir-400">Chưa có đơn hàng nào</td></tr>`;
         }
       }
 
@@ -263,25 +310,69 @@
         const trends = await resTrends.json();
         const container = document.getElementById("top-trends-list");
         if (trends && trends.length > 0) {
-          container.innerHTML = trends.slice(0, 5).map(t => \`
+          container.innerHTML = trends.slice(0, 5).map(t => `
             <div class="flex items-center justify-between rounded-md border border-noir-700 bg-noir-800/50 p-2.5 hover:bg-noir-800 hover:border-noir-600 transition">
               <div class="min-w-0 flex-1 pr-2">
-                <p class="truncate text-sm font-semibold text-noir-200">\${esc(t.name)}</p>
-                <p class="text-sm text-noir-400">\${esc(t.style || "Phong cách")} • Tăng \${esc(t.growth_rate || "+15%")}</p>
+                <p class="truncate text-sm font-semibold text-noir-200">${esc(t.name)}</p>
+                <p class="text-sm text-noir-400">${esc(t.style || "Phong cách")} • Tăng ${esc(t.growth_rate || "+15%")}</p>
               </div>
-              <span class="rounded-md bg-noir-900 px-2 py-0.5 text-sm font-mono font-bold text-noir-200 border border-noir-700">\${esc(t.score || 90)} pts</span>
+              <span class="rounded-md bg-noir-900 px-2 py-0.5 text-sm font-mono font-bold text-noir-200 border border-noir-700">${esc(t.score || 90)} pts</span>
             </div>
-          \`).join("");
+          `).join("");
         } else {
-          container.innerHTML = \`<p class="text-center py-4 text-sm text-noir-400">Chưa có dữ liệu xu hướng</p>\`;
+          container.innerHTML = `<p class="text-center py-4 text-sm text-noir-400">Chưa có dữ liệu xu hướng</p>`;
         }
+      }
+
+      if (!isBackground) {
+        showToast("Đã cập nhật dữ liệu bảng điều khiển!");
       }
 
     } catch (e) {
       console.error("Dashboard error:", e);
+    } finally {
+      isRefreshing = false;
+      if (refreshIcon) {
+        setTimeout(() => refreshIcon.classList.remove("animate-spin"), 350);
+      }
     }
   }
 
-  loadDashboard();
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    refreshTimer = setInterval(() => {
+      // Dừng việc tự động fetch khi tab trình duyệt không active
+      if (document.visibilityState === "visible") {
+        loadDashboard(true);
+      }
+    }, REFRESH_INTERVAL_MS);
+  }
+
+  function stopAutoRefresh() {
+    if (refreshTimer) {
+      clearInterval(refreshTimer);
+      refreshTimer = null;
+    }
+  }
+
+  // Tạm dừng khi chuyển tab, kích hoạt lại ngay khi quay lại tab
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      loadDashboard(true);
+      startAutoRefresh();
+    } else {
+      stopAutoRefresh();
+    }
+  });
+
+  // Nút Làm mới thủ công
+  document.getElementById("btn-manual-refresh")?.addEventListener("click", () => {
+    loadDashboard(false);
+    startAutoRefresh();
+  });
+
+  // Khởi động
+  loadDashboard(true);
+  startAutoRefresh();
 </script>
 {% endblock %}

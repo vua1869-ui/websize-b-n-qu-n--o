@@ -20,6 +20,7 @@ from app.routers.deps import (
     require_admin,
     verify_order_access,
 )
+from app.services.momo_service import momo_service
 from app.services.order_service import order_service
 from app.services.vnpay_service import vnpay_service
 
@@ -30,6 +31,12 @@ class VNPayCreatePaymentRequest(BaseModel):
     order_id: str
     bank_code: Optional[str] = None
     phone: Optional[str] = None
+
+
+class MoMoCreatePaymentRequest(BaseModel):
+    order_id: str
+    phone: Optional[str] = None
+
 
 
 def check_simulate_enabled():
@@ -389,3 +396,241 @@ async def vnpay_ipn(request: Request):
         return {"RspCode": "00", "Message": "Confirm Success"}
     else:
         return {"RspCode": "00", "Message": "Payment failed acknowledged"}
+
+
+# ==========================================
+# Cổng thanh toán MoMo Sandbox & Production
+# ==========================================
+@router.post("/api/payment/momo/create-payment-url")
+def momo_create_payment_url(body: MoMoCreatePaymentRequest, request: Request):
+    order = db_service.get_order_by_id(body.order_id)
+    if not order:
+        order = order_service.get_order_by_id(body.order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
+
+    # Kiểm tra quyền sở hữu đơn hàng
+    user = get_current_user_optional(request)
+    cookie_phone = request.cookies.get(f"aura_order_{body.order_id}")
+    phone_to_check = body.phone or cookie_phone
+    is_allowed, _ = verify_order_access(order, user, phone_to_check)
+    if not is_allowed:
+        raise HTTPException(status_code=403, detail="Bạn không có quyền truy cập hoặc thanh toán đơn hàng này")
+
+    amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
+    res = momo_service.build_payment_url(
+        order_id=body.order_id,
+        amount=amount,
+        order_desc=f"Thanh toan don hang {body.order_id}",
+    )
+    if not res.get("success"):
+        raise HTTPException(
+            status_code=400,
+            detail=res.get("message") or "Không thể tạo liên kết thanh toán MoMo",
+        )
+
+    return {
+        "success": True,
+        "order_id": body.order_id,
+        "payment_url": res.get("payment_url"),
+        "qr_code_url": res.get("qr_code_url"),
+        "deeplink": res.get("deeplink"),
+    }
+
+
+@router.get("/api/payment/momo/return")
+def momo_payment_return(request: Request):
+    params = dict(request.query_params)
+    is_valid, momo_data = momo_service.verify_signature(params)
+
+    accept_header = request.headers.get("accept", "")
+    is_json_request = "application/json" in accept_header.lower()
+    is_browser_html = not is_json_request
+
+    if not is_valid:
+        if is_browser_html:
+            return HTMLResponse(
+                content="""
+                <div style="font-family:sans-serif;text-align:center;padding:50px;">
+                    <h2 style="color:#e11d48;">Lỗi bảo mật thanh toán</h2>
+                    <p>Chữ ký bảo mật MoMo không hợp lệ hoặc dữ liệu phản hồi bị can thiệp.</p>
+                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
+                </div>
+                """,
+                status_code=400,
+            )
+        raise HTTPException(status_code=400, detail="Chữ ký phản hồi MoMo không hợp lệ")
+
+    order_id = momo_data.get("orderId", "")
+    result_code = str(momo_data.get("resultCode", ""))
+    trans_id = momo_data.get("transId") or f"MOMO-{order_id}"
+
+    try:
+        amount = int(momo_data.get("amount", 0))
+    except (ValueError, TypeError):
+        amount = 0
+
+    safe_order_id = html.escape(str(order_id))
+    safe_result_code = html.escape(str(result_code))
+
+    order = db_service.get_order_by_id(order_id)
+    if not order:
+        order = order_service.get_order_by_id(order_id)
+
+    if not order:
+        if is_browser_html:
+            return HTMLResponse(
+                content=f"""
+                <div style="font-family:sans-serif;text-align:center;padding:50px;">
+                    <h2 style="color:#e11d48;">Lỗi đơn hàng</h2>
+                    <p>Không tìm thấy mã đơn hàng: <strong>{safe_order_id}</strong></p>
+                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
+                </div>
+                """,
+                status_code=404,
+            )
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy đơn hàng '{order_id}'")
+
+    order_amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
+    if amount != order_amount:
+        if is_browser_html:
+            return HTMLResponse(
+                content=f"""
+                <div style="font-family:sans-serif;text-align:center;padding:50px;">
+                    <h2 style="color:#e11d48;">Lỗi số tiền thanh toán</h2>
+                    <p>Số tiền thanh toán ({amount}đ) không khớp với giá trị đơn hàng ({order_amount}đ).</p>
+                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
+                </div>
+                """,
+                status_code=400,
+            )
+        raise HTTPException(status_code=400, detail="Số tiền thanh toán không khớp với đơn hàng")
+
+    if result_code == "0":
+        confirm_res = db_service.confirm_payment(
+            order_id=order_id,
+            amount=amount,
+            transaction_code=str(trans_id),
+            payment_channel="momo",
+        )
+        if confirm_res in ("cancelled", "refund_pending"):
+            if is_browser_html:
+                return HTMLResponse(
+                    content=f"""
+                    <div style="font-family:sans-serif;text-align:center;padding:50px;">
+                        <h2 style="color:#e11d48;">Đơn hàng đã bị hủy</h2>
+                        <p>Đơn hàng <strong>{safe_order_id}</strong> đã bị hủy trước đó. Hệ thống đã ghi nhận thanh toán chờ hoàn tiền cho quý khách.</p>
+                        <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
+                    </div>
+                    """,
+                    status_code=200,
+                )
+            return {
+                "success": False,
+                "order_id": order_id,
+                "status": "refund_pending",
+                "message": "Đơn hàng đã bị hủy, thanh toán được ghi nhận để hoàn tiền",
+            }
+
+        if order.get("order_status") == "pending_payment" or order.get("status") == "pending_payment":
+            order_service.update_order_status(order_id, "confirmed")
+        if is_browser_html:
+            resp = RedirectResponse(url=f"/order-success/{order_id}", status_code=302)
+            phone_val = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
+            if phone_val:
+                resp.set_cookie(f"aura_order_{order_id}", phone_val, httponly=True, max_age=3600, samesite="lax")
+            return resp
+        return {
+            "success": True,
+            "order_id": order_id,
+            "result_code": result_code,
+            "payment_status": "paid",
+            "order_status": "confirmed",
+            "message": "Thanh toán MoMo thành công!",
+        }
+    else:
+        if is_browser_html:
+            return HTMLResponse(
+                content=f"""
+                <div style="font-family:sans-serif;text-align:center;padding:50px;">
+                    <h2 style="color:#d97706;">Giao dịch chưa hoàn tất</h2>
+                    <p>Mã đơn hàng: <strong>{safe_order_id}</strong></p>
+                    <p>Mã phản hồi MoMo: <strong>{safe_result_code}</strong></p>
+                    <p>Giao dịch thanh toán qua MoMo chưa thành công hoặc bạn đã hủy thao tác.</p>
+                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
+                </div>
+                """
+            )
+        return {
+            "success": False,
+            "order_id": order_id,
+            "result_code": result_code,
+            "payment_status": "unpaid",
+            "order_status": "pending_payment",
+            "message": f"Giao dịch MoMo không thành công (Mã lỗi: {result_code})",
+        }
+
+
+@router.post("/api/payment/momo/ipn")
+async def momo_ipn(request: Request):
+    """
+    Webhook tiếp nhận Instant Payment Notification (IPN) từ MoMo Gateway.
+    MoMo gửi dữ liệu qua POST JSON.
+    """
+    try:
+        params = await request.json()
+    except Exception:
+        try:
+            form = await request.form()
+            params = dict(form)
+        except Exception:
+            params = dict(request.query_params)
+
+    is_valid, momo_data = momo_service.verify_signature(params)
+    if not is_valid:
+        return {"message": "Invalid signature", "resultCode": 97}
+
+    order_id = momo_data.get("orderId")
+    order = db_service.get_order_by_id(order_id)
+    if not order:
+        order = order_service.get_order_by_id(order_id)
+    if not order:
+        return {"message": "Order not found", "resultCode": 1}
+
+    order_amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
+    try:
+        amount = int(momo_data.get("amount", 0))
+    except (ValueError, TypeError):
+        amount = 0
+
+    if amount != order_amount:
+        return {"message": "Invalid amount", "resultCode": 4}
+
+    if order.get("payment_status") == "paid" or order.get("status") == "confirmed" or order.get("order_status") == "confirmed":
+        return {"message": "Order already confirmed", "resultCode": 0}
+
+    result_code = str(momo_data.get("resultCode", ""))
+    trans_id = momo_data.get("transId") or f"MOMO-{order_id}"
+
+    if result_code == "0":
+        confirm_res = db_service.confirm_payment(
+            order_id=order_id,
+            amount=amount,
+            transaction_code=str(trans_id),
+            payment_channel="momo",
+        )
+        if confirm_res == "already_paid":
+            return {"message": "Order already confirmed", "resultCode": 0}
+        elif confirm_res == "invalid_amount":
+            return {"message": "Invalid amount", "resultCode": 4}
+        elif confirm_res == "not_found":
+            return {"message": "Order not found", "resultCode": 1}
+        elif confirm_res in ("cancelled", "refund_pending"):
+            return {"message": "Order cancelled, payment marked for refund", "resultCode": 0}
+
+        if order.get("order_status") == "pending_payment" or order.get("status") == "pending_payment":
+            order_service.update_order_status(order_id, "confirmed")
+        return {"message": "Success", "resultCode": 0}
+    else:
+        return {"message": "Payment failed acknowledged", "resultCode": 0}
+

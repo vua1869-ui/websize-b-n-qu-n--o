@@ -150,7 +150,7 @@
             </div>
             <div class="flex justify-between">
               <dt class="text-neutral-500">Thanh toán</dt>
-              <dd class="font-medium">{{ 'COD' if order.payment_method == 'cod' else ('VNPay' if order.payment_method == 'vnpay' else 'Chuyển khoản') }}</dd>
+              <dd class="font-medium">{{ 'COD' if order.payment_method == 'cod' else ('MoMo' if order.payment_method == 'momo' else ('VNPay' if order.payment_method == 'vnpay' else 'Chuyển khoản')) }}</dd>
             </div>
           </dl>
         </div>

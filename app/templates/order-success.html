@@ -15,8 +15,18 @@
 
   <div class="main-content-layout flex flex-col flex-1">
 
+  <!-- Nút Quay Lại (Quay về trang chủ, tránh đặt lại đơn) -->
+  <div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 2xl:px-16 pt-4 pb-0">
+    <a href="/" class="aura-back-btn group" title="Về trang chủ" aria-label="Về trang chủ">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+      </svg>
+      <span>Về trang chủ</span>
+    </a>
+  </div>
+
   <!-- Nội Dung Chính -->
-  <main class="mx-auto max-w-[1600px] px-4 py-10 sm:px-6 lg:px-10 2xl:px-16">
+  <main class="mx-auto max-w-[1600px] px-4 pt-4 pb-10 sm:px-6 lg:px-10 2xl:px-16">
     
     <div class="border border-[#E5E2DC] bg-white rounded-[2px]">
       <!-- Header Banner -->
@@ -62,7 +72,7 @@
               <div class="flex flex-wrap items-center gap-2">
                 <h3 class="text-sm font-bold uppercase tracking-wider text-[#111111]">Đã thanh toán thành công</h3>
                 <span class="inline-flex items-center rounded-[2px] border border-[#111111] bg-white px-2 py-0.5 text-sm font-semibold text-[#111111] uppercase tracking-wider">
-                  {{ 'Cổng VNPay' if order.payment_method == 'vnpay' else ('Chuyển khoản VietQR' if order.payment_method == 'qr_transfer' else order.payment_method | upper) }}
+                  {{ 'Ví MoMo' if order.payment_method == 'momo' else ('Cổng VNPay' if order.payment_method == 'vnpay' else ('Chuyển khoản VietQR' if order.payment_method == 'qr_transfer' else order.payment_method | upper)) }}
                 </span>
               </div>
               <p class="mt-1 text-sm text-neutral-600 leading-relaxed">
