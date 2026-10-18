@@ -242,12 +242,12 @@
             const st = statusMap[o.status] || { label: o.status, bg: "bg-noir-800 text-noir-300 border-noir-600" };
             return \`
               <tr class="hover:bg-noir-800 transition">
-                <td class="py-3 font-mono font-semibold text-noir-100">\${o.order_id}</td>
-                <td class="py-3 font-medium text-noir-200">\${o.customer?.name || "Khách hàng"}</td>
+                <td class="py-3 font-mono font-semibold text-noir-100">\${esc(o.order_id)}</td>
+                <td class="py-3 font-medium text-noir-200">\${esc(o.customer?.name || "Khách hàng")}</td>
                 <td class="py-3 font-semibold text-gold-500">\${(o.quote?.total || 0).toLocaleString("vi-VN")}đ</td>
                 <td class="py-3 text-noir-400">\${o.payment_method === 'cod' ? 'COD' : 'Chuyển khoản'}</td>
                 <td class="py-3 text-right">
-                  <span class="inline-flex rounded-full px-2 py-0.5 text-sm font-medium border \${st.bg}">\${st.label}</span>
+                  <span class="inline-flex rounded-full px-2 py-0.5 text-sm font-medium border \${st.bg}">\${esc(st.label)}</span>
                 </td>
               </tr>
             \`;
@@ -266,10 +266,10 @@
           container.innerHTML = trends.slice(0, 5).map(t => \`
             <div class="flex items-center justify-between rounded-md border border-noir-700 bg-noir-800/50 p-2.5 hover:bg-noir-800 hover:border-noir-600 transition">
               <div class="min-w-0 flex-1 pr-2">
-                <p class="truncate text-sm font-semibold text-noir-200">\${t.name}</p>
-                <p class="text-sm text-noir-400">\${t.style || "Phong cách"} • Tăng \${t.growth_rate || "+15%"}</p>
+                <p class="truncate text-sm font-semibold text-noir-200">\${esc(t.name)}</p>
+                <p class="text-sm text-noir-400">\${esc(t.style || "Phong cách")} • Tăng \${esc(t.growth_rate || "+15%")}</p>
               </div>
-              <span class="rounded-md bg-noir-900 px-2 py-0.5 text-sm font-mono font-bold text-noir-200 border border-noir-700">\${t.score || 90} pts</span>
+              <span class="rounded-md bg-noir-900 px-2 py-0.5 text-sm font-mono font-bold text-noir-200 border border-noir-700">\${esc(t.score || 90)} pts</span>
             </div>
           \`).join("");
         } else {

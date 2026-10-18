@@ -1,6 +1,8 @@
 import logging
 import os
 
+from typing import Optional
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
@@ -19,6 +21,18 @@ class Settings(BaseSettings):
         env_file_encoding="utf-8",
         extra="ignore",
     )
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def _parse_debug_value(cls, value):
+        """Accept common environment labels while keeping DEBUG a boolean."""
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"release", "prod", "production", "off", "no"}:
+                return False
+            if normalized in {"debug", "dev", "development", "on", "yes"}:
+                return True
+        return value
 
     APP_NAME: str = "AURA STUDIO"
     VERSION: str = "2.1.0"
@@ -46,17 +60,30 @@ class Settings(BaseSettings):
     # Domain public chính thức của hệ thống (dùng dựng link reset mật khẩu an toàn, không phụ thuộc Host header)
     PUBLIC_BASE_URL: str = "http://127.0.0.1:8000"
 
-    from pydantic import model_validator
+    # ---- Sentry Error Tracking ----
+    SENTRY_DSN: Optional[str] = None
+    SENTRY_TRACES_SAMPLE_RATE: float = 0.1
 
     @model_validator(mode="after")
     def _validate_production(self) -> "Settings":
-        """Nếu APP_ENV là production: bắt buộc các khóa secret phải được đổi, không dùng SQLite hay 127.0.0.1."""
+        """Nếu APP_ENV là production: bắt buộc các khóa secret phải được đổi, không dùng SQLite hay 127.0.0.1, từ chối DEMO_DATA=True."""
         if self.APP_ENV.strip().lower() == "production":
             errors = []
-            if not self.SECRET_KEY or self.SECRET_KEY.strip() == "dev-only-change-me" or len(self.SECRET_KEY.strip()) < 16:
-                errors.append("- SECRET_KEY chưa được đặt hoặc vẫn dùng giá trị mặc định dev ('dev-only-change-me'). Bắt buộc tối thiểu 16 ký tự.")
+            default_secrets = {
+                "dev-only-change-me",
+                "dev-payment-webhook-secret",
+                "secret",
+                "changeme",
+                "default",
+                "admin",
+                "123456",
+            }
+            sec = (self.SECRET_KEY or "").strip()
+            if not sec or sec in default_secrets or len(sec) < 16 or sec.lower().startswith("dev-"):
+                errors.append("- SECRET_KEY chưa được đặt hoặc vẫn dùng giá trị mặc định dev ('dev-only-change-me'). Bắt buộc tối thiểu 16 ký tự và không dùng secret mặc định.")
 
-            if not self.PAYMENT_WEBHOOK_SECRET or self.PAYMENT_WEBHOOK_SECRET.strip() == "dev-payment-webhook-secret":
+            webhook_sec = (self.PAYMENT_WEBHOOK_SECRET or "").strip()
+            if not webhook_sec or webhook_sec in default_secrets or webhook_sec.lower().startswith("dev-"):
                 errors.append("- PAYMENT_WEBHOOK_SECRET chưa được đặt hoặc vẫn dùng giá trị mặc định dev ('dev-payment-webhook-secret').")
 
             if not self.VNPAY_HASH_SECRET or not self.VNPAY_HASH_SECRET.strip():
@@ -74,11 +101,8 @@ class Settings(BaseSettings):
             if self.EMAIL_BACKEND == "console":
                 errors.append("- EMAIL_BACKEND không được dùng 'console' khi triển khai Production.")
 
-            if self.DEMO_DATA:
-                logger.warning("=" * 80)
-                logger.warning("⚠️ CẢNH BÁO NGUY HIỂM: DEMO_DATA=True đang được bật trong môi trường Production!")
-                logger.warning("Hệ thống sẽ hiển thị đánh giá và số lượng bán giả lập nếu không tắt!")
-                logger.warning("=" * 80)
+            if bool(self.DEMO_DATA):
+                errors.append("- DEMO_DATA=true không được phép trong môi trường Production. Bắt buộc tắt (DEMO_DATA=false).")
 
             if errors:
                 err_msg = (

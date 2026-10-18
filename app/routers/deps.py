@@ -61,6 +61,7 @@ _login_pair_attempts: Dict[str, collections.deque] = collections.defaultdict(col
 _register_ip_attempts: Dict[str, collections.deque] = collections.defaultdict(collections.deque)
 _forgot_pw_reqs: Dict[str, collections.deque] = collections.defaultdict(collections.deque)
 _track_reqs: Dict[str, collections.deque] = collections.defaultdict(collections.deque)
+_voucher_validate_reqs: Dict[str, collections.deque] = collections.defaultdict(collections.deque)
 
 # Backward compatibility aliases for existing tests
 def _login_key(ip: str, username: str) -> str:
@@ -81,6 +82,9 @@ FORGOT_PW_MAX_REQ = 5
 
 TRACK_WINDOW_SEC = 60        # 1 phút
 TRACK_MAX_REQ = 20
+
+VOUCHER_VALIDATE_WINDOW_SEC = 60 # 1 phút
+VOUCHER_VALIDATE_MAX_REQ = 20    # 20 lần kiểm tra voucher / phút / IP
 
 _last_cleanup_time = time.time()
 
@@ -106,6 +110,7 @@ def _cleanup_expired_rate_limits(now: float) -> None:
     _purge(_register_ip_attempts, REGISTER_WINDOW_SEC)
     _purge(_forgot_pw_reqs, FORGOT_PW_WINDOW_SEC)
     _purge(_track_reqs, TRACK_WINDOW_SEC)
+    _purge(_voucher_validate_reqs, VOUCHER_VALIDATE_WINDOW_SEC)
 
 
 def check_login_rate_limit(ip: str, username: str) -> None:
@@ -195,13 +200,32 @@ def check_public_track_rate_limit(request: Request) -> None:
         q.append(now)
 
 
+def check_voucher_validate_rate_limit(request: Request) -> None:
+    ip = get_client_ip(request)
+    now = time.time()
+    with _rate_limit_lock:
+        _cleanup_expired_rate_limits(now)
+        q = _voucher_validate_reqs[ip]
+        while q and now - q[0] > VOUCHER_VALIDATE_WINDOW_SEC:
+            q.popleft()
+        if len(q) >= VOUCHER_VALIDATE_MAX_REQ:
+            raise HTTPException(
+                status_code=429,
+                detail="Bạn đã kiểm tra mã giảm giá quá nhiều lần. Vui lòng thử lại sau 1 phút.",
+            )
+        q.append(now)
+
+
 # ==========================================
 # Helpers Masking
 # ==========================================
 def normalize_phone(p: Optional[str]) -> str:
     if not p:
         return ""
-    return "".join(c for c in str(p) if c.isdigit())
+    digits = "".join(c for c in str(p) if c.isdigit())
+    if digits.startswith("84") and len(digits) > 9:
+        digits = "0" + digits[2:]
+    return digits
 
 
 def mask_phone(phone: Optional[str]) -> str:

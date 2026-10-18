@@ -19,14 +19,28 @@ class EmailSender(abc.ABC):
         """Gửi link đặt lại mật khẩu đến email được chỉ định."""
         pass
 
+    @abc.abstractmethod
+    def send_order_confirmation(self, to_email: str, order_data: dict) -> bool:
+        """Gửi email xác nhận đơn hàng thành công đến khách hàng."""
+        pass
+
 
 class ConsoleEmailSender(EmailSender):
-    """Bản dev: In link đặt lại mật khẩu trực tiếp ra Console / Log."""
+    """Bản dev: In link đặt lại mật khẩu và thông báo đơn hàng trực tiếp ra Console / Log."""
 
     def send_reset_email(self, to_email: str, reset_link: str) -> bool:
         msg = f"[EMAIL DEV] Link đặt lại mật khẩu cho {to_email}: {reset_link}"
         logger.info("======================================================================")
         logger.info(msg)
+        logger.info("======================================================================")
+        return True
+
+    def send_order_confirmation(self, to_email: str, order_data: dict) -> bool:
+        order_id = order_data.get("order_id", "N/A")
+        total = order_data.get("total_amount") or order_data.get("quote", {}).get("total", 0)
+        customer_name = order_data.get("customer_name") or order_data.get("customer", {}).get("name", "Khách hàng")
+        logger.info("======================================================================")
+        logger.info(f"[EMAIL DEV - XÁC NHẬN ĐƠN HÀNG] Gửi tới: {to_email} | Mã đơn: {order_id} | Người nhận: {customer_name} | Tổng tiền: {total:,.0f}đ")
         logger.info("======================================================================")
         return True
 
@@ -77,6 +91,55 @@ class SMTPEmailSender(EmailSender):
             logger.error(f"Lỗi gửi email qua SMTP: {e}")
             return False
 
+    def send_order_confirmation(self, to_email: str, order_data: dict) -> bool:
+        if not settings.SMTP_HOST or not settings.SMTP_USER:
+            logger.info(f"[EMAIL DEV FALLBACK] Gửi email xác nhận đơn {order_data.get('order_id')} tới {to_email}")
+            return True
+
+        order_id = order_data.get("order_id", "N/A")
+        total = order_data.get("total_amount") or order_data.get("quote", {}).get("total", 0)
+        customer_name = order_data.get("customer_name") or order_data.get("customer", {}).get("name", "Quý khách")
+        phone = order_data.get("customer_phone") or order_data.get("customer", {}).get("phone", "")
+        track_url = f"{settings.BASE_URL if hasattr(settings, 'BASE_URL') else ''}/tracking?code={order_id}&phone={phone}"
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = f"[{settings.APP_NAME}] Xác nhận đơn hàng #{order_id} thành công"
+        msg["From"] = settings.EMAIL_FROM
+        msg["To"] = to_email
+
+        html_body = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #E5E2DC; background: #ffffff;">
+            <h2 style="color: #111111; margin-bottom: 8px;">AURA Studio - Xác nhận đơn hàng</h2>
+            <p>Chào <strong>{customer_name}</strong>, đơn hàng của bạn đã được tiếp nhận thành công!</p>
+            <div style="background: #FAF8F5; padding: 16px; border: 1px solid #E5E2DC; margin: 20px 0;">
+                <p style="margin: 4px 0;"><strong>Mã đơn hàng:</strong> {order_id}</p>
+                <p style="margin: 4px 0;"><strong>Tổng tiền:</strong> {total:,.0f}đ</p>
+                <p style="margin: 4px 0;"><strong>Phương thức:</strong> {order_data.get('payment_method', 'cod').upper()}</p>
+            </div>
+            <p style="margin: 20px 0;">
+                <a href="{track_url}" style="background-color: #111111; color: #ffffff; padding: 12px 24px; text-decoration: none; display: inline-block; font-weight: bold;">Theo dõi đơn hàng</a>
+            </p>
+        </div>
+        """
+        msg.attach(MIMEText(html_body, "html"))
+
+        try:
+            if settings.SMTP_TLS:
+                server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10)
+                server.starttls()
+            else:
+                server = smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT, timeout=10)
+
+            if settings.SMTP_USER and settings.SMTP_PASSWORD:
+                server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
+
+            server.sendmail(settings.EMAIL_FROM, [to_email], msg.as_string())
+            server.quit()
+            return True
+        except Exception as e:
+            logger.error(f"Lỗi gửi email xác nhận đơn qua SMTP: {e}")
+            return False
+
 
 class ResendEmailSender(EmailSender):
     """Bản sản xuất: Gửi mail qua dịch vụ Resend REST API (https://resend.com)."""
@@ -121,6 +184,53 @@ class ResendEmailSender(EmailSender):
                 return resp.status in (200, 201)
         except Exception as e:
             logger.error(f"Lỗi gửi email qua Resend API: {e}")
+            return False
+
+    def send_order_confirmation(self, to_email: str, order_data: dict) -> bool:
+        if not settings.RESEND_API_KEY:
+            logger.info(f"[EMAIL DEV FALLBACK] Gửi email xác nhận đơn {order_data.get('order_id')} tới {to_email}")
+            return True
+
+        order_id = order_data.get("order_id", "N/A")
+        total = order_data.get("total_amount") or order_data.get("quote", {}).get("total", 0)
+        customer_name = order_data.get("customer_name") or order_data.get("customer", {}).get("name", "Quý khách")
+        phone = order_data.get("customer_phone") or order_data.get("customer", {}).get("phone", "")
+        track_url = f"/tracking?code={order_id}&phone={phone}"
+
+        payload = {
+            "from": settings.EMAIL_FROM,
+            "to": [to_email],
+            "subject": f"[{settings.APP_NAME}] Xác nhận đơn hàng #{order_id} thành công",
+            "html": f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #E5E2DC; background: #ffffff;">
+                <h2 style="color: #111111; margin-bottom: 8px;">AURA Studio - Xác nhận đơn hàng</h2>
+                <p>Chào <strong>{customer_name}</strong>, đơn hàng của bạn đã được tiếp nhận thành công!</p>
+                <div style="background: #FAF8F5; padding: 16px; border: 1px solid #E5E2DC; margin: 20px 0;">
+                    <p style="margin: 4px 0;"><strong>Mã đơn hàng:</strong> {order_id}</p>
+                    <p style="margin: 4px 0;"><strong>Tổng tiền:</strong> {total:,.0f}đ</p>
+                </div>
+                <p style="margin: 20px 0;">
+                    <a href="{track_url}" style="background-color: #111111; color: #ffffff; padding: 12px 24px; text-decoration: none; display: inline-block; font-weight: bold;">Theo dõi đơn hàng</a>
+                </p>
+            </div>
+            """
+        }
+
+        req = urllib.request.Request(
+            "https://api.resend.com/emails",
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {settings.RESEND_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                return resp.status in (200, 201)
+        except Exception as e:
+            logger.error(f"Lỗi gửi email xác nhận đơn qua Resend API: {e}")
             return False
 
 
