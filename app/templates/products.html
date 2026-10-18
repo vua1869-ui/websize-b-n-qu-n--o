@@ -19,6 +19,17 @@
 
   <div class="main-content-layout flex flex-col flex-1">
 
+  <!-- Nút Quay Lại -->
+  <div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 2xl:px-16 pt-3 pb-2">
+    <a href="/" onclick="if (window.history.length > 1) { window.history.back(); return false; }"
+       class="aura-back-btn group" title="Quay lại" aria-label="Quay lại">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+      </svg>
+      <span>Quay lại</span>
+    </a>
+  </div>
+
   <!-- 2. CATEGORY & SORT SUBBAR (Top horizontal filter tabs & sort options) -->
   <div class="bg-white border-b border-[#E5E5E5] py-3.5 px-4 sm:px-6 lg:px-10 2xl:px-16">
     <div class="mx-auto max-w-[1600px] flex flex-col md:flex-row md:items-center justify-between gap-4">

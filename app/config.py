@@ -49,9 +49,24 @@ class Settings(BaseSettings):
     from pydantic import model_validator
 
     @model_validator(mode="after")
-    def _validate_production(self) -> "Settings":
-        """Nếu APP_ENV là production: bắt buộc các khóa secret phải được đổi, không dùng SQLite hay 127.0.0.1."""
-        if self.APP_ENV.strip().lower() == "production":
+    def _validate_environment(self) -> "Settings":
+        """Validate cấu hình an toàn khi khởi động: cảnh báo nếu dùng localhost cho VNPay khi APP_ENV != 'dev' và chặn khởi động nếu production không hợp lệ."""
+        env = self.APP_ENV.strip().lower()
+        is_vnpay_localhost = "127.0.0.1" in self.VNPAY_RETURN_URL or "localhost" in self.VNPAY_RETURN_URL.lower()
+
+        # Cảnh báo rõ ràng nếu VNPAY_RETURN_URL vẫn là localhost khi APP_ENV khác "dev"
+        if env != "dev" and is_vnpay_localhost:
+            logger.warning("=" * 80)
+            logger.warning(
+                "⚠️ CẢNH BÁO NGUY HIỂM: APP_ENV='%s' nhưng VNPAY_RETURN_URL đang trỏ về localhost/127.0.0.1 (%s)!",
+                self.APP_ENV,
+                self.VNPAY_RETURN_URL,
+            )
+            logger.warning("Trình duyệt của khách hàng sẽ không thể kết nối lại máy chủ sau khi thanh toán trên cổng VNPay.")
+            logger.warning("Vui lòng cấu hình domain công khai hoặc IP LAN thực tế trong file .env!")
+            logger.warning("=" * 80)
+
+        if env == "production":
             errors = []
             if not self.SECRET_KEY or self.SECRET_KEY.strip() == "dev-only-change-me" or len(self.SECRET_KEY.strip()) < 16:
                 errors.append("- SECRET_KEY chưa được đặt hoặc vẫn dùng giá trị mặc định dev ('dev-only-change-me'). Bắt buộc tối thiểu 16 ký tự.")
@@ -68,7 +83,7 @@ class Settings(BaseSettings):
             if "sqlite" in self.DATABASE_URL.lower():
                 errors.append("- DATABASE_URL vẫn dùng SQLite. Khi triển khai Production bắt buộc sử dụng cơ sở dữ liệu như PostgreSQL.")
 
-            if "127.0.0.1" in self.VNPAY_RETURN_URL or "localhost" in self.VNPAY_RETURN_URL:
+            if is_vnpay_localhost:
                 errors.append("- VNPAY_RETURN_URL vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống.")
 
             if self.EMAIL_BACKEND == "console":

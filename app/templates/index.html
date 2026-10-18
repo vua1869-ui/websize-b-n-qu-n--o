@@ -17,6 +17,17 @@
 
   <div class="main-content-layout flex flex-col flex-1">
 
+  <!-- Nút Quay Lại -->
+  <div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 2xl:px-16 pt-3 pb-2">
+    <button type="button" onclick="if (window.history.length > 1) { window.history.back(); } else { window.location.href='/products'; }"
+            class="aura-back-btn group" title="Quay lại" aria-label="Quay lại">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+      </svg>
+      <span>Quay lại</span>
+    </button>
+  </div>
+
   <!-- 3. HERO (1 ảnh lớn full-width, 1 dòng tiêu đề Playfair, 1 nút duy nhất, không chồng lớp/gradient) -->
   <section class="w-full" aria-label="Bộ sưu tập nổi bật">
     <div class="relative w-full aspect-[16/9] sm:aspect-[21/9] max-h-[72vh] overflow-hidden bg-[#EAE6DF]">

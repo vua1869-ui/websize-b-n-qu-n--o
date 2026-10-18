@@ -71,6 +71,7 @@ module.exports = {
     'btn-outline',
     'btn-soft',
     'btn-dark',
+    'aura-back-btn',
     'chip',
     'chip-on',
     'max-w-[1600px]',
