@@ -657,6 +657,12 @@ class ProductService:
                     var_list.append(ProductVariant(color=c_name, color_hex=c_hex, size=s_str, stock=max(0, v_st), sku=sku))
             p.variants = var_list
 
+        valid_keys = {(v.color, v.size) for v in p.variants}
+        existing_vars = conn.execute("SELECT color, size FROM product_variants WHERE product_id = ?", (p.id,)).fetchall()
+        for ev in existing_vars:
+            if (ev["color"], ev["size"]) not in valid_keys:
+                conn.execute("DELETE FROM product_variants WHERE product_id = ? AND color = ? AND size = ?", (p.id, ev["color"], ev["size"]))
+
         for v in p.variants:
             c_name = v.color
             c_hex = v.color_hex or "#000000"

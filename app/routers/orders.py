@@ -70,6 +70,9 @@ def get_order_by_id(order_id: str, request: Request, phone: Optional[str] = Quer
         order_phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
         order["customer_phone"] = mask_phone(order_phone)
         order["customer_address"] = mask_address(order.get("customer_address"), order.get("province"))
+        if order.get("refund_account_number"):
+            from app.core.logging import mask_account_number
+            order["refund_account_number"] = mask_account_number(order["refund_account_number"])
     return order
 
 

@@ -276,6 +276,45 @@ EMAIL_RE = re.compile(r"^[^<>\s@]+@[^<>\s@]+\.[^<>\s@]+$")
 class OrderCancelRequest(BaseModel):
     phone: Optional[str] = None
     reason: Optional[str] = Field(default=None, max_length=250)
+    refund_bank_name: Optional[str] = Field(default=None, max_length=100)
+    refund_account_number: Optional[str] = Field(default=None, max_length=50)
+    refund_account_holder: Optional[str] = Field(default=None, max_length=100)
+
+    @field_validator("refund_bank_name", mode="before")
+    @classmethod
+    def _validate_bank_name(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v = str(v).strip()
+        if not v:
+            return None
+        if "<" in v or ">" in v:
+            raise ValueError("Tên ngân hàng không được chứa ký tự < hoặc >")
+        return v
+
+    @field_validator("refund_account_holder", mode="before")
+    @classmethod
+    def _validate_account_holder(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v = str(v).strip()
+        if not v:
+            return None
+        if "<" in v or ">" in v:
+            raise ValueError("Tên chủ tài khoản không được chứa ký tự < hoặc >")
+        return v.upper()
+
+    @field_validator("refund_account_number", mode="before")
+    @classmethod
+    def _validate_account_number(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v = str(v).strip().replace(" ", "").replace("-", "")
+        if not v:
+            return None
+        if not re.match(r"^[a-zA-Z0-9]{5,35}$", v):
+            raise ValueError("Số tài khoản ngân hàng không hợp lệ (chỉ gồm 5-35 ký tự chữ và số)")
+        return v
 
 
 VALID_PAYMENT_METHODS = ["cod", "vietqr", "qr_transfer", "vnpay", "momo"]

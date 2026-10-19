@@ -300,7 +300,8 @@ def test_profit_loss_report_weighted_average_cost(admin_headers):
     # Doanh thu = 2 * 300.000đ = 600.000đ
     # Giá vốn COGS = 2 * 150.000đ = 300.000đ
     # Lợi nhuận gộp = 600.000đ - 300.000đ = 300.000đ
-    order_id = f"AURA-TEST-PROFIT-{pid}"
+    import uuid
+    order_id = f"AURA-TEST-PROFIT-{pid}-{uuid.uuid4().hex[:6]}"
     order_data = {
         "order_id": order_id,
         "status": "confirmed",

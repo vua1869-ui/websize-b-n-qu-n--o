@@ -20,14 +20,25 @@ def mask_phone(phone: str = "") -> str:
     return "***"
 
 
+def mask_account_number(account_num: str = "") -> str:
+    """Che bớt số tài khoản ngân hàng, giữ lại tối đa 4 ký tự cuối (ví dụ: ******7890)."""
+    if not account_num:
+        return ""
+    s = str(account_num).strip()
+    if len(s) <= 4:
+        return "****"
+    return "*" * (len(s) - 4) + s[-4:]
+
+
 def mask_sensitive_data(data: Dict[str, Any]) -> Dict[str, Any]:
-    """Loại bỏ hoặc che mật khẩu, token, SĐT đầy đủ trước khi ghi log."""
+    """Loại bỏ hoặc che mật khẩu, token, SĐT, số tài khoản đầy đủ trước khi ghi log."""
     masked = {}
     sensitive_keys = {
         "password", "hashed_password", "token", "secret", "vnp_hashsecret",
         "api_key", "secret_key", "confirm_password", "new_password", "old_password"
     }
     phone_keys = {"phone", "customer_phone", "sender_phone"}
+    account_keys = {"account_number", "refund_account_number", "bank_account", "bank_account_number"}
 
     for k, v in data.items():
         lower_k = k.lower()
@@ -35,6 +46,8 @@ def mask_sensitive_data(data: Dict[str, Any]) -> Dict[str, Any]:
             masked[k] = "[REDACTED]"
         elif any(pk in lower_k for pk in phone_keys):
             masked[k] = mask_phone(str(v))
+        elif any(ak in lower_k for ak in account_keys):
+            masked[k] = mask_account_number(str(v))
         elif isinstance(v, dict):
             masked[k] = mask_sensitive_data(v)
         elif isinstance(v, str) and PHONE_RE.search(v):

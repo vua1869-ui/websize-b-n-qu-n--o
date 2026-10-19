@@ -486,6 +486,9 @@ class OrderService:
             "payment_method": o.payment_method,
             "quote": quote,
             "internal_note": getattr(o, "internal_note", None),
+            "refund_bank_name": getattr(o, "refund_bank_name", None),
+            "refund_account_number": getattr(o, "refund_account_number", None),
+            "refund_account_holder": getattr(o, "refund_account_holder", None),
         }
 
     def _restore_stock_from_history(self):
@@ -552,11 +555,21 @@ class OrderService:
         order_phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
         phone_provided = (req and req.phone) or phone
 
+        is_admin = bool(user and getattr(user, "role", "") == "admin")
         is_owner = bool(user and order_user_id and str(getattr(user, "id", "")) == str(order_user_id))
         phone_matches = bool(phone_provided and order_phone and normalize_phone(phone_provided) == normalize_phone(order_phone))
 
-        if not (is_owner or phone_matches):
-            raise OrderError("Đơn hàng không tồn tại hoặc SĐT không khớp", 404)
+        if order_user_id:
+            # Đơn của tài khoản đã đăng ký: chỉ cho phép chính chủ hoặc admin hủy
+            if user:
+                if not (is_owner or is_admin):
+                    raise OrderError("Bạn không có quyền thao tác trên đơn hàng này", 403)
+            else:
+                raise OrderError("Đơn hàng thuộc về tài khoản người dùng, vui lòng đăng nhập để hủy", 401)
+        else:
+            # Đơn vãng lai (guest): kiểm tra SĐT hoặc admin
+            if not (phone_matches or is_admin):
+                raise OrderError("Đơn hàng không tồn tại hoặc SĐT không khớp", 404)
 
         # Chỉ cho phép huỷ khi đơn chưa vận chuyển
         current_status = order.get("order_status") or order.get("status", "")
@@ -565,11 +578,34 @@ class OrderService:
         if current_status == "cancelled":
             raise OrderError("Đơn hàng đã được huỷ trước đó", 409)
 
+        # Kiểm tra thông tin ngân hàng nhận hoàn tiền nếu đơn đã thanh toán
+        current_payment_status = order.get("payment_status", "")
+        bank_name = (req and req.refund_bank_name and req.refund_bank_name.strip()) or None
+        account_number = (req and req.refund_account_number and req.refund_account_number.strip()) or None
+        account_holder = (req and req.refund_account_holder and req.refund_account_holder.strip()) or None
+
+        if current_payment_status == "paid":
+            if not (bank_name and account_number and account_holder):
+                raise OrderError(
+                    "Đơn hàng đã thanh toán yêu cầu cung cấp đầy đủ thông tin ngân hàng hoàn tiền (tên ngân hàng, số tài khoản, tên chủ tài khoản)",
+                    400,
+                )
+
+        refund_info = None
+        if bank_name or account_number or account_holder:
+            refund_info = {
+                "refund_bank_name": bank_name,
+                "refund_account_number": account_number,
+                "refund_account_holder": account_holder,
+            }
+
         # Gọi cancel_order_atomic với race guard được đảm bảo bằng khóa in-memory
         with product_service._lock:
             # forbid_if_shipping=True: transaction sẽ check lại bên trong và raise 409 nếu admin
             # vừa commit shipping trước khi khoá được acquire
-            cancelled = db_service.cancel_order_atomic(order_id, forbid_if_shipping=True)
+            cancelled = db_service.cancel_order_atomic(
+                order_id, forbid_if_shipping=True, refund_info=refund_info
+            )
             if not cancelled:
                 raise OrderError("Đơn hàng không thể huỷ lúc này", 409)
 

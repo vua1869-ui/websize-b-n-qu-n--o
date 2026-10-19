@@ -66,6 +66,9 @@ class OrderDB(Base):
     voucher_code = Column(String, nullable=True)
     quote_json = Column(Text, nullable=True)
     internal_note = Column(Text, nullable=True)
+    refund_bank_name = Column(String, nullable=True)
+    refund_account_number = Column(String, nullable=True)
+    refund_account_holder = Column(String, nullable=True)
     paid_at = Column(String, nullable=True)
     created_at = Column(String, nullable=False, index=True)
 

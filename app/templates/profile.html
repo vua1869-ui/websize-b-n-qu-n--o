@@ -619,6 +619,18 @@
                 </div>
               </div>
 
+              ${o.payment_status === 'refund_pending' ? `
+                <div class="rounded-[2px] bg-amber-50 border border-amber-200 p-2.5 text-xs text-amber-800 space-y-1">
+                  <div class="font-semibold">⚠️ Đang chờ xử lý hoàn tiền (3–5 ngày làm việc)</div>
+                  ${o.refund_bank_name ? `<div class="text-[11px] text-amber-700">Tài khoản nhận: <strong>${esc(o.refund_bank_name)}</strong> - ${esc(o.refund_account_number || '')} (${esc(o.refund_account_holder || '')})</div>` : ''}
+                </div>
+              ` : ''}
+              ${o.payment_status === 'refunded' ? `
+                <div class="rounded-[2px] bg-purple-50 border border-purple-200 p-2.5 text-xs text-purple-800">
+                  ✅ Đã hoàn tiền thành công về tài khoản ngân hàng.
+                </div>
+              ` : ''}
+
               <div class="flex items-center justify-between border-t border-[#E5E2DC] pt-3 text-sm">
                 <span class="text-[#777777]">Hình thức: <strong class="text-[#111111] font-medium">${o.payment_method === 'cod' ? 'COD (Tiền mặt)' : 'Chuyển khoản QR'}</strong></span>
                 <span class="text-sm font-semibold text-[#111111]">Tổng cộng: ${totalStr}</span>
@@ -652,12 +664,14 @@
     }
 
     /* =========================================================
-       MODAL HỦY ĐƠN + NHẬP TK NGÂN HÀNG HOÀN TIỀN
-    ========================================================= */
+        MODAL HỦY ĐƠN + NHẬP TK NGÂN HÀNG HOÀN TIỀN
+     ========================================================= */
     let _cancelOrderId = null;
+    let _cancelIsPaid = false;
 
     function openCancelModal(orderId, isPaid) {
       _cancelOrderId = orderId;
+      _cancelIsPaid = isPaid;
       document.getElementById('cancel-order-id-display').textContent = orderId;
       const refundSection = document.getElementById('cancel-refund-section');
       if (isPaid) {
@@ -676,6 +690,7 @@
       document.getElementById('cancel-order-modal').classList.add('hidden');
       document.body.style.overflow = '';
       _cancelOrderId = null;
+      _cancelIsPaid = false;
     }
 
     document.getElementById('cancel-modal-close')?.addEventListener('click', closeCancelModal);
@@ -684,16 +699,24 @@
     document.getElementById('cancel-confirm-btn')?.addEventListener('click', async () => {
       if (!_cancelOrderId) return;
       const btn = document.getElementById('cancel-confirm-btn');
-      btn.disabled = true;
-      btn.textContent = 'Đang hủy...';
 
       const phone = document.getElementById('edit_phone')?.value?.trim() || '';
       const bankName = document.getElementById('cancel-bank-name')?.value?.trim() || '';
       const accountNumber = document.getElementById('cancel-account-number')?.value?.trim() || '';
       const accountHolder = document.getElementById('cancel-account-holder')?.value?.trim() || '';
 
+      if (_cancelIsPaid) {
+        if (!bankName || !accountNumber || !accountHolder) {
+          alert('Vui lòng nhập đầy đủ thông tin ngân hàng nhận hoàn tiền (Tên ngân hàng, Số tài khoản, Tên chủ tài khoản).');
+          return;
+        }
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Đang hủy...';
+
       const body = { phone };
-      if (bankName || accountNumber || accountHolder) {
+      if (_cancelIsPaid || bankName || accountNumber || accountHolder) {
         body.refund_bank_name = bankName;
         body.refund_account_number = accountNumber;
         body.refund_account_holder = accountHolder;

@@ -170,22 +170,170 @@ class TestCustomerCancel:
         p = product_service.get_by_id("prod_001")
         assert p.stock > 0
 
-    # 3b. Đơn đã thanh toán -> refund_pending
+    # 3b. Đơn đã thanh toán -> yêu cầu thông tin ngân hàng hợp lệ -> refund_pending
     def test_cancel_paid_order_sets_refund_pending(self, client):
         order_id = self._make_order(client)
         # Giả lập đơn đã thanh toán
         total = db_service.get_order_by_id(order_id)["total_amount"]
         db_service.confirm_payment(order_id, total, "TX-PAID-CANCEL-1", "vietqr")
 
-        r = client.post(
+        # 1. Huỷ nhưng thiếu thông tin ngân hàng -> 400
+        r_missing = client.post(
             f"/api/orders/{order_id}/cancel",
             json={"phone": "0911222333"},
+        )
+        assert r_missing.status_code == 400
+        assert "thông tin ngân hàng" in r_missing.json()["detail"].lower()
+
+        # 2. Huỷ với thông tin ngân hàng hợp lệ -> 200
+        r = client.post(
+            f"/api/orders/{order_id}/cancel",
+            json={
+                "phone": "0911222333",
+                "refund_bank_name": "Vietcombank",
+                "refund_account_number": "0123456789",
+                "refund_account_holder": "LE THI C",
+            },
         )
         assert r.status_code == 200, r.text
         order = db_service.get_order_by_id(order_id)
         assert order["order_status"] == "cancelled"
         assert order["payment_status"] == "refund_pending"
+        assert order["refund_bank_name"] == "Vietcombank"
+        assert order["refund_account_number"] == "0123456789"
+        assert order["refund_account_holder"] == "LE THI C"
         assert "hoàn" in r.json()["message"].lower()
+
+    def test_cancel_paid_order_missing_partial_bank_info(self, client):
+        order_id = self._make_order(client)
+        total = db_service.get_order_by_id(order_id)["total_amount"]
+        db_service.confirm_payment(order_id, total, "TX-PAID-CANCEL-PARTIAL", "vietqr")
+
+        # Thiếu số tài khoản
+        r1 = client.post(
+            f"/api/orders/{order_id}/cancel",
+            json={
+                "phone": "0911222333",
+                "refund_bank_name": "Techcombank",
+                "refund_account_holder": "LE THI C",
+            },
+        )
+        assert r1.status_code == 400
+        assert "thông tin ngân hàng" in r1.json()["detail"].lower()
+
+        # Thiếu tên chủ tài khoản
+        r2 = client.post(
+            f"/api/orders/{order_id}/cancel",
+            json={
+                "phone": "0911222333",
+                "refund_bank_name": "Techcombank",
+                "refund_account_number": "1903456789",
+            },
+        )
+        assert r2.status_code == 400
+        assert "thông tin ngân hàng" in r2.json()["detail"].lower()
+
+    def test_cancel_registered_user_order_authorization(self, client):
+        import uuid
+        from app.services.user_service import user_service
+        # Tạo 2 user
+        uid = uuid.uuid4().hex[:6]
+        u1 = user_service.register_user("User A", f"usera_{uid}@example.com", f"user_a_{uid}", "pass123456", "0911222333")
+        u2 = user_service.register_user("User B", f"userb_{uid}@example.com", f"user_b_{uid}", "pass123456", "0988777666")
+        token_a = user_service.create_session_token(u1)
+        token_b = user_service.create_session_token(u2)
+
+        # User A đặt đơn
+        req = {
+            "customer_name": "User A",
+            "customer_phone": "0911222333",
+            "customer_address": "123 Hanoi",
+            "items": [item("prod_001", qty=1)],
+            "payment_method": "cod",
+        }
+        res_create = client.post("/api/orders", json=req, headers={"Authorization": f"Bearer {token_a}"})
+        assert res_create.status_code == 200
+        order_id = res_create.json()["order_id"]
+
+        # 1. Khách vãng lai chưa đăng nhập cố huỷ đơn của User A -> 401
+        res_guest = client.post(f"/api/orders/{order_id}/cancel", json={"phone": "0911222333"})
+        assert res_guest.status_code == 401
+
+        # 2. User B cố huỷ đơn của User A -> 403
+        res_b = client.post(
+            f"/api/orders/{order_id}/cancel",
+            json={"phone": "0911222333"},
+            headers={"Authorization": f"Bearer {token_b}"},
+        )
+        assert res_b.status_code == 403
+
+        # 3. User A huỷ chính đơn của mình -> 200
+        res_a = client.post(
+            f"/api/orders/{order_id}/cancel",
+            json={"phone": "0911222333"},
+            headers={"Authorization": f"Bearer {token_a}"},
+        )
+        assert res_a.status_code == 200
+
+    def test_admin_refund_view_and_legacy_data_support(self, client):
+        # 1. Tạo đơn với thông tin ngân hàng hoàn chỉnh
+        order_id = self._make_order(client)
+        total = db_service.get_order_by_id(order_id)["total_amount"]
+        db_service.confirm_payment(order_id, total, "TX-PAID-CANCEL-LEGACY", "vietqr")
+        client.post(
+            f"/api/orders/{order_id}/cancel",
+            json={
+                "phone": "0911222333",
+                "refund_bank_name": "MB Bank",
+                "refund_account_number": "999888777",
+                "refund_account_holder": "LE THI C",
+            },
+        )
+
+        # 2. Tạo đơn cũ giả lập trong DB không có thông tin ngân hàng (legacy data)
+        import uuid
+        legacy_order_id = f"AURA-LEGACY-{uuid.uuid4().hex[:6]}"
+        from app.db.database import get_db_transaction
+        with get_db_transaction(db_service.db_path) as conn:
+            conn.execute(
+                """
+                INSERT INTO orders (
+                    order_id, customer_name, customer_phone, customer_address, payment_method,
+                    payment_status, order_status, total_amount, subtotal, shipping_fee, discount_amount, created_at,
+                    refund_bank_name, refund_account_number, refund_account_holder
+                ) VALUES (?, 'Khách Cũ', '0912345678', '456 Saigon', 'vnpay', 'refund_pending', 'cancelled', 500000, 500000, 0, 0, '2026-01-01', NULL, NULL, NULL);
+                """,
+                (legacy_order_id,)
+            )
+
+        # Đăng nhập admin
+        login_res = client.post("/api/auth/login", json={"username": "admin", "password": "admin123"})
+        assert login_res.status_code == 200
+        admin_headers = {"Authorization": f"Bearer {login_res.json()['token']}"}
+
+        res_pending = client.get("/api/admin/orders/refund-pending", headers=admin_headers)
+        assert res_pending.status_code == 200, res_pending.text
+        pending_list = res_pending.json()
+        ids = [o["order_id"] for o in pending_list]
+        assert order_id in ids
+        assert legacy_order_id in ids
+
+        order_item = next(o for o in pending_list if o["order_id"] == order_id)
+        assert order_item["refund_bank_name"] == "MB Bank"
+        assert order_item["refund_account_number"] == "999888777"
+        assert order_item["refund_account_holder"] == "LE THI C"
+
+        legacy_item = next(o for o in pending_list if o["order_id"] == legacy_order_id)
+        assert legacy_item["refund_bank_name"] is None
+        assert legacy_item["refund_account_number"] is None
+
+        # Kiểm tra masking khi người dùng không phải full access tra cứu
+        res_pub = client.get(f"/api/orders/{order_id}?phone=0911222333")
+        assert res_pub.status_code == 200
+        pub_data = res_pub.json()
+        # Số tài khoản phải được che khi không phải full owner login
+        assert pub_data["refund_account_number"] != "999888777"
+        assert "****" in pub_data["refund_account_number"]
 
     # 3c. Không thể huỷ khi đã shipping
     def test_cancel_blocked_after_shipping(self, client):

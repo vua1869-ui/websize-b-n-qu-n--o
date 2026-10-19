@@ -157,6 +157,9 @@ CREATE TABLE IF NOT EXISTS orders (
     voucher_code TEXT,
     quote_json TEXT,
     internal_note TEXT,
+    refund_bank_name TEXT,
+    refund_account_number TEXT,
+    refund_account_holder TEXT,
     loyalty_awarded INTEGER DEFAULT 0,
     paid_at TEXT,
     created_at TEXT NOT NULL
@@ -333,6 +336,12 @@ def init_db(db_path: str = DB_PATH):
                 conn.execute("ALTER TABLE orders ADD COLUMN loyalty_awarded INTEGER DEFAULT 0;")
             if "internal_note" not in order_cols:
                 conn.execute("ALTER TABLE orders ADD COLUMN internal_note TEXT;")
+            if "refund_bank_name" not in order_cols:
+                conn.execute("ALTER TABLE orders ADD COLUMN refund_bank_name TEXT;")
+            if "refund_account_number" not in order_cols:
+                conn.execute("ALTER TABLE orders ADD COLUMN refund_account_number TEXT;")
+            if "refund_account_holder" not in order_cols:
+                conn.execute("ALTER TABLE orders ADD COLUMN refund_account_holder TEXT;")
             conn.commit()
 
             # Đảm bảo bảng audit_log và view audit_logs tồn tại
@@ -1413,10 +1422,16 @@ class DatabaseService:
         )
         return order_id
 
-    def cancel_order_atomic(self, order_id: str, forbid_if_shipping: bool = False) -> bool:
+    def cancel_order_atomic(
+        self,
+        order_id: str,
+        forbid_if_shipping: bool = False,
+        refund_info: Optional[Dict[str, Any]] = None,
+    ) -> bool:
         """
         Hủy đơn hàng nguyên tử (ACID Transaction):
         - Cập nhật order_status = 'cancelled' (và payment_status = 'refund_pending' nếu đã thanh toán).
+        - Lưu thông tin tài khoản ngân hàng hoàn tiền (nếu có).
         - Hoàn tồn kho trong CSDL cho product_variants và products.
         - Hoàn điểm đã dùng (loại 'refund').
         - Thu hồi điểm đã cộng cho đơn đó (nếu đã từng cộng).
@@ -1438,15 +1453,23 @@ class DatabaseService:
                     409,
                 )
 
-            # 1. Cập nhật trạng thái
+            # 1. Cập nhật trạng thái và lưu thông tin tài khoản hoàn tiền
             new_payment_status = "refund_pending" if order["payment_status"] == "paid" else order["payment_status"]
+            bank_name = (refund_info or {}).get("refund_bank_name")
+            account_number = (refund_info or {}).get("refund_account_number")
+            account_holder = (refund_info or {}).get("refund_account_holder")
+
             conn.execute(
                 """
                 UPDATE orders 
-                SET order_status = 'cancelled', payment_status = ?
+                SET order_status = 'cancelled',
+                    payment_status = ?,
+                    refund_bank_name = COALESCE(?, refund_bank_name),
+                    refund_account_number = COALESCE(?, refund_account_number),
+                    refund_account_holder = COALESCE(?, refund_account_holder)
                 WHERE order_id = ?;
                 """,
-                (new_payment_status, order_id)
+                (new_payment_status, bank_name, account_number, account_holder, order_id)
             )
 
             # 2. Hoàn tồn kho trong CSDL cho product_variants và products
@@ -1516,12 +1539,19 @@ class DatabaseService:
             # 5. Hoàn lượt dùng voucher
             conn.execute("DELETE FROM voucher_usages WHERE order_id = ?;", (order_id,))
 
+        extra_info = {"refunded_points": points_used if "points_used" in locals() else 0}
+        if refund_info:
+            from app.core.logging import mask_account_number
+            extra_info["refund_bank_name"] = refund_info.get("refund_bank_name")
+            extra_info["refund_account_number"] = mask_account_number(refund_info.get("refund_account_number") or "")
+            extra_info["refund_account_holder"] = refund_info.get("refund_account_holder")
+
         log_money_event(
             "order_cancelled",
             order_id=order_id,
             user_id=order["user_id"] if (order and "user_id" in order.keys()) else None,
             amount=order["total_amount"] if (order and "total_amount" in order.keys()) else 0,
-            extra={"refunded_points": points_used if "points_used" in locals() else 0},
+            extra=extra_info,
         )
         return True
 
@@ -1575,6 +1605,9 @@ class DatabaseService:
         if not res.get("estimated_delivery"):
             res["estimated_delivery"] = "2 - 3 ngày tới"
         res["internal_note"] = res.get("internal_note")
+        res["refund_bank_name"] = res.get("refund_bank_name")
+        res["refund_account_number"] = res.get("refund_account_number")
+        res["refund_account_holder"] = res.get("refund_account_holder")
         return res
 
     def get_order_payment_status(self, order_id: str) -> Dict[str, Any]:

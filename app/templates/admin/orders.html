@@ -156,11 +156,24 @@
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
               <p class="font-semibold text-rose-400 text-sm">⚠️ Đơn hàng chờ hoàn tiền</p>
-              <p class="text-xs text-noir-400 mt-0.5">Gọi API hoàn tiền tự động về tài khoản khách qua cổng thanh toán.</p>
+              <p class="text-xs text-noir-400 mt-0.5">Xác nhận hoàn tiền tự động qua cổng thanh toán hoặc chuyển khoản thủ công.</p>
             </div>
             <button id="btn-modal-process-refund" type="button" class="rounded-md bg-rose-600 hover:bg-rose-500 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition">
               Hoàn tiền ngay
             </button>
+          </div>
+        </div>
+
+        <!-- Thông tin tài khoản ngân hàng nhận hoàn tiền -->
+        <div id="detail-refund-bank-container" class="hidden mt-2 pt-2 border-t border-noir-700 text-xs space-y-1 text-noir-300">
+          <p class="font-semibold text-rose-300">Thông tin ngân hàng nhận hoàn tiền:</p>
+          <div id="detail-refund-bank-details" class="space-y-0.5">
+            <div>Ngân hàng: <span id="detail-refund-bank-name" class="font-mono font-semibold text-noir-100"></span></div>
+            <div>Số tài khoản: <span id="detail-refund-account-number" class="font-mono font-semibold text-gold-400"></span></div>
+            <div>Chủ tài khoản: <span id="detail-refund-account-holder" class="font-mono font-semibold text-noir-100"></span></div>
+          </div>
+          <div id="detail-refund-bank-empty" class="hidden text-noir-400 italic">
+            Chưa có thông tin ngân hàng (Khách chưa cung cấp, hoàn tự động qua cổng hoặc dữ liệu cũ).
           </div>
         </div>
       </div>
@@ -415,22 +428,53 @@
 
     const payStatusEl = document.getElementById("detail-payment-status");
     const refundBox = document.getElementById("detail-refund-box");
+    const refundBankContainer = document.getElementById("detail-refund-bank-container");
+    const refundBankDetails = document.getElementById("detail-refund-bank-details");
+    const refundBankEmpty = document.getElementById("detail-refund-bank-empty");
+
     if (o.payment_status === 'paid') {
       payStatusEl.textContent = 'Đã thanh toán (paid)';
       payStatusEl.className = 'font-semibold text-emerald-400';
       refundBox.classList.add('hidden');
+      if (refundBankContainer) refundBankContainer.classList.add('hidden');
     } else if (o.payment_status === 'refund_pending') {
       payStatusEl.textContent = 'Chờ hoàn tiền (refund_pending)';
       payStatusEl.className = 'font-bold text-rose-400 animate-pulse';
       refundBox.classList.remove('hidden');
+      if (refundBankContainer) {
+        refundBankContainer.classList.remove('hidden');
+        if (o.refund_bank_name || o.refund_account_number || o.refund_account_holder) {
+          document.getElementById("detail-refund-bank-name").textContent = o.refund_bank_name || "N/A";
+          document.getElementById("detail-refund-account-number").textContent = o.refund_account_number || "N/A";
+          document.getElementById("detail-refund-account-holder").textContent = o.refund_account_holder || "N/A";
+          refundBankDetails.classList.remove('hidden');
+          refundBankEmpty.classList.add('hidden');
+        } else {
+          refundBankDetails.classList.add('hidden');
+          refundBankEmpty.classList.remove('hidden');
+        }
+      }
     } else if (o.payment_status === 'refunded') {
       payStatusEl.textContent = 'Đã hoàn tiền (refunded)';
       payStatusEl.className = 'font-semibold text-purple-400';
       refundBox.classList.add('hidden');
+      if (refundBankContainer) {
+        if (o.refund_bank_name || o.refund_account_number || o.refund_account_holder) {
+          refundBankContainer.classList.remove('hidden');
+          document.getElementById("detail-refund-bank-name").textContent = o.refund_bank_name || "N/A";
+          document.getElementById("detail-refund-account-number").textContent = o.refund_account_number || "N/A";
+          document.getElementById("detail-refund-account-holder").textContent = o.refund_account_holder || "N/A";
+          refundBankDetails.classList.remove('hidden');
+          refundBankEmpty.classList.add('hidden');
+        } else {
+          refundBankContainer.classList.add('hidden');
+        }
+      }
     } else {
       payStatusEl.textContent = 'Chưa thanh toán (unpaid)';
       payStatusEl.className = 'font-medium text-noir-400';
       refundBox.classList.add('hidden');
+      if (refundBankContainer) refundBankContainer.classList.add('hidden');
     }
 
     document.getElementById("update-status-select").value = o.status;

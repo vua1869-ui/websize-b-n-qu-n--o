@@ -209,7 +209,15 @@ def test_admin_order_status_update():
     orders = res_orders.json()
     assert len(orders) > 0
 
-    order_id = orders[0]["order_id"]
+    order = next((o for o in orders if o["order_status"] == "confirmed"), None)
+    if not order:
+        order = next((o for o in orders if o["order_status"] in ("pending", "pending_payment")), None)
+        if order:
+            client.put(f"/api/admin/orders/{order['order_id']}/status", json={"status": "confirmed"}, headers=headers)
+        else:
+            order = orders[0]
+            client.put(f"/api/admin/orders/{order['order_id']}/status", json={"status": "confirmed"}, headers=headers)
+    order_id = order["order_id"]
     # Cập nhật sang 'shipping'
     res_up = client.put(f"/api/admin/orders/{order_id}/status", json={"status": "shipping"}, headers=headers)
     assert res_up.status_code == 200
