@@ -34,6 +34,28 @@
   </div>
 </div>
 
+<script>
+  window.safeBack = function(fallbackUrl) {
+    fallbackUrl = fallbackUrl || '/';
+    var isSameOrigin = false;
+    try {
+      if (document.referrer) {
+        var refUrl = new URL(document.referrer);
+        if (refUrl.origin === window.location.origin) {
+          isSameOrigin = true;
+        }
+      }
+    } catch (e) {
+      isSameOrigin = false;
+    }
+    if (isSameOrigin && window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = fallbackUrl;
+    }
+  };
+</script>
+
 {% if user %}
 <script>
   (function() {

@@ -287,6 +287,53 @@ body:not(.admin-body) {
 .aura-back-btn:active {
   transform: scale(0.96);
 }
+.aura-back-btn:focus-visible {
+  outline: 2px solid #D4AF37 !important;
+  outline-offset: 2px !important;
+}
+
+/* ─── Admin Back Button (Dành riêng cho giao diện quản trị Admin) ─── */
+.aura-admin-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  min-height: 36px;
+  border-radius: 4px;
+  background-color: #18181B;
+  color: #D4D4D8;
+  border: 1px solid #27272A;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-decoration: none !important;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.aura-admin-back-btn svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  color: #A1A1AA;
+  transition: transform 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+.aura-admin-back-btn:hover {
+  background-color: #27272A;
+  color: #FFFFFF;
+  border-color: #D4AF37;
+}
+.aura-admin-back-btn:hover svg {
+  transform: translateX(-3px);
+  color: #D4AF37;
+}
+.aura-admin-back-btn:focus-visible {
+  outline: 2px solid #D4AF37 !important;
+  outline-offset: 2px !important;
+}
+.aura-admin-back-btn:active {
+  transform: scale(0.97);
+}
 
 /* ─── Form Fields (COS Style) ─── */
 .field, input[type="text"], input[type="search"], input[type="password"],

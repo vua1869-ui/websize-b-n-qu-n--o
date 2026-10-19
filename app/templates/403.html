@@ -46,8 +46,8 @@
     {% endif %}
 
     <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-      <a href="/" class="inline-flex items-center justify-center rounded-[2px] border border-[#E5E2DC] bg-white px-5 py-2.5 text-sm font-medium text-[#111111] transition hover:border-[#111111]">
-        <svg class="mr-2 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
+      <a href="/" onclick="safeBack('/'); return false;" class="inline-flex items-center justify-center rounded-[2px] border border-[#E5E2DC] bg-white px-5 py-2.5 text-sm font-medium text-[#111111] transition hover:border-[#111111] hover:text-black" aria-label="Quay lại trang chủ">
+        <svg class="mr-2 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"/></svg>
         Quay lại trang chủ
       </a>
       <button id="switch-admin-btn" class="inline-flex items-center justify-center rounded-[2px] bg-[#111111] px-5 py-2.5 text-sm font-medium uppercase tracking-wider text-[#FAF8F5] transition hover:bg-neutral-800">
@@ -60,6 +60,26 @@
   </div>
 
   <script>
+    window.safeBack = function(fallbackUrl) {
+      fallbackUrl = fallbackUrl || '/';
+      var isSameOrigin = false;
+      try {
+        if (document.referrer) {
+          var refUrl = new URL(document.referrer);
+          if (refUrl.origin === window.location.origin) {
+            isSameOrigin = true;
+          }
+        }
+      } catch (e) {
+        isSameOrigin = false;
+      }
+      if (isSameOrigin && window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = fallbackUrl;
+      }
+    };
+
     document.getElementById("switch-admin-btn").addEventListener("click", async () => {
       try {
         await fetch("/api/auth/logout", { method: "POST" });

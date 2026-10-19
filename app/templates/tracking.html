@@ -15,7 +15,18 @@
   {% include "components/sidebar.html" %}
 
   <div class="main-content-layout flex flex-col flex-1">
-  <main class="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-10">
+
+  <!-- Nút Quay Lại -->
+  <div class="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-10 pt-4 pb-0">
+    <a href="/" onclick="safeBack('/'); return false;" class="aura-back-btn group mb-2" aria-label="Quay lại trang chủ">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+      </svg>
+      <span>Quay lại trang chủ</span>
+    </a>
+  </div>
+
+  <main class="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-10">
 
     <!-- Page Header -->
     <div class="mb-8 text-center">
@@ -212,6 +223,26 @@
   </div>
 
 <script>
+  window.safeBack = function(fallbackUrl) {
+    fallbackUrl = fallbackUrl || '/';
+    var isSameOrigin = false;
+    try {
+      if (document.referrer) {
+        var refUrl = new URL(document.referrer);
+        if (refUrl.origin === window.location.origin) {
+          isSameOrigin = true;
+        }
+      }
+    } catch (e) {
+      isSameOrigin = false;
+    }
+    if (isSameOrigin && window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = fallbackUrl;
+    }
+  };
+
 (function () {
   const btn = document.getElementById('cancel-order-btn');
   const result = document.getElementById('cancel-result');
