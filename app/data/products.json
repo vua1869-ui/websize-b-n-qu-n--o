@@ -49545,5 +49545,49 @@
     "tags": [],
     "is_hot": false,
     "is_new": false
+  },
+  {
+    "id": "prod_944",
+    "name": "Áo Thun Test Admin Demo",
+    "category": "ao-thun",
+    "category_name": "Sản phẩm",
+    "gender": "unisex",
+    "price": 299000,
+    "original_price": 350000,
+    "flash_sale": false,
+    "sold_count": 0,
+    "stock_total": 100,
+    "stock": 50,
+    "rating": 0.0,
+    "reviews_count": 0,
+    "location": "TP. Hồ Chí Minh",
+    "images": [
+      "https://example.com/test.jpg"
+    ],
+    "sizes": [
+      "S",
+      "M",
+      "L",
+      "XL"
+    ],
+    "colors": [
+      {
+        "name": "Tiêu chuẩn",
+        "hex": "#27272a"
+      }
+    ],
+    "description": "Sản phẩm test tự động",
+    "material": "Cotton & Linen thoáng khí cao cấp",
+    "style": "Minimalism",
+    "occasions": [
+      "Dạo phố"
+    ],
+    "tags": [
+      "test",
+      "demo",
+      "cotton"
+    ],
+    "is_hot": false,
+    "is_new": false
   }
 ]

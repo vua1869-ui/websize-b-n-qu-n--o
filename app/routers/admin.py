@@ -22,6 +22,7 @@ from app.db.database import db_service
 from app.models.schemas import (
     AdminOrderNoteUpdate,
     AdminOrderStatusUpdate,
+    AdminProcessRefundRequest,
     AdminProductPayload,
     AdminUserRoleUpdate,
     AdminUserStatusUpdate,
@@ -585,11 +586,15 @@ def admin_get_refund_pending_orders(_admin: User = Depends(require_admin)):
 def admin_process_order_refund(
     order_id: str,
     request: Request,
+    body: Optional[AdminProcessRefundRequest] = None,
     _admin: User = Depends(require_admin),
 ):
     """
-    Xử lý hoàn tiền tự động qua Cổng thanh toán (VNPay / MoMo) cho đơn hàng.
-    Cập nhật payment_status thành 'refunded' khi thành công.
+    Xử lý hoàn tiền cho đơn hàng:
+    - Với MoMo/VNPay: Gọi API hoàn tiền trực tuyến khi có đủ mã giao dịch và cấu hình hợp lệ.
+    - Với Chuyển khoản ngân hàng / VietQR / COD hoặc khi is_manual=True: Xác nhận admin đã chuyển khoản thủ công.
+    - Chống gửi lặp / hoàn tiền 2 lần (idempotency & concurrency guard).
+    - Không cho hoàn tiền cho đơn chưa thanh toán; không cho hoàn quá số tiền đã thanh toán.
     """
     order = db_service.get_order_by_id(order_id)
     if not order:
@@ -599,28 +604,76 @@ def admin_process_order_refund(
 
     payment_status = order.get("payment_status")
     if payment_status == "refunded":
-        raise HTTPException(status_code=400, detail="Đơn hàng này đã được hoàn tiền trước đó")
-    if payment_status not in ("refund_pending", "paid"):
+        raise HTTPException(
+            status_code=409,
+            detail="Đơn hàng này đã được hoàn tiền thành công trước đó (chống hoàn tiền hai lần)",
+        )
+    if payment_status not in ("refund_pending", "refund_failed", "paid"):
         raise HTTPException(
             status_code=400,
-            detail=f"Chỉ có thể hoàn tiền cho đơn hàng có trạng thái 'refund_pending' hoặc 'paid' (trạng thái hiện tại: {payment_status})",
+            detail=f"Không thể hoàn tiền cho đơn hàng chưa thanh toán (trạng thái hiện tại: '{payment_status}')",
         )
 
     # Lấy thông tin giao dịch thanh toán gốc
     tx = db_service.get_order_payment_transaction(order_id)
-    payment_channel = (tx.get("payment_channel") if tx else None) or order.get("payment_method") or "vnpay"
-    payment_channel = payment_channel.lower()
+    rf_req = db_service.get_refund_request(order_id)
+    orig_trans_code = (tx.get("transaction_code") if tx else None) or (rf_req.get("original_trans_code") if rf_req else None)
 
-    amount = int(order.get("total_amount") or (tx.get("amount") if tx else 0) or 0)
-    if amount <= 0:
+    order_total = int(order.get("total_amount") or 0)
+    paid_amount = int((tx.get("amount") if tx else None) or (rf_req.get("amount") if rf_req else None) or order_total)
+
+    if paid_amount <= 0:
+        raise HTTPException(status_code=400, detail="Đơn hàng chưa có giao dịch thanh toán hợp lệ (số tiền thanh toán bằng 0)")
+
+    amount = body.amount if (body and body.amount is not None) else paid_amount
+    if amount is None or amount <= 0:
         raise HTTPException(status_code=400, detail="Số tiền hoàn không hợp lệ (nhỏ hơn hoặc bằng 0)")
+    if amount > paid_amount:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Số tiền yêu cầu hoàn ({amount:,.0f}đ) vượt quá số tiền khách đã thanh toán ({paid_amount:,.0f}đ). Không thể hoàn quá số tiền đã thanh toán.",
+        )
+
+    payment_channel = (tx.get("payment_channel") if tx else None) or (rf_req.get("payment_channel") if rf_req else None) or order.get("payment_method") or "vietqr"
+    payment_channel = payment_channel.lower()
+    is_manual = bool(body and body.is_manual)
 
     refund_code = None
     refund_res = {}
 
-    if payment_channel == "vnpay":
-        trans_no = (tx.get("transaction_code") if tx else None) or f"VNPAY-{order_id}"
-        # Lấy ngày giao dịch ban đầu (YYYYMMDDHHMMSS)
+    if is_manual or payment_channel in ("vietqr", "qr_transfer", "bank_transfer", "cod", "cash"):
+        # Kênh thủ công (VietQR, Chuyển khoản ngân hàng, COD tiền mặt): Xác nhận admin đã chuyển tiền thủ công cho khách
+        refund_code = (body.refund_trans_id if body and body.refund_trans_id else None) or f"MANUAL-REF-{int(time.time())}"
+        note_msg = (body.note if body and body.note else None) or "Admin đã xác nhận chuyển khoản hoàn tiền thủ công"
+        bank_info_str = ""
+        if order.get("refund_bank_name"):
+            bank_info_str = f" tới tài khoản {order.get('refund_bank_name')} - {order.get('refund_account_number')} ({order.get('refund_account_holder')})"
+
+        refund_res = {
+            "success": True,
+            "refund_trans_id": refund_code,
+            "mode": "manual",
+            "message": f"Xác nhận Admin ({_admin.username}) đã hoàn tiền thủ công{bank_info_str}",
+            "refunded_by": _admin.username,
+            "refund_bank_name": order.get("refund_bank_name"),
+            "refund_account_number": order.get("refund_account_number"),
+            "refund_account_holder": order.get("refund_account_holder"),
+            "note": note_msg,
+        }
+
+    elif payment_channel == "vnpay":
+        trans_no = orig_trans_code
+        if not trans_no:
+            raise HTTPException(
+                status_code=400,
+                detail="Không thể hoàn tiền qua cổng VNPay: Đơn hàng thiếu mã giao dịch thanh toán gốc từ cổng VNPay. Vui lòng kiểm tra lại giao dịch hoặc chuyển sang hoàn tiền thủ công.",
+            )
+        if not vnpay_service.is_configured():
+            raise HTTPException(
+                status_code=400,
+                detail="Cổng thanh toán VNPay chưa được cấu hình đầy đủ (thiếu TMN Code hoặc Hash Secret). Vui lòng cấu hình cổng hoặc chọn hoàn tiền thủ công.",
+            )
+
         trans_date = None
         if tx and tx.get("created_at"):
             try:
@@ -640,11 +693,23 @@ def admin_process_order_refund(
         )
         if not refund_res.get("success"):
             err_msg = refund_res.get("message") or "Cổng VNPay từ chối xử lý hoàn tiền"
+            db_service.mark_order_refund_failed(order_id, err_msg, processed_by=_admin.username)
             raise HTTPException(status_code=400, detail=f"Lỗi hoàn tiền VNPay: {err_msg}")
         refund_code = refund_res.get("refund_trans_id") or f"VNPAY-REF-{order_id}"
 
     elif payment_channel == "momo":
-        trans_id = (tx.get("transaction_code") if tx else None) or order_id
+        trans_id = orig_trans_code
+        if not trans_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Không thể hoàn tiền qua cổng MoMo: Đơn hàng thiếu mã giao dịch thanh toán gốc từ cổng MoMo. Vui lòng kiểm tra lại giao dịch hoặc chuyển sang hoàn tiền thủ công.",
+            )
+        if not momo_service.is_configured():
+            raise HTTPException(
+                status_code=400,
+                detail="Cổng thanh toán MoMo chưa được cấu hình đầy đủ (thiếu Access Key hoặc Secret Key). Vui lòng cấu hình cổng hoặc chọn hoàn tiền thủ công.",
+            )
+
         refund_res = momo_service.refund(
             order_id=order_id,
             trans_id=str(trans_id),
@@ -653,26 +718,29 @@ def admin_process_order_refund(
         )
         if not refund_res.get("success"):
             err_msg = refund_res.get("message") or "Cổng MoMo từ chối xử lý hoàn tiền"
+            db_service.mark_order_refund_failed(order_id, err_msg, processed_by=_admin.username)
             raise HTTPException(status_code=400, detail=f"Lỗi hoàn tiền MoMo: {err_msg}")
         refund_code = refund_res.get("refund_trans_id") or f"MOMO-REF-{order_id}"
 
     else:
-        # Kênh thủ công (VietQR, Chuyển khoản ngân hàng, COD tiền mặt): Xác nhận admin đã hoàn tất chuyển trả cho khách
-        refund_code = f"MANUAL-{int(time.time())}"
+        # Kênh khác: Hoàn tiền thủ công
+        refund_code = (body.refund_trans_id if body and body.refund_trans_id else None) or f"MANUAL-REF-{int(time.time())}"
         refund_res = {
             "success": True,
             "refund_trans_id": refund_code,
+            "mode": "manual",
             "message": f"Xác nhận hoàn tiền thủ công qua {payment_channel.upper()}",
             "refunded_by": _admin.username,
         }
 
-    # Cập nhật trạng thái payment_status = 'refunded' và lưu vào payment_transactions
+    # Cập nhật trạng thái payment_status = 'refunded' và lưu vào payment_transactions & refund_requests
     db_service.mark_order_refunded(
         order_id=order_id,
         refund_tx_code=refund_code,
         amount=amount,
         payment_channel=payment_channel,
         payload=refund_res,
+        processed_by=_admin.username,
     )
 
     db_service.log_audit(
@@ -681,7 +749,7 @@ def admin_process_order_refund(
         target_type="order",
         target_id=order_id,
         before_state={"payment_status": payment_status},
-        after_state={"payment_status": "refunded", "refund_code": refund_code, "channel": payment_channel},
+        after_state={"payment_status": "refunded", "refund_code": refund_code, "channel": payment_channel, "is_manual": is_manual},
         ip_address=get_client_ip(request),
     )
 
@@ -692,7 +760,8 @@ def admin_process_order_refund(
         "amount": amount,
         "payment_channel": payment_channel,
         "refund_trans_id": refund_code,
-        "message": f"Đã hoàn tiền {amount:,.0f}đ thành công cho đơn hàng {order_id} qua {payment_channel.upper()}",
+        "is_manual": is_manual,
+        "message": f"Đã hoàn tiền {amount:,.0f}đ thành công cho đơn hàng {order_id} ({'Thủ công' if (is_manual or payment_channel in ('vietqr', 'cod', 'bank_transfer')) else payment_channel.upper()})",
     }
 
 

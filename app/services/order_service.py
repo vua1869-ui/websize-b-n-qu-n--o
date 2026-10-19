@@ -592,11 +592,12 @@ class OrderService:
                 )
 
         refund_info = None
-        if bank_name or account_number or account_holder:
+        if bank_name or account_number or account_holder or (req and req.reason):
             refund_info = {
                 "refund_bank_name": bank_name,
                 "refund_account_number": account_number,
                 "refund_account_holder": account_holder,
+                "reason": (req and req.reason and req.reason.strip()) or "Khách hàng yêu cầu hủy đơn",
             }
 
         # Gọi cancel_order_atomic với race guard được đảm bảo bằng khóa in-memory

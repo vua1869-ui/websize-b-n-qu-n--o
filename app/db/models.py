@@ -175,6 +175,27 @@ class PaymentTransactionDB(Base):
     created_at = Column(String, nullable=False)
 
 
+class RefundRequestDB(Base):
+    __tablename__ = "refund_requests"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    order_id = Column(String, ForeignKey("orders.order_id", ondelete="CASCADE"), nullable=False, index=True)
+    amount = Column(Integer, nullable=False)
+    payment_channel = Column(String, nullable=False)
+    original_trans_code = Column(String, nullable=True)
+    refund_trans_id = Column(String, nullable=True)
+    status = Column(String, default="pending", nullable=False, index=True)  # pending, success, failed
+    refund_bank_name = Column(String, nullable=True)
+    refund_account_number = Column(String, nullable=True)
+    refund_account_holder = Column(String, nullable=True)
+    reason = Column(Text, nullable=True)
+    error_message = Column(Text, nullable=True)
+    processed_by = Column(String, nullable=True)
+    processed_at = Column(String, nullable=True)
+    created_at = Column(String, nullable=False)
+    updated_at = Column(String, nullable=True)
+
+
 class LoyaltyTransactionDB(Base):
     __tablename__ = "loyalty_transactions"
 

@@ -177,6 +177,13 @@ class MoMoService:
 
         return is_valid, data
 
+    def is_configured(self) -> bool:
+        """Kiểm tra cấu hình cổng MoMo có đầy đủ Partner Code, Access Key và Secret Key không."""
+        partner = (settings.MOMO_PARTNER_CODE or "").strip()
+        access = (settings.MOMO_ACCESS_KEY or "").strip()
+        secret = (settings.MOMO_SECRET_KEY or "").strip()
+        return bool(partner and access and secret)
+
     def refund(
         self,
         order_id: str,
@@ -190,6 +197,22 @@ class MoMoService:
         Chuỗi ký chuẩn:
         accessKey=$accessKey&amount=$amount&description=$description&orderId=$orderId&partnerCode=$partnerCode&requestId=$requestId&transId=$transId
         """
+        if not self.is_configured():
+            logger.warning("Cổng MoMo chưa được cấu hình đầy đủ để thực hiện hoàn tiền.")
+            return {
+                "success": False,
+                "message": "Cổng MoMo chưa được cấu hình đầy đủ (thiếu Access Key hoặc Secret Key)",
+                "refund_trans_id": None,
+            }
+
+        if not trans_id or not str(trans_id).strip():
+            logger.warning("Thiếu mã giao dịch thanh toán gốc để hoàn tiền MoMo.")
+            return {
+                "success": False,
+                "message": "Thiếu mã giao dịch gốc (transId) từ cổng MoMo",
+                "refund_trans_id": None,
+            }
+
         partner_code = settings.MOMO_PARTNER_CODE
         access_key = settings.MOMO_ACCESS_KEY
         secret_key = settings.MOMO_SECRET_KEY

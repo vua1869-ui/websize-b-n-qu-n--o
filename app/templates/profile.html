@@ -627,7 +627,13 @@
               ` : ''}
               ${o.payment_status === 'refunded' ? `
                 <div class="rounded-[2px] bg-purple-50 border border-purple-200 p-2.5 text-xs text-purple-800">
-                  ✅ Đã hoàn tiền thành công về tài khoản ngân hàng.
+                  ✅ Đã hoàn tiền thành công về tài khoản ngân hàng${o.refund_trans_id ? ` (Mã GD: <strong>${esc(o.refund_trans_id)}</strong>)` : ''}.
+                </div>
+              ` : ''}
+              ${o.payment_status === 'refund_failed' ? `
+                <div class="rounded-[2px] bg-rose-50 border border-rose-200 p-2.5 text-xs text-rose-800 space-y-1">
+                  <div class="font-semibold">❌ Hoàn tiền gặp gián đoạn kỹ thuật</div>
+                  <div class="text-[11px] text-rose-700">Bộ phận kế toán đang kiểm tra và chuyển khoản hoàn tiền thủ công cho bạn. Vui lòng liên hệ hotline nếu cần hỗ trợ gấp.</div>
                 </div>
               ` : ''}
 

@@ -969,3 +969,10 @@ class VNPayCreatePaymentRequest(BaseModel):
     bank_code: Optional[str] = None
     phone: Optional[str] = None
 
+
+class AdminProcessRefundRequest(BaseModel):
+    is_manual: Optional[bool] = False
+    refund_trans_id: Optional[str] = None
+    amount: Optional[int] = None
+    note: Optional[str] = None
+

@@ -135,6 +135,12 @@ class VNPayService:
 
         return is_valid, vnp_data
 
+    def is_configured(self) -> bool:
+        """Kiểm tra cấu hình cổng VNPay có đầy đủ mã TMN Code và Hash Secret không."""
+        tmn = (settings.VNPAY_TMN_CODE or "").strip()
+        secret = (settings.VNPAY_HASH_SECRET or "").strip()
+        return bool(tmn and secret)
+
     def refund(
         self,
         order_id: str,
@@ -151,6 +157,22 @@ class VNPayService:
         Chuỗi ký chuẩn HMAC-SHA512 ngăn cách bằng dấu gạch đứng | :
         vnp_RequestId|vnp_Version|vnp_Command|vnp_TmnCode|vnp_TransactionType|vnp_TxnRef|vnp_Amount|vnp_TransactionNo|vnp_TransactionDate|vnp_CreateBy|vnp_CreateDate|vnp_IpAddr|vnp_OrderInfo
         """
+        if not self.is_configured():
+            logger.warning("Cổng VNPay chưa được cấu hình đầy đủ để thực hiện hoàn tiền.")
+            return {
+                "success": False,
+                "message": "Cổng VNPay chưa được cấu hình đầy đủ (thiếu TMN Code hoặc Hash Secret)",
+                "refund_trans_id": None,
+            }
+
+        if not trans_no or not str(trans_no).strip():
+            logger.warning("Thiếu mã giao dịch thanh toán gốc để hoàn tiền VNPay.")
+            return {
+                "success": False,
+                "message": "Thiếu mã giao dịch gốc (vnp_TransactionNo) từ cổng VNPay",
+                "refund_trans_id": None,
+            }
+
         now = dt.datetime.now()
         vnp_request_id = f"{order_id}_{int(time.time() * 1000)}"
         vnp_version = "2.1.0"

@@ -151,16 +151,26 @@
           <span>Trạng thái thanh toán:</span>
           <span id="detail-payment-status" class="font-medium"></span>
         </div>
-        <!-- Hộp hoàn tiền tự động khi payment_status === 'refund_pending' -->
+        <div id="detail-refund-trans-row" class="hidden flex justify-between items-center text-xs text-noir-400 mt-1">
+          <span>Mã giao dịch hoàn tiền:</span>
+          <span id="detail-refund-trans-id" class="font-mono text-purple-300 font-semibold"></span>
+        </div>
+        <!-- Hộp hoàn tiền tự động khi payment_status === 'refund_pending' hoặc 'refund_failed' -->
         <div id="detail-refund-box" class="hidden mt-3 pt-3 border-t border-rose-500/20 bg-rose-500/5 p-3 rounded border border-rose-500/30">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
-              <p class="font-semibold text-rose-400 text-sm">⚠️ Đơn hàng chờ hoàn tiền</p>
-              <p class="text-xs text-noir-400 mt-0.5">Xác nhận hoàn tiền tự động qua cổng thanh toán hoặc chuyển khoản thủ công.</p>
+              <p id="detail-refund-title" class="font-semibold text-rose-400 text-sm">⚠️ Đơn hàng chờ hoàn tiền</p>
+              <p id="detail-refund-desc" class="text-xs text-noir-400 mt-0.5">Xác nhận hoàn tiền tự động qua cổng thanh toán hoặc chuyển khoản thủ công.</p>
+              <p id="detail-refund-error" class="hidden text-xs text-rose-300 font-medium mt-1"></p>
             </div>
-            <button id="btn-modal-process-refund" type="button" class="rounded-md bg-rose-600 hover:bg-rose-500 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition">
-              Hoàn tiền ngay
-            </button>
+            <div class="flex flex-wrap gap-2">
+              <button id="btn-modal-process-refund" type="button" class="rounded-md bg-rose-600 hover:bg-rose-500 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-lg transition">
+                Hoàn tiền ngay
+              </button>
+              <button id="btn-modal-manual-refund" type="button" class="hidden rounded-md border border-gold-500/50 bg-gold-500/20 hover:bg-gold-500 hover:text-noir-900 px-3 py-1.5 text-xs font-semibold text-gold-400 shadow transition">
+                Xác nhận hoàn thủ công
+              </button>
+            </div>
           </div>
         </div>
 
@@ -284,6 +294,8 @@
           payStatusBadge = '<span class="inline-block text-[11px] font-semibold text-emerald-400">Đã thanh toán</span>';
         } else if (o.payment_status === 'refund_pending') {
           payStatusBadge = '<span class="inline-block text-[11px] font-bold text-rose-400 animate-pulse">⚠️ Chờ hoàn tiền</span>';
+        } else if (o.payment_status === 'refund_failed') {
+          payStatusBadge = '<span class="inline-block text-[11px] font-bold text-rose-500">❌ Hoàn tiền lỗi</span>';
         } else if (o.payment_status === 'refunded') {
           payStatusBadge = '<span class="inline-block text-[11px] font-semibold text-purple-400">Đã hoàn tiền</span>';
         } else {
@@ -308,9 +320,9 @@
               <span class="inline-flex rounded-full px-2 py-0.5 text-sm font-medium border ${st.bg}">${esc(st.label)}</span>
             </td>
             <td class="py-3 px-4 text-right whitespace-nowrap space-x-1">
-              ${o.payment_status === 'refund_pending' ? `
-                <button data-order-id="${esc(o.order_id)}" class="btn-refund-order rounded-md border border-rose-500/40 bg-rose-500/10 px-2.5 py-1 text-sm font-semibold text-rose-400 hover:bg-rose-500 hover:text-white shadow-lg transition" title="Xử lý hoàn tiền trực tuyến">
-                  Hoàn tiền
+              ${(o.payment_status === 'refund_pending' || o.payment_status === 'refund_failed') ? `
+                <button data-order-id="${esc(o.order_id)}" class="btn-refund-order rounded-md border border-rose-500/40 bg-rose-500/10 px-2.5 py-1 text-sm font-semibold text-rose-400 hover:bg-rose-500 hover:text-white shadow-lg transition" title="Xử lý hoàn tiền">
+                  ${o.payment_status === 'refund_failed' ? 'Thử lại hoàn' : 'Hoàn tiền'}
                 </button>
               ` : ''}
               <a href="/admin/orders/${esc(o.order_id)}/print" target="_blank" class="inline-flex rounded-md border border-noir-700 bg-noir-800 px-2.5 py-1 text-sm font-medium text-noir-300 hover:bg-noir-700 hover:text-gold-400 shadow-lg transition">
@@ -343,7 +355,10 @@
   tbody.addEventListener("click", e => {
     const refundBtn = e.target.closest(".btn-refund-order");
     if (refundBtn) {
-      triggerRefundOrder(refundBtn.dataset.orderId);
+      const orderId = refundBtn.dataset.orderId;
+      const o = currentOrders.find(x => x.order_id === orderId);
+      const isManual = !['momo', 'vnpay'].includes(o?.payment_method);
+      triggerRefundOrder(orderId, isManual);
       return;
     }
     const btn = e.target.closest(".btn-view-order");
@@ -427,20 +442,55 @@
     document.getElementById("detail-payment-method").textContent = payMethodMap[o.payment_method] || o.payment_method || 'Chưa xác định';
 
     const payStatusEl = document.getElementById("detail-payment-status");
+    const refundTransRow = document.getElementById("detail-refund-trans-row");
+    const refundTransIdEl = document.getElementById("detail-refund-trans-id");
     const refundBox = document.getElementById("detail-refund-box");
+    const refundTitle = document.getElementById("detail-refund-title");
+    const refundDesc = document.getElementById("detail-refund-desc");
+    const refundError = document.getElementById("detail-refund-error");
+    const btnModalProcessRefund = document.getElementById("btn-modal-process-refund");
+    const btnModalManualRefund = document.getElementById("btn-modal-manual-refund");
     const refundBankContainer = document.getElementById("detail-refund-bank-container");
     const refundBankDetails = document.getElementById("detail-refund-bank-details");
     const refundBankEmpty = document.getElementById("detail-refund-bank-empty");
 
+    const isManualMethod = ['vietqr', 'bank_transfer', 'cod', 'qr_transfer'].includes(o.payment_method);
+
     if (o.payment_status === 'paid') {
       payStatusEl.textContent = 'Đã thanh toán (paid)';
       payStatusEl.className = 'font-semibold text-emerald-400';
+      if (refundTransRow) refundTransRow.classList.add('hidden');
       refundBox.classList.add('hidden');
       if (refundBankContainer) refundBankContainer.classList.add('hidden');
-    } else if (o.payment_status === 'refund_pending') {
-      payStatusEl.textContent = 'Chờ hoàn tiền (refund_pending)';
-      payStatusEl.className = 'font-bold text-rose-400 animate-pulse';
+    } else if (o.payment_status === 'refund_pending' || o.payment_status === 'refund_failed') {
+      const isFailed = o.payment_status === 'refund_failed';
+      payStatusEl.textContent = isFailed ? 'Hoàn tiền thất bại (refund_failed)' : 'Chờ hoàn tiền (refund_pending)';
+      payStatusEl.className = isFailed ? 'font-bold text-rose-500' : 'font-bold text-rose-400 animate-pulse';
+      if (refundTransRow) refundTransRow.classList.add('hidden');
       refundBox.classList.remove('hidden');
+
+      if (isFailed) {
+        if (refundTitle) refundTitle.textContent = '❌ Xử lý hoàn tiền thất bại trước đó';
+        if (refundError) {
+          refundError.textContent = `Lý do lỗi: ${o.refund_error_message || 'Không rõ nguyên nhân từ cổng thanh toán'}`;
+          refundError.classList.remove('hidden');
+        }
+      } else {
+        if (refundTitle) refundTitle.textContent = '⚠️ Đơn hàng chờ hoàn tiền';
+        if (refundError) refundError.classList.add('hidden');
+      }
+
+      if (isManualMethod) {
+        if (refundDesc) refundDesc.textContent = 'Thanh toán chuyển khoản ngân hàng thủ công. Vui lòng chuyển tiền cho khách theo thông tin tài khoản bên dưới, sau đó bấm xác nhận hoàn thủ công.';
+        if (btnModalProcessRefund) btnModalProcessRefund.textContent = isFailed ? 'Thử lại xác nhận' : 'Xác nhận hoàn thủ công';
+        if (btnModalManualRefund) btnModalManualRefund.classList.add('hidden');
+      } else {
+        const gwName = o.payment_method === 'momo' ? 'MoMo' : (o.payment_method === 'vnpay' ? 'VNPay' : 'Cổng online');
+        if (refundDesc) refundDesc.textContent = `Hoàn tự động qua cổng ${gwName}. Nếu cổng chưa cấu hình hoặc lỗi, có thể chọn xác nhận hoàn tiền thủ công.`;
+        if (btnModalProcessRefund) btnModalProcessRefund.textContent = isFailed ? `Thử lại qua ${gwName}` : `Hoàn qua ${gwName}`;
+        if (btnModalManualRefund) btnModalManualRefund.classList.remove('hidden');
+      }
+
       if (refundBankContainer) {
         refundBankContainer.classList.remove('hidden');
         if (o.refund_bank_name || o.refund_account_number || o.refund_account_holder) {
@@ -458,6 +508,14 @@
       payStatusEl.textContent = 'Đã hoàn tiền (refunded)';
       payStatusEl.className = 'font-semibold text-purple-400';
       refundBox.classList.add('hidden');
+      if (refundTransRow) {
+        if (o.refund_trans_id) {
+          refundTransIdEl.textContent = o.refund_trans_id;
+          refundTransRow.classList.remove('hidden');
+        } else {
+          refundTransRow.classList.add('hidden');
+        }
+      }
       if (refundBankContainer) {
         if (o.refund_bank_name || o.refund_account_number || o.refund_account_holder) {
           refundBankContainer.classList.remove('hidden');
@@ -473,6 +531,7 @@
     } else {
       payStatusEl.textContent = 'Chưa thanh toán (unpaid)';
       payStatusEl.className = 'font-medium text-noir-400';
+      if (refundTransRow) refundTransRow.classList.add('hidden');
       refundBox.classList.add('hidden');
       if (refundBankContainer) refundBankContainer.classList.add('hidden');
     }
@@ -481,20 +540,26 @@
     modal.classList.remove("hidden");
   };
 
-  async function triggerRefundOrder(orderId) {
+  async function triggerRefundOrder(orderId, isManual = false) {
     const o = currentOrders.find(x => x.order_id === orderId) || activeOrder;
-    const channelName = o && o.payment_method ? (o.payment_method === 'momo' ? 'MoMo' : (o.payment_method === 'vnpay' ? 'VNPay' : o.payment_method.toUpperCase())) : 'Cổng thanh toán';
+    const isOnline = o && (o.payment_method === 'momo' || o.payment_method === 'vnpay');
+    const channelName = isOnline ? (o.payment_method === 'momo' ? 'MoMo' : 'VNPay') : 'Chuyển khoản thủ công';
     const amountStr = o && o.quote && o.quote.total ? o.quote.total.toLocaleString('vi-VN') + 'đ' : '';
 
-    if (!confirm(`Xác nhận thực hiện HOÀN TIỀN ${amountStr} cho đơn hàng "${orderId}" qua cổng ${channelName}?`)) {
+    const confirmMsg = isManual || !isOnline
+      ? `Xác nhận bạn ĐÃ CHUYỂN KHOẢN hoàn tiền ${amountStr} cho đơn hàng "${orderId}" và ghi nhận trạng thái đã hoàn thủ công?`
+      : `Xác nhận gửi yêu cầu HOÀN TIỀN ${amountStr} cho đơn hàng "${orderId}" qua cổng ${channelName}?`;
+
+    if (!confirm(confirmMsg)) {
       return;
     }
 
     try {
-      showToast(`Đang gửi yêu cầu hoàn tiền qua ${channelName}...`);
+      showToast(isManual || !isOnline ? "Đang ghi nhận hoàn tiền thủ công..." : `Đang gửi yêu cầu hoàn tiền qua ${channelName}...`);
       const res = await fetch(`/api/admin/orders/${encodeURIComponent(orderId)}/process-refund`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_manual: isManual || !isOnline })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -515,7 +580,16 @@
   const btnModalRefund = document.getElementById("btn-modal-process-refund");
   if (btnModalRefund) {
     btnModalRefund.addEventListener("click", () => {
-      if (activeOrder) triggerRefundOrder(activeOrder.order_id);
+      if (activeOrder) {
+        const isManual = ['vietqr', 'bank_transfer', 'cod', 'qr_transfer'].includes(activeOrder.payment_method);
+        triggerRefundOrder(activeOrder.order_id, isManual);
+      }
+    });
+  }
+  const btnModalManualRefund = document.getElementById("btn-modal-manual-refund");
+  if (btnModalManualRefund) {
+    btnModalManualRefund.addEventListener("click", () => {
+      if (activeOrder) triggerRefundOrder(activeOrder.order_id, true);
     });
   }
 

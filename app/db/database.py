@@ -190,6 +190,28 @@ CREATE TABLE IF NOT EXISTS payment_transactions (
     FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS refund_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id TEXT NOT NULL,
+    amount INTEGER NOT NULL,
+    payment_channel TEXT NOT NULL,
+    original_trans_code TEXT,
+    refund_trans_id TEXT,
+    status TEXT NOT NULL DEFAULT 'pending',
+    refund_bank_name TEXT,
+    refund_account_number TEXT,
+    refund_account_holder TEXT,
+    reason TEXT,
+    error_message TEXT,
+    processed_by TEXT,
+    processed_at TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_refund_requests_order ON refund_requests(order_id);
+CREATE INDEX IF NOT EXISTS idx_refund_requests_status ON refund_requests(status);
+
 CREATE TABLE IF NOT EXISTS reviews (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     product_id TEXT NOT NULL,
@@ -342,6 +364,34 @@ def init_db(db_path: str = DB_PATH):
                 conn.execute("ALTER TABLE orders ADD COLUMN refund_account_number TEXT;")
             if "refund_account_holder" not in order_cols:
                 conn.execute("ALTER TABLE orders ADD COLUMN refund_account_holder TEXT;")
+            conn.commit()
+
+            # Đảm bảo bảng refund_requests tồn tại
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS refund_requests (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    order_id TEXT NOT NULL,
+                    amount INTEGER NOT NULL,
+                    payment_channel TEXT NOT NULL,
+                    original_trans_code TEXT,
+                    refund_trans_id TEXT,
+                    status TEXT NOT NULL DEFAULT 'pending',
+                    refund_bank_name TEXT,
+                    refund_account_number TEXT,
+                    refund_account_holder TEXT,
+                    reason TEXT,
+                    error_message TEXT,
+                    processed_by TEXT,
+                    processed_at TEXT,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT,
+                    FOREIGN KEY (order_id) REFERENCES orders(order_id) ON DELETE CASCADE
+                );
+                """
+            )
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_refund_requests_order ON refund_requests(order_id);")
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_refund_requests_status ON refund_requests(status);")
             conn.commit()
 
             # Đảm bảo bảng audit_log và view audit_logs tồn tại
@@ -1069,6 +1119,14 @@ class DatabaseService:
                         now_str,
                     ),
                 )
+                conn.execute(
+                    """
+                    INSERT INTO refund_requests
+                    (order_id, amount, payment_channel, original_trans_code, status, reason, created_at)
+                    VALUES (?, ?, ?, ?, 'pending', 'Đơn hàng đã hủy nhận thanh toán từ cổng/ngân hàng', ?);
+                    """,
+                    (order_id, amount, payment_channel, transaction_code, now_str)
+                )
                 logger.warning(
                     "CẢNH BÁO HOÀN TIỀN ADMIN: Đơn hàng '%s' nhận thanh toán %s đ khi đã hủy! Đã ghi nhận transaction '%s' (unmatched_or_cancelled) và chuyển payment_status='refund_pending'",
                     order_id, amount, transaction_code,
@@ -1458,6 +1516,8 @@ class DatabaseService:
             bank_name = (refund_info or {}).get("refund_bank_name")
             account_number = (refund_info or {}).get("refund_account_number")
             account_holder = (refund_info or {}).get("refund_account_holder")
+            cancel_reason = (refund_info or {}).get("reason") or "Khách hàng yêu cầu hủy đơn"
+            now_iso = datetime.datetime.now().isoformat()
 
             conn.execute(
                 """
@@ -1471,6 +1531,55 @@ class DatabaseService:
                 """,
                 (new_payment_status, bank_name, account_number, account_holder, order_id)
             )
+
+            # Nếu đơn đã thanh toán: ghi nhận yêu cầu hoàn tiền vào refund_requests
+            if order["payment_status"] == "paid":
+                tx_row = conn.execute(
+                    """
+                    SELECT transaction_code, payment_channel, amount
+                    FROM payment_transactions
+                    WHERE order_id = ? AND status IN ('success', 'unmatched_or_cancelled')
+                    ORDER BY id DESC LIMIT 1;
+                    """,
+                    (order_id,)
+                ).fetchone()
+
+                channel = (tx_row["payment_channel"] if tx_row else order["payment_method"]) or "vietqr"
+                orig_code = tx_row["transaction_code"] if tx_row else None
+                rf_amount = int(order["total_amount"])
+
+                existing_rf = conn.execute(
+                    "SELECT id, status FROM refund_requests WHERE order_id = ?;",
+                    (order_id,)
+                ).fetchone()
+
+                if not existing_rf:
+                    conn.execute(
+                        """
+                        INSERT INTO refund_requests
+                        (order_id, amount, payment_channel, original_trans_code, status,
+                         refund_bank_name, refund_account_number, refund_account_holder, reason, created_at)
+                        VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?);
+                        """,
+                        (order_id, rf_amount, channel, orig_code, bank_name, account_number, account_holder, cancel_reason, now_iso)
+                    )
+                elif existing_rf["status"] != "success":
+                    conn.execute(
+                        """
+                        UPDATE refund_requests
+                        SET status = 'pending',
+                            amount = ?,
+                            payment_channel = ?,
+                            original_trans_code = COALESCE(?, original_trans_code),
+                            refund_bank_name = COALESCE(?, refund_bank_name),
+                            refund_account_number = COALESCE(?, refund_account_number),
+                            refund_account_holder = COALESCE(?, refund_account_holder),
+                            reason = COALESCE(?, reason),
+                            updated_at = ?
+                        WHERE order_id = ?;
+                        """,
+                        (rf_amount, channel, orig_code, bank_name, account_number, account_holder, cancel_reason, now_iso, order_id)
+                    )
 
             # 2. Hoàn tồn kho trong CSDL cho product_variants và products
             items = conn.execute(
@@ -1558,7 +1667,22 @@ class DatabaseService:
     def get_order_by_id(self, order_id: str) -> Optional[Dict[str, Any]]:
         conn = get_db_connection(self.db_path)
         try:
-            row = conn.execute("SELECT * FROM orders WHERE order_id = ?;", (order_id,)).fetchone()
+            row = conn.execute(
+                """
+                SELECT o.*, 
+                       rr.status as refund_request_status,
+                       rr.amount as refund_request_amount,
+                       rr.refund_trans_id,
+                       rr.error_message as refund_error_message,
+                       rr.processed_by as refund_processed_by,
+                       rr.processed_at as refund_processed_at
+                FROM orders o
+                LEFT JOIN refund_requests rr ON o.order_id = rr.order_id
+                WHERE o.order_id = ?
+                ORDER BY rr.id DESC LIMIT 1;
+                """,
+                (order_id,)
+            ).fetchone()
             if not row:
                 return None
             return self._format_order_row(dict(row))
@@ -1571,10 +1695,36 @@ class DatabaseService:
         try:
             query = code.strip()
             # 1. Tìm theo order_id
-            row = conn.execute("SELECT * FROM orders WHERE order_id = ? COLLATE NOCASE;", (query,)).fetchone()
+            row = conn.execute(
+                """
+                SELECT o.*, 
+                       rr.status as refund_request_status,
+                       rr.amount as refund_request_amount,
+                       rr.refund_trans_id,
+                       rr.error_message as refund_error_message
+                FROM orders o
+                LEFT JOIN refund_requests rr ON o.order_id = rr.order_id
+                WHERE o.order_id = ? COLLATE NOCASE
+                ORDER BY rr.id DESC LIMIT 1;
+                """,
+                (query,)
+            ).fetchone()
             if not row:
                 # 2. Tìm theo tracking_code
-                row = conn.execute("SELECT * FROM orders WHERE tracking_code = ? COLLATE NOCASE;", (query,)).fetchone()
+                row = conn.execute(
+                    """
+                    SELECT o.*, 
+                           rr.status as refund_request_status,
+                           rr.amount as refund_request_amount,
+                           rr.refund_trans_id,
+                           rr.error_message as refund_error_message
+                    FROM orders o
+                    LEFT JOIN refund_requests rr ON o.order_id = rr.order_id
+                    WHERE o.tracking_code = ? COLLATE NOCASE
+                    ORDER BY rr.id DESC LIMIT 1;
+                    """,
+                    (query,)
+                ).fetchone()
             if not row:
                 return None
             return self._format_order_row(dict(row))
@@ -1608,6 +1758,9 @@ class DatabaseService:
         res["refund_bank_name"] = res.get("refund_bank_name")
         res["refund_account_number"] = res.get("refund_account_number")
         res["refund_account_holder"] = res.get("refund_account_holder")
+        res["refund_trans_id"] = res.get("refund_trans_id")
+        res["refund_error_message"] = res.get("refund_error_message")
+        res["refund_status"] = res.get("refund_request_status") or res.get("payment_status")
         return res
 
     def get_order_payment_status(self, order_id: str) -> Dict[str, Any]:
@@ -1632,15 +1785,23 @@ class DatabaseService:
             conn.close()
 
     def get_refund_pending_orders(self) -> List[Dict[str, Any]]:
-        """Lấy danh sách các đơn hàng cần hoàn tiền (payment_status = 'refund_pending')."""
+        """Lấy danh sách các đơn hàng cần hoàn tiền (payment_status in ('refund_pending', 'refund_failed'))."""
         conn = get_db_connection(self.db_path)
         try:
             rows = conn.execute(
                 """
-                SELECT o.*, pt.transaction_code, pt.amount as paid_amount, pt.payment_channel, pt.status as tx_status
+                SELECT o.*, 
+                       COALESCE(rr.amount, o.total_amount) as refund_amount,
+                       COALESCE(rr.payment_channel, o.payment_method) as refund_channel,
+                       COALESCE(rr.original_trans_code, pt.transaction_code) as original_trans_code,
+                       rr.status as refund_request_status,
+                       rr.refund_trans_id,
+                       rr.error_message as refund_error_message,
+                       pt.transaction_code, pt.amount as paid_amount, pt.payment_channel
                 FROM orders o
-                LEFT JOIN payment_transactions pt ON o.order_id = pt.order_id
-                WHERE o.payment_status = 'refund_pending'
+                LEFT JOIN refund_requests rr ON o.order_id = rr.order_id
+                LEFT JOIN payment_transactions pt ON o.order_id = pt.order_id AND pt.status IN ('success', 'unmatched_or_cancelled')
+                WHERE o.payment_status IN ('refund_pending', 'refund_failed')
                 ORDER BY o.created_at DESC;
                 """
             ).fetchall()
@@ -1666,6 +1827,18 @@ class DatabaseService:
         finally:
             conn.close()
 
+    def get_refund_request(self, order_id: str) -> Optional[Dict[str, Any]]:
+        """Lấy bản ghi yêu cầu hoàn tiền gần nhất của đơn hàng."""
+        conn = get_db_connection(self.db_path)
+        try:
+            row = conn.execute(
+                "SELECT * FROM refund_requests WHERE order_id = ? ORDER BY id DESC LIMIT 1;",
+                (order_id,)
+            ).fetchone()
+            return dict(row) if row else None
+        finally:
+            conn.close()
+
     def mark_order_refunded(
         self,
         order_id: str,
@@ -1673,8 +1846,9 @@ class DatabaseService:
         amount: int,
         payment_channel: str = "vnpay",
         payload: Optional[Dict[str, Any]] = None,
+        processed_by: Optional[str] = None,
     ) -> bool:
-        """Đánh dấu đơn hàng đã được hoàn tiền thành công (payment_status = 'refunded') và lưu vết vào payment_transactions."""
+        """Đánh dấu đơn hàng đã được hoàn tiền thành công (payment_status = 'refunded') và lưu vết vào payment_transactions & refund_requests."""
         with get_db_transaction(self.db_path) as conn:
             order = conn.execute("SELECT order_id, user_id, payment_status FROM orders WHERE order_id = ?;", (order_id,)).fetchone()
             if not order:
@@ -1688,6 +1862,21 @@ class DatabaseService:
                 WHERE order_id = ?;
                 """,
                 (order_id,)
+            )
+
+            # Cập nhật bản ghi refund_requests
+            conn.execute(
+                """
+                UPDATE refund_requests
+                SET status = 'success',
+                    refund_trans_id = ?,
+                    error_message = NULL,
+                    processed_by = ?,
+                    processed_at = ?,
+                    updated_at = ?
+                WHERE order_id = ?;
+                """,
+                (refund_tx_code, processed_by, now_str, now_str, order_id)
             )
 
             tx_code_to_save = refund_tx_code if refund_tx_code.startswith("REFUND-") else f"REFUND-{refund_tx_code}"
@@ -1712,7 +1901,44 @@ class DatabaseService:
                 order_id=order_id,
                 user_id=order["user_id"] if "user_id" in order.keys() else None,
                 amount=amount,
-                extra={"refund_tx_code": tx_code_to_save, "payment_channel": payment_channel},
+                extra={"refund_tx_code": tx_code_to_save, "payment_channel": payment_channel, "processed_by": processed_by},
+            )
+            return True
+
+    def mark_order_refund_failed(
+        self,
+        order_id: str,
+        error_message: str,
+        processed_by: Optional[str] = None,
+    ) -> bool:
+        """Đánh dấu hoàn tiền thất bại (payment_status = 'refund_failed', refund_requests.status = 'failed')."""
+        with get_db_transaction(self.db_path) as conn:
+            now_str = datetime.datetime.now().isoformat()
+            conn.execute(
+                """
+                UPDATE orders
+                SET payment_status = 'refund_failed'
+                WHERE order_id = ?;
+                """,
+                (order_id,)
+            )
+            conn.execute(
+                """
+                UPDATE refund_requests
+                SET status = 'failed',
+                    error_message = ?,
+                    processed_by = ?,
+                    processed_at = ?,
+                    updated_at = ?
+                WHERE order_id = ?;
+                """,
+                (error_message, processed_by, now_str, now_str, order_id)
+            )
+            log_money_event(
+                "order_refund_failed",
+                order_id=order_id,
+                amount=0,
+                extra={"error_message": error_message, "processed_by": processed_by},
             )
             return True
 
