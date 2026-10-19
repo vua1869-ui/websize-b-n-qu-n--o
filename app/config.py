@@ -56,6 +56,7 @@ class Settings(BaseSettings):
     VNPAY_HASH_SECRET: str = ""  # PHẢI đặt trong .env — xem .env.example
     VNPAY_URL: str = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
     VNPAY_RETURN_URL: str = "http://127.0.0.1:8000/api/payment/vnpay/return"
+    VNPAY_IPN_URL: str = "http://127.0.0.1:8000/api/payment/vnpay/ipn"
     VNPAY_API_URL: str = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction"
 
     # ---- Cổng thanh toán MoMo Sandbox & Refund (MoMo v2 Gateway API) ----
@@ -96,6 +97,9 @@ class Settings(BaseSettings):
             if not webhook_sec or webhook_sec in default_secrets or webhook_sec.lower().startswith("dev-"):
                 errors.append("- PAYMENT_WEBHOOK_SECRET chưa được đặt hoặc vẫn dùng giá trị mặc định dev ('dev-payment-webhook-secret').")
 
+            if not self.VNPAY_TMN_CODE or not self.VNPAY_TMN_CODE.strip():
+                errors.append("- VNPAY_TMN_CODE chưa được đặt hoặc bị rỗng. Cần cấu hình mã Terminal ID được cấp bởi VNPay.")
+
             if not self.VNPAY_HASH_SECRET or not self.VNPAY_HASH_SECRET.strip():
                 errors.append("- VNPAY_HASH_SECRET chưa được đặt hoặc bị rỗng. Khóa rỗng cho phép kẻ tấn công giả mạo chữ ký giao dịch.")
 
@@ -114,6 +118,10 @@ class Settings(BaseSettings):
             is_vnpay_localhost = not self.VNPAY_RETURN_URL or "127.0.0.1" in self.VNPAY_RETURN_URL or "localhost" in self.VNPAY_RETURN_URL.lower()
             if is_vnpay_localhost:
                 errors.append("- VNPAY_RETURN_URL vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống.")
+
+            is_vnpay_ipn_localhost = not self.VNPAY_IPN_URL or "127.0.0.1" in self.VNPAY_IPN_URL or "localhost" in self.VNPAY_IPN_URL.lower()
+            if is_vnpay_ipn_localhost:
+                errors.append("- VNPAY_IPN_URL vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống để nhận IPN webhook.")
 
             is_momo_localhost = not self.MOMO_RETURN_URL or "127.0.0.1" in self.MOMO_RETURN_URL or "localhost" in self.MOMO_RETURN_URL.lower()
             if is_momo_localhost:

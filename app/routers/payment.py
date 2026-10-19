@@ -24,7 +24,7 @@ from app.routers.deps import (
 )
 from app.services.momo_service import momo_service
 from app.services.order_service import order_service
-from app.services.vnpay_service import vnpay_service
+from app.services.vnpay_service import get_vnpay_response_message, vnpay_service
 
 router = APIRouter(tags=["payment"])
 
@@ -180,6 +180,13 @@ def vnpay_create_payment_url(body: VNPayCreatePaymentRequest, request: Request):
     if not order:
         raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
 
+    # Kiểm tra trạng thái đơn hàng
+    if order.get("payment_status") == "paid":
+        raise HTTPException(status_code=400, detail="Đơn hàng này đã được thanh toán")
+
+    if order.get("status") == "cancelled" or order.get("order_status") == "cancelled":
+        raise HTTPException(status_code=400, detail="Đơn hàng đã bị hủy, không thể tạo link thanh toán")
+
     # Kiểm tra quyền sở hữu đơn hàng
     user = get_current_user_optional(request)
     cookie_phone = request.cookies.get(f"aura_order_{body.order_id}")
@@ -189,20 +196,33 @@ def vnpay_create_payment_url(body: VNPayCreatePaymentRequest, request: Request):
         raise HTTPException(status_code=403, detail="Bạn không có quyền truy cập hoặc thanh toán đơn hàng này")
 
     amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
-    client_ip = request.client.host if request.client else "127.0.0.1"
-    payment_url = vnpay_service.build_payment_url(
-        order_id=body.order_id,
-        amount=amount,
-        client_ip=client_ip,
-        bank_code=body.bank_code,
-    )
-    mock_url = f"/api/payment/vnpay/mock-gateway?order_id={body.order_id}"
 
-    # Nếu biến môi trường VNPay bị thiếu hoặc rỗng, tự động fallback sang cổng mô phỏng nội bộ
-    sec = (settings.VNPAY_HASH_SECRET or "").strip()
-    tmn = (settings.VNPAY_TMN_CODE or "").strip()
-    if not sec or not tmn:
+    # Xử lý IP client chuẩn xác kể cả khi chạy sau reverse proxy (X-Forwarded-For)
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        client_ip = forwarded.split(",")[0].strip()
+    elif request.client and request.client.host:
+        client_ip = request.client.host
+    else:
+        client_ip = "127.0.0.1"
+
+    is_cfg = vnpay_service.is_configured()
+    if not is_cfg and settings.APP_ENV.strip().lower() == "production":
+        raise HTTPException(
+            status_code=503,
+            detail="Cổng thanh toán VNPay chưa được cấu hình trên môi trường Production"
+        )
+
+    mock_url = f"/api/payment/vnpay/mock-gateway?order_id={body.order_id}"
+    if not is_cfg:
         payment_url = mock_url
+    else:
+        payment_url = vnpay_service.build_payment_url(
+            order_id=body.order_id,
+            amount=amount,
+            client_ip=client_ip,
+            bank_code=body.bank_code,
+        )
 
     return {
         "success": True,
@@ -214,6 +234,9 @@ def vnpay_create_payment_url(body: VNPayCreatePaymentRequest, request: Request):
 
 @router.get("/api/payment/vnpay/mock-gateway", response_class=HTMLResponse)
 def vnpay_mock_gateway(order_id: str = Query(...)):
+    if settings.APP_ENV.strip().lower() == "production":
+        raise HTTPException(status_code=403, detail="Cổng thanh toán mô phỏng bị vô hiệu hóa trên môi trường Production")
+
     order = db_service.get_order_by_id(order_id)
     if not order:
         order = order_service.get_order_by_id(order_id)
@@ -223,6 +246,8 @@ def vnpay_mock_gateway(order_id: str = Query(...)):
     amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
     safe_order_id = html.escape(str(order_id))
     amount_vnd = f"{amount:,}".replace(",", ".") + "đ"
+
+    secret_key = str(settings.VNPAY_HASH_SECRET).strip() or "MOCK_VNPAY_SECRET_FOR_DEV_ONLY"
 
     # Tạo link xác nhận thành công chuẩn chữ ký HMAC-SHA512
     vnp_params = {
@@ -239,25 +264,33 @@ def vnpay_mock_gateway(order_id: str = Query(...)):
         "vnp_TxnRef": order_id,
     }
     inputData = sorted(vnp_params.items())
-    queryString = ""
-    seq = 0
-    for key, val in inputData:
-        encoded_val = urllib.parse.quote_plus(str(val))
-        if seq == 1:
-            queryString += "&" + str(key) + "=" + encoded_val
-        else:
-            seq = 1
-            queryString = str(key) + "=" + encoded_val
-
-    secret_key = str(settings.VNPAY_HASH_SECRET).strip()
+    queryString = "&".join(f"{k}={urllib.parse.quote_plus(str(v))}" for k, v in inputData)
     secure_hash = hmac.new(
         secret_key.encode("utf-8"),
         queryString.encode("utf-8"),
         hashlib.sha512,
     ).hexdigest()
-
     success_url = f"/api/payment/vnpay/return?{queryString}&vnp_SecureHash={secure_hash}"
-    cancel_url = f"/api/payment/vnpay/return?vnp_TxnRef={safe_order_id}&vnp_ResponseCode=24&vnp_Amount={amount*100}"
+
+    # Tạo link hủy thanh toán chuẩn chữ ký HMAC-SHA512 (mã lỗi 24)
+    vnp_cancel_params = {
+        "vnp_Amount": str(amount * 100),
+        "vnp_OrderInfo": f"Thanh toan don hang {order_id}",
+        "vnp_PayDate": dt.datetime.now().strftime("%Y%m%d%H%M%S"),
+        "vnp_ResponseCode": "24",
+        "vnp_TmnCode": str(settings.VNPAY_TMN_CODE).strip() or "VNPAYDEMO",
+        "vnp_TransactionNo": "0",
+        "vnp_TransactionStatus": "02",
+        "vnp_TxnRef": order_id,
+    }
+    cancel_inputData = sorted(vnp_cancel_params.items())
+    cancel_queryString = "&".join(f"{k}={urllib.parse.quote_plus(str(v))}" for k, v in cancel_inputData)
+    cancel_hash = hmac.new(
+        secret_key.encode("utf-8"),
+        cancel_queryString.encode("utf-8"),
+        hashlib.sha512,
+    ).hexdigest()
+    cancel_url = f"/api/payment/vnpay/return?{cancel_queryString}&vnp_SecureHash={cancel_hash}"
 
     html_content = f"""
     <!DOCTYPE html>
@@ -324,8 +357,20 @@ def vnpay_mock_gateway(order_id: str = Query(...)):
     return HTMLResponse(content=html_content)
 
 
-def _payment_error_html(title: str, body_html: str, status: int = 400, back_url: str = "/") -> HTMLResponse:
+def _payment_error_html(
+    title: str,
+    body_html: str,
+    status: int = 400,
+    back_url: str = "/",
+    retry_url: Optional[str] = None,
+    retry_text: str = "Thử thanh toán lại",
+) -> HTMLResponse:
     """Helper render trang lỗi thanh toán có charset UTF-8 chuẩn, tránh lỗi encoding tiếng Việt."""
+    retry_btn = (
+        f'<a href="{html.escape(retry_url)}" class="btn" style="background:#005baa;margin-right:8px;">{html.escape(retry_text)}</a>'
+        if retry_url
+        else ""
+    )
     content = f"""<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -340,17 +385,19 @@ def _payment_error_html(title: str, body_html: str, status: int = 400, back_url:
     h2{{font-size:20px;font-weight:700;color:#111;margin-bottom:12px}}
     p{{font-size:14px;color:#555;line-height:1.6;margin-bottom:8px}}
     strong{{color:#111}}
-    .btn{{display:inline-block;margin-top:28px;padding:11px 28px;background:#111;color:#fff;text-decoration:none;border-radius:3px;font-size:14px;font-weight:600;letter-spacing:.02em;transition:background .2s}}
+    .btn{{display:inline-block;margin-top:28px;padding:11px 24px;background:#111;color:#fff;text-decoration:none;border-radius:3px;font-size:14px;font-weight:600;letter-spacing:.02em;transition:background .2s}}
     .btn:hover{{background:#333}}
-    .btn-outline{{background:transparent;border:1px solid #111;color:#111;margin-left:10px}}
+    .btn-outline{{background:transparent;border:1px solid #111;color:#111;margin-left:6px}}
     .btn-outline:hover{{background:#111;color:#fff}}
   </style>
 </head>
 <body>
   <div class="card">
     {body_html}
-    <a href="{html.escape(back_url)}" class="btn">Về trang chủ</a>
-    <a href="javascript:history.back()" class="btn btn-outline">← Quay lại</a>
+    <div style="margin-top: 24px;">
+      {retry_btn}
+      <a href="{html.escape(back_url)}" class="btn btn-outline">Về trang chủ</a>
+    </div>
   </div>
 </body>
 </html>"""
@@ -372,13 +419,14 @@ def vnpay_payment_return(request: Request):
                 title="Lỗi bảo mật thanh toán",
                 body_html="""<div class="icon">🔒</div>
                   <h2>Lỗi bảo mật thanh toán</h2>
-                  <p>Chữ ký bảo mật VNPay không hợp lệ.<br>Vui lòng không thay đổi URL callback.</p>""",
+                  <p>Chữ ký bảo mật VNPay không hợp lệ.<br>Vui lòng không chỉnh sửa URL phản hồi hoặc kiểm tra lại cấu hình bí mật.</p>""",
                 status=400,
             )
         raise HTTPException(status_code=400, detail="Chữ ký phản hồi VNPay không hợp lệ")
 
     order_id = vnp_data.get("vnp_TxnRef", "")
     response_code = vnp_data.get("vnp_ResponseCode", "")
+    trans_status = vnp_data.get("vnp_TransactionStatus", "00")
     transaction_no = vnp_data.get("vnp_TransactionNo") or f"VNPAY-{order_id}"
 
     try:
@@ -414,12 +462,15 @@ def vnpay_payment_return(request: Request):
                   <h2>Số tiền không khớp</h2>
                   <p>Số tiền VNPay: <strong>{amount:,}đ</strong></p>
                   <p>Giá trị đơn hàng: <strong>{order_amount:,}đ</strong></p>
-                  <p>Vui lòng liên hệ AURA Studio để được hỗ trợ.</p>""",
+                  <p>Vui lòng liên hệ bộ phận hỗ trợ khách hàng.</p>""",
                 status=400,
+                retry_url=f"/order-success/{order_id}",
             )
         raise HTTPException(status_code=400, detail="Số tiền thanh toán không khớp với đơn hàng")
 
-    if response_code == "00":
+    is_success = (response_code == "00" and trans_status in ("00", ""))
+
+    if is_success:
         confirm_res = db_service.confirm_payment(
             order_id=order_id,
             amount=amount,
@@ -433,8 +484,9 @@ def vnpay_payment_return(request: Request):
                     body_html=f"""<div class="icon">❌</div>
                       <h2>Đơn hàng đã bị hủy</h2>
                       <p>Đơn hàng <strong>{safe_order_id}</strong> đã bị hủy trước đó.</p>
-                      <p>Hệ thống đã ghi nhận thanh toán và sẽ hoàn tiền trong 3–5 ngày làm việc.</p>""",
+                      <p>Hệ thống đã tự động ghi nhận thanh toán {amount:,}đ và đưa vào danh sách hoàn tiền cho quý khách.</p>""",
                     status=200,
+                    back_url="/",
                 )
             return {
                 "success": False,
@@ -455,160 +507,38 @@ def vnpay_payment_return(request: Request):
             "success": True,
             "order_id": order_id,
             "response_code": response_code,
+            "transaction_status": trans_status,
             "payment_status": "paid",
             "order_status": "confirmed",
             "message": "Thanh toán VNPay thành công!",
         }
     else:
+        err_msg = get_vnpay_response_message(response_code)
+        safe_err_msg = html.escape(err_msg)
+        is_user_cancel = (response_code == "24")
+        title = "Giao dịch đã bị hủy" if is_user_cancel else "Thanh toán chưa hoàn tất"
+        icon = "↩️" if is_user_cancel else "⏳"
+
         if is_browser_html:
             return _payment_error_html(
-                title="Giao dịch chưa hoàn tất",
-                body_html=f"""<div class="icon">⏳</div>
-                  <h2>Giao dịch chưa hoàn tất</h2>
+                title=title,
+                body_html=f"""<div class="icon">{icon}</div>
+                  <h2>{html.escape(title)}</h2>
                   <p>Mã đơn hàng: <strong>{safe_order_id}</strong></p>
-                  <p>Mã phản hồi VNPay: <strong>{safe_response_code}</strong></p>
-                  <p>Giao dịch chưa thành công hoặc bạn đã hủy thanh toán trên VNPay.</p>""",
+                  <p>{safe_err_msg}</p>
+                  <p style="color:#888;font-size:12px;margin-top:6px;">Mã phản hồi VNPay: {safe_response_code}</p>""",
                 status=200,
+                retry_url=f"/order-success/{order_id}",
+                retry_text="Thanh toán lại",
             )
         return {
             "success": False,
             "order_id": order_id,
             "response_code": response_code,
+            "transaction_status": trans_status,
             "payment_status": "unpaid",
-            "order_status": "pending_payment",
-            "message": f"Giao dịch không thành công (Mã lỗi VNPay: {response_code})",
-        }
-
-
-    params = dict(request.query_params)
-    is_valid, vnp_data = vnpay_service.verify_response(params)
-
-    accept_header = request.headers.get("accept", "")
-    is_json_request = "application/json" in accept_header.lower()
-    is_browser_html = not is_json_request
-
-    if not is_valid:
-        if is_browser_html:
-            return HTMLResponse(
-                content="""
-                <div style="font-family:sans-serif;text-align:center;padding:50px;">
-                    <h2 style="color:#e11d48;">Lỗi bảo mật thanh toán</h2>
-                    <p>Chữ ký bảo mật VNPay không hợp lệ.</p>
-                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
-                </div>
-                """,
-                status_code=400,
-            )
-        raise HTTPException(status_code=400, detail="Chữ ký phản hồi VNPay không hợp lệ")
-
-    order_id = vnp_data.get("vnp_TxnRef", "")
-    response_code = vnp_data.get("vnp_ResponseCode", "")
-    transaction_no = vnp_data.get("vnp_TransactionNo") or f"VNPAY-{order_id}"
-
-    try:
-        amount_raw = int(vnp_data.get("vnp_Amount", 0))
-        amount = amount_raw // 100
-    except (ValueError, TypeError):
-        amount = 0
-
-    safe_order_id = html.escape(str(order_id))
-    safe_response_code = html.escape(str(response_code))
-
-    order = db_service.get_order_by_id(order_id)
-    if not order:
-        order = order_service.get_order_by_id(order_id)
-
-    if not order:
-        if is_browser_html:
-            return HTMLResponse(
-                content=f"""
-                <div style="font-family:sans-serif;text-align:center;padding:50px;">
-                    <h2 style="color:#e11d48;">Lỗi đơn hàng</h2>
-                    <p>Không tìm thấy mã đơn hàng: <strong>{safe_order_id}</strong></p>
-                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
-                </div>
-                """,
-                status_code=404,
-            )
-        raise HTTPException(status_code=404, detail=f"Không tìm thấy đơn hàng '{order_id}'")
-
-    order_amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
-    if amount != order_amount:
-        if is_browser_html:
-            return HTMLResponse(
-                content=f"""
-                <div style="font-family:sans-serif;text-align:center;padding:50px;">
-                    <h2 style="color:#e11d48;">Lỗi số tiền thanh toán</h2>
-                    <p>Số tiền thanh toán ({amount}đ) không khớp với giá trị đơn hàng ({order_amount}đ).</p>
-                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
-                </div>
-                """,
-                status_code=400,
-            )
-        raise HTTPException(status_code=400, detail="Số tiền thanh toán không khớp với đơn hàng")
-
-    if response_code == "00":
-        confirm_res = db_service.confirm_payment(
-            order_id=order_id,
-            amount=amount,
-            transaction_code=transaction_no,
-            payment_channel="vnpay",
-        )
-        if confirm_res in ("cancelled", "refund_pending"):
-            if is_browser_html:
-                return HTMLResponse(
-                    content=f"""
-                    <div style="font-family:sans-serif;text-align:center;padding:50px;">
-                        <h2 style="color:#e11d48;">Đơn hàng đã bị hủy</h2>
-                        <p>Đơn hàng <strong>{safe_order_id}</strong> đã bị hủy trước đó. Hệ thống đã ghi nhận thanh toán chờ hoàn tiền cho quý khách.</p>
-                        <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
-                    </div>
-                    """,
-                    status_code=200,
-                )
-            return {
-                "success": False,
-                "order_id": order_id,
-                "status": "refund_pending",
-                "message": "Đơn hàng đã bị hủy, thanh toán được ghi nhận để hoàn tiền",
-            }
-
-        if order.get("order_status") == "pending_payment" or order.get("status") == "pending_payment":
-            order_service.update_order_status(order_id, "confirmed")
-        if is_browser_html:
-            resp = RedirectResponse(url=f"/order-success/{order_id}", status_code=302)
-            phone_val = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
-            if phone_val:
-                resp.set_cookie(f"aura_order_{order_id}", phone_val, httponly=True, max_age=3600, samesite="lax")
-            return resp
-        return {
-            "success": True,
-            "order_id": order_id,
-            "response_code": response_code,
-            "payment_status": "paid",
-            "order_status": "confirmed",
-            "message": "Thanh toán VNPay thành công!",
-        }
-    else:
-        if is_browser_html:
-            return HTMLResponse(
-                content=f"""
-                <div style="font-family:sans-serif;text-align:center;padding:50px;">
-                    <h2 style="color:#d97706;">Giao dịch chưa hoàn tất</h2>
-                    <p>Mã đơn hàng: <strong>{safe_order_id}</strong></p>
-                    <p>Mã phản hồi VNPay: <strong>{safe_response_code}</strong></p>
-                    <p>Giao dịch thanh toán chưa thành công hoặc quý khách đã hủy thanh toán.</p>
-                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
-                </div>
-                """
-            )
-        return {
-            "success": False,
-            "order_id": order_id,
-            "response_code": response_code,
-            "payment_status": "unpaid",
-            "order_status": "pending_payment",
-            "message": f"Giao dịch không thành công (Mã lỗi VNPay: {response_code})",
+            "order_status": order.get("order_status") or order.get("status") or "pending_payment",
+            "message": err_msg,
         }
 
 
@@ -646,13 +576,17 @@ async def vnpay_ipn(request: Request):
     if vnp_amount != order_amount:
         return {"RspCode": "04", "Message": "Invalid amount"}
 
-    if order.get("payment_status") == "paid" or order.get("status") == "confirmed" or order.get("order_status") == "confirmed":
+    # Chỉ kiểm tra payment_status == 'paid' để chống ghi nhận lặp (Idempotent)
+    if order.get("payment_status") == "paid":
         return {"RspCode": "02", "Message": "Order already confirmed"}
 
     response_code = vnp_data.get("vnp_ResponseCode")
+    trans_status = vnp_data.get("vnp_TransactionStatus", "00")
     transaction_no = vnp_data.get("vnp_TransactionNo") or f"VNPAY-{order_id}"
 
-    if response_code == "00":
+    is_success = (response_code == "00" and trans_status in ("00", ""))
+
+    if is_success:
         confirm_res = db_service.confirm_payment(
             order_id=order_id,
             amount=vnp_amount,
@@ -666,13 +600,17 @@ async def vnpay_ipn(request: Request):
         elif confirm_res == "not_found":
             return {"RspCode": "01", "Message": "Order not found"}
         elif confirm_res in ("cancelled", "refund_pending"):
-            return {"RspCode": "02", "Message": "Order cancelled, payment marked for refund"}
+            # Đơn hàng đã bị hủy, thanh toán được đưa vào danh sách hoàn tiền.
+            # Trả về RspCode 00 để cổng VNPay xác nhận webhook thành công và không thử lại.
+            return {"RspCode": "00", "Message": "Confirm Success"}
 
         if order.get("order_status") == "pending_payment" or order.get("status") == "pending_payment":
             order_service.update_order_status(order_id, "confirmed")
         return {"RspCode": "00", "Message": "Confirm Success"}
     else:
-        return {"RspCode": "00", "Message": "Payment failed acknowledged"}
+        # Giao dịch thất bại tại cổng VNPay (khách hủy hoặc lỗi thẻ)
+        # Xác nhận đã tiếp nhận thông tin từ IPN để VNPay ngừng gửi lại
+        return {"RspCode": "00", "Message": "Confirm Success"}
 
 
 # ==========================================

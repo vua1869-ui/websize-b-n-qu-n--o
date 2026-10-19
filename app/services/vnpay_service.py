@@ -19,20 +19,62 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
+# Mã phản hồi và thông điệp chuẩn từ cổng VNPay 2.1.0
+VNPAY_RESPONSE_CODES = {
+    "00": "Giao dịch thành công",
+    "07": "Trừ tiền thành công. Giao dịch bị nghi ngờ (liên quan tới lừa đảo, giao dịch bất thường).",
+    "09": "Giao dịch không thành công: Thẻ/Tài khoản của khách hàng chưa đăng ký dịch vụ InternetBanking.",
+    "10": "Giao dịch không thành công: Khách hàng xác thực thông tin thẻ/tài khoản không đúng quá 3 lần.",
+    "11": "Giao dịch không thành công: Đã hết hạn chờ thanh toán. Vui lòng thực hiện lại giao dịch.",
+    "12": "Giao dịch không thành công: Thẻ/Tài khoản của khách hàng bị khóa.",
+    "13": "Giao dịch không thành công: Quý khách nhập sai mật khẩu xác thực OTP.",
+    "24": "Giao dịch không thành công: Khách hàng đã hủy giao dịch.",
+    "51": "Giao dịch không thành công: Tài khoản của quý khách không đủ số dư để thực hiện giao dịch.",
+    "65": "Giao dịch không thành công: Tài khoản đã vượt quá hạn mức giao dịch trong ngày.",
+    "75": "Ngân hàng thanh toán đang bảo trì.",
+    "79": "Giao dịch không thành công: Nhập sai mật khẩu thanh toán quá số lần quy định.",
+    "99": "Giao dịch thất bại (Lỗi không xác định từ cổng thanh toán)",
+}
+
+
+def get_vnpay_response_message(code: str) -> str:
+    """Trả về mô tả lỗi tiếng Việt thân thiện theo mã phản hồi VNPay."""
+    return VNPAY_RESPONSE_CODES.get(str(code), f"Giao dịch không thành công (Mã phản hồi VNPay: {code})")
+
+
+def sanitize_ip(ip_addr: Optional[str]) -> str:
+    """Chuẩn hóa địa chỉ IP client theo định dạng VNPay (tối đa 45 ký tự, không chứa chuỗi X-Forwarded-For)."""
+    if not ip_addr:
+        return "127.0.0.1"
+    first_ip = str(ip_addr).split(",")[0].strip()
+    if not first_ip or first_ip.lower() in ("::1", "localhost", "none", "null"):
+        return "127.0.0.1"
+    return first_ip[:45]
+
+
 def create_vnpay_url(order_id, amount, order_info, ip_addr, vnp_tmn_code, vnp_hash_secret, vnp_url, vnp_return_url, bank_code=None):
+    # Thời gian theo chuẩn giờ Việt Nam (GMT+7)
+    vn_tz = dt.timezone(dt.timedelta(hours=7))
+    now_vn = dt.datetime.now(vn_tz)
+    create_date = now_vn.strftime('%Y%m%d%H%M%S')
+    expire_date = (now_vn + dt.timedelta(minutes=15)).strftime('%Y%m%d%H%M%S')
+
+    clean_ip = sanitize_ip(ip_addr)
+
     vnp_Params = {
         'vnp_Version': '2.1.0',
         'vnp_Command': 'pay',
         'vnp_TmnCode': str(vnp_tmn_code).strip(),
-        'vnp_Amount': str(int(float(amount) * 100)),
+        'vnp_Amount': str(int(round(float(amount) * 100))),
         'vnp_CurrCode': 'VND',
         'vnp_TxnRef': str(order_id),
         'vnp_OrderInfo': str(order_info),
         'vnp_OrderType': 'other',
         'vnp_Locale': 'vn',
         'vnp_ReturnUrl': str(vnp_return_url).strip(),
-        'vnp_IpAddr': '127.0.0.1' if ip_addr in ['::1', 'localhost', None, ''] else str(ip_addr),
-        'vnp_CreateDate': datetime.now().strftime('%Y%m%d%H%M%S')
+        'vnp_IpAddr': clean_ip,
+        'vnp_CreateDate': create_date,
+        'vnp_ExpireDate': expire_date,
     }
 
     if bank_code:
@@ -94,12 +136,20 @@ class VNPayService:
         """
         Xác thực chữ ký phản hồi từ VNPay (Return URL hoặc IPN) chuẩn VNPay 2.1.0.
         Trả về (is_valid, clean_params).
+        Nếu secret key chưa cấu hình hoặc rỗng, từ chối ngay lập tức để chống giả mạo.
         """
+        secret_key = str(settings.VNPAY_HASH_SECRET or "").strip()
+        if not secret_key:
+            return False, {}
+
         clean_params = dict(params)
         received_hash = clean_params.pop("vnp_SecureHash", None)
         clean_params.pop("vnp_SecureHashType", None)
 
-        # Chỉ giữ lại các trường bắt đầu bằng vnp_
+        if not received_hash or not str(received_hash).strip():
+            return False, {}
+
+        # Chỉ giữ lại các trường bắt đầu bằng vnp_ và có giá trị không rỗng
         vnp_data = {k: str(v) for k, v in clean_params.items() if str(k).startswith("vnp_") and v is not None and str(v) != ""}
         inputData = sorted(vnp_data.items())
 
@@ -114,7 +164,6 @@ class VNPayService:
                 seq = 1
                 queryString = str(key) + '=' + encoded_val
 
-        secret_key = str(settings.VNPAY_HASH_SECRET).strip()
         expected_hash = hmac.new(
             secret_key.encode("utf-8"),
             queryString.encode("utf-8"),
@@ -173,7 +222,8 @@ class VNPayService:
                 "refund_trans_id": None,
             }
 
-        now = dt.datetime.now()
+        vn_tz = dt.timezone(dt.timedelta(hours=7))
+        now = dt.datetime.now(vn_tz)
         vnp_request_id = f"{order_id}_{int(time.time() * 1000)}"
         vnp_version = "2.1.0"
         vnp_command = "refund"
@@ -185,7 +235,7 @@ class VNPayService:
         vnp_transaction_date = trans_date or now.strftime("%Y%m%d%H%M%S")
         vnp_create_by = create_by or "admin"
         vnp_create_date = now.strftime("%Y%m%d%H%M%S")
-        vnp_ip_addr = client_ip or "127.0.0.1"
+        vnp_ip_addr = sanitize_ip(client_ip)
         vnp_order_info = order_desc or f"Hoan tien don hang {order_id}"
 
         # Chuỗi dữ liệu nối bằng | theo đúng đặc tả VNPay 2.1.0 Refund API
