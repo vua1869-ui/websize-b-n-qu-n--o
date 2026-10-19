@@ -13,7 +13,7 @@
 
   {% set active_page = 'products' %}
   
-  <!-- 1. TOP HEADER (Coolmate Style: Announcement Subbar + Main Nav Bar with Search Input) -->
+  <!-- 1. TOP HEADER (AURA STUDIO Style: Announcement Subbar + Main Nav Bar with Search Input) -->
   {% include "components/header.html" %}
   {% include "components/sidebar.html" %}
 
@@ -59,7 +59,7 @@
   <main id="catalog" class="mx-auto pt-4 pb-12 w-full max-w-[1600px] flex-1 px-4 sm:px-6 lg:px-10 2xl:px-16">
     <div class="flex flex-col lg:flex-row gap-8 items-start">
       
-      <!-- COLUMN 1: VERTICAL FILTER SIDEBAR (Thanh công cụ lọc bên trái như Coolmate) -->
+      <!-- COLUMN 1: VERTICAL FILTER SIDEBAR (Thanh công cụ lọc bên trái như AURA STUDIO) -->
       {% include "components/filter_sidebar.html" %}
 
       <!-- COLUMN 2: PRODUCTS GRID (Lưới sản phẩm 4 cột trên PC) -->
@@ -70,7 +70,7 @@
           <article class="product-card group relative flex flex-col text-left cursor-pointer">
             <a href="/product/{{ p.id }}" class="block">
               
-              <!-- Product Image Container (Rounded Top Cards like Coolmate) -->
+              <!-- Product Image Container (Rounded Top Cards like AURA STUDIO) -->
               <div class="relative aspect-[3/4] w-full overflow-hidden bg-[#F2F2F2] rounded-xl">
                 <img src="{{ p.images[0] }}" alt="{{ p.name }}" class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 {% if p.images|length > 1 %}group-hover:opacity-0{% endif %} {% if not p.in_stock %}opacity-50{% endif %}" loading="lazy" />
                 {% if p.images|length > 1 %}

@@ -20,8 +20,8 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['"Open Sans"', '"Segoe UI"', "-apple-system", "Roboto", "sans-serif"],
-        serif: ['"Open Sans"', '"Segoe UI"', "-apple-system", "Roboto", "sans-serif"],
+        sans: ['"Plus Jakarta Sans"', '"Segoe UI"', "-apple-system", "Roboto", "sans-serif"],
+        serif: ['"Playfair Display"', "Georgia", '"Times New Roman"', "serif"],
       },
       /* ── Thang cỡ chữ chuẩn – URBAN REVIVO STYLE (Min 14px) ─────────────
          body: 16px (1rem), line-height 1.6

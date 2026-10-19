@@ -1,6 +1,9 @@
 """Khởi động AURA STUDIO:  python run.py"""
+import logging
 import os
 import sys
+
+logging.basicConfig(level=logging.INFO)
 
 # Tránh lỗi hiển thị tiếng Việt trên Windows PowerShell / CMD
 for stream in (sys.stdout, sys.stderr):

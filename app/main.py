@@ -11,6 +11,9 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import settings
 from app.core.logging import request_id_ctx, setup_logging
+
+# Cấu hình log trước khi import db_service — init_db() chạy ngay lúc import module
+setup_logging()
 from app.db.database import db_service
 from app.routers import (
     admin,
@@ -34,8 +37,6 @@ from app.routers.deps import (
 )
 from app.services.order_service import OrderError
 
-# Khởi tạo logging tập trung
-setup_logging()
 logger = logging.getLogger("aura.main")
 
 # Tích hợp Sentry Error Tracking qua SENTRY_DSN

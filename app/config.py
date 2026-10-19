@@ -60,8 +60,8 @@ class Settings(BaseSettings):
 
     # ---- Cổng thanh toán MoMo Sandbox & Refund (MoMo v2 Gateway API) ----
     MOMO_PARTNER_CODE: str = "MOMO"
-    MOMO_ACCESS_KEY: str = "F8BBA842ECF85"
-    MOMO_SECRET_KEY: str = "K951B6PE1waDMi640xX08PD3vg6EkVlz"
+    MOMO_ACCESS_KEY: str = ""  # PHẢI đặt trong .env — xem .env.example
+    MOMO_SECRET_KEY: str = ""  # PHẢI đặt trong .env — xem .env.example
     MOMO_API_URL: str = "https://test-payment.momo.vn/v2/gateway/api/create"
     MOMO_REFUND_URL: str = "https://test-payment.momo.vn/v2/gateway/api/refund"
     MOMO_RETURN_URL: str = "http://127.0.0.1:8000/api/payment/momo/return"
@@ -98,6 +98,12 @@ class Settings(BaseSettings):
 
             if not self.VNPAY_HASH_SECRET or not self.VNPAY_HASH_SECRET.strip():
                 errors.append("- VNPAY_HASH_SECRET chưa được đặt hoặc bị rỗng. Khóa rỗng cho phép kẻ tấn công giả mạo chữ ký giao dịch.")
+
+            if not self.MOMO_ACCESS_KEY or not self.MOMO_ACCESS_KEY.strip():
+                errors.append("- MOMO_ACCESS_KEY chưa được đặt hoặc bị rỗng. Bắt buộc cấu hình khóa MoMo khi triển khai Production.")
+
+            if not self.MOMO_SECRET_KEY or not self.MOMO_SECRET_KEY.strip():
+                errors.append("- MOMO_SECRET_KEY chưa được đặt hoặc bị rỗng. Khóa rỗng cho phép kẻ tấn công giả mạo chữ ký giao dịch MoMo.")
 
             if not self.PUBLIC_BASE_URL or "127.0.0.1" in self.PUBLIC_BASE_URL or "localhost" in self.PUBLIC_BASE_URL.lower():
                 errors.append("- PUBLIC_BASE_URL chưa được đặt hoặc vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống.")

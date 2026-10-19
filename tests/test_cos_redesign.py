@@ -156,10 +156,10 @@ def test_vertical_sidebar_layout_storefront(client: TestClient):
         auth_container = sidebar.find("div", {"id": "header-auth-container"})
         assert auth_container is not None, f"Missing #header-auth-container on {path}"
 
-        # Thanh mobile top bar & overlay drawer
-        mobile_bar = soup.find("header", class_="mobile-top-bar")
-        assert mobile_bar is not None, f"Missing .mobile-top-bar on {path}"
-        assert mobile_bar.find("button", {"id": "mobile-menu-open-btn"}) is not None
+        # Chỉ còn 1 nút hamburger (header chính), không còn thanh mobile-top-bar trùng
+        assert soup.find("header", class_="mobile-top-bar") is None
+        open_btns = soup.find_all(id="mobile-menu-open-btn")
+        assert len(open_btns) == 1, f"Expected 1 #mobile-menu-open-btn on {path}, got {len(open_btns)}"
         assert soup.find("div", {"id": "sidebar-overlay"}) is not None
 
         # Khung nội dung chính dịch sang phải

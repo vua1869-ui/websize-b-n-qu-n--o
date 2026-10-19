@@ -18,7 +18,8 @@ class PaymentConfirmResult(str):
         return self in ("success", "already_paid")
 
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "aura_store.db")
+_DEFAULT_DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "aura_store.db")
+DB_PATH = os.environ.get("AURA_SQLITE_PATH") or _DEFAULT_DB_PATH
 DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
 
 _lock = threading.RLock()
@@ -394,25 +395,28 @@ def init_db(db_path: str = DB_PATH):
             # Chỉ khởi tạo điểm thưởng demo cho user usr_002 (Tiến Anh) khi ở môi trường dev
             from app.config import settings
             if getattr(settings, "APP_ENV", "dev").strip().lower() == "dev":
-                loyalty_count = conn.execute("SELECT COUNT(*) FROM loyalty_transactions WHERE user_id = 'usr_002';").fetchone()[0]
-                if loyalty_count == 0:
-                    conn.execute("""
-                        UPDATE users 
-                        SET points_balance = 120, total_spent = 6450000, tier = 'Gold' 
-                        WHERE id = 'usr_002';
-                    """)
-                    now_demo = datetime.datetime.now()
-                    t1 = (now_demo - datetime.timedelta(days=7)).strftime("%d/%m/%Y %H:%M")
-                    t2 = (now_demo - datetime.timedelta(days=2)).strftime("%d/%m/%Y %H:%M")
-                    conn.execute("""
-                        INSERT INTO loyalty_transactions (user_id, order_id, points, type, description, balance_after, created_at)
-                        VALUES ('usr_002', 'AURA-260315-DEMO1', 150, 'earn', 'Tích điểm từ đơn hàng AURA-260315-DEMO1', 150, ?);
-                    """, (t1,))
-                    conn.execute("""
-                        INSERT INTO loyalty_transactions (user_id, order_id, points, type, description, balance_after, created_at)
-                        VALUES ('usr_002', 'AURA-260320-DEMO2', -30, 'redeem', 'Dùng 30 điểm giảm giá đơn hàng AURA-260320-DEMO2', 120, ?);
-                    """, (t2,))
-                    conn.commit()
+                try:
+                    loyalty_count = conn.execute("SELECT COUNT(*) FROM loyalty_transactions WHERE user_id = 'usr_002';").fetchone()[0]
+                    if loyalty_count == 0:
+                        conn.execute("""
+                            UPDATE users 
+                            SET points_balance = 120, total_spent = 6450000, tier = 'Gold' 
+                            WHERE id = 'usr_002';
+                        """)
+                        now_demo = datetime.datetime.now()
+                        t1 = (now_demo - datetime.timedelta(days=7)).strftime("%d/%m/%Y %H:%M")
+                        t2 = (now_demo - datetime.timedelta(days=2)).strftime("%d/%m/%Y %H:%M")
+                        conn.execute("""
+                            INSERT INTO loyalty_transactions (user_id, order_id, points, type, description, balance_after, created_at)
+                            VALUES ('usr_002', 'AURA-260315-DEMO1', 150, 'earn', 'Tích điểm từ đơn hàng AURA-260315-DEMO1', 150, ?);
+                        """, (t1,))
+                        conn.execute("""
+                            INSERT INTO loyalty_transactions (user_id, order_id, points, type, description, balance_after, created_at)
+                            VALUES ('usr_002', 'AURA-260320-DEMO2', -30, 'redeem', 'Dùng 30 điểm giảm giá đơn hàng AURA-260320-DEMO2', 120, ?);
+                        """, (t2,))
+                        conn.commit()
+                except Exception as e:
+                    logger.warning("Failed seeding demo loyalty points for usr_002: %s", e)
 
             # Đồng bộ cấu trúc lô hàng và biến thể tồn kho (Single Source of Truth)
             _migrate_sync_variants_and_products_stock(conn)
@@ -430,9 +434,10 @@ def _migrate_users(conn: sqlite3.Connection):
         for u in data:
             conn.execute(
                 """
-                INSERT OR IGNORE INTO users 
-                (id, username, email, password_hash, name, full_name, phone, address, role, status, avatar, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO users 
+                (id, username, email, password_hash, name, full_name, phone, address, role, status, avatar,
+                 points_balance, total_spent, tier, token_version, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     u.get("id"),
@@ -446,6 +451,10 @@ def _migrate_users(conn: sqlite3.Connection):
                     u.get("role", "user"),
                     u.get("status", "active"),
                     u.get("avatar"),
+                    u.get("points_balance", 0),
+                    u.get("total_spent", 0),
+                    u.get("tier", "Silver"),
+                    u.get("token_version", 1),
                     u.get("created_at") or datetime.datetime.now().strftime("%d/%m/%Y %H:%M"),
                 ),
             )
