@@ -373,7 +373,7 @@ class UserService:
     # ---------- Admin Quản lý User ----------
     def get_all_users(self) -> List[User]:
         with get_db_session() as session:
-            users = session.query(UserDB).order_by(UserDB.id.asc()).all()
+            users = session.query(UserDB).order_by(UserDB.id.desc()).all()
             return [to_user_model(u) for u in users]
 
     def update_role(self, user_id: str, new_role: str, current_admin_id: Optional[str] = None) -> User:

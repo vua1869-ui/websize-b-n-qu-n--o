@@ -143,7 +143,8 @@ def admin_inventory_and_profit_page(request: Request, admin: User = Depends(requ
 # API Quản trị Thống kê & Sản phẩm
 # ==========================================
 @router.get("/api/admin/stats")
-def admin_stats(_admin: User = Depends(require_admin)):
+def admin_stats(response: Response, _admin: User = Depends(require_admin)):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     stats = order_service.get_admin_stats()
     all_products = product_service.get_all()
     stats["total_products"] = len(all_products)
@@ -552,6 +553,7 @@ def admin_export_orders(
 
 @router.get("/api/admin/orders")
 def admin_get_orders(
+    response: Response,
     status: Optional[str] = Query(None),
     payment_status: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
@@ -563,6 +565,7 @@ def admin_get_orders(
     offset: int = Query(0, ge=0),
     _admin: User = Depends(require_admin),
 ):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     f_date = from_date or start_date
     t_date = to_date or end_date
     return order_service.get_orders(
@@ -816,7 +819,8 @@ def admin_update_order_internal_note(
 # Quản lý User (Role, Status, Self-protection)
 # ==========================================
 @router.get("/api/admin/users")
-def admin_get_users(_admin: User = Depends(require_admin)):
+def admin_get_users(response: Response, _admin: User = Depends(require_admin)):
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     return user_service.get_all_users()
 
 

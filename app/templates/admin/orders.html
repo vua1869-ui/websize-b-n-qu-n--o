@@ -239,13 +239,18 @@
     cancelled: { label: "Đã hủy", bg: "bg-rose-500/10 text-rose-400 border-rose-500/20" }
   };
 
-  let knownOrderIds = null;
+  let knownOrderStates = null;
+  let lastFilterKey = null;
   let isRefreshing = false;
   let refreshTimer = null;
   const REFRESH_INTERVAL_MS = 20000;
 
   async function loadOrders(isBackground = false) {
     if (isRefreshing) return;
+    if (isBackground) {
+      if (modal && !modal.classList.contains("hidden")) return;
+      if (document.activeElement === searchInput) return;
+    }
     isRefreshing = true;
 
     const refreshIcons = document.querySelectorAll(".order-refresh-icon");
@@ -259,21 +264,40 @@
     if (activeStatus !== "all") url += `&status=${encodeURIComponent(activeStatus)}`;
     const q = searchInput.value.trim();
     if (q) url += `&search=${encodeURIComponent(q)}`;
+    const currentFilterKey = `${activeStatus}::${q}`;
 
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, { cache: "no-store" });
+      if (res.status === 401 || res.status === 403) {
+        window.location.href = "/login?redirect=/admin/orders";
+        return;
+      }
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
       const newOrders = await res.json();
 
-      // Phát hiện đơn hàng mới so với lần fetch trước
-      if (knownOrderIds !== null && Array.isArray(newOrders)) {
-        const freshOrders = newOrders.filter(o => !knownOrderIds.has(o.order_id));
+      // Chỉ thông báo đơn hàng mới khi chạy nền và cùng bộ lọc (tránh false positive khi đổi tab/tìm kiếm)
+      if (isBackground && lastFilterKey === currentFilterKey && knownOrderStates !== null && Array.isArray(newOrders)) {
+        const freshOrders = newOrders.filter(o => !knownOrderStates.has(o.order_id));
         if (freshOrders.length > 0) {
           showToast(`🛒 Có ${freshOrders.length} đơn hàng mới!`, "success");
+        }
+        let updatedCount = 0;
+        for (const o of newOrders) {
+          const old = knownOrderStates.get(o.order_id);
+          if (old && (old.status !== o.status || old.payment_status !== o.payment_status)) {
+            updatedCount++;
+          }
+        }
+        if (updatedCount > 0) {
+          showToast(`🔄 Cập nhật trạng thái ${updatedCount} đơn hàng`, "info");
         }
       }
 
       if (Array.isArray(newOrders)) {
-        knownOrderIds = new Set(newOrders.map(o => o.order_id));
+        knownOrderStates = new Map(newOrders.map(o => [o.order_id, { status: o.status, payment_status: o.payment_status }]));
+        lastFilterKey = currentFilterKey;
         currentOrders = newOrders;
       }
 
@@ -672,7 +696,9 @@
   // Tạm dừng khi chuyển tab, kích hoạt lại ngay khi quay lại tab
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
-      loadOrders(true);
+      if (!modal || modal.classList.contains("hidden")) {
+        loadOrders(true);
+      }
       startAutoRefresh();
     } else {
       stopAutoRefresh();

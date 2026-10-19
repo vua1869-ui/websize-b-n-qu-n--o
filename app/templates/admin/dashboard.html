@@ -239,85 +239,93 @@
 
     try {
       // 1. Lấy thống kê tổng quan
-      const resStats = await fetch("/api/admin/stats");
-      if (resStats.ok) {
-        const stats = await resStats.json();
-        const currentOrders = stats.total_orders || 0;
-        const currentUsers = stats.total_users || 0;
-
-        // Phát hiện đơn hàng / tài khoản mới xuất hiện so với lần fetch trước
-        if (!isFirstLoad) {
-          if (prevTotalOrders !== null && currentOrders > prevTotalOrders) {
-            const diff = currentOrders - prevTotalOrders;
-            showToast(`🛒 Có ${diff} đơn hàng mới!`, "success");
-          }
-          if (prevTotalUsers !== null && currentUsers > prevTotalUsers) {
-            const diffUsers = currentUsers - prevTotalUsers;
-            showToast(`👤 Có ${diffUsers} tài khoản mới đăng ký!`, "success");
-          }
+      const resStats = await fetch("/api/admin/stats", { cache: "no-store" });
+      if (!resStats.ok) {
+        if (resStats.status === 401 || resStats.status === 403) {
+          window.location.href = "/login?redirect=/admin";
+          return;
         }
+        throw new Error(`HTTP error ${resStats.status}`);
+      }
 
-        prevTotalOrders = currentOrders;
-        prevTotalUsers = currentUsers;
-        isFirstLoad = false;
+      const stats = await resStats.json();
+      const currentOrders = stats.total_orders || 0;
+      const currentUsers = stats.total_users || 0;
 
-        document.getElementById("stat-revenue").textContent = (stats.total_revenue || 0).toLocaleString("vi-VN") + "đ";
-        document.getElementById("stat-orders").textContent = stats.total_orders || 0;
-        document.getElementById("stat-products").textContent = stats.total_products || 500;
-        document.getElementById("stat-users").textContent = stats.total_users || 0;
-
-        // Badge tài khoản mới hôm nay
-        const newUsersToday = stats.new_users_today || 0;
-        const newUsersBadge = document.getElementById('stat-new-users-badge');
-        const newUsersCount = document.getElementById('stat-new-users-count');
-        if (newUsersToday > 0 && newUsersBadge && newUsersCount) {
-          newUsersCount.textContent = newUsersToday;
-          newUsersBadge.classList.remove('hidden');
-        } else if (newUsersBadge) {
-          newUsersBadge.classList.add('hidden');
+      // Phát hiện đơn hàng / tài khoản mới xuất hiện so với lần fetch trước
+      if (!isFirstLoad) {
+        if (prevTotalOrders !== null && currentOrders > prevTotalOrders) {
+          const diff = currentOrders - prevTotalOrders;
+          showToast(`🛒 Có ${diff} đơn hàng mới!`, "success");
         }
-
-        const totalP = stats.total_products || 500;
-        const inS = stats.products_in_stock || 0;
-        const lowS = stats.products_low_stock || 0;
-        const outS = stats.products_out_of_stock || 0;
-
-        document.getElementById("stock-in").textContent = `${inS} sp`;
-        document.getElementById("stock-low").textContent = `${lowS} sp`;
-        document.getElementById("stock-out").textContent = `${outS} sp`;
-
-        document.getElementById("bar-stock-in").style.width = `${Math.min(100, Math.round(inS / totalP * 100))}%`;
-        document.getElementById("bar-stock-low").style.width = `${Math.min(100, Math.round(lowS / totalP * 100))}%`;
-        document.getElementById("bar-stock-out").style.width = `${Math.min(100, Math.round(outS / totalP * 100))}%`;
-
-        // Render Recent Orders
-        const tbody = document.getElementById("recent-orders-tbody");
-        const statusMap = {
-          pending_payment: { label: "Chờ thanh toán", bg: "bg-noir-800 text-noir-300 border-noir-600" },
-          confirmed: { label: "Đã xác nhận", bg: "bg-noir-800 text-noir-100 border-noir-600" },
-          shipping: { label: "Đang giao", bg: "bg-gold-500/10 text-gold-400 border-gold-500/20" },
-          completed: { label: "Hoàn tất", bg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
-          cancelled: { label: "Đã hủy", bg: "bg-noir-800 text-noir-500 border-noir-700" }
-        };
-
-        if (stats.recent_orders && stats.recent_orders.length > 0) {
-          tbody.innerHTML = stats.recent_orders.map(o => {
-            const st = statusMap[o.status] || { label: o.status, bg: "bg-noir-800 text-noir-300 border-noir-600" };
-            return `
-              <tr class="hover:bg-noir-800 transition">
-                <td class="py-3 font-mono font-semibold text-noir-100">${esc(o.order_id)}</td>
-                <td class="py-3 font-medium text-noir-200">${esc(o.customer?.name || "Khách hàng")}</td>
-                <td class="py-3 font-semibold text-gold-500">${(o.quote?.total || 0).toLocaleString("vi-VN")}đ</td>
-                <td class="py-3 text-noir-400">${o.payment_method === 'cod' ? 'COD' : (o.payment_method === 'momo' ? 'MoMo' : (o.payment_method === 'vnpay' ? 'VNPay' : 'VietQR'))}</td>
-                <td class="py-3 text-right">
-                  <span class="inline-flex rounded-full px-2 py-0.5 text-sm font-medium border ${st.bg}">${esc(st.label)}</span>
-                </td>
-              </tr>
-            `;
-          }).join("");
-        } else {
-          tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-noir-400">Chưa có đơn hàng nào</td></tr>`;
+        if (prevTotalUsers !== null && currentUsers > prevTotalUsers) {
+          const diffUsers = currentUsers - prevTotalUsers;
+          showToast(`👤 Có ${diffUsers} tài khoản mới đăng ký!`, "success");
         }
+      }
+
+      prevTotalOrders = currentOrders;
+      prevTotalUsers = currentUsers;
+      isFirstLoad = false;
+
+      document.getElementById("stat-revenue").textContent = (stats.total_revenue || 0).toLocaleString("vi-VN") + "đ";
+      document.getElementById("stat-orders").textContent = stats.total_orders || 0;
+      document.getElementById("stat-products").textContent = stats.total_products || 500;
+      document.getElementById("stat-users").textContent = stats.total_users || 0;
+
+      // Badge tài khoản mới hôm nay
+      const newUsersToday = stats.new_users_today || 0;
+      const newUsersBadge = document.getElementById('stat-new-users-badge');
+      const newUsersCount = document.getElementById('stat-new-users-count');
+      if (newUsersToday > 0 && newUsersBadge && newUsersCount) {
+        newUsersCount.textContent = newUsersToday;
+        newUsersBadge.classList.remove('hidden');
+      } else if (newUsersBadge) {
+        newUsersBadge.classList.add('hidden');
+      }
+
+      const totalP = stats.total_products || 500;
+      const inS = stats.products_in_stock || 0;
+      const lowS = stats.products_low_stock || 0;
+      const outS = stats.products_out_of_stock || 0;
+
+      document.getElementById("stock-in").textContent = `${inS} sp`;
+      document.getElementById("stock-low").textContent = `${lowS} sp`;
+      document.getElementById("stock-out").textContent = `${outS} sp`;
+
+      document.getElementById("bar-stock-in").style.width = `${Math.min(100, Math.round(inS / totalP * 100))}%`;
+      document.getElementById("bar-stock-low").style.width = `${Math.min(100, Math.round(lowS / totalP * 100))}%`;
+      document.getElementById("bar-stock-out").style.width = `${Math.min(100, Math.round(outS / totalP * 100))}%`;
+
+      // Render Recent Orders
+      const tbody = document.getElementById("recent-orders-tbody");
+      const statusMap = {
+        pending_payment: { label: "Chờ thanh toán", bg: "bg-noir-800 text-noir-300 border-noir-600" },
+        confirmed: { label: "Đã xác nhận", bg: "bg-noir-800 text-noir-100 border-noir-600" },
+        shipping: { label: "Đang giao", bg: "bg-gold-500/10 text-gold-400 border-gold-500/20" },
+        completed: { label: "Hoàn tất", bg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
+        cancelled: { label: "Đã hủy", bg: "bg-noir-800 text-noir-500 border-noir-700" }
+      };
+
+      if (stats.recent_orders && stats.recent_orders.length > 0) {
+        tbody.innerHTML = stats.recent_orders.map(o => {
+          const st = statusMap[o.status] || { label: o.status, bg: "bg-noir-800 text-noir-300 border-noir-600" };
+          const orderTotal = o.quote?.total || o.total_amount || 0;
+          const payMethod = o.payment_method === 'cod' ? 'COD' : (o.payment_method === 'momo' ? 'MoMo' : (o.payment_method === 'vnpay' ? 'VNPay' : 'VietQR'));
+          return `
+            <tr class="hover:bg-noir-800 transition">
+              <td class="py-3 font-mono font-semibold text-noir-100">${esc(o.order_id)}</td>
+              <td class="py-3 font-medium text-noir-200">${esc(o.customer?.name || "Khách hàng")}</td>
+              <td class="py-3 font-semibold text-gold-500">${orderTotal.toLocaleString("vi-VN")}đ</td>
+              <td class="py-3 text-noir-400">${payMethod}</td>
+              <td class="py-3 text-right">
+                <span class="inline-flex rounded-full px-2 py-0.5 text-sm font-medium border ${st.bg}">${esc(st.label)}</span>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      } else {
+        tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-noir-400">Chưa có đơn hàng nào</td></tr>`;
       }
 
       // 2. Lấy top xu hướng

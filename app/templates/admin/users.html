@@ -84,6 +84,10 @@
 
   async function loadUsers(isBackground = false) {
     if (isRefreshing) return;
+    // Nếu admin đang gõ tìm kiếm, tạm hoãn tự động làm mới ngầm để không gián đoạn thao tác
+    if (isBackground && document.activeElement === searchInput) {
+      return;
+    }
     isRefreshing = true;
 
     const refreshIcons = document.querySelectorAll(".user-refresh-icon");
@@ -94,7 +98,14 @@
     }
 
     try {
-      const res = await fetch("/api/admin/users");
+      const res = await fetch("/api/admin/users", { cache: "no-store" });
+      if (!res.ok) {
+        if (res.status === 401 || res.status === 403) {
+          window.location.href = "/login?redirect=/admin/users";
+          return;
+        }
+        throw new Error(`HTTP error ${res.status}`);
+      }
       const freshUsers = await res.json();
 
       // Phát hiện tài khoản mới đăng ký so với lần fetch trước
@@ -117,8 +128,9 @@
       }
 
     } catch (e) {
+      console.warn("Lỗi tải danh sách người dùng:", e);
       if (!isBackground) {
-        tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-rose-400">Lỗi tải dữ liệu người dùng</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-rose-400">Lỗi tải dữ liệu người dùng. Vui lòng thử lại.</td></tr>`;
       }
     } finally {
       isRefreshing = false;
@@ -139,7 +151,7 @@
     });
 
     if (filtered.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" class="py-12 text-center text-noir-400">Không tìm thấy tài khoản phù hợp</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="py-12 text-center text-noir-400">Không tìm thấy tài khoản phù hợp</td></tr>`;
       return;
     }
 
