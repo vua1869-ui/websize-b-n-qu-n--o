@@ -231,12 +231,19 @@ async def validation_error_handler(_: Request, exc: RequestValidationError):
     else:
         label = FIELD_LABELS.get(field, field or "dữ liệu")
         detail = f"{label} không hợp lệ"
-    return JSONResponse(status_code=422, content={"detail": detail})
+    status_code = 400 if (field == "payment_method" or "payment_method" in detail) else 422
+    return JSONResponse(
+        status_code=status_code,
+        content={"success": False, "message": detail, "error": detail, "detail": detail}
+    )
 
 
 @app.exception_handler(OrderError)
 async def order_error_handler(_: Request, exc: OrderError):
-    return JSONResponse(status_code=exc.status_code, content={"detail": exc.message})
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"success": False, "message": exc.message, "error": exc.message, "detail": exc.message}
+    )
 
 
 @app.exception_handler(StarletteHTTPException)

@@ -17,12 +17,11 @@
 
   <!-- Nút Quay Lại -->
   <div class="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-10 2xl:px-16 pt-4 pb-0">
-    <a href="/" onclick="if (window.history.length > 1) { window.history.back(); return false; }"
-       class="aura-back-btn group" title="Quay lại trang chủ" aria-label="Quay lại trang chủ">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-      </svg>
-      <span>Quay lại</span>
+    <a href="javascript:history.back()" class="inline-flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-black mb-4" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+        <svg width="20" height="20" style="width: 20px !important; height: 20px !important; min-width: 20px; max-width: 20px; flex-shrink: 0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>Quay lại</span>
     </a>
   </div>
 
@@ -606,13 +605,17 @@
                   <span>🚚</span>
                   <span>Vận đơn: <strong class="font-mono text-[#111111] font-semibold">${esc(trackingCode)}</strong> (${esc(carrier)})</span>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                   <button type="button" data-order-id="${esc(o.order_id)}" class="btn-view-track btn btn-outline btn-sm !py-1 text-sm">
                     Theo dõi bưu tá
                   </button>
                   <button type="button" data-order-id="${esc(o.order_id)}" class="btn-view-inv btn btn-outline btn-sm !py-1 text-sm">
                     Hóa đơn
                   </button>
+                  ${['pending','pending_payment','confirmed'].includes(o.status) ? `
+                  <button type="button" data-order-id="${esc(o.order_id)}" data-paid="${o.payment_status === 'paid' ? '1' : '0'}" class="btn-cancel-order btn btn-sm !py-1 text-sm !border-red-300 !text-red-600 hover:!bg-red-50 transition">
+                    ✕ Hủy đơn
+                  </button>` : ''}
                 </div>
               </div>
 
@@ -629,6 +632,8 @@
           if (trackBtn) viewOrderTracking(trackBtn.dataset.orderId);
           const invBtn = e.target.closest(".btn-view-inv");
           if (invBtn) viewOrderInvoice(invBtn.dataset.orderId);
+          const cancelBtn = e.target.closest(".btn-cancel-order");
+          if (cancelBtn) openCancelModal(cancelBtn.dataset.orderId, cancelBtn.dataset.paid === '1');
         });
 
       } catch (err) {
@@ -645,6 +650,73 @@
         `;
       }
     }
+
+    /* =========================================================
+       MODAL HỦY ĐƠN + NHẬP TK NGÂN HÀNG HOÀN TIỀN
+    ========================================================= */
+    let _cancelOrderId = null;
+
+    function openCancelModal(orderId, isPaid) {
+      _cancelOrderId = orderId;
+      document.getElementById('cancel-order-id-display').textContent = orderId;
+      const refundSection = document.getElementById('cancel-refund-section');
+      if (isPaid) {
+        refundSection.classList.remove('hidden');
+      } else {
+        refundSection.classList.add('hidden');
+        document.getElementById('cancel-bank-name').value = '';
+        document.getElementById('cancel-account-number').value = '';
+        document.getElementById('cancel-account-holder').value = '';
+      }
+      document.getElementById('cancel-order-modal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeCancelModal() {
+      document.getElementById('cancel-order-modal').classList.add('hidden');
+      document.body.style.overflow = '';
+      _cancelOrderId = null;
+    }
+
+    document.getElementById('cancel-modal-close')?.addEventListener('click', closeCancelModal);
+    document.getElementById('cancel-modal-backdrop')?.addEventListener('click', closeCancelModal);
+
+    document.getElementById('cancel-confirm-btn')?.addEventListener('click', async () => {
+      if (!_cancelOrderId) return;
+      const btn = document.getElementById('cancel-confirm-btn');
+      btn.disabled = true;
+      btn.textContent = 'Đang hủy...';
+
+      const phone = document.getElementById('edit_phone')?.value?.trim() || '';
+      const bankName = document.getElementById('cancel-bank-name')?.value?.trim() || '';
+      const accountNumber = document.getElementById('cancel-account-number')?.value?.trim() || '';
+      const accountHolder = document.getElementById('cancel-account-holder')?.value?.trim() || '';
+
+      const body = { phone };
+      if (bankName || accountNumber || accountHolder) {
+        body.refund_bank_name = bankName;
+        body.refund_account_number = accountNumber;
+        body.refund_account_holder = accountHolder;
+      }
+
+      try {
+        const res = await fetch(`/api/orders/${_cancelOrderId}/cancel`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Hủy đơn thất bại');
+        closeCancelModal();
+        alert(data.message || 'Đơn hàng đã được hủy thành công!');
+        loadOrders();
+      } catch(err) {
+        alert('Lỗi: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Xác nhận hủy đơn';
+      }
+    });
 
     // Profile form submit
     document.getElementById("profile-form").addEventListener("submit", async (e) => {
@@ -945,5 +1017,76 @@
   <!-- Chat AI Drawer & Floating Widget -->
   {% include "components/ai_stylist_widget.html" %}
   <script src="/static/js/ai_stylist.js?v={{ version }}"></script>
+
+  <!-- =====================================================
+       MODAL HỦY ĐƠN HÀNG + NHẬP TK NGÂN HÀNG HOÀN TIỀN
+  ====================================================== -->
+  <div id="cancel-order-modal" class="hidden fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <!-- Backdrop -->
+    <div id="cancel-modal-backdrop" class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+
+    <!-- Modal Box -->
+    <div class="relative z-10 w-full max-w-md bg-white rounded-[4px] border border-[#E5E2DC] shadow-2xl">
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-[#E5E2DC] px-6 py-4">
+        <div class="flex items-center gap-2">
+          <span class="text-red-500 text-lg">⚠️</span>
+          <h3 class="text-base font-semibold text-[#111111]">Xác nhận hủy đơn hàng</h3>
+        </div>
+        <button id="cancel-modal-close" type="button"
+          class="flex h-8 w-8 items-center justify-center rounded-full text-[#777777] hover:bg-[#F0EDE8] hover:text-[#111111] transition">
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div class="px-6 py-5 space-y-4">
+        <p class="text-sm text-[#555555]">
+          Bạn đang yêu cầu hủy đơn hàng
+          <strong class="font-mono text-[#111111]" id="cancel-order-id-display"></strong>.
+        </p>
+        <div class="rounded-[2px] bg-amber-50 border border-amber-200 p-3 text-sm text-amber-800">
+          ⚡ Chỉ được hủy khi đơn hàng <strong>chưa được giao</strong> (Chờ xử lý hoặc Đã xác nhận).
+        </div>
+
+        <!-- Phần hoàn tiền: chỉ hiện nếu đã thanh toán -->
+        <div id="cancel-refund-section" class="hidden space-y-3">
+          <div class="rounded-[2px] bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800">
+            💳 Đơn này đã thanh toán. Vui lòng nhập thông tin ngân hàng để admin hoàn tiền về tài khoản của bạn.
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-[#333333] mb-1">Tên ngân hàng <span class="text-red-500">*</span></label>
+            <input id="cancel-bank-name" type="text" placeholder="VD: Vietcombank, MB Bank, BIDV..."
+              class="w-full rounded-[2px] border border-[#E5E2DC] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-[#333333] mb-1">Số tài khoản <span class="text-red-500">*</span></label>
+            <input id="cancel-account-number" type="text" placeholder="Nhập số tài khoản nhận hoàn tiền"
+              class="w-full rounded-[2px] border border-[#E5E2DC] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-[#333333] mb-1">Chủ tài khoản <span class="text-red-500">*</span></label>
+            <input id="cancel-account-holder" type="text" placeholder="Tên chủ tài khoản (IN HOA)"
+              class="w-full rounded-[2px] border border-[#E5E2DC] px-3 py-2 text-sm focus:border-[#111111] focus:outline-none focus:ring-1 focus:ring-[#111111]" />
+          </div>
+          <p class="text-xs text-[#999999]">Tiền hoàn lại trong 3–5 ngày làm việc sau khi admin xác nhận.</p>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="flex items-center justify-end gap-3 border-t border-[#E5E2DC] px-6 py-4">
+        <button type="button" id="cancel-modal-close-btn" onclick="document.getElementById('cancel-order-modal').classList.add('hidden'); document.body.style.overflow='';"
+          class="px-5 py-2 text-sm font-medium border border-[#E5E2DC] rounded-[2px] text-[#555555] hover:bg-[#F0EDE8] transition">
+          Đóng
+        </button>
+        <button type="button" id="cancel-confirm-btn"
+          class="px-5 py-2 text-sm font-semibold rounded-[2px] bg-red-600 hover:bg-red-700 text-white transition disabled:opacity-60">
+          Xác nhận hủy đơn
+        </button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

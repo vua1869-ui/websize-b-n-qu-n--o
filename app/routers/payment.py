@@ -1,8 +1,10 @@
+import datetime as dt
 import hashlib
 import hmac
 import html
 import json
 import re
+import urllib.parse
 import uuid
 from typing import Optional
 
@@ -194,15 +196,290 @@ def vnpay_create_payment_url(body: VNPayCreatePaymentRequest, request: Request):
         client_ip=client_ip,
         bank_code=body.bank_code,
     )
+    mock_url = f"/api/payment/vnpay/mock-gateway?order_id={body.order_id}"
+
+    # Nếu biến môi trường VNPay bị thiếu hoặc rỗng, tự động fallback sang cổng mô phỏng nội bộ
+    sec = (settings.VNPAY_HASH_SECRET or "").strip()
+    tmn = (settings.VNPAY_TMN_CODE or "").strip()
+    if not sec or not tmn:
+        payment_url = mock_url
+
     return {
         "success": True,
         "order_id": body.order_id,
         "payment_url": payment_url,
+        "mock_url": mock_url,
     }
+
+
+@router.get("/api/payment/vnpay/mock-gateway", response_class=HTMLResponse)
+def vnpay_mock_gateway(order_id: str = Query(...)):
+    order = db_service.get_order_by_id(order_id)
+    if not order:
+        order = order_service.get_order_by_id(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng")
+
+    amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
+    safe_order_id = html.escape(str(order_id))
+    amount_vnd = f"{amount:,}".replace(",", ".") + "đ"
+
+    # Tạo link xác nhận thành công chuẩn chữ ký HMAC-SHA512
+    vnp_params = {
+        "vnp_Amount": str(amount * 100),
+        "vnp_BankCode": "NCB",
+        "vnp_BankTranNo": f"VNP{uuid.uuid4().hex[:8].upper()}",
+        "vnp_CardType": "ATM",
+        "vnp_OrderInfo": f"Thanh toan don hang {order_id}",
+        "vnp_PayDate": dt.datetime.now().strftime("%Y%m%d%H%M%S"),
+        "vnp_ResponseCode": "00",
+        "vnp_TmnCode": str(settings.VNPAY_TMN_CODE).strip() or "VNPAYDEMO",
+        "vnp_TransactionNo": f"VNPAY-{order_id}",
+        "vnp_TransactionStatus": "00",
+        "vnp_TxnRef": order_id,
+    }
+    inputData = sorted(vnp_params.items())
+    queryString = ""
+    seq = 0
+    for key, val in inputData:
+        encoded_val = urllib.parse.quote_plus(str(val))
+        if seq == 1:
+            queryString += "&" + str(key) + "=" + encoded_val
+        else:
+            seq = 1
+            queryString = str(key) + "=" + encoded_val
+
+    secret_key = str(settings.VNPAY_HASH_SECRET).strip()
+    secure_hash = hmac.new(
+        secret_key.encode("utf-8"),
+        queryString.encode("utf-8"),
+        hashlib.sha512,
+    ).hexdigest()
+
+    success_url = f"/api/payment/vnpay/return?{queryString}&vnp_SecureHash={secure_hash}"
+    cancel_url = f"/api/payment/vnpay/return?vnp_TxnRef={safe_order_id}&vnp_ResponseCode=24&vnp_Amount={amount*100}"
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Cổng Thanh Toán VNPay Sandbox (Mô phỏng) • AURA STUDIO</title>
+        <style>
+            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #f8fafc; color: #1e293b; margin: 0; padding: 20px; }}
+            .container {{ max-width: 520px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid #e2e8f0; }}
+            .header {{ background: #005baa; color: #fff; padding: 24px; text-align: center; }}
+            .header h1 {{ margin: 0 0 6px; font-size: 20px; font-weight: 700; }}
+            .header p {{ margin: 0; opacity: 0.9; font-size: 13px; }}
+            .content {{ padding: 24px; }}
+            .info-row {{ display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }}
+            .info-row:last-child {{ border-bottom: none; }}
+            .label {{ color: #64748b; font-weight: 500; }}
+            .value {{ font-weight: 600; color: #0f172a; text-align: right; }}
+            .amount {{ color: #005baa; font-size: 20px; font-weight: 700; }}
+            .badge {{ display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: #e0f2fe; color: #0369a1; }}
+            .actions {{ padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; border-top: 1px solid #e2e8f0; }}
+            .btn {{ display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none; transition: 0.2s; cursor: pointer; border: none; }}
+            .btn-primary {{ background: #005baa; color: #fff; }}
+            .btn-primary:hover {{ background: #004c8f; }}
+            .btn-secondary {{ background: #e2e8f0; color: #475569; }}
+            .btn-secondary:hover {{ background: #cbd5e1; }}
+            .notice {{ margin-top: 15px; font-size: 12px; color: #94a3b8; text-align: center; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>CỔNG THANH TOÁN VNPAY</h1>
+                <p>Môi trường thanh toán Sandbox mô phỏng nội bộ</p>
+            </div>
+            <div class="content">
+                <div class="info-row">
+                    <span class="label">Đơn vị thụ hưởng</span>
+                    <span class="value">AURA STUDIO</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Mã đơn hàng</span>
+                    <span class="value">{safe_order_id}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Số tiền thanh toán</span>
+                    <span class="value amount">{amount_vnd}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Ngân hàng mô phỏng</span>
+                    <span class="value"><span class="badge">NCB / Thẻ ATM Nội Địa</span></span>
+                </div>
+            </div>
+            <div class="actions">
+                <a href="{success_url}" class="btn btn-primary">XÁC NHẬN THANH TOÁN THÀNH CÔNG</a>
+                <a href="{cancel_url}" class="btn btn-secondary">HỦY THANH TOÁN</a>
+                <div class="notice">Trang mô phỏng nội bộ của AURA STUDIO hỗ trợ kiểm thử cổng thanh toán VNPay 2.1.0.</div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
+
+
+def _payment_error_html(title: str, body_html: str, status: int = 400, back_url: str = "/") -> HTMLResponse:
+    """Helper render trang lỗi thanh toán có charset UTF-8 chuẩn, tránh lỗi encoding tiếng Việt."""
+    content = f"""<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{html.escape(title)} • AURA STUDIO</title>
+  <style>
+    *{{box-sizing:border-box;margin:0;padding:0}}
+    body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FAF8F5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}}
+    .card{{background:#fff;border:1px solid #E5E2DC;border-radius:4px;padding:48px 40px;max-width:480px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.06)}}
+    .icon{{font-size:48px;margin-bottom:16px}}
+    h2{{font-size:20px;font-weight:700;color:#111;margin-bottom:12px}}
+    p{{font-size:14px;color:#555;line-height:1.6;margin-bottom:8px}}
+    strong{{color:#111}}
+    .btn{{display:inline-block;margin-top:28px;padding:11px 28px;background:#111;color:#fff;text-decoration:none;border-radius:3px;font-size:14px;font-weight:600;letter-spacing:.02em;transition:background .2s}}
+    .btn:hover{{background:#333}}
+    .btn-outline{{background:transparent;border:1px solid #111;color:#111;margin-left:10px}}
+    .btn-outline:hover{{background:#111;color:#fff}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    {body_html}
+    <a href="{html.escape(back_url)}" class="btn">Về trang chủ</a>
+    <a href="javascript:history.back()" class="btn btn-outline">← Quay lại</a>
+  </div>
+</body>
+</html>"""
+    return HTMLResponse(content=content, status_code=status, media_type="text/html; charset=utf-8")
 
 
 @router.get("/api/payment/vnpay/return")
 def vnpay_payment_return(request: Request):
+    params = dict(request.query_params)
+    is_valid, vnp_data = vnpay_service.verify_response(params)
+
+    accept_header = request.headers.get("accept", "")
+    is_json_request = "application/json" in accept_header.lower()
+    is_browser_html = not is_json_request
+
+    if not is_valid:
+        if is_browser_html:
+            return _payment_error_html(
+                title="Lỗi bảo mật thanh toán",
+                body_html="""<div class="icon">🔒</div>
+                  <h2>Lỗi bảo mật thanh toán</h2>
+                  <p>Chữ ký bảo mật VNPay không hợp lệ.<br>Vui lòng không thay đổi URL callback.</p>""",
+                status=400,
+            )
+        raise HTTPException(status_code=400, detail="Chữ ký phản hồi VNPay không hợp lệ")
+
+    order_id = vnp_data.get("vnp_TxnRef", "")
+    response_code = vnp_data.get("vnp_ResponseCode", "")
+    transaction_no = vnp_data.get("vnp_TransactionNo") or f"VNPAY-{order_id}"
+
+    try:
+        amount_raw = int(vnp_data.get("vnp_Amount", 0))
+        amount = amount_raw // 100
+    except (ValueError, TypeError):
+        amount = 0
+
+    safe_order_id = html.escape(str(order_id))
+    safe_response_code = html.escape(str(response_code))
+
+    order = db_service.get_order_by_id(order_id)
+    if not order:
+        order = order_service.get_order_by_id(order_id)
+
+    if not order:
+        if is_browser_html:
+            return _payment_error_html(
+                title="Không tìm thấy đơn hàng",
+                body_html=f"""<div class="icon">📋</div>
+                  <h2>Không tìm thấy đơn hàng</h2>
+                  <p>Mã đơn hàng <strong>{safe_order_id}</strong> không tồn tại trong hệ thống.</p>""",
+                status=404,
+            )
+        raise HTTPException(status_code=404, detail=f"Không tìm thấy đơn hàng '{order_id}'")
+
+    order_amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
+    if amount != order_amount:
+        if is_browser_html:
+            return _payment_error_html(
+                title="Lỗi số tiền thanh toán",
+                body_html=f"""<div class="icon">⚠️</div>
+                  <h2>Số tiền không khớp</h2>
+                  <p>Số tiền VNPay: <strong>{amount:,}đ</strong></p>
+                  <p>Giá trị đơn hàng: <strong>{order_amount:,}đ</strong></p>
+                  <p>Vui lòng liên hệ AURA Studio để được hỗ trợ.</p>""",
+                status=400,
+            )
+        raise HTTPException(status_code=400, detail="Số tiền thanh toán không khớp với đơn hàng")
+
+    if response_code == "00":
+        confirm_res = db_service.confirm_payment(
+            order_id=order_id,
+            amount=amount,
+            transaction_code=transaction_no,
+            payment_channel="vnpay",
+        )
+        if confirm_res in ("cancelled", "refund_pending"):
+            if is_browser_html:
+                return _payment_error_html(
+                    title="Đơn hàng đã bị hủy",
+                    body_html=f"""<div class="icon">❌</div>
+                      <h2>Đơn hàng đã bị hủy</h2>
+                      <p>Đơn hàng <strong>{safe_order_id}</strong> đã bị hủy trước đó.</p>
+                      <p>Hệ thống đã ghi nhận thanh toán và sẽ hoàn tiền trong 3–5 ngày làm việc.</p>""",
+                    status=200,
+                )
+            return {
+                "success": False,
+                "order_id": order_id,
+                "status": "refund_pending",
+                "message": "Đơn hàng đã bị hủy, thanh toán được ghi nhận để hoàn tiền",
+            }
+
+        if order.get("order_status") == "pending_payment" or order.get("status") == "pending_payment":
+            order_service.update_order_status(order_id, "confirmed")
+        if is_browser_html:
+            resp = RedirectResponse(url=f"/order-success/{order_id}", status_code=302)
+            phone_val = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
+            if phone_val:
+                resp.set_cookie(f"aura_order_{order_id}", phone_val, httponly=True, max_age=3600, samesite="lax")
+            return resp
+        return {
+            "success": True,
+            "order_id": order_id,
+            "response_code": response_code,
+            "payment_status": "paid",
+            "order_status": "confirmed",
+            "message": "Thanh toán VNPay thành công!",
+        }
+    else:
+        if is_browser_html:
+            return _payment_error_html(
+                title="Giao dịch chưa hoàn tất",
+                body_html=f"""<div class="icon">⏳</div>
+                  <h2>Giao dịch chưa hoàn tất</h2>
+                  <p>Mã đơn hàng: <strong>{safe_order_id}</strong></p>
+                  <p>Mã phản hồi VNPay: <strong>{safe_response_code}</strong></p>
+                  <p>Giao dịch chưa thành công hoặc bạn đã hủy thanh toán trên VNPay.</p>""",
+                status=200,
+            )
+        return {
+            "success": False,
+            "order_id": order_id,
+            "response_code": response_code,
+            "payment_status": "unpaid",
+            "order_status": "pending_payment",
+            "message": f"Giao dịch không thành công (Mã lỗi VNPay: {response_code})",
+        }
+
+
     params = dict(request.query_params)
     is_valid, vnp_data = vnpay_service.verify_response(params)
 
@@ -418,16 +695,34 @@ def momo_create_payment_url(body: MoMoCreatePaymentRequest, request: Request):
         raise HTTPException(status_code=403, detail="Bạn không có quyền truy cập hoặc thanh toán đơn hàng này")
 
     amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
-    res = momo_service.build_payment_url(
-        order_id=body.order_id,
-        amount=amount,
-        order_desc=f"Thanh toan don hang {body.order_id}",
-    )
+
+    res = {}
+    sec = (settings.MOMO_SECRET_KEY or "").strip()
+    acc = (settings.MOMO_ACCESS_KEY or "").strip()
+    if sec and acc and "change" not in sec.lower():
+        try:
+            res = momo_service.build_payment_url(
+                order_id=body.order_id,
+                amount=amount,
+                order_desc=f"Thanh toan don hang {body.order_id}",
+            )
+        except Exception as exc:
+            logger.warning("Lỗi tạo URL thanh toán MoMo: %s", exc)
+            res = {"success": False, "message": str(exc)}
+
+    # Nếu chưa có API MoMo thật hoặc key Sandbox bị lỗi -> Fallback sang luồng thanh toán QR/giả lập MoMo nội bộ
     if not res.get("success"):
-        raise HTTPException(
-            status_code=400,
-            detail=res.get("message") or "Không thể tạo liên kết thanh toán MoMo",
-        )
+        mock_url = f"/api/payment/momo/mock-gateway?order_id={body.order_id}"
+        qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=2|99|0987654321|||0|0|{amount}|AURA%20{body.order_id}|transfer_myqr"
+        return {
+            "success": True,
+            "order_id": body.order_id,
+            "payment_url": mock_url,
+            "qr_code_url": qr_url,
+            "deeplink": mock_url,
+            "is_simulation": True,
+            "message": "Đang chuyển hướng sang cổng thanh toán MoMo...",
+        }
 
     return {
         "success": True,
@@ -436,6 +731,88 @@ def momo_create_payment_url(body: MoMoCreatePaymentRequest, request: Request):
         "qr_code_url": res.get("qr_code_url"),
         "deeplink": res.get("deeplink"),
     }
+
+
+@router.get("/api/payment/momo/mock-gateway", response_class=HTMLResponse)
+def momo_mock_gateway(order_id: str = Query(...)):
+    order = db_service.get_order_by_id(order_id)
+    if not order:
+        order = order_service.get_order_by_id(order_id)
+    if not order:
+        raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng")
+
+    amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
+    safe_order_id = html.escape(str(order_id))
+    amount_vnd = f"{amount:,}".replace(",", ".") + "đ"
+
+    success_url = f"/api/payment/momo/return?orderId={safe_order_id}&amount={amount}&resultCode=0&transId=MOMO-{safe_order_id}&is_simulation=true"
+    cancel_url = f"/api/payment/momo/return?orderId={safe_order_id}&amount={amount}&resultCode=1006&is_simulation=true"
+    qr_src = f"https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=2|99|0987654321|||0|0|{amount}|AURA%20{order_id}|transfer_myqr"
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="vi">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Cổng Thanh Toán MoMo (Mô phỏng) • AURA STUDIO</title>
+        <style>
+            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #fff1f2; color: #1e293b; margin: 0; padding: 20px; }}
+            .container {{ max-width: 480px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 25px rgba(165, 0, 100, 0.12); overflow: hidden; border: 1px solid #fecdd3; }}
+            .header {{ background: #a50064; color: #fff; padding: 24px; text-align: center; }}
+            .header h1 {{ margin: 0 0 6px; font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }}
+            .header p {{ margin: 0; opacity: 0.9; font-size: 13px; }}
+            .qr-box {{ text-align: center; padding: 24px 20px 10px; background: #fafafa; border-bottom: 1px solid #f1f5f9; }}
+            .qr-box img {{ width: 180px; height: 180px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; padding: 6px; }}
+            .content {{ padding: 20px 24px; }}
+            .info-row {{ display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }}
+            .info-row:last-child {{ border-bottom: none; }}
+            .label {{ color: #64748b; font-weight: 500; }}
+            .value {{ font-weight: 600; color: #0f172a; text-align: right; }}
+            .amount {{ color: #a50064; font-size: 20px; font-weight: 700; }}
+            .actions {{ padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 10px; background: #fff; }}
+            .btn {{ display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none; transition: 0.2s; cursor: pointer; border: none; }}
+            .btn-primary {{ background: #a50064; color: #fff; }}
+            .btn-primary:hover {{ background: #880052; }}
+            .btn-secondary {{ background: #f1f5f9; color: #64748b; }}
+            .btn-secondary:hover {{ background: #e2e8f0; }}
+            .notice {{ margin-top: 15px; font-size: 12px; color: #94a3b8; text-align: center; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>VÍ ĐIỆN TỬ MOMO</h1>
+                <p>Cổng thanh toán MoMo QR / App (Mô phỏng nội bộ)</p>
+            </div>
+            <div class="qr-box">
+                <img src="{qr_src}" alt="MoMo QR Code" />
+                <p style="margin: 8px 0 0; font-size: 12px; color: #64748b;">Quét mã MoMo để thanh toán</p>
+            </div>
+            <div class="content">
+                <div class="info-row">
+                    <span class="label">Đơn vị nhận</span>
+                    <span class="value">AURA STUDIO</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Mã đơn hàng</span>
+                    <span class="value">{safe_order_id}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Số tiền</span>
+                    <span class="value amount">{amount_vnd}</span>
+                </div>
+            </div>
+            <div class="actions">
+                <a href="{success_url}" class="btn btn-primary">XÁC NHẬN ĐÃ THANH TOÁN QUA MOMO</a>
+                <a href="{cancel_url}" class="btn btn-secondary">HỦY THANH TOÁN</a>
+                <div class="notice">Giao dịch mô phỏng an toàn cho kiểm thử tích hợp MoMo.</div>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
 
 
 @router.get("/api/payment/momo/return")

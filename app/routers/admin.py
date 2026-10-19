@@ -155,7 +155,21 @@ def admin_stats(_admin: User = Depends(require_admin)):
     stats["variants_low_stock"] = len(low_vars)
     stats["variants_out_of_stock"] = sum(1 for v in low_vars if v["stock"] == 0)
 
-    stats["total_users"] = len(user_service.get_all_users())
+    all_users = user_service.get_all_users()
+    stats["total_users"] = len(all_users)
+
+    # Đếm tài khoản mới đăng ký hôm nay
+    import datetime as _dt
+    today_str = _dt.datetime.now().strftime("%d/%m/%Y")
+    stats["new_users_today"] = sum(
+        1 for u in all_users
+        if getattr(u, "created_at", "") and str(u.created_at).startswith(today_str)
+    )
+
+    # Đơn hàng gần đây (10 đơn mới nhất)
+    recent = order_service.get_orders(limit=10)
+    stats["recent_orders"] = recent
+
     return stats
 
 

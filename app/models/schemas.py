@@ -278,6 +278,9 @@ class OrderCancelRequest(BaseModel):
     reason: Optional[str] = Field(default=None, max_length=250)
 
 
+VALID_PAYMENT_METHODS = ["cod", "vietqr", "qr_transfer", "vnpay", "momo"]
+
+
 class OrderCreateRequest(BaseModel):
     customer_name: str = Field(min_length=2, max_length=80)
     customer_phone: str
@@ -291,7 +294,7 @@ class OrderCreateRequest(BaseModel):
     province: Optional[str] = Field(default=None, max_length=100)
     ward: Optional[str] = Field(default=None, max_length=100)
     specific_address: Optional[str] = Field(default=None, max_length=250)
-    payment_method: Literal["cod", "qr_transfer", "vnpay"] = "cod"
+    payment_method: str = "cod"
     items: List[OrderItem] = Field(min_length=1, max_length=50)
     voucher_code: Optional[str] = Field(default=None, max_length=30)
     use_points: int = Field(default=0, ge=0)
@@ -324,6 +327,14 @@ class OrderCreateRequest(BaseModel):
                 raise ValueError("Nội dung không được chứa ký tự < hoặc >")
             return v.strip()
         return None
+
+    @field_validator("payment_method")
+    @classmethod
+    def _validate_payment_method(cls, v: Any) -> str:
+        method = str(v or "cod").strip().lower()
+        if method not in VALID_PAYMENT_METHODS:
+            raise ValueError("payment_method không hợp lệ")
+        return method
 
     @field_validator("customer_phone")
     @classmethod

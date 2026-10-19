@@ -255,11 +255,37 @@ class OrderService:
 
     # ---------- Đặt hàng ----------
     def create_order(self, req: OrderCreateRequest, user: Optional[Any] = None) -> OrderResponse:
-        # 1. Báo giá lại toàn bộ phía server
+        # 1. Validate payment_method TRƯỚC KHI xử lý bất kỳ logic trừ voucher hay lưu đơn nào
+        VALID_PAYMENT_METHODS = ['cod', 'vietqr', 'qr_transfer', 'vnpay', 'momo']
+        payment_method = str(getattr(req, "payment_method", "") or "").strip().lower()
+        if payment_method not in VALID_PAYMENT_METHODS:
+            raise OrderError("payment_method không hợp lệ", 400)
+
+        # 2. Báo giá lại toàn bộ phía server (chỉ tính toán, chưa trừ voucher trong DB)
         quote = self.build_quote(
             req.items, req.voucher_code, strict_voucher=True,
             use_points=req.use_points, user=user
         )
+
+        # 3. Kiểm tra thông tin cấu hình thanh toán QR nếu khách chọn QR
+        bank_id = getattr(settings, "BANK_ID", "")
+        bank_acc = getattr(settings, "BANK_ACCOUNT_NO", "")
+        bank_name = getattr(settings, "BANK_ACCOUNT_NAME", "")
+        if payment_method in ("qr_transfer", "vietqr"):
+            if not (bank_id and bank_acc and bank_name):
+                raise OrderError("Phương thức chuyển khoản qua QR hiện chưa sẵn sàng do chưa cấu hình thông tin ngân hàng", 400)
+
+        # 4. Kiểm tra tồn kho trước khi tạo đơn hàng
+        needed: Dict[str, int] = {}
+        for line in quote.lines:
+            needed[line.product_id] = needed.get(line.product_id, 0) + line.quantity
+
+        for pid, qty in needed.items():
+            p = product_service.get_by_id(pid)
+            if not p or p.stock < qty:
+                msg = (f"'{p.name}' chỉ còn {p.stock} sản phẩm" if p and p.stock > 0
+                       else f"'{p.name if p else pid}' đã hết hàng")
+                raise OrderError(msg, 409)
 
         now = datetime.datetime.now()
         order_id = None
@@ -272,7 +298,7 @@ class OrderService:
         if not order_id:
             raise OrderError("Không thể tạo mã đơn hàng duy nhất lúc này, vui lòng thử lại", 500)
 
-        status = "confirmed" if req.payment_method == "cod" else "pending_payment"
+        status = "confirmed" if payment_method == "cod" else "pending_payment"
         carrier = "Đang điều phối vận chuyển"
         tracking_code = None  # Chưa tích hợp GHN thật: không sinh mã giả
         shipping_status = "ready_to_pick" if status == "confirmed" else "pending_confirm"
@@ -302,23 +328,12 @@ class OrderService:
                 "specific_address": req.specific_address,
                 "note": req.customer_note
             },
-            "payment_method": req.payment_method,
+            "payment_method": payment_method,
             "quote": quote.model_dump(),
         }
 
-        # 2. Tạo đơn hàng nguyên tử trong Database và đồng bộ bộ nhớ
+        # 5. Tạo đơn hàng nguyên tử trong Database và đồng bộ bộ nhớ
         with product_service._lock:
-            needed: Dict[str, int] = {}
-            for line in quote.lines:
-                needed[line.product_id] = needed.get(line.product_id, 0) + line.quantity
-
-            for pid, qty in needed.items():
-                p = product_service.get_by_id(pid)
-                if not p or p.stock < qty:
-                    msg = (f"'{p.name}' chỉ còn {p.stock} sản phẩm" if p and p.stock > 0
-                           else f"'{p.name if p else pid}' đã hết hàng")
-                    raise OrderError(msg, 409)
-
             items_payload = [
                 {
                     "product_id": line.product_id,
@@ -363,7 +378,7 @@ class OrderService:
                     "customer_name": req.customer_name,
                     "customer_phone": req.customer_phone,
                     "total_amount": quote.total,
-                    "payment_method": req.payment_method,
+                    "payment_method": payment_method,
                     "quote": quote.model_dump(),
                 })
             except Exception as _email_err:  # pragma: no cover
@@ -371,12 +386,7 @@ class OrderService:
 
         qr_code_url = None
         bank_info = None
-        if req.payment_method == "qr_transfer":
-            bank_id = getattr(settings, "BANK_ID", "")
-            bank_acc = getattr(settings, "BANK_ACCOUNT_NO", "")
-            bank_name = getattr(settings, "BANK_ACCOUNT_NAME", "")
-            if not (bank_id and bank_acc and bank_name):
-                raise OrderError("Phương thức chuyển khoản qua QR hiện chưa sẵn sàng do chưa cấu hình thông tin ngân hàng", 400)
+        if payment_method in ("qr_transfer", "vietqr"):
             import urllib.parse
             acc_name_quoted = urllib.parse.quote(bank_name)
             qr_code_url = (
@@ -392,6 +402,10 @@ class OrderService:
             }
             msg = (f"Đã ghi nhận đơn. Vui lòng quét mã VietQR hoặc chuyển khoản {_money(quote.total)} "
                    f"với nội dung 'AURA {order_id}' để hệ thống tự động xác nhận đơn.")
+        elif payment_method == "momo":
+            msg = "Đã ghi nhận đơn. Đang chuyển hướng sang cổng thanh toán MoMo..."
+        elif payment_method == "vnpay":
+            msg = "Đã ghi nhận đơn. Đang chuyển hướng sang cổng thanh toán VNPay..."
         else:
             msg = "Đặt hàng thành công! Chúng tôi sẽ liên hệ xác nhận và giao hàng sớm nhất."
 
@@ -401,7 +415,7 @@ class OrderService:
             estimated_delivery=estimated_delivery,
             quote=quote, customer_name=req.customer_name, customer_phone=req.customer_phone,
             customer_email=getattr(req, "customer_email", None),
-            customer_address=req.customer_address, payment_method=req.payment_method,
+            customer_address=req.customer_address, payment_method=payment_method,
             created_at=now.strftime("%d/%m/%Y %H:%M"), message=msg,
             qr_code_url=qr_code_url, bank_info=bank_info,
         )

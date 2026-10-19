@@ -3,6 +3,7 @@ Dịch vụ tích hợp Cổng thanh toán VNPay (Sandbox & Production):
 - Tạo Payment URL chuẩn HMAC-SHA512 theo tài liệu VNPay 2.1.0.
 - Xác thực chữ ký dữ liệu Return URL và IPN.
 """
+from datetime import datetime
 import datetime as dt
 import hashlib
 import hmac
@@ -18,6 +19,47 @@ from app.config import settings
 logger = logging.getLogger(__name__)
 
 
+def create_vnpay_url(order_id, amount, order_info, ip_addr, vnp_tmn_code, vnp_hash_secret, vnp_url, vnp_return_url, bank_code=None):
+    vnp_Params = {
+        'vnp_Version': '2.1.0',
+        'vnp_Command': 'pay',
+        'vnp_TmnCode': str(vnp_tmn_code).strip(),
+        'vnp_Amount': str(int(float(amount) * 100)),
+        'vnp_CurrCode': 'VND',
+        'vnp_TxnRef': str(order_id),
+        'vnp_OrderInfo': str(order_info),
+        'vnp_OrderType': 'other',
+        'vnp_Locale': 'vn',
+        'vnp_ReturnUrl': str(vnp_return_url).strip(),
+        'vnp_IpAddr': '127.0.0.1' if ip_addr in ['::1', 'localhost', None, ''] else str(ip_addr),
+        'vnp_CreateDate': datetime.now().strftime('%Y%m%d%H%M%S')
+    }
+
+    if bank_code:
+        vnp_Params['vnp_BankCode'] = str(bank_code).strip()
+
+    inputData = sorted(vnp_Params.items())
+    queryString = ''
+    seq = 0
+    for key, val in inputData:
+        if str(key).startswith('vnp_') and val is not None and str(val) != "":
+            encoded_val = urllib.parse.quote_plus(str(val))
+            if seq == 1:
+                queryString += "&" + str(key) + '=' + encoded_val
+            else:
+                seq = 1
+                queryString = str(key) + '=' + encoded_val
+
+    secret_key = str(vnp_hash_secret).strip()
+    hashValue = hmac.new(
+        secret_key.encode('utf-8'),
+        queryString.encode('utf-8'),
+        hashlib.sha512
+    ).hexdigest()
+
+    return f"{vnp_url}?{queryString}&vnp_SecureHash={hashValue}"
+
+
 class VNPayService:
     def __init__(self):
         pass
@@ -31,47 +73,26 @@ class VNPayService:
         bank_code: Optional[str] = None,
     ) -> str:
         """
-        Tạo URL redirect sang cổng VNPay.
+        Tạo URL redirect sang cổng VNPay theo chuẩn VNPay 2.1.0 HMAC-SHA512.
         - vnp_Amount = amount * 100 (theo quy định VNPay: nhân 100 loại bỏ phần thập phân).
-        - Sắp xếp tham số theo thứ tự chữ cái và ký bằng HMAC-SHA512.
+        - Sắp xếp tham số theo thứ tự chữ cái và encode bằng quote_plus.
         """
-        now = dt.datetime.now()
-        create_date = now.strftime("%Y%m%d%H%M%S")
-
-        vnp_params = {
-            "vnp_Version": "2.1.0",
-            "vnp_Command": "pay",
-            "vnp_TmnCode": settings.VNPAY_TMN_CODE,
-            "vnp_Amount": str(int(amount) * 100),
-            "vnp_CreateDate": create_date,
-            "vnp_CurrCode": "VND",
-            "vnp_IpAddr": client_ip or "127.0.0.1",
-            "vnp_Locale": "vn",
-            "vnp_OrderInfo": order_desc or f"Thanh toan don hang {order_id}",
-            "vnp_OrderType": "other",
-            "vnp_ReturnUrl": settings.VNPAY_RETURN_URL,
-            "vnp_TxnRef": order_id,
-        }
-
-        if bank_code:
-            vnp_params["vnp_BankCode"] = bank_code
-
-        # Sắp xếp các tham số theo thứ tự a-z
-        sorted_params = sorted(vnp_params.items())
-        hash_data = urllib.parse.urlencode(sorted_params)
-
-        # Ký HMAC-SHA512
-        secure_hash = hmac.new(
-            settings.VNPAY_HASH_SECRET.encode("utf-8"),
-            hash_data.encode("utf-8"),
-            hashlib.sha512,
-        ).hexdigest()
-
-        return f"{settings.VNPAY_URL}?{hash_data}&vnp_SecureHash={secure_hash}"
+        order_info = order_desc or f"Thanh toan don hang {order_id}"
+        return create_vnpay_url(
+            order_id=order_id,
+            amount=amount,
+            order_info=order_info,
+            ip_addr=client_ip,
+            vnp_tmn_code=settings.VNPAY_TMN_CODE,
+            vnp_hash_secret=settings.VNPAY_HASH_SECRET,
+            vnp_url=settings.VNPAY_URL,
+            vnp_return_url=settings.VNPAY_RETURN_URL,
+            bank_code=bank_code,
+        )
 
     def verify_response(self, params: Dict[str, Any]) -> Tuple[bool, Dict[str, Any]]:
         """
-        Xác thực chữ ký phản hồi từ VNPay (Return URL hoặc IPN).
+        Xác thực chữ ký phản hồi từ VNPay (Return URL hoặc IPN) chuẩn VNPay 2.1.0.
         Trả về (is_valid, clean_params).
         """
         clean_params = dict(params)
@@ -79,17 +100,39 @@ class VNPayService:
         clean_params.pop("vnp_SecureHashType", None)
 
         # Chỉ giữ lại các trường bắt đầu bằng vnp_
-        vnp_data = {k: str(v) for k, v in clean_params.items() if k.startswith("vnp_")}
-        sorted_params = sorted(vnp_data.items())
-        hash_data = urllib.parse.urlencode(sorted_params)
+        vnp_data = {k: str(v) for k, v in clean_params.items() if str(k).startswith("vnp_") and v is not None and str(v) != ""}
+        inputData = sorted(vnp_data.items())
 
+        # Tạo queryString chuẩn quote_plus
+        queryString = ''
+        seq = 0
+        for key, val in inputData:
+            encoded_val = urllib.parse.quote_plus(str(val))
+            if seq == 1:
+                queryString += "&" + str(key) + '=' + encoded_val
+            else:
+                seq = 1
+                queryString = str(key) + '=' + encoded_val
+
+        secret_key = str(settings.VNPAY_HASH_SECRET).strip()
         expected_hash = hmac.new(
-            settings.VNPAY_HASH_SECRET.encode("utf-8"),
-            hash_data.encode("utf-8"),
+            secret_key.encode("utf-8"),
+            queryString.encode("utf-8"),
             hashlib.sha512,
         ).hexdigest()
 
         is_valid = bool(received_hash and hmac.compare_digest(received_hash.lower(), expected_hash.lower()))
+
+        # Fallback thêm urlencode nếu đối tác test gửi theo urlencode legacy
+        if not is_valid and received_hash:
+            hash_data_legacy = urllib.parse.urlencode(inputData)
+            legacy_hash = hmac.new(
+                secret_key.encode("utf-8"),
+                hash_data_legacy.encode("utf-8"),
+                hashlib.sha512,
+            ).hexdigest()
+            is_valid = bool(hmac.compare_digest(received_hash.lower(), legacy_hash.lower()))
+
         return is_valid, vnp_data
 
     def refund(

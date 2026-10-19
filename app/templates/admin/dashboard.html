@@ -66,7 +66,7 @@
       </div>
     </div>
 
-    <!-- Tổng người dùng -->
+    <!-- Tổng người dùng + Mới hôm nay -->
     <div class="rounded-lg border border-noir-700 bg-noir-900 glass-card p-5 shadow-lg">
       <div class="flex items-center justify-between">
         <span class="text-sm font-semibold text-noir-400 uppercase tracking-widest">Người dùng hệ thống</span>
@@ -74,7 +74,12 @@
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>
         </div>
       </div>
-      <p id="stat-users" class="mt-3 text-2xl font-bold tracking-tight text-noir-100">...</p>
+      <div class="mt-3 flex items-end gap-2">
+        <p id="stat-users" class="text-2xl font-bold tracking-tight text-noir-100">...</p>
+        <span id="stat-new-users-badge" class="hidden mb-0.5 inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-0.5 text-sm font-semibold text-emerald-400 border border-emerald-500/20">
+          +<span id="stat-new-users-count">0</span> hôm nay
+        </span>
+      </div>
       <div class="mt-2 flex items-center text-sm text-noir-400 font-medium">
         <span>Thành viên đăng ký</span>
       </div>
@@ -260,6 +265,17 @@
         document.getElementById("stat-orders").textContent = stats.total_orders || 0;
         document.getElementById("stat-products").textContent = stats.total_products || 500;
         document.getElementById("stat-users").textContent = stats.total_users || 0;
+
+        // Badge tài khoản mới hôm nay
+        const newUsersToday = stats.new_users_today || 0;
+        const newUsersBadge = document.getElementById('stat-new-users-badge');
+        const newUsersCount = document.getElementById('stat-new-users-count');
+        if (newUsersToday > 0 && newUsersBadge && newUsersCount) {
+          newUsersCount.textContent = newUsersToday;
+          newUsersBadge.classList.remove('hidden');
+        } else if (newUsersBadge) {
+          newUsersBadge.classList.add('hidden');
+        }
 
         const totalP = stats.total_products || 500;
         const inS = stats.products_in_stock || 0;

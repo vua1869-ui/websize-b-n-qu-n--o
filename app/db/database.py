@@ -1320,14 +1320,6 @@ class DatabaseService:
                     if user_used >= v.max_uses_per_user:
                         raise OrderError(f"Bạn đã sử dụng hết {v.max_uses_per_user} lượt cho mã giảm giá '{code_upper}'", 400)
 
-                conn.execute(
-                    """
-                    INSERT INTO voucher_usages (voucher_code, user_id, phone, order_id, created_at)
-                    VALUES (?, ?, ?, ?, ?);
-                    """,
-                    (code_upper, user_id, norm_phone, order_id, now_str)
-                )
-
             # 5. Lưu đơn hàng vào bảng orders
             quote = order_record.get("quote", {})
             conn.execute(
@@ -1395,6 +1387,17 @@ class DatabaseService:
                         line.get("unit_price") or line.get("price", 0),
                         line.get("line_total") or (line.get("price", 0) * line.get("quantity", 1)),
                     )
+                )
+
+            # 7. Đánh dấu đã sử dụng Voucher sau khi Đơn hàng (Order) đã được lưu thành công vào Database
+            if voucher_code:
+                code_upper = voucher_code.strip().upper()
+                conn.execute(
+                    """
+                    INSERT INTO voucher_usages (voucher_code, user_id, phone, order_id, created_at)
+                    VALUES (?, ?, ?, ?, ?);
+                    """,
+                    (code_upper, user_id, norm_phone, order_id, now_str)
                 )
 
         log_money_event(
