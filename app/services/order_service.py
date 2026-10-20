@@ -256,7 +256,7 @@ class OrderService:
     # ---------- Đặt hàng ----------
     def create_order(self, req: OrderCreateRequest, user: Optional[Any] = None) -> OrderResponse:
         # 1. Validate payment_method TRƯỚC KHI xử lý bất kỳ logic trừ voucher hay lưu đơn nào
-        VALID_PAYMENT_METHODS = ['cod', 'vietqr', 'qr_transfer', 'vnpay', 'momo']
+        VALID_PAYMENT_METHODS = ['cod', 'vietqr', 'qr_transfer', 'vnpay', 'mbank', 'banking', 'momo']
         payment_method = str(getattr(req, "payment_method", "") or "").strip().lower()
         if payment_method not in VALID_PAYMENT_METHODS:
             raise OrderError("payment_method không hợp lệ", 400)
@@ -386,24 +386,47 @@ class OrderService:
 
         qr_code_url = None
         bank_info = None
-        if payment_method in ("qr_transfer", "vietqr"):
-            import urllib.parse
-            acc_name_quoted = urllib.parse.quote(bank_name)
-            qr_code_url = (
-                f"https://img.vietqr.io/image/{bank_id}-{bank_acc}-compact2.png"
-                f"?amount={quote.total}&addInfo=AURA%20{order_id}&accountName={acc_name_quoted}"
-            )
+        transfer_content = str(order_id).upper() if str(order_id).upper().startswith("AURA-") else f"AURA-{order_id}"
+
+        if payment_method in ("mbank", "banking", "qr_transfer", "vietqr"):
+            mb_bank_name = getattr(settings, "MBBANK_BANK_NAME", "") or "Ngân hàng TMCP Quân Đội (MB Bank)"
+            mb_acc_no = getattr(settings, "MBBANK_ACCOUNT_NUMBER", "") or "0835731473"
+            mb_acc_name = getattr(settings, "MBBANK_ACCOUNT_NAME", "") or "VU TIEN ANH"
+            mb_qr_image = getattr(settings, "MBBANK_QR_IMAGE", "") or "/static/images/MB-qr.jpg"
+
+            qr_code_url = mb_qr_image
             bank_info = {
-                "bank_name": bank_id,
-                "account_number": bank_acc,
-                "account_name": bank_name,
+                "bank_name": mb_bank_name,
+                "bank_code": "MBBank",
+                "account_number": mb_acc_no,
+                "account_name": mb_acc_name,
                 "amount": str(quote.total),
-                "content": f"AURA {order_id}"
+                "transfer_content": transfer_content,
+                "qr_code_url": mb_qr_image,
+                "redirect_url": f"/payment/mbank/{order_id}",
             }
-            msg = (f"Đã ghi nhận đơn. Vui lòng quét mã VietQR hoặc chuyển khoản {_money(quote.total)} "
-                   f"với nội dung 'AURA {order_id}' để hệ thống tự động xác nhận đơn.")
+            msg = (
+                f"Đã ghi nhận đơn. Vui lòng quét mã QR MB Bank hoặc chuyển khoản "
+                f"{_money(quote.total)} tới STK {mb_acc_no} ({mb_acc_name}) "
+                f"với nội dung '{transfer_content}' để hệ thống tự động xác nhận đơn."
+            )
         elif payment_method == "momo":
-            msg = "Đã ghi nhận đơn. Đang chuyển hướng sang cổng thanh toán MoMo..."
+            # Hỗ trợ tương thích ngược cho MoMo
+            momo_link = getattr(settings, "MOMO_PERSONAL_LINK", "") or "https://me.momo.vn/aurastudio"
+            momo_phone = getattr(settings, "MOMO_PHONE", "") or "0775972171"
+            momo_name = getattr(settings, "MOMO_NAME", "") or "AURA STUDIO"
+            momo_qr_url = getattr(settings, "MOMO_QR_IMAGE", "") or "/static/img/momo-qr.jpg"
+            qr_code_url = momo_qr_url
+            bank_info = {
+                "momo_link": momo_link,
+                "momo_qr_url": momo_qr_url,
+                "momo_phone": momo_phone,
+                "momo_name": momo_name,
+                "amount": str(quote.total),
+                "transfer_content": transfer_content,
+                "redirect_url": f"/payment/mbank/{order_id}",
+            }
+            msg = f"Đã ghi nhận đơn. Vui lòng hoàn tất thanh toán {_money(quote.total)} với nội dung '{transfer_content}'."
         elif payment_method == "vnpay":
             msg = "Đã ghi nhận đơn. Đang chuyển hướng sang cổng thanh toán VNPay..."
         else:
@@ -418,6 +441,13 @@ class OrderService:
             customer_address=req.customer_address, payment_method=payment_method,
             created_at=now.strftime("%d/%m/%Y %H:%M"), message=msg,
             qr_code_url=qr_code_url, bank_info=bank_info,
+            success=True,
+            amount=quote.total,
+            transfer_content=transfer_content,
+            bank_account_number=bank_info.get("account_number") if bank_info else None,
+            bank_account_name=bank_info.get("account_name") if bank_info else None,
+            bank_name=bank_info.get("bank_name") if bank_info else None,
+            redirect_url=bank_info.get("redirect_url") if bank_info else None,
         )
 
     # ---------- Lưu trữ & Truy vấn Database ----------

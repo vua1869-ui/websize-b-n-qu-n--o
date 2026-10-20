@@ -2892,6 +2892,10 @@ class DatabaseService:
             )
             return cursor.rowcount > 0
 
+    def update_order_note(self, order_id: str, note: Optional[str]) -> bool:
+        """Alias cho update_order_internal_note hỗ trợ cập nhật ghi chú đơn hàng."""
+        return self.update_order_internal_note(order_id, note)
+
     def log_audit(
         self,
         admin_id: Optional[str],

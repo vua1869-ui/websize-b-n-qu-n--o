@@ -1952,21 +1952,15 @@ const App = {
         }
       }
 
-      // Nếu khách chọn Thanh toán qua MoMo -> Chuyển hướng sang MoMo
-      if (body.payment_method === 'momo') {
-        try {
-          const payRes = await U.api('/api/payment/momo/create-payment-url', {
-            method: 'POST',
-            body: { order_id: order.order_id }
-          });
-          if (payRes && payRes.payment_url) {
-            window.location.href = payRes.payment_url;
-            return;
-          }
-        } catch (payErr) {
-          console.error('Lỗi tạo URL thanh toán MoMo:', payErr);
-        }
+      // Nếu khách chọn Chuyển khoản MB Bank -> Chuyển hướng sang trang chuyển khoản MB Bank tự động
+      if (body.payment_method === 'mbank' || body.payment_method === 'banking' || body.payment_method === 'momo') {
+        const mbRedirect = order.redirect_url
+          || (order.bank_info && order.bank_info.redirect_url)
+          || `/payment/mbank/${encodeURIComponent(order.order_id)}`;
+        window.location.href = mbRedirect;
+        return;
       }
+
 
       // Đơn hàng COD hoặc hình thức khác -> Chuyển hướng tới trang xác nhận đơn hàng thành công
       const phoneParam = body.customer_phone ? `?phone=${encodeURIComponent(body.customer_phone)}` : '';
@@ -1992,6 +1986,7 @@ const App = {
 
     const isQr = o.payment_method === 'qr_transfer';
     const isVNPay = o.payment_method === 'vnpay';
+    const isMBank = o.payment_method === 'mbank' || o.payment_method === 'banking';
     const isMoMo = o.payment_method === 'momo';
     const isPaid = o.payment_status === 'paid' || o.status === 'confirmed';
 
@@ -2132,46 +2127,94 @@ const App = {
           `}
         </div>
       </div>`;
-    } else if (isMoMo) {
+    } else if (isMBank || isMoMo) {
+      // Lấy thông tin chuyển khoản MB Bank từ bank_info trả về từ server
+      const mbInfo = o.bank_info || {};
+      const mbQrUrl = o.qr_code_url || mbInfo.qr_code_url || '/static/images/MB-qr.jpg';
+      const mbAccountNo = o.bank_account_number || mbInfo.account_number || '0835731473';
+      const mbAccountName = o.bank_account_name || mbInfo.account_name || 'VU TIEN ANH';
+      const mbBankName = o.bank_name || mbInfo.bank_name || 'Ngân hàng TMCP Quân Đội (MB Bank)';
+      const mbContent = o.transfer_content || mbInfo.transfer_content || (String(o.order_id).startsWith('AURA-') ? o.order_id : `AURA-${o.order_id}`);
+      const mbPageUrl = mbInfo.redirect_url || `/payment/mbank/${encodeURIComponent(o.order_id)}`;
+
       paymentHtml = `
-      <div id="momo-container" class="my-4 rounded-2xl border border-pink-200 bg-pink-50/50 p-4 text-left shadow-sm">
-        <div class="flex items-center justify-between border-b border-pink-100 pb-3">
+      <div id="mbank-container" class="my-4 rounded-2xl border border-blue-200 bg-gradient-to-b from-blue-50/80 to-white p-4 text-left shadow-sm">
+        <div class="flex items-center justify-between border-b border-blue-100 pb-3">
           <div class="flex items-center gap-2">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-[#a50064] text-white font-bold text-sm">M</span>
+            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-[#002855] text-white font-bold text-sm">MB</span>
             <div>
-              <h3 class="text-sm font-bold text-[#a50064] uppercase tracking-wide">Ví điện tử MoMo</h3>
-              <p class="text-sm text-zinc-500">Quét mã QR • Ứng dụng MoMo • Thẻ ATM / Visa</p>
+              <h3 class="text-sm font-bold text-[#002855] uppercase tracking-wide">Ngân hàng MB Bank</h3>
+              <p class="text-xs text-zinc-500">Chuyển khoản tự động xác nhận qua SePay</p>
             </div>
           </div>
-          <span class="rounded bg-pink-100 px-2 py-0.5 text-sm font-bold text-[#a50064]">MoMo Sandbox</span>
+          <span class="rounded bg-blue-100 px-2 py-0.5 text-xs font-bold text-[#002855]">Tự động xác nhận</span>
         </div>
 
-        <div id="payment-status-box" class="mt-4 rounded-xl border ${isPaid ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-pink-200 bg-white text-pink-900'} p-3.5 text-center">
+        <div id="payment-status-box" class="mt-4 rounded-xl border ${isPaid ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-blue-200 bg-white text-blue-950'} p-3.5">
           ${isPaid ? `
             <div class="flex items-center justify-center gap-2 text-sm font-bold text-emerald-800">
               <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-sm">✓</span>
-              <span>ĐÃ XÁC NHẬN THANH TOÁN MOMO THÀNH CÔNG!</span>
+              <span>ĐÃ XÁC NHẬN THANH TOÁN MB BANK THÀNH CÔNG!</span>
             </div>
-            <p class="mt-1 text-sm text-emerald-700">Đơn hàng đã được thanh toán và đang được xử lý.</p>
+            <p class="mt-1 text-sm text-emerald-700 text-center">Đơn hàng đã được thanh toán và đang được xử lý gửi đi.</p>
           ` : `
-            <div class="flex items-center justify-center gap-2 text-sm font-bold text-[#a50064]">
-              <span class="flex h-2.5 w-2.5 relative">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#a50064]"></span>
-              </span>
-              <span id="payment-status-text">Đang chờ bạn hoàn tất thanh toán trên MoMo...</span>
+            <div class="flex justify-center mb-3">
+              <div class="relative">
+                <img src="${U.esc(mbQrUrl)}" alt="MB Bank QR" class="w-44 h-44 rounded-xl border-2 border-blue-200 object-contain bg-white p-1 shadow-sm"
+                     onerror="this.src='https://img.vietqr.io/image/MB-${U.esc(mbAccountNo)}-compact2.png?amount=${q.total}&addInfo=${encodeURIComponent(mbContent)}&accountName=${encodeURIComponent(mbAccountName)}'" />
+                <div class="absolute inset-0 rounded-xl border-2 border-[#002855] opacity-0 animate-ping" style="animation-duration:2.5s"></div>
+              </div>
             </div>
-            <p class="mt-1 text-sm text-zinc-500">Nhấn nút bên dưới để chuyển sang cổng MoMo nếu trình duyệt chưa tự chuyển.</p>
-            <div class="mt-3 flex flex-wrap gap-2 justify-center">
-              <button type="button" data-action="pay-momo" data-order-id="${U.esc(o.order_id)}"
-                      class="inline-flex items-center gap-1.5 rounded-lg bg-[#a50064] hover:bg-[#850050] px-4 py-2 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
-                <span>💳 Thanh toán qua MoMo ngay</span>
+            <p class="text-center text-xs text-zinc-500 mb-3">📱 Mở App MB Bank / Mọi ngân hàng → Quét mã → Chuyển khoản</p>
+            <div class="space-y-2 text-sm">
+              <div class="flex items-center justify-between py-1 border-b border-blue-50">
+                <span class="text-zinc-500">Ngân hàng</span>
+                <span class="font-bold text-zinc-800 text-right text-xs sm:text-sm">${U.esc(mbBankName)}</span>
+              </div>
+              <div class="flex items-center justify-between py-1 border-b border-blue-50">
+                <span class="text-zinc-500">Số tài khoản</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono font-bold text-zinc-900">${U.esc(mbAccountNo)}</span>
+                  <button type="button" data-action="copy-text" data-text="${U.esc(mbAccountNo)}" class="copy-badge-btn">Copy</button>
+                </div>
+              </div>
+              <div class="flex items-center justify-between py-1 border-b border-blue-50">
+                <span class="text-zinc-500">Chủ tài khoản</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-bold text-zinc-800">${U.esc(mbAccountName)}</span>
+                  <button type="button" data-action="copy-text" data-text="${U.esc(mbAccountName)}" class="copy-badge-btn">Copy</button>
+                </div>
+              </div>
+              <div class="flex items-center justify-between py-1 border-b border-blue-50">
+                <span class="text-zinc-500">Số tiền</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono font-bold text-[#002855] text-base">${U.vnd(q.total)}</span>
+                  <button type="button" data-action="copy-text" data-text="${q.total}" class="copy-badge-btn">Copy</button>
+                </div>
+              </div>
+              <div class="flex items-center justify-between py-1 border-b border-blue-50">
+                <span class="text-zinc-500">Nội dung CK</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-mono font-bold text-[#002855] bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">${U.esc(mbContent)}</span>
+                  <button type="button" data-action="copy-text" data-text="${U.esc(mbContent)}" class="copy-badge-btn">Copy</button>
+                </div>
+              </div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-blue-100 flex flex-col gap-2">
+              <button type="button" data-action="confirm-mbank" data-order-id="${U.esc(o.order_id)}"
+                      class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#002855] hover:bg-[#001f42] px-4 py-2.5 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
+                🔄 Kiểm tra trạng thái thanh toán ngay
               </button>
+              <a href="${U.esc(mbPageUrl)}"
+                 class="text-center text-xs text-blue-600 hover:text-blue-800 underline">
+                Xem trang chuyển khoản MB Bank đầy đủ →
+              </a>
             </div>
           `}
         </div>
       </div>`;
     }
+
 
     U.$('#success-body').innerHTML = `
     <div class="p-5 sm:p-6 text-center max-w-lg mx-auto">
@@ -2179,7 +2222,7 @@ const App = {
         <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
       </div>
       <h2 class="text-base sm:text-lg font-bold text-zinc-900" id="success-title">
-        ${isPaid ? 'Đặt hàng & Thanh toán thành công!' : (isMoMo ? 'Đã ghi nhận đơn • Vui lòng thanh toán MoMo' : (isVNPay ? 'Đã ghi nhận đơn • Vui lòng thanh toán VNPay' : (isQr ? 'Đã ghi nhận đơn • Vui lòng chuyển khoản' : 'Đặt hàng thành công!')))}
+        ${isPaid ? 'Đặt hàng & Thanh toán thành công!' : (isMBank ? 'Đã ghi nhận đơn • Vui lòng chuyển khoản MB Bank' : (isVNPay ? 'Đã ghi nhận đơn • Vui lòng thanh toán VNPay' : (isQr ? 'Đã ghi nhận đơn • Vui lòng chuyển khoản' : 'Đặt hàng thành công!')))}
       </h2>
       <p class="text-sm text-zinc-500 mt-0.5">Mã đơn hàng: <b class="font-mono text-brand-600">${U.esc(o.order_id)}</b></p>
       
@@ -2188,7 +2231,7 @@ const App = {
       <div class="my-3 space-y-1.5 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3.5 text-left text-sm">
         <div class="flex justify-between gap-3"><span class="text-zinc-500">Người nhận</span><b class="text-right text-zinc-800">${U.esc(o.customer_name)} (${U.esc(o.customer_phone)})</b></div>
         <div class="flex justify-between gap-3"><span class="text-zinc-500">Địa chỉ giao</span><span class="text-right font-medium text-zinc-800">${U.esc(o.customer_address)}</span></div>
-        <div class="flex justify-between gap-3"><span class="text-zinc-500">Hình thức</span><b>${isMoMo ? 'Ví điện tử MoMo' : (isVNPay ? 'VNPay Sandbox' : (isQr ? 'Chuyển khoản VietQR' : 'Thanh toán khi nhận hàng (COD)'))}</b></div>
+        <div class="flex justify-between gap-3"><span class="text-zinc-500">Hình thức</span><b>${isMBank ? 'Ngân hàng MB Bank (Tự động)' : (isVNPay ? 'VNPay Sandbox' : (isQr ? 'Chuyển khoản VietQR' : 'Thanh toán khi nhận hàng (COD)'))}</b></div>
         ${this.summaryRows(q)}
       </div>
 
@@ -2200,15 +2243,16 @@ const App = {
 
     Modal.open('success-modal');
 
-    // Bắt đầu Polling kiểm tra trạng thái thanh toán tự động nếu chưa thanh toán
-    if ((isQr || isVNPay || isMoMo) && !isPaid) {
+    // Bắt đầu Polling kiểm tra trạng thái thanh toán tự động nếu chưa thanh toán (cứ mỗi 3 giây)
+    if ((isQr || isVNPay || isMBank || isMoMo) && !isPaid) {
       this._pollTimer = setInterval(async () => {
         try {
-          const res = await U.api(`/api/payment/check-status/${encodeURIComponent(o.order_id)}`);
-          if (res && (res.status === 'paid' || res.order_status === 'confirmed')) {
+          const res = await U.api(`/api/orders/${encodeURIComponent(o.order_id)}/status`);
+          if (res && (res.is_paid || res.payment_status === 'paid' || res.status === 'paid')) {
             clearInterval(App._pollTimer);
             App._pollTimer = null;
-            App.onPaymentSuccess(o.order_id);
+            // Tự động chuyển hướng ngay sang trang thành công mà không cần bấm thủ công
+            window.location.href = res.redirect_url || `/order-success/${encodeURIComponent(o.order_id)}`;
           }
         } catch { /* tiếp tục polling */ }
       }, 3000);
@@ -2698,25 +2742,36 @@ Object.assign(Actions, {
       if (btn) { btn.disabled = false; btn.textContent = '💳 Thanh toán qua VNPay'; }
     }
   },
-  'pay-momo': async (d, btn) => {
+  'pay-mbank': async (d, btn) => {
+    if (!d.orderId) return;
+    window.location.href = `/payment/mbank/${encodeURIComponent(d.orderId)}`;
+  },
+  'confirm-mbank': async (d, btn) => {
     if (!d.orderId) return;
     try {
-      if (btn) { btn.disabled = true; btn.textContent = 'Đang chuyển tới MoMo...'; }
-      U.toast('Đang tạo liên kết thanh toán MoMo...');
-      const res = await U.api('/api/payment/momo/create-payment-url', {
-        method: 'POST',
-        body: { order_id: d.orderId }
-      });
-      if (res && res.payment_url) {
-        window.location.href = res.payment_url;
+      if (btn) { btn.disabled = true; btn.textContent = 'Đang kiểm tra biến động MB Bank...'; }
+      U.toast('Đang đối soát biến động số dư MB Bank...');
+      const res = await U.api(`/api/orders/${encodeURIComponent(d.orderId)}/confirm-mbank`, { method: 'POST' });
+      if (res && res.is_paid && res.redirect_url) {
+        U.toast('Đã nhận được tiền thanh toán MB Bank! Đang chuyển trang...', 'success');
+        setTimeout(() => { window.location.href = res.redirect_url; }, 600);
       } else {
-        throw new Error('Không nhận được liên kết thanh toán từ máy chủ');
+        U.toast(res.message || 'Hệ thống chưa ghi nhận biến động số dư. Vui lòng chuyển tiền đúng cú pháp và đợi trong giây lát!', 'warning');
+        if (btn) { btn.disabled = false; btn.textContent = '🔄 Kiểm tra trạng thái thanh toán ngay'; }
       }
     } catch (e) {
-      U.toast(e.message || 'Lỗi khi tạo liên kết thanh toán MoMo', 'error');
-      if (btn) { btn.disabled = false; btn.textContent = '💳 Thanh toán qua MoMo'; }
+      U.toast(e.message || 'Lỗi kiểm tra thanh toán MB Bank', 'error');
+      if (btn) { btn.disabled = false; btn.textContent = '🔄 Kiểm tra trạng thái thanh toán ngay'; }
     }
   },
+  'pay-momo': async (d, btn) => {
+    if (!d.orderId) return;
+    window.location.href = `/payment/mbank/${encodeURIComponent(d.orderId)}`;
+  },
+  'confirm-momo': async (d, btn) => {
+    return App._actions['confirm-mbank'] ? App._actions['confirm-mbank'](d, btn) : null;
+  },
+
   'simulate-payment': async (d, btn) => {
     if (!d.orderId) return;
     try {

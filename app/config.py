@@ -68,6 +68,25 @@ class Settings(BaseSettings):
     MOMO_RETURN_URL: str = "http://127.0.0.1:8000/api/payment/momo/return"
     MOMO_IPN_URL: str = "http://127.0.0.1:8000/api/payment/momo/ipn"
 
+    # ---- MoMo Cá Nhân (Nhận tiền thật qua QR / me.momo.vn) ----
+    # Thay thế MOMO_PERSONAL_LINK bằng link me.momo.vn của bạn trong file .env
+    MOMO_PERSONAL_LINK: str = "https://me.momo.vn/aurastudio"
+    MOMO_PHONE: str = "0775972171"      # Số điện thoại ví MoMo nhận tiền
+    MOMO_NAME: str = "AURA STUDIO"      # Tên chủ ví hiển thị cho khách
+    # Đường dẫn ảnh QR tĩnh (đặt file tại app/static/img/momo-qr.png)
+    # Nếu để trống, hệ thống tự tạo QR động từ MOMO_PERSONAL_LINK
+    MOMO_QR_IMAGE: str = "/static/img/momo-qr.jpg"
+
+    # ---- Chuyển khoản Ngân hàng MB Bank (Tự động SePay) ----
+    MBBANK_BANK_NAME: str = "Ngân hàng TMCP Quân Đội (MB Bank)"
+    MBBANK_BANK_CODE: str = "MBBank"
+    MBBANK_ACCOUNT_NUMBER: str = "0835731473"
+    MBBANK_ACCOUNT_NAME: str = "VU TIEN ANH"
+    MBBANK_QR_IMAGE: str = "/static/images/MB-qr.jpg"
+
+    # ---- Cổng Webhook Tự Động SePay (sepay.vn) ----
+    SEPAY_API_KEY: Optional[str] = None
+
     # Domain public chính thức của hệ thống (dùng dựng link reset mật khẩu an toàn, không phụ thuộc Host header)
     PUBLIC_BASE_URL: str = "http://127.0.0.1:8000"
 
