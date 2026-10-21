@@ -328,6 +328,7 @@ class TestCustomerCancel:
         assert legacy_item["refund_account_number"] is None
 
         # Kiểm tra masking khi người dùng không phải full access tra cứu
+        client.cookies.clear()
         res_pub = client.get(f"/api/orders/{order_id}?phone=0911222333")
         assert res_pub.status_code == 200
         pub_data = res_pub.json()

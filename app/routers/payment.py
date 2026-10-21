@@ -10,8 +10,6 @@ import urllib.parse
 import uuid
 from typing import Optional
 
-logger = logging.getLogger("aura.payment")
-
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel
@@ -21,14 +19,19 @@ from app.db.database import db_service
 from app.models.schemas import PaymentWebhookPayload, User
 from app.routers.deps import (
     check_public_track_rate_limit,
+    get_client_ip,
     get_current_user_optional,
     normalize_phone,
     require_admin,
+    sign_guest_order_cookie,
+    verify_guest_order_cookie,
     verify_order_access,
 )
 from app.services.momo_service import momo_service
 from app.services.order_service import order_service
 from app.services.vnpay_service import get_vnpay_response_message, vnpay_service
+
+logger = logging.getLogger("aura.payment")
 
 router = APIRouter(tags=["payment"])
 
@@ -136,15 +139,14 @@ def check_order_payment_status(order_id: str, request: Request, phone: Optional[
         if not user or (user.role != "admin" and str(user.id) != str(order_user_id)):
             raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
     else:
-        # Đơn vãng lai: Admin có quyền xem, người dùng khác bắt buộc cung cấp SĐT khớp với đơn
+        # Đơn vãng lai: Admin có quyền xem, người dùng khác bắt buộc cung cấp SĐT khớp với đơn hoặc cookie HMAC hợp lệ
         if not (user and user.role == "admin"):
-            cookie_phone = request.cookies.get(f"aura_order_{order_id}")
-            check_phone = phone or cookie_phone
-            if not check_phone:
-                raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại hoặc cần cung cấp số điện thoại xác thực")
             order_phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
-            if normalize_phone(check_phone) != normalize_phone(order_phone):
-                raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
+            cookie_token = request.cookies.get(f"aura_order_{order_id}")
+            has_cookie_access = verify_guest_order_cookie(cookie_token, order_id, order_phone)
+            has_phone_access = bool(phone and normalize_phone(phone) == normalize_phone(order_phone))
+            if not (has_cookie_access or has_phone_access):
+                raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại hoặc cần cung cấp số điện thoại xác thực")
 
     status = db_service.get_order_payment_status(order_id)
     if not status.get("exists"):
@@ -193,22 +195,18 @@ def vnpay_create_payment_url(body: VNPayCreatePaymentRequest, request: Request):
 
     # Kiểm tra quyền sở hữu đơn hàng
     user = get_current_user_optional(request)
-    cookie_phone = request.cookies.get(f"aura_order_{body.order_id}")
-    phone_to_check = body.phone or cookie_phone
+    cookie_token = request.cookies.get(f"aura_order_{body.order_id}")
+    order_phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
+    has_cookie = verify_guest_order_cookie(cookie_token, body.order_id, order_phone)
+    phone_to_check = body.phone or (order_phone if has_cookie else None)
     is_allowed, _ = verify_order_access(order, user, phone_to_check)
     if not is_allowed:
         raise HTTPException(status_code=403, detail="Bạn không có quyền truy cập hoặc thanh toán đơn hàng này")
 
     amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
 
-    # Xử lý IP client chuẩn xác kể cả khi chạy sau reverse proxy (X-Forwarded-For)
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        client_ip = forwarded.split(",")[0].strip()
-    elif request.client and request.client.host:
-        client_ip = request.client.host
-    else:
-        client_ip = "127.0.0.1"
+    # Xử lý IP client chuẩn xác kể cả khi chạy sau reverse proxy qua get_client_ip
+    client_ip = get_client_ip(request)
 
     is_cfg = vnpay_service.is_configured()
     if not is_cfg and settings.APP_ENV.strip().lower() == "production":
@@ -361,20 +359,23 @@ def vnpay_mock_gateway(order_id: str = Query(...)):
     return HTMLResponse(content=html_content)
 
 
-def _payment_error_html(
+def _error_page(
     title: str,
-    body_html: str,
-    status: int = 400,
+    message: str,
+    status_code: int = 400,
+    color: str = "#e11d48",
     back_url: str = "/",
     retry_url: Optional[str] = None,
     retry_text: str = "Thử thanh toán lại",
+    icon: str = "⚠️",
 ) -> HTMLResponse:
-    """Helper render trang lỗi thanh toán có charset UTF-8 chuẩn, tránh lỗi encoding tiếng Việt."""
+    """Helper gom chung render trang lỗi HTML có charset UTF-8 chuẩn cho toàn bộ cổng thanh toán."""
     retry_btn = (
         f'<a href="{html.escape(retry_url)}" class="btn" style="background:#005baa;margin-right:8px;">{html.escape(retry_text)}</a>'
         if retry_url
         else ""
     )
+    body_content = message if ("<p>" in message or "<div" in message) else f"<p>{message}</p>"
     content = f"""<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -386,7 +387,7 @@ def _payment_error_html(
     body{{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FAF8F5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}}
     .card{{background:#fff;border:1px solid #E5E2DC;border-radius:4px;padding:48px 40px;max-width:480px;width:100%;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.06)}}
     .icon{{font-size:48px;margin-bottom:16px}}
-    h2{{font-size:20px;font-weight:700;color:#111;margin-bottom:12px}}
+    h2{{font-size:20px;font-weight:700;color:{color};margin-bottom:12px}}
     p{{font-size:14px;color:#555;line-height:1.6;margin-bottom:8px}}
     strong{{color:#111}}
     .btn{{display:inline-block;margin-top:28px;padding:11px 24px;background:#111;color:#fff;text-decoration:none;border-radius:3px;font-size:14px;font-weight:600;letter-spacing:.02em;transition:background .2s}}
@@ -397,7 +398,9 @@ def _payment_error_html(
 </head>
 <body>
   <div class="card">
-    {body_html}
+    <div class="icon">{icon}</div>
+    <h2>{html.escape(title)}</h2>
+    {body_content}
     <div style="margin-top: 24px;">
       {retry_btn}
       <a href="{html.escape(back_url)}" class="btn btn-outline">Về trang chủ</a>
@@ -405,7 +408,26 @@ def _payment_error_html(
   </div>
 </body>
 </html>"""
-    return HTMLResponse(content=content, status_code=status, media_type="text/html; charset=utf-8")
+    return HTMLResponse(content=content, status_code=status_code, media_type="text/html; charset=utf-8")
+
+
+def _payment_error_html(
+    title: str,
+    body_html: str,
+    status: int = 400,
+    back_url: str = "/",
+    retry_url: Optional[str] = None,
+    retry_text: str = "Thử thanh toán lại",
+) -> HTMLResponse:
+    return _error_page(
+        title=title,
+        message=body_html,
+        status_code=status,
+        color="#111",
+        back_url=back_url,
+        retry_url=retry_url,
+        retry_text=retry_text,
+    )
 
 
 @router.get("/api/payment/vnpay/return")
@@ -505,7 +527,8 @@ def vnpay_payment_return(request: Request):
             resp = RedirectResponse(url=f"/order-success/{order_id}", status_code=302)
             phone_val = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
             if phone_val:
-                resp.set_cookie(f"aura_order_{order_id}", phone_val, httponly=True, max_age=3600, samesite="lax")
+                cookie_val = sign_guest_order_cookie(order_id, phone_val)
+                resp.set_cookie(f"aura_order_{order_id}", cookie_val, httponly=True, max_age=3600, samesite="lax")
             return resp
         return {
             "success": True,
@@ -630,8 +653,10 @@ def momo_create_payment_url(body: MoMoCreatePaymentRequest, request: Request):
 
     # Kiểm tra quyền sở hữu đơn hàng
     user = get_current_user_optional(request)
-    cookie_phone = request.cookies.get(f"aura_order_{body.order_id}")
-    phone_to_check = body.phone or cookie_phone
+    cookie_token = request.cookies.get(f"aura_order_{body.order_id}")
+    order_phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
+    has_cookie = verify_guest_order_cookie(cookie_token, body.order_id, order_phone)
+    phone_to_check = body.phone or (order_phone if has_cookie else None)
     is_allowed, _ = verify_order_access(order, user, phone_to_check)
     if not is_allowed:
         raise HTTPException(status_code=403, detail="Bạn không có quyền truy cập hoặc thanh toán đơn hàng này")
@@ -770,15 +795,11 @@ def momo_payment_return(request: Request):
 
     if not is_valid:
         if is_browser_html:
-            return HTMLResponse(
-                content="""
-                <div style="font-family:sans-serif;text-align:center;padding:50px;">
-                    <h2 style="color:#e11d48;">Lỗi bảo mật thanh toán</h2>
-                    <p>Chữ ký bảo mật MoMo không hợp lệ hoặc dữ liệu phản hồi bị can thiệp.</p>
-                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
-                </div>
-                """,
+            return _error_page(
+                title="Lỗi bảo mật thanh toán",
+                message="Chữ ký bảo mật MoMo không hợp lệ hoặc dữ liệu phản hồi bị can thiệp.",
                 status_code=400,
+                color="#e11d48",
             )
         raise HTTPException(status_code=400, detail="Chữ ký phản hồi MoMo không hợp lệ")
 
@@ -800,30 +821,22 @@ def momo_payment_return(request: Request):
 
     if not order:
         if is_browser_html:
-            return HTMLResponse(
-                content=f"""
-                <div style="font-family:sans-serif;text-align:center;padding:50px;">
-                    <h2 style="color:#e11d48;">Lỗi đơn hàng</h2>
-                    <p>Không tìm thấy mã đơn hàng: <strong>{safe_order_id}</strong></p>
-                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
-                </div>
-                """,
+            return _error_page(
+                title="Lỗi đơn hàng",
+                message=f"Không tìm thấy mã đơn hàng: <strong>{safe_order_id}</strong>",
                 status_code=404,
+                color="#e11d48",
             )
         raise HTTPException(status_code=404, detail=f"Không tìm thấy đơn hàng '{order_id}'")
 
     order_amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
     if amount != order_amount:
         if is_browser_html:
-            return HTMLResponse(
-                content=f"""
-                <div style="font-family:sans-serif;text-align:center;padding:50px;">
-                    <h2 style="color:#e11d48;">Lỗi số tiền thanh toán</h2>
-                    <p>Số tiền thanh toán ({amount}đ) không khớp với giá trị đơn hàng ({order_amount}đ).</p>
-                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
-                </div>
-                """,
+            return _error_page(
+                title="Lỗi số tiền thanh toán",
+                message=f"Số tiền thanh toán ({amount:,}đ) không khớp với giá trị đơn hàng ({order_amount:,}đ).",
                 status_code=400,
+                color="#e11d48",
             )
         raise HTTPException(status_code=400, detail="Số tiền thanh toán không khớp với đơn hàng")
 
@@ -836,15 +849,11 @@ def momo_payment_return(request: Request):
         )
         if confirm_res in ("cancelled", "refund_pending"):
             if is_browser_html:
-                return HTMLResponse(
-                    content=f"""
-                    <div style="font-family:sans-serif;text-align:center;padding:50px;">
-                        <h2 style="color:#e11d48;">Đơn hàng đã bị hủy</h2>
-                        <p>Đơn hàng <strong>{safe_order_id}</strong> đã bị hủy trước đó. Hệ thống đã ghi nhận thanh toán chờ hoàn tiền cho quý khách.</p>
-                        <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
-                    </div>
-                    """,
+                return _error_page(
+                    title="Đơn hàng đã bị hủy",
+                    message=f"Đơn hàng <strong>{safe_order_id}</strong> đã bị hủy trước đó. Hệ thống đã ghi nhận thanh toán chờ hoàn tiền cho quý khách.",
                     status_code=200,
+                    color="#e11d48",
                 )
             return {
                 "success": False,
@@ -859,7 +868,8 @@ def momo_payment_return(request: Request):
             resp = RedirectResponse(url=f"/order-success/{order_id}", status_code=302)
             phone_val = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
             if phone_val:
-                resp.set_cookie(f"aura_order_{order_id}", phone_val, httponly=True, max_age=3600, samesite="lax")
+                cookie_val = sign_guest_order_cookie(order_id, phone_val)
+                resp.set_cookie(f"aura_order_{order_id}", cookie_val, httponly=True, max_age=3600, samesite="lax")
             return resp
         return {
             "success": True,
@@ -871,16 +881,11 @@ def momo_payment_return(request: Request):
         }
     else:
         if is_browser_html:
-            return HTMLResponse(
-                content=f"""
-                <div style="font-family:sans-serif;text-align:center;padding:50px;">
-                    <h2 style="color:#d97706;">Giao dịch chưa hoàn tất</h2>
-                    <p>Mã đơn hàng: <strong>{safe_order_id}</strong></p>
-                    <p>Mã phản hồi MoMo: <strong>{safe_result_code}</strong></p>
-                    <p>Giao dịch thanh toán qua MoMo chưa thành công hoặc bạn đã hủy thao tác.</p>
-                    <a href="/" style="display:inline-block;margin-top:20px;padding:10px 20px;background:#000;color:#fff;text-decoration:none;border-radius:8px;">Về trang chủ</a>
-                </div>
-                """
+            return _error_page(
+                title="Giao dịch chưa hoàn tất",
+                message=f"Mã đơn hàng: <strong>{safe_order_id}</strong><br>Mã phản hồi MoMo: <strong>{safe_result_code}</strong><br>Giao dịch thanh toán qua MoMo chưa thành công hoặc bạn đã hủy thao tác.",
+                status_code=200,
+                color="#d97706",
             )
         return {
             "success": False,
@@ -1217,7 +1222,7 @@ def mbank_payment_page(order_id: str, request: Request):
       </button>
       <a href="/" class="cancel">← Quay lại trang chủ / Hủy</a>
 
-      {f'''
+      {'''
       <div class="test-box">
         <div>🧪 <strong>Chế độ Kiểm thử (DEBUG):</strong></div>
         <div>Bấm nút bên dưới để giả lập hệ thống nhận tiền MB Bank thành công và xem luồng tự động nhảy trang:</div>
@@ -1521,7 +1526,6 @@ async def sepay_webhook_handler(
 
     # 1. Trích xuất các trường theo đặc tả SePay
     gateway = data.get("gateway") or "SePay"
-    transaction_date = data.get("transactionDate") or ""
     account_number = data.get("accountNumber") or ""
     transfer_type = (data.get("transferType") or "in").strip().lower()
     content = data.get("content") or ""

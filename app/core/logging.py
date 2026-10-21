@@ -1,3 +1,4 @@
+import contextvars
 import json
 import logging
 import re
@@ -55,9 +56,6 @@ def mask_sensitive_data(data: Dict[str, Any]) -> Dict[str, Any]:
         else:
             masked[k] = v
     return masked
-
-
-import contextvars
 
 request_id_ctx: contextvars.ContextVar[str] = contextvars.ContextVar("request_id", default="")
 

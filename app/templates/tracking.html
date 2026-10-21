@@ -165,7 +165,7 @@
             </div>
             <div class="flex justify-between">
               <dt class="text-neutral-500">Thanh toán</dt>
-              <dd class="font-medium">{{ 'COD' if order.payment_method == 'cod' else ('Ngân hàng MB Bank' if order.payment_method in ('mbank', 'banking') else ('VNPay' if order.payment_method == 'vnpay' else ('MoMo' if order.payment_method == 'momo' else 'Chuyển khoản')) }}</dd>
+              <dd class="font-medium">{% if order.payment_method == 'cod' %}COD{% elif order.payment_method in ('mbank', 'banking') %}Ngân hàng MB Bank{% elif order.payment_method == 'vnpay' %}VNPay{% elif order.payment_method == 'momo' %}MoMo{% else %}Chuyển khoản{% endif %}</dd>
             </div>
           </dl>
         </div>

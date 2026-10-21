@@ -2,6 +2,7 @@ import logging
 import os
 import uuid
 from contextlib import asynccontextmanager
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -11,9 +12,6 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import settings
 from app.core.logging import request_id_ctx, setup_logging
-
-# Cấu hình log trước khi import db_service — init_db() chạy ngay lúc import module
-setup_logging()
 from app.db.database import db_service
 from app.routers import (
     admin,
@@ -37,6 +35,8 @@ from app.routers.deps import (
 )
 from app.services.order_service import OrderError
 
+# Cấu hình log và logger
+setup_logging()
 logger = logging.getLogger("aura.main")
 
 # Tích hợp Sentry Error Tracking qua SENTRY_DSN
@@ -104,6 +104,27 @@ async def lifespan(app: FastAPI):
             logger.critical(msg)
             raise RuntimeError(msg)
 
+        # Kiểm tra tài khoản admin không dùng mật khẩu mặc định
+        try:
+            from sqlalchemy import func
+
+            from app.db.models import UserDB
+            from app.db.session import get_db_session
+            from app.services.user_service import verify_password
+
+            with get_db_session() as session:
+                admin_user = session.query(UserDB).filter(func.lower(UserDB.username) == "admin").first()
+                if admin_user and admin_user.password_hash:
+                    for weak_pw in ("admin123", "user123"):
+                        if verify_password(weak_pw, admin_user.password_hash):
+                            msg = f"🚨 TỪ CHỐI KHỞI ĐỘNG (APP_ENV=production): Tài khoản 'admin' đang dùng mật khẩu mặc định nguy hiểm ('{weak_pw}'). Vui lòng đổi mật khẩu bằng scripts/reset_admin_password.py trước khi khởi chạy."
+                            logger.critical(msg)
+                            raise RuntimeError(msg)
+        except RuntimeError:
+            raise
+        except Exception as e:
+            logger.warning("Không thể kiểm tra mật khẩu admin lúc khởi động: %s", e)
+
     yield
 
 
@@ -137,6 +158,74 @@ async def request_id_middleware(request: Request, call_next):
         request_id_ctx.reset(token)
 
 
+# CSRF Protection Middleware: Bảo vệ các API ghi dữ liệu dùng cookie aura_session
+CSRF_EXEMPT_PREFIXES = (
+    "/api/payment/webhook",
+    "/api/payment/vnpay/ipn",
+    "/api/payment/momo/ipn",
+)
+
+
+def _is_csrf_exempt(path: str) -> bool:
+    if any(path.startswith(prefix) for prefix in CSRF_EXEMPT_PREFIXES):
+        return True
+    if path.startswith("/api/payment/") and (path.endswith("/return") or path.endswith("/ipn") or path.endswith("/webhook")):
+        return True
+    return False
+
+
+@app.middleware("http")
+async def csrf_protect_middleware(request: Request, call_next):
+    if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        if not _is_csrf_exempt(request.url.path):
+            session_cookie = request.cookies.get("aura_session")
+            auth_header = request.headers.get("Authorization", "").strip()
+            is_bearer = auth_header.lower().startswith("bearer ")
+
+            # Chỉ áp dụng kiểm tra Origin/Referer khi request dùng cookie xác thực và không dùng Bearer header
+            if session_cookie and not is_bearer:
+                sec_fetch_site = request.headers.get("sec-fetch-site", "").strip().lower()
+                if sec_fetch_site == "cross-site":
+                    return JSONResponse(
+                        status_code=403,
+                        content={"detail": "CSRF verification failed: cross-site request forbidden."},
+                    )
+
+                origin = request.headers.get("origin")
+                referer = request.headers.get("referer")
+                source_url = origin or referer
+                if source_url:
+                    try:
+                        source_host = urlparse(source_url).hostname or ""
+                    except Exception:
+                        source_host = ""
+
+                    source_host = source_host.lower()
+
+                    # Danh sách host hợp lệ
+                    valid_hosts = set()
+                    if request.url.hostname:
+                        valid_hosts.add(request.url.hostname.lower())
+                    host_hdr = request.headers.get("host")
+                    if host_hdr:
+                        valid_hosts.add(host_hdr.split(":")[0].lower())
+                    if settings.PUBLIC_BASE_URL:
+                        try:
+                            pub_h = urlparse(settings.PUBLIC_BASE_URL).hostname
+                            if pub_h:
+                                valid_hosts.add(pub_h.lower())
+                        except Exception:
+                            pass
+
+                    if not source_host or source_host not in valid_hosts:
+                        return JSONResponse(
+                            status_code=403,
+                            content={"detail": "CSRF verification failed: cross-origin request forbidden."},
+                        )
+
+    return await call_next(request)
+
+
 # Security headers middleware
 @app.middleware("http")
 async def security_headers_middleware(request: Request, call_next):
@@ -152,6 +241,8 @@ async def security_headers_middleware(request: Request, call_next):
         "img-src 'self' data: https://images.unsplash.com https://img.vietqr.io https://res.cloudinary.com; "
         "connect-src 'self'"
     )
+    if settings.APP_ENV.strip().lower() == "production":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
 
 
@@ -159,20 +250,23 @@ async def security_headers_middleware(request: Request, call_next):
 @app.get("/healthz", tags=["System"])
 @app.get("/health", tags=["System"])
 def health_check():
-    """Kiểm tra tính sẵn sàng của ứng dụng và kết nối cơ sở dữ liệu (Health Check)."""
+    """Kiểm tra tính sẵn sàng của ứng dụng và kết nối cơ sở dữ liệu (Health Check qua SQLAlchemy)."""
     db_ok = False
     error_msg = None
     try:
-        import sqlite3
-        conn = sqlite3.connect(db_service.db_path, timeout=5.0)
-        try:
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1;")
-            row = cursor.fetchone()
+        from sqlalchemy import text
+
+        from app.db.session import engine
+
+        if str(engine.url).startswith("sqlite"):
+            import sqlite3
+            conn_sq = sqlite3.connect(db_service.db_path, timeout=5.0)
+            conn_sq.close()
+
+        with engine.connect() as conn:
+            row = conn.execute(text("SELECT 1;")).fetchone()
             if row and row[0] == 1:
                 db_ok = True
-        finally:
-            conn.close()
     except Exception as e:
         error_msg = str(e)
         logger.error("Health check DB thất bại: %s", e)

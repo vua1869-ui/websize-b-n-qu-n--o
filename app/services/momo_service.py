@@ -255,7 +255,8 @@ class MoMoService:
         }
 
         try:
-            logger.info("MoMo Refund Request -> %s, payload: %s", settings.MOMO_REFUND_URL, payload)
+            logger.info("MoMo Refund Request -> %s, orderId=%s, amount=%s", settings.MOMO_REFUND_URL, refund_order_id, amount)
+            logger.debug("MoMo Refund Full Payload: %s", payload)
             response = requests.post(
                 settings.MOMO_REFUND_URL,
                 json=payload,

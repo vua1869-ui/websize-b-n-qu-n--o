@@ -7,6 +7,9 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from app.config import settings
 
 DATABASE_URL = getattr(settings, "DATABASE_URL", None)
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 if not DATABASE_URL:
     db_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "aura_store.db")
     DATABASE_URL = f"sqlite:///{db_file.replace(chr(92), '/')}"

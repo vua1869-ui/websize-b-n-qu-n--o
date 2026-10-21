@@ -1,7 +1,7 @@
 import logging
 import os
-
 from typing import Optional
+
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -145,6 +145,10 @@ class Settings(BaseSettings):
             is_momo_localhost = not self.MOMO_RETURN_URL or "127.0.0.1" in self.MOMO_RETURN_URL or "localhost" in self.MOMO_RETURN_URL.lower()
             if is_momo_localhost:
                 errors.append("- MOMO_RETURN_URL vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống.")
+
+            is_momo_ipn_localhost = not self.MOMO_IPN_URL or "127.0.0.1" in self.MOMO_IPN_URL or "localhost" in self.MOMO_IPN_URL.lower()
+            if is_momo_ipn_localhost:
+                errors.append("- MOMO_IPN_URL vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống để nhận IPN webhook.")
 
             if self.EMAIL_BACKEND == "console":
                 errors.append("- EMAIL_BACKEND không được dùng 'console' khi triển khai Production.")

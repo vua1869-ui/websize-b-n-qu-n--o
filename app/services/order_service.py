@@ -12,10 +12,7 @@ import logging
 import os
 import secrets
 import threading
-from typing import Any, Dict, List, Optional
-
-logger = logging.getLogger("aura.order_service")
-
+from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import func, or_
 
@@ -33,6 +30,8 @@ from app.models.schemas import (
 )
 from app.services.email_sender import get_email_sender
 from app.services.product_service import product_service
+
+logger = logging.getLogger("aura.order_service")
 
 
 class OrderError(Exception):
@@ -184,6 +183,11 @@ class OrderService:
                 if strict_voucher:
                     raise OrderError(msg, 400)
                 voucher_message = msg
+            elif v.max_uses is not None and v.used_uses >= v.max_uses:
+                msg = f"Mã {code} đã hết lượt sử dụng trên hệ thống"
+                if strict_voucher:
+                    raise OrderError(msg, 400)
+                voucher_message = f"Mã {code} đã hết lượt; đơn hàng vẫn tiếp tục không dùng mã này"
             elif after_combo < v.min_order:
                 msg = f"Mã {code} chỉ áp dụng cho đơn từ {_money(v.min_order)}"
                 if strict_voucher:
@@ -334,6 +338,13 @@ class OrderService:
 
         # 5. Tạo đơn hàng nguyên tử trong Database và đồng bộ bộ nhớ
         with product_service._lock:
+            for pid, qty in needed.items():
+                p = product_service.get_by_id(pid)
+                if not p or p.stock < qty:
+                    msg = (f"'{p.name}' chỉ còn {p.stock} sản phẩm" if p and p.stock > 0
+                           else f"'{p.name if p else pid}' đã hết hàng")
+                    raise OrderError(msg, 409)
+
             items_payload = [
                 {
                     "product_id": line.product_id,
@@ -351,7 +362,7 @@ class OrderService:
                 items=items_payload,
                 user_id=getattr(user, "id", None) if user else None,
                 points_to_deduct=quote.points_used,
-                voucher_code=req.voucher_code
+                voucher_code=quote.voucher_code
             )
 
             # Chỉ cập nhật tồn kho bộ nhớ SAU khi CSDL commit thành công
@@ -389,25 +400,35 @@ class OrderService:
         transfer_content = str(order_id).upper() if str(order_id).upper().startswith("AURA-") else f"AURA-{order_id}"
 
         if payment_method in ("mbank", "banking", "qr_transfer", "vietqr"):
-            mb_bank_name = getattr(settings, "MBBANK_BANK_NAME", "") or "Ngân hàng TMCP Quân Đội (MB Bank)"
-            mb_acc_no = getattr(settings, "MBBANK_ACCOUNT_NUMBER", "") or "0835731473"
-            mb_acc_name = getattr(settings, "MBBANK_ACCOUNT_NAME", "") or "VU TIEN ANH"
-            mb_qr_image = getattr(settings, "MBBANK_QR_IMAGE", "") or "/static/images/MB-qr.jpg"
+            if payment_method in ("vietqr", "qr_transfer"):
+                b_id = getattr(settings, "BANK_ID", "MB") or "MB"
+                acc_no = getattr(settings, "BANK_ACCOUNT_NO", "0900000001") or "0900000001"
+                acc_name = getattr(settings, "BANK_ACCOUNT_NAME", "AURA STUDIO") or "AURA STUDIO"
+                bank_name = getattr(settings, "MBBANK_BANK_NAME", "") or "Ngân hàng TMCP Quân Đội (MB Bank)"
+                import urllib.parse
+                qr_code_url = f"https://img.vietqr.io/image/{b_id}-{acc_no}-compact2.png?amount={quote.total}&addInfo={urllib.parse.quote(transfer_content)}&accountName={urllib.parse.quote(acc_name)}"
+                redirect_url = f"/payment/mbank/{order_id}"
+            else:
+                bank_name = getattr(settings, "MBBANK_BANK_NAME", "") or "Ngân hàng TMCP Quân Đội (MB Bank)"
+                acc_no = getattr(settings, "MBBANK_ACCOUNT_NUMBER", "") or "0835731473"
+                acc_name = getattr(settings, "MBBANK_ACCOUNT_NAME", "") or "VU TIEN ANH"
+                b_id = getattr(settings, "MBBANK_BANK_CODE", "MBBank") or "MBBank"
+                qr_code_url = getattr(settings, "MBBANK_QR_IMAGE", "") or "/static/images/MB-qr.jpg"
+                redirect_url = f"/payment/mbank/{order_id}"
 
-            qr_code_url = mb_qr_image
             bank_info = {
-                "bank_name": mb_bank_name,
-                "bank_code": "MBBank",
-                "account_number": mb_acc_no,
-                "account_name": mb_acc_name,
+                "bank_name": bank_name,
+                "bank_code": b_id,
+                "account_number": acc_no,
+                "account_name": acc_name,
                 "amount": str(quote.total),
                 "transfer_content": transfer_content,
-                "qr_code_url": mb_qr_image,
-                "redirect_url": f"/payment/mbank/{order_id}",
+                "qr_code_url": qr_code_url,
+                "redirect_url": redirect_url,
             }
             msg = (
-                f"Đã ghi nhận đơn. Vui lòng quét mã QR MB Bank hoặc chuyển khoản "
-                f"{_money(quote.total)} tới STK {mb_acc_no} ({mb_acc_name}) "
+                f"Đã ghi nhận đơn. Vui lòng quét mã QR hoặc chuyển khoản "
+                f"{_money(quote.total)} tới STK {acc_no} ({acc_name}) "
                 f"với nội dung '{transfer_content}' để hệ thống tự động xác nhận đơn."
             )
         elif payment_method == "momo":

@@ -1,8 +1,16 @@
 'use strict';
 /**
- * AURA STUDIO - lõi giao diện: catalog, Flash Sale, giỏ hàng, thanh toán, Live.
- * Nguyên tắc: MỌI dữ liệu chèn vào HTML đều qua U.esc(); không dùng onclick chứa JSON;
- * giá tiền hiển thị/thanh toán luôn lấy từ server (/api/orders/quote).
+ * AURA STUDIO - Lõi giao diện người dùng (app/static/js/app.js)
+ * ============================================================
+ * CẤU TRÚC CÁC PHÂN KHU CHỨC NĂNG:
+ * 1. TIỆN ÍCH CHUNG (U: DOM, esc/XSS, api fetch, toast, format tiền)
+ * 2. MODAL CONTROLLER (Modal.open, Modal.close, backdrop, esc key)
+ * 3. CORE APPLICATION (App: state, catalog, flash sale, quickview, cart, checkout)
+ * 4. BẰNG CHỨNG XÃ HỘI & ĐÁNH GIÁ SẢN PHẨM (SocialProofUI, Reviews)
+ * 5. TRA CỨU VẬN ĐƠN & TIMELINE (TrackingUI)
+ * 6. XUẤT HÓA ĐƠN VAT / IN PHIẾU BÁN HÀNG (InvoiceUI)
+ * 7. GIỮ CHÂN KHÁCH & PHỤC HỒI GIỎ (ExitIntentUI, OmnichannelUI)
+ * 8. ACTION DISPATCHER & EVENT DELEGATION (Actions, click/change/keydown handlers)
  */
 
 /* ===================== Tiện ích ===================== */
@@ -54,6 +62,7 @@ const U = {
     return `<img src="${U.esc(src)}" alt="${U.esc(alt)}" class="${cls}" loading="lazy" />`;
   },
 };
+window.escapeHtml = U.esc;
 
 // Ảnh lỗi (link hỏng/mất mạng) -> ảnh thay thế thay vì icon vỡ
 document.addEventListener('error', e => {
@@ -570,10 +579,15 @@ const App = {
   renderVouchers() {
     const el = U.$('#vouchers-list');
     if (!el) return;
+    if (!this.state.vouchers.length) {
+      el.innerHTML = '<p class="col-span-full py-6 text-center text-sm text-[#777777]">Hiện chưa có mã giảm giá. Bạn quay lại sau nhé.</p>';
+      return;
+    }
     el.innerHTML = this.state.vouchers.map(v => {
       const saved = this.state.savedVouchers.includes(v.code);
+      const soldOut = v.remaining_uses === 0;
       return `
-      <div class="voucher-ticket flex items-center justify-between gap-3 rounded-[2px] p-3 border border-[#E5E2DC] bg-white">
+      <div class="voucher-ticket flex items-center justify-between gap-3 rounded-[2px] p-3 border border-[#E5E2DC] bg-white ${soldOut ? 'opacity-60' : ''}">
         <div class="flex items-center gap-2.5">
           <div class="flex h-11 w-11 flex-shrink-0 flex-col items-center justify-center rounded-[2px] border border-[#111111] bg-[#FAF8F5] text-[#111111]">
             <span class="text-sm font-bold">${U.esc(v.code.slice(0, 4))}</span><span class="text-sm font-bold uppercase">Mã</span></div>
@@ -581,15 +595,18 @@ const App = {
             <div class="text-sm font-bold text-[#111111]">${U.esc(v.discount_display)}</div>
             <div class="truncate text-sm font-medium text-[#555555]">${U.esc(v.title)}</div>
             <div class="text-sm text-[#888888]">${v.min_order ? 'Đơn từ ' + U.vnd(v.min_order) : 'Mọi đơn hàng'} • ${U.esc(v.expire_in)}</div>
+            <div class="text-sm font-semibold ${soldOut ? 'text-red-600' : 'text-emerald-700'}">${soldOut ? 'Đã săn hết lượt' : (v.remaining_uses == null ? 'Còn mã' : `Còn ${v.remaining_uses} lượt`)}</div>
           </div>
         </div>
-        <button data-action="claim-voucher" data-code="${U.esc(v.code)}" ${saved ? 'disabled' : ''}
-          class="btn btn-sm flex-shrink-0 ${saved ? 'btn-outline opacity-50' : 'btn-primary'}">${saved ? 'Đã lưu' : 'Lưu mã'}</button>
+        <button data-action="claim-voucher" data-code="${U.esc(v.code)}" ${(saved || soldOut) ? 'disabled' : ''}
+          class="btn btn-sm flex-shrink-0 ${(saved || soldOut) ? 'btn-outline opacity-50' : 'btn-primary'}">${soldOut ? 'Hết mã' : saved ? 'Đã lưu' : 'Săn mã'}</button>
       </div>`;
     }).join('');
   },
 
   claimVoucher(code) {
+    const voucher = this.state.vouchers.find(v => v.code === code);
+    if (voucher?.remaining_uses === 0) { U.toast('Mã này đã hết lượt sử dụng.'); return; }
     if (this.state.savedVouchers.includes(code)) return;
     this.state.savedVouchers.push(code);
     U.store.set('aura_vouchers_v2', this.state.savedVouchers);

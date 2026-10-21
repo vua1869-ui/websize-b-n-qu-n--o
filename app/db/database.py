@@ -9,6 +9,30 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from app.core.logging import log_money_event
 
+"""
+AURA STUDIO - Database Layer & Service (app/db/database.py)
+===========================================================
+MỤC LỤC CÁC NHÓM HÀM TRONG TỆP:
+1. KẾT NỐI & KHỞI TẠO CSDL (Lines ~30-150):
+   - normalize_phone, get_db_connection, get_db_transaction, init_db
+2. QUẢN LÝ SẢN PHẨM & FLASH SALE (Lines ~150-750):
+   - get_products, get_product_by_id, add_product, update_product, delete_product, get_categories
+3. QUẢN LÝ MÃ GIẢM GIÁ / VOUCHERS (Lines ~750-850):
+   - get_voucher, get_all_vouchers, save_voucher, delete_voucher
+4. QUẢN LÝ ĐƠN HÀNG & TRA CỨU (Lines ~850-1400):
+   - create_order, get_order_by_id, get_order_by_tracking_or_id, update_order_status
+5. QUẢN LÝ THANH TOÁN & WEBHOOK (Lines ~1400-1800):
+   - confirm_payment, get_order_payment_status, process_refund
+6. ĐÁNH GIÁ SẢN PHẨM / REVIEWS (Lines ~1800-2000):
+   - get_product_reviews, add_product_review
+7. KHÁCH HÀNG THÂN THIẾT & ĐIỂM THƯỞNG AURA CLUB (Lines ~2000-2300):
+   - get_loyalty_status, add_loyalty_points, use_loyalty_points
+8. LÔ HÀNG NHẬP KHO & BÁO CÁO LÃI/LỖ (Lines ~2300-2650):
+   - create_inventory_batch, get_inventory_batches, get_profit_report
+9. THỐNG KÊ QUẢN TRỊ ADMIN (Lines ~2650-Hết):
+   - get_admin_dashboard_stats, get_admin_orders_paginated
+"""
+
 logger = logging.getLogger("aura.database")
 
 
@@ -580,10 +604,10 @@ def _migrate_products(conn: sqlite3.Connection):
             has_m = "M" in sizes
             s_alloc = min(3, max(1, total_stock - 1)) if (has_s and has_m and total_stock > 1) else 0
 
-            for c_idx, c in enumerate(colors):
+            for c in colors:
                 c_name = c.get("name") if isinstance(c, dict) else str(c)
                 c_hex = c.get("hex", "#000000") if isinstance(c, dict) else "#000000"
-                for s_idx, s in enumerate(sizes):
+                for s in sizes:
                     if c_name == def_color_name:
                         if has_s and has_m:
                             if s == "S":
@@ -797,9 +821,9 @@ class DatabaseService:
                     has_m = "M" in sizes
                     s_alloc = min(3, max(1, total_stock - 1)) if (has_s and has_m and total_stock > 1) else 0
 
-                    for c_idx, c in enumerate(colors):
+                    for c in colors:
                         c_name = c.get("name") if isinstance(c, dict) else str(c)
-                        for s_idx, s in enumerate(sizes):
+                        for s in sizes:
                             if c_name == def_color_name:
                                 if has_s and has_m:
                                     if s == "S":
@@ -826,71 +850,6 @@ class DatabaseService:
 
     def reset_stock(self):
         return self.seed_reset_stock()
-
-    def get_voucher(self, code: str) -> Optional[Any]:
-        if not code:
-            return None
-        code = code.strip().upper()
-        conn = get_db_connection(self.db_path)
-        try:
-            row = conn.execute("SELECT * FROM vouchers WHERE code = ? AND is_active = 1;", (code,)).fetchone()
-            if not row:
-                return None
-            from app.models.schemas import Voucher
-            data = dict(row)
-            if data.get("expires_at"):
-                try:
-                    data["expires_at"] = datetime.datetime.fromisoformat(data["expires_at"])
-                except Exception:
-                    pass
-            return Voucher(**data)
-        finally:
-            conn.close()
-
-    def get_all_vouchers(self) -> List[Any]:
-        conn = get_db_connection(self.db_path)
-        try:
-            rows = conn.execute("SELECT * FROM vouchers WHERE is_active = 1;").fetchall()
-            from app.models.schemas import Voucher
-            out = []
-            for r in rows:
-                data = dict(r)
-                if data.get("expires_at"):
-                    try:
-                        data["expires_at"] = datetime.datetime.fromisoformat(data["expires_at"])
-                    except Exception:
-                        pass
-                out.append(Voucher(**data))
-            return out
-        finally:
-            conn.close()
-
-    def save_voucher(self, v: Any) -> None:
-        conn = get_db_connection(self.db_path)
-        try:
-            exp_str = v.expires_at.isoformat() if isinstance(getattr(v, "expires_at", None), datetime.datetime) else getattr(v, "expires_at", None)
-            now_str = datetime.datetime.now().isoformat()
-            code = v.code.strip().upper()
-            conn.execute(
-                """
-                INSERT INTO vouchers 
-                (code, title, kind, value, max_discount, min_order, badge, expire_in, expires_at, max_uses, max_uses_per_user, is_active, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
-                ON CONFLICT(code) DO UPDATE SET
-                    title=excluded.title, kind=excluded.kind, value=excluded.value,
-                    max_discount=excluded.max_discount, min_order=excluded.min_order,
-                    badge=excluded.badge, expire_in=excluded.expire_in,
-                    expires_at=excluded.expires_at, max_uses=excluded.max_uses,
-                    max_uses_per_user=excluded.max_uses_per_user, is_active=1;
-                """,
-                (
-                    code, v.title, v.kind, v.value, v.max_discount, v.min_order,
-                    v.badge, v.expire_in, exp_str, v.max_uses, v.max_uses_per_user, now_str
-                )
-            )
-            conn.commit()
-        finally:
-            conn.close()
 
     def reset_vouchers(self) -> None:
         conn = get_db_connection(self.db_path)
@@ -2793,25 +2752,17 @@ class DatabaseService:
         if not row:
             return None
         from app.models.schemas import Voucher
-        expires_at = None
-        if row["expires_at"]:
+        data = dict(row)
+        if data.get("expires_at"):
             try:
-                expires_at = datetime.datetime.fromisoformat(row["expires_at"])
+                data["expires_at"] = datetime.datetime.fromisoformat(data["expires_at"])
             except Exception:
                 pass
-        return Voucher(
-            code=row["code"],
-            title=row["title"],
-            kind=row["kind"],
-            value=row["value"],
-            max_discount=row["max_discount"],
-            min_order=row["min_order"],
-            badge=row["badge"],
-            expire_in=row["expire_in"],
-            expires_at=expires_at,
-            max_uses=row["max_uses"],
-            max_uses_per_user=row["max_uses_per_user"],
-        )
+        used = data.get("used_uses") or 0
+        data["used_uses"] = used
+        if data.get("max_uses") is not None:
+            data["remaining_uses"] = max(0, data["max_uses"] - used)
+        return Voucher(**data)
 
     def get_voucher(self, code: Optional[str]):
         """Lấy thông tin voucher từ CSDL SQLite."""
@@ -2820,7 +2771,7 @@ class DatabaseService:
         code = code.strip().upper()
         conn = get_db_connection(self.db_path)
         try:
-            row = conn.execute("SELECT * FROM vouchers WHERE code = ? AND is_active = 1;", (code,)).fetchone()
+            row = conn.execute("SELECT v.*, (SELECT COUNT(*) FROM voucher_usages u WHERE u.voucher_code = v.code) AS used_uses FROM vouchers v WHERE v.code = ? AND v.is_active = 1;", (code,)).fetchone()
             return self._row_to_voucher(row)
         finally:
             conn.close()
@@ -2829,7 +2780,7 @@ class DatabaseService:
         """Lấy danh sách tất cả voucher đang active từ CSDL SQLite."""
         conn = get_db_connection(self.db_path)
         try:
-            rows = conn.execute("SELECT * FROM vouchers WHERE is_active = 1 ORDER BY created_at ASC;").fetchall()
+            rows = conn.execute("SELECT v.*, (SELECT COUNT(*) FROM voucher_usages u WHERE u.voucher_code = v.code) AS used_uses FROM vouchers v WHERE v.is_active = 1 ORDER BY v.created_at ASC;").fetchall()
             return [self._row_to_voucher(r) for r in rows if r]
         finally:
             conn.close()

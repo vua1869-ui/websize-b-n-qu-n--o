@@ -117,6 +117,8 @@ class Voucher(BaseModel):
     expires_at: Optional[datetime.datetime] = None
     max_uses: Optional[int] = None
     max_uses_per_user: Optional[int] = None
+    used_uses: int = 0
+    remaining_uses: Optional[int] = None
 
     @computed_field  # type: ignore[misc]
     @property
@@ -459,6 +461,15 @@ class ProductReviewCreate(BaseModel):
     purchased_size: Optional[str] = None
     purchased_color: Optional[str] = None
     fit_feedback: Optional[str] = "Vừa vặn"
+
+    @field_validator("user_name", "comment", "fit_feedback")
+    @classmethod
+    def _validate_safe_review_text(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            if "<" in v or ">" in v:
+                raise ValueError("Nội dung đánh giá không được chứa thẻ HTML hoặc ký tự < >")
+            return v.strip()
+        return None
 
 
 class ProductReviewItem(BaseModel):

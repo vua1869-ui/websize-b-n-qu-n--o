@@ -108,8 +108,63 @@ def test_production_env_valid_config_passes():
         PAYMENT_WEBHOOK_SECRET="valid_prod_webhook_secret_key_99",
         DATABASE_URL="postgresql://user:pass@localhost:5432/aura_prod",
         VNPAY_RETURN_URL="https://aurastudio.vn/api/payment/vnpay/return",
+        VNPAY_IPN_URL="https://aurastudio.vn/api/payment/vnpay/ipn",
+        VNPAY_TMN_CODE="AURA0001",
         VNPAY_HASH_SECRET="valid_vnpay_hash_secret_key",
+        MOMO_ACCESS_KEY="valid_momo_access_key",
+        MOMO_SECRET_KEY="valid_momo_secret_key",
+        MOMO_RETURN_URL="https://aurastudio.vn/api/payment/momo/return",
+        MOMO_IPN_URL="https://aurastudio.vn/api/payment/momo/ipn",
         PUBLIC_BASE_URL="https://aurastudio.vn",
         EMAIL_BACKEND="smtp"
     )
     assert s.APP_ENV == "production"
+
+
+def test_production_env_refuses_localhost_momo_urls():
+    """Kiểm tra APP_ENV=production từ chối khi MOMO_RETURN_URL hoặc MOMO_IPN_URL trỏ về localhost."""
+    with pytest.raises(ValueError) as exc_info:
+        Settings(
+            APP_ENV="production",
+            SECRET_KEY="valid_prod_secret_key_123456789",
+            PAYMENT_WEBHOOK_SECRET="valid_prod_webhook_secret_key_99",
+            DATABASE_URL="postgresql://user:pass@localhost:5432/aura_prod",
+            VNPAY_RETURN_URL="https://aurastudio.vn/api/payment/vnpay/return",
+            VNPAY_IPN_URL="https://aurastudio.vn/api/payment/vnpay/ipn",
+            VNPAY_TMN_CODE="AURA0001",
+            VNPAY_HASH_SECRET="valid_vnpay_hash_secret_key",
+            MOMO_ACCESS_KEY="valid_momo_access_key",
+            MOMO_SECRET_KEY="valid_momo_secret_key",
+            MOMO_RETURN_URL="http://127.0.0.1:8000/api/payment/momo/return",
+            MOMO_IPN_URL="https://aurastudio.vn/api/payment/momo/ipn",
+            PUBLIC_BASE_URL="https://aurastudio.vn",
+            EMAIL_BACKEND="smtp"
+        )
+    assert "MOMO_RETURN_URL vẫn trỏ về 127.0.0.1" in str(exc_info.value)
+
+
+@pytest.mark.anyio
+async def test_production_lifespan_refuses_default_admin_password(monkeypatch):
+    """Kiểm tra lifespan từ chối khởi động khi APP_ENV=production mà tài khoản admin có mật khẩu admin123."""
+    from app.config import settings
+    from app.db.models import UserDB
+    from app.db.session import get_db_session
+    from app.main import app, lifespan
+    from app.services.user_service import hash_password
+    from sqlalchemy import func
+
+    monkeypatch.setattr(settings, "APP_ENV", "production")
+    monkeypatch.setattr(settings, "SECRET_KEY", "super_secret_key_prod_123456789")
+    monkeypatch.setattr(settings, "PAYMENT_WEBHOOK_SECRET", "super_webhook_sec_prod_123456789")
+    monkeypatch.setattr(settings, "DEMO_DATA", False)
+
+    with get_db_session() as session:
+        admin = session.query(UserDB).filter(func.lower(UserDB.username) == "admin").first()
+        if admin:
+            admin.password_hash = hash_password("admin123")
+            session.commit()
+
+    with pytest.raises(RuntimeError) as exc_info:
+        async with lifespan(app):
+            pass
+    assert "mật khẩu mặc định nguy hiểm" in str(exc_info.value)

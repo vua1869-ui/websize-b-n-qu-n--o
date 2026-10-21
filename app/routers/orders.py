@@ -21,6 +21,7 @@ from app.routers.deps import (
     mask_address,
     mask_phone,
     require_admin,
+    sign_guest_order_cookie,
     verify_order_access,
 )
 from app.services.order_service import OrderError, order_service
@@ -40,9 +41,10 @@ def create_order(body: OrderCreateRequest, request: Request, response: Response)
     created = order_service.create_order(body, user=user)
     order_id = getattr(created, "order_id", None) or (created.get("order_id") if isinstance(created, dict) else None)
     if not getattr(user, "id", None) and body.customer_phone and order_id:
+        cookie_val = sign_guest_order_cookie(order_id, body.customer_phone)
         response.set_cookie(
             key=f"aura_order_{order_id}",
-            value=body.customer_phone,
+            value=cookie_val,
             httponly=True,
             max_age=3600,
             samesite="lax",
@@ -237,7 +239,7 @@ def cancel_order_by_customer(order_id: str, body: OrderCancelRequest, request: R
             msg += " Số tiền thanh toán sẽ được hoàn lại trong 3-5 ngày làm việc."
         return {"success": True, "order_id": order_id, "order_status": order_status, "message": msg}
     except OrderError as e:
-        raise HTTPException(status_code=e.status_code, detail=e.message)
+        raise HTTPException(status_code=e.status_code, detail=e.message) from e
 
 
 @router.post("/api/orders/{order_id}/send-notification")

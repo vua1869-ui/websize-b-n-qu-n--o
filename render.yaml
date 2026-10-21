@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: aura-studio
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: TRUSTED_PROXY_HEADERS
+        value: "true"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PAYMENT_WEBHOOK_SECRET
+        generateValue: true
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: MOMO_ACCESS_KEY
+        sync: false
+      - key: MOMO_SECRET_KEY
+        sync: false
+      - key: MOMO_RETURN_URL
+        sync: false
+      - key: MOMO_IPN_URL
+        sync: false
+      - key: VNPAY_RETURN_URL
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aura-db
+          property: connectionString
+
+databases:
+  - name: aura-db
+    databaseName: auradb
+    user: aura
+    plan: free
