@@ -1,7 +1,10 @@
+import asyncio
+import datetime as dt
 import logging
 import os
 import uuid
 from contextlib import asynccontextmanager
+from typing import Optional
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request
@@ -38,6 +41,7 @@ from app.services.order_service import OrderError
 # Cấu hình log và logger
 setup_logging()
 logger = logging.getLogger("aura.main")
+_last_backup_time: Optional[str] = None
 
 # Tích hợp Sentry Error Tracking qua SENTRY_DSN
 if getattr(settings, "SENTRY_DSN", None) and str(settings.SENTRY_DSN).strip():
@@ -125,7 +129,81 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning("Không thể kiểm tra mật khẩu admin lúc khởi động: %s", e)
 
-    yield
+    # 7.3 Kiểm tra cảnh báo lệch tồn kho lúc khởi động (không chặn khởi động)
+    try:
+        from app.services.stock_reconcile import reconcile_stock
+        stk_rep = reconcile_stock(apply_fix=False)
+        if stk_rep.get("has_mismatch"):
+            logger.warning(
+                "CẢNH BÁO TỒN KHO: Phát hiện chênh lệch tồn kho giữa CSDL và RAM (%s). "
+                "Vui lòng chạy 'python scripts/reconcile_stock.py --apply' để sửa.",
+                stk_rep.get("summary"),
+            )
+    except Exception as _e:
+        logger.warning("Không thể kiểm tra đối soát tồn kho lúc khởi động: %s", _e)
+
+    # Khởi chạy các tác vụ nền định kỳ
+    bg_tasks = []
+
+    # 1.4 Tự động hủy đơn online quá hạn thanh toán
+    order_ttl = getattr(settings, "ORDER_PAYMENT_TTL_MINUTES", 30)
+    order_interval = getattr(settings, "ORDER_EXPIRY_INTERVAL_SEC", 60)
+    if order_ttl > 0 and order_interval > 0:
+        async def _expire_unpaid_loop():
+            while True:
+                try:
+                    await asyncio.sleep(order_interval)
+                    from app.services.order_service import order_service
+                    await asyncio.to_thread(order_service.expire_unpaid_orders)
+                except asyncio.CancelledError:
+                    break
+                except Exception as ex:
+                    logger.warning("Lỗi trong tác vụ nền expire_unpaid_orders: %s", ex)
+
+        task_expiry = asyncio.create_task(_expire_unpaid_loop())
+        bg_tasks.append(task_expiry)
+
+    # 10.1 Tự động sao lưu CSDL định kỳ (chỉ cho SQLite)
+    backup_interval_h = getattr(settings, "BACKUP_INTERVAL_HOURS", 0)
+    backup_keep = getattr(settings, "BACKUP_KEEP", 7)
+    db_url = getattr(settings, "DATABASE_URL", "")
+    if backup_interval_h > 0:
+        if "postgres" in db_url.lower():
+            logger.info("Cơ sở dữ liệu là PostgreSQL. Tác vụ sao lưu SQLite định kỳ được bỏ qua.")
+        else:
+            async def _backup_loop():
+                global _last_backup_time
+                while True:
+                    try:
+                        await asyncio.sleep(backup_interval_h * 3600)
+                        from scripts.backup import run_backup
+                        await asyncio.to_thread(
+                            run_backup,
+                            db_path=db_service.db_path,
+                            keep_count=backup_keep,
+                        )
+                        _last_backup_time = dt.datetime.now().isoformat(timespec="seconds")
+                        logger.info("Sao lưu CSDL tự động hoàn tất thành công lúc %s", _last_backup_time)
+                    except asyncio.CancelledError:
+                        break
+                    except Exception as ex:
+                        logger.warning("Lỗi trong tác vụ nền auto-backup: %s", ex)
+
+            task_backup = asyncio.create_task(_backup_loop())
+            bg_tasks.append(task_backup)
+
+    try:
+        yield
+    finally:
+        for t in bg_tasks:
+            t.cancel()
+        for t in bg_tasks:
+            try:
+                await t
+            except asyncio.CancelledError:
+                pass
+            except Exception:
+                pass
 
 
 is_prod = settings.APP_ENV.strip().lower() == "production"
@@ -281,11 +359,41 @@ def health_check():
             },
         )
 
+    pending_count = 0
+    oldest_age_minutes = None
+    try:
+        from app.db.models import OrderDB
+        from app.db.session import get_db_session
+        from app.services.order_service import parse_order_created_at
+
+        with get_db_session() as session:
+            pending_orders = (
+                session.query(OrderDB.created_at)
+                .filter(OrderDB.order_status == "pending_payment")
+                .all()
+            )
+            pending_count = len(pending_orders)
+            if pending_orders:
+                now_dt = dt.datetime.now()
+                oldest_dt = None
+                for (cat_str,) in pending_orders:
+                    p_dt = parse_order_created_at(cat_str)
+                    if p_dt:
+                        if oldest_dt is None or p_dt < oldest_dt:
+                            oldest_dt = p_dt
+                if oldest_dt:
+                    oldest_age_minutes = round((now_dt - oldest_dt).total_seconds() / 60.0, 1)
+    except Exception as _e:
+        logger.warning("Không thể lấy thống kê đơn chờ thanh toán cho /healthz: %s", _e)
+
     return {
         "status": "ok",
         "database": "connected",
         "app_env": settings.APP_ENV,
         "version": settings.VERSION,
+        "pending_payment_count": pending_count,
+        "oldest_pending_payment_age_minutes": oldest_age_minutes,
+        "last_backup_at": _last_backup_time,
     }
 
 

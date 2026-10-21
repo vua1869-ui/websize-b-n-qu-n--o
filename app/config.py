@@ -245,6 +245,14 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_TLS: bool = True
     RESEND_API_KEY: str = ""
+    # ---- Đơn hàng & Tác vụ nền (Real-world) ----
+    ORDER_PAYMENT_TTL_MINUTES: int = 30
+    ORDER_EXPIRY_INTERVAL_SEC: int = 60
+    IDEMPOTENCY_TTL_HOURS: int = 24
+    COD_MAX_OPEN_PER_PHONE: int = 3
+    FLASH_SALE_MAX_QTY_PER_CUSTOMER: int = 2
+    BACKUP_INTERVAL_HOURS: int = 0
+    BACKUP_KEEP: int = 7
 
 
 settings = Settings()

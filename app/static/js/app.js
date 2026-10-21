@@ -26,14 +26,18 @@ const U = {
     get(k, def) { try { const v = localStorage.getItem(k); return v == null ? def : JSON.parse(v); } catch { return def; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* bỏ qua (chế độ riêng tư) */ } },
   },
-  async api(url, { method = 'GET', body, timeout = 30000 } = {}) {
+  async api(url, { method = 'GET', body, headers = {}, timeout = 30000 } = {}) {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), timeout);
     try {
-      const headers = body ? { 'Content-Type': 'application/json' } : {};
+      const mergedHeaders = Object.assign(
+        {},
+        body ? { 'Content-Type': 'application/json' } : {},
+        headers
+      );
       const res = await fetch(url, {
         method, signal: ctrl.signal,
-        headers,
+        headers: mergedHeaders,
         credentials: 'same-origin',
         body: body ? JSON.stringify(body) : undefined,
       });
@@ -1937,8 +1941,18 @@ const App = {
     if (this._isSubmittingOrder) return;
     this._isSubmittingOrder = true;
     if (btn) { btn.disabled = true; btn.textContent = 'Đang xử lý...'; }
+    if (!this._orderIdemKey) {
+      this._orderIdemKey = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : 'k' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+    }
     try {
-      const order = await U.api('/api/orders', { method: 'POST', body });
+      const order = await U.api('/api/orders', {
+        method: 'POST',
+        body,
+        headers: { 'Idempotency-Key': this._orderIdemKey },
+      });
+      this._orderIdemKey = null;
       U.store.set('aura_customer', { 
         name: body.customer_name, 
         phone: body.customer_phone, 

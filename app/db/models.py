@@ -301,3 +301,12 @@ class AuditLogDB(Base):
     ip = Column(String, nullable=True)
     created_at = Column(String, nullable=False, index=True)
     thoi_gian = Column(String, nullable=True)
+
+
+class IdempotencyKeyDB(Base):
+    __tablename__ = "idempotency_keys"
+
+    key = Column(String, primary_key=True)
+    request_hash = Column(String, nullable=False)
+    response_json = Column(Text, nullable=False)
+    created_at = Column(Float, index=True, nullable=False)

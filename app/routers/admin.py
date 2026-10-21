@@ -768,6 +768,28 @@ def admin_process_order_refund(
     }
 
 
+@router.post("/api/admin/orders/expire-unpaid")
+def admin_expire_unpaid_orders(_admin: User = Depends(require_admin)):
+    """Tự động hủy các đơn online quá hạn chưa thanh toán (chỉ admin)."""
+    expired = order_service.expire_unpaid_orders()
+    return {
+        "success": True,
+        "expired_count": len(expired),
+        "order_ids": expired,
+    }
+
+
+@router.get("/api/admin/stock/reconcile")
+def admin_stock_reconcile(_admin: User = Depends(require_admin)):
+    """Đối soát chênh lệch tồn kho giữa CSDL và RAM (chỉ đọc, chỉ admin)."""
+    from app.services.stock_reconcile import reconcile_stock
+    report = reconcile_stock(apply_fix=False, admin_id=str(_admin.id))
+    return {
+        "success": True,
+        **report,
+    }
+
+
 @router.put("/api/admin/orders/{order_id}/status")
 def admin_update_order_status(
     order_id: str,

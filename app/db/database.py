@@ -59,10 +59,11 @@ def normalize_phone(p: Optional[str]) -> str:
     return digits
 
 
-def get_db_connection(db_path: str = DB_PATH) -> sqlite3.Connection:
+def get_db_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
     """Tạo kết nối SQLite có hỗ trợ row_factory và bật WAL mode cho hiệu năng cao."""
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    conn = sqlite3.connect(db_path, timeout=20.0, check_same_thread=False)
+    target_path = db_path or getattr(db_service, "db_path", None) or DB_PATH
+    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+    conn = sqlite3.connect(target_path, timeout=20.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode = WAL;")
     conn.execute("PRAGMA synchronous = NORMAL;")
@@ -71,9 +72,10 @@ def get_db_connection(db_path: str = DB_PATH) -> sqlite3.Connection:
 
 
 @contextmanager
-def get_db_transaction(db_path: str = DB_PATH):
+def get_db_transaction(db_path: Optional[str] = None):
     """Context manager đảm bảo Transaction ACID (Rollback nếu lỗi, Commit nếu thành công)."""
-    conn = get_db_connection(db_path)
+    target_path = db_path or getattr(db_service, "db_path", None) or DB_PATH
+    conn = get_db_connection(target_path)
     try:
         conn.execute("BEGIN IMMEDIATE;")
         yield conn
@@ -85,7 +87,7 @@ def get_db_transaction(db_path: str = DB_PATH):
         conn.close()
 
 
-def get_db(db_path: str = DB_PATH) -> sqlite3.Connection:
+def get_db(db_path: Optional[str] = None) -> sqlite3.Connection:
     return get_db_connection(db_path)
 
 
@@ -339,8 +341,9 @@ CREATE VIEW IF NOT EXISTS audit_logs AS SELECT * FROM audit_log;
 """
 
 
-def init_db(db_path: str = DB_PATH):
+def init_db(db_path: Optional[str] = None):
     """Khởi tạo cấu trúc bảng SQLite và tự động import dữ liệu từ JSON nếu DB mới."""
+    target_path = db_path or getattr(db_service, "db_path", None) or DB_PATH
     try:
         from app.db.models import Base
         from app.db.session import engine
@@ -349,7 +352,7 @@ def init_db(db_path: str = DB_PATH):
         pass
 
     with _lock:
-        conn = get_db_connection(db_path)
+        conn = get_db_connection(target_path)
         try:
             conn.executescript(SCHEMA_SQL)
             conn.commit()
@@ -1444,6 +1447,7 @@ class DatabaseService:
         order_id: str,
         forbid_if_shipping: bool = False,
         refund_info: Optional[Dict[str, Any]] = None,
+        only_if_unpaid_pending: bool = False,
     ) -> bool:
         """
         Hủy đơn hàng nguyên tử (ACID Transaction):
@@ -1455,6 +1459,7 @@ class DatabaseService:
         - Trừ total_spent đã cộng và tính lại tier.
         - Hoàn lượt sử dụng voucher.
         - forbid_if_shipping=True: từ chối nếu đơn đã chuyển sang shipping/completed (race guard cho khách tự huỷ).
+        - only_if_unpaid_pending=True: chỉ hủy nếu order_status == 'pending_payment' và payment_status == 'unpaid'.
         """
         # Import locally to avoid circular import; OrderError is defined in order_service
         from app.services.order_service import OrderError  # noqa: PLC0415
@@ -1464,6 +1469,9 @@ class DatabaseService:
                 return False
             if order["order_status"] == "cancelled":
                 return False
+            if only_if_unpaid_pending:
+                if order["order_status"] != "pending_payment" or order["payment_status"] != "unpaid":
+                    return False
             if forbid_if_shipping and order["order_status"] in ("shipping", "completed"):
                 raise OrderError(
                     "Đơn hàng đã chuyển sang vận chuyển, không thể hủy lúc này",
