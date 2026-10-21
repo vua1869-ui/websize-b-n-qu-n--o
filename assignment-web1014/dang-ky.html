@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng Ký Tài Khoản Mới - AURA FASHION</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header-main">
+    <div class="container navbar">
+      <button class="hamburger" aria-label="Mở Menu">☰</button>
+      <a href="index.html" class="logo">AURA<span>.</span></a>
+      <nav class="nav-menu">
+        <a href="index.html" class="nav-link">Trang Chủ</a>
+        <a href="san-pham.html" class="nav-link">Sản Phẩm</a>
+        <a href="chi-tiet.html" class="nav-link">Chi Tiết</a>
+        <a href="gio-hang.html" class="nav-link">Giỏ Hàng</a>
+        <a href="gioi-thieu.html" class="nav-link">Giới Thiệu</a>
+        <a href="lien-he.html" class="nav-link">Liên Hệ</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="dang-nhap.html" class="action-icon" title="Tài khoản">👤</a>
+        <a href="gio-hang.html" class="action-icon" title="Giỏ hàng">
+          🛒
+          <span class="cart-count">2</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- FORM ĐĂNG KÝ -->
+  <main class="container section-padding" style="display: flex; justify-content: center; align-items: center;">
+    <div class="form-card" style="width: 100%; max-width: 520px;">
+      <h2 style="font-family: var(--font-heading); font-size: 1.8rem; text-align: center; margin-bottom: 8px;">Đăng Ký Tài Khoản</h2>
+      <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">Trở thành thành viên AURA Club để nhận ưu đãi độc quyền</p>
+
+      <form onsubmit="event.preventDefault(); alert('Đăng ký tài khoản thành công! Bạn có thể đăng nhập ngay.'); window.location.href='dang-nhap.html';">
+        <div class="form-group">
+          <label>Họ và tên của bạn <span class="required">*</span></label>
+          <input type="text" class="form-control" placeholder="Ví dụ: Nguyễn Văn Thuận" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Số điện thoại <span class="required">*</span></label>
+            <input type="tel" class="form-control" placeholder="0905123456" pattern="[0-9]{10}" required>
+          </div>
+          <div class="form-group">
+            <label>Ngày sinh</label>
+            <input type="date" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Địa chỉ Email <span class="required">*</span></label>
+          <input type="email" class="form-control" placeholder="email@gmail.com" required>
+        </div>
+
+        <div class="form-group">
+          <label>Mật khẩu đăng nhập <span class="required">*</span></label>
+          <input type="password" class="form-control" placeholder="Ít nhất 6 ký tự" minlength="6" required>
+        </div>
+
+        <div class="form-group">
+          <label>Xác nhận lại mật khẩu <span class="required">*</span></label>
+          <input type="password" class="form-control" placeholder="Nhập lại mật khẩu trên" minlength="6" required>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: flex-start; gap: 8px; margin-top: 15px;">
+          <input type="checkbox" id="terms" style="margin-top: 4px; accent-color: var(--secondary-color);" required>
+          <label for="terms" style="font-size: 0.85rem; font-weight: normal; margin: 0; cursor: pointer;">
+            Tôi đồng ý với các <a href="#" style="color: var(--secondary-color); text-decoration: underline;">Điều khoản dịch vụ</a> và chính sách bảo vệ quyền riêng tư của AURA Fashion.
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 13px; margin-top: 15px;">Tạo Tài Khoản Thành Viên</button>
+      </form>
+
+      <p style="text-align: center; font-size: 0.9rem; margin-top: 25px; color: var(--text-muted);">
+        Đã có tài khoản? <a href="dang-nhap.html" style="color: var(--primary-color); font-weight: 600; text-decoration: underline;">Đăng nhập ngay</a>
+      </p>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-col">
+        <h3>AURA FASHION</h3>
+        <p style="font-size: 0.9rem; line-height: 1.8;">Thương hiệu thời trang tối giản hướng đến sự tinh tế và chuẩn mực trong từng đường may.</p>
+      </div>
+      <div class="footer-col">
+        <h3>Liên Kết</h3>
+        <ul class="footer-links">
+          <li><a href="index.html">Trang Chủ</a></li>
+          <li><a href="san-pham.html">Sản Phẩm</a></li>
+          <li><a href="gio-hang.html">Giỏ Hàng</a></li>
+          <li><a href="lien-he.html">Liên Hệ</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3>Hỗ Trợ</h3>
+        <ul class="footer-links">
+          <li><a href="#">Chính Sách Đổi Trả</a></li>
+          <li><a href="#">Bảng Kích Cỡ Size</a></li>
+          <li><a href="#">Tra Cứu Đơn Hàng</a></li>
+        </ul>
+      </div>
+      <div class="footer-col footer-newsletter">
+        <h3>Đăng Ký Nhận Tin</h3>
+        <p>Nhận ngay mã giảm 10% khi đăng ký hôm nay.</p>
+        <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Đã đăng ký nhận tin!');">
+          <input type="email" class="newsletter-input" placeholder="Email của bạn..." required>
+          <button type="submit" class="newsletter-btn">Gửi</button>
+        </form>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <p>&copy; 2026 AURA FASHION STUDIO - Bài tập Assignment môn WEB1014</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

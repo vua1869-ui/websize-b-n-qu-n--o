@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AURA FASHION - Thời Trang Tối Giản & Sang Trọng</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- 1. TOP BAR THÔNG BÁO -->
+  <div class="top-bar">
+    <div class="container">
+      <span>Miễn phí vận chuyển toàn quốc cho đơn hàng từ 499.000đ • Nhập mã <strong>AURANEW</strong> giảm 10%</span>
+    </div>
+  </div>
+
+  <!-- 2. HEADER & MENU ĐIỀU HƯỚNG (FLEXBOX) -->
+  <header class="header-main">
+    <div class="container navbar">
+      <!-- Nút Hamburger cho Mobile -->
+      <button class="hamburger" aria-label="Mở Menu">☰</button>
+
+      <!-- Logo thương hiệu -->
+      <a href="index.html" class="logo">AURA<span>.</span></a>
+
+      <!-- Menu chính -->
+      <nav class="nav-menu">
+        <a href="index.html" class="nav-link active">Trang Chủ</a>
+        <a href="san-pham.html" class="nav-link">Sản Phẩm</a>
+        <a href="chi-tiet.html" class="nav-link">Chi Tiết</a>
+        <a href="gio-hang.html" class="nav-link">Giỏ Hàng</a>
+        <a href="gioi-thieu.html" class="nav-link">Giới Thiệu</a>
+        <a href="lien-he.html" class="nav-link">Liên Hệ</a>
+      </nav>
+
+      <!-- Tiện ích bên phải -->
+      <div class="nav-actions">
+        <a href="dang-nhap.html" class="action-icon" title="Tài khoản">👤</a>
+        <a href="gio-hang.html" class="action-icon" title="Giỏ hàng">
+          🛒
+          <span class="cart-count">2</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- 3. HERO BANNER -->
+  <section class="hero">
+    <div class="hero-content">
+      <p class="hero-subtitle">Bộ Sưu Tập Mùa Mới 2026</p>
+      <h1 class="hero-title">Định Hình Phong Cách Tối Giản</h1>
+      <div class="hero-buttons">
+        <a href="san-pham.html" class="btn btn-primary">Khám Phá Cửa Hàng</a>
+        <a href="gioi-thieu.html" class="btn btn-outline" style="border-color: white; color: white;">Về Thương Hiệu</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. CHÍNH SÁCH CAM KẾT (FLEXBOX) -->
+  <section class="policy-bar">
+    <div class="container policy-grid">
+      <div class="policy-item">
+        <span class="policy-icon">🚚</span>
+        <div class="policy-text">
+          <h4>Giao Hàng Toàn Quốc</h4>
+          <p>Nhận hàng nhanh trong 2-3 ngày</p>
+        </div>
+      </div>
+      <div class="policy-item">
+        <span class="policy-icon">🔄</span>
+        <div class="policy-text">
+          <h4>Đổi Trả Dễ Dàng</h4>
+          <p>Hỗ trợ đổi size trong 30 ngày</p>
+        </div>
+      </div>
+      <div class="policy-item">
+        <span class="policy-icon">⭐</span>
+        <div class="policy-text">
+          <h4>Chất Lượng Cao Cấp</h4>
+          <p>Chất liệu tự nhiên, bền đẹp</p>
+        </div>
+      </div>
+      <div class="policy-item">
+        <span class="policy-icon">💳</span>
+        <div class="policy-text">
+          <h4>Thanh Toán An Toàn</h4>
+          <p>Thẻ, Chuyển khoản hoặc COD</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. DANH MỤC NỔI BẬT (CSS GRID) -->
+  <section class="section-padding">
+    <div class="container">
+      <div class="section-title">
+        <h2>Danh Mục Phong Cách</h2>
+        <p>Lựa chọn theo phong cách riêng của bạn</p>
+      </div>
+      <div class="category-grid">
+        <article class="category-card">
+          <img src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=800&auto=format&fit=crop" alt="Thời trang nữ" loading="lazy">
+          <div class="category-info">
+            <h3>Thời Trang Nữ</h3>
+            <a href="san-pham.html" class="btn btn-outline btn-sm" style="border-color: white; color: white;">Xem Bộ Sưu Tập</a>
+          </div>
+        </article>
+        <article class="category-card">
+          <img src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=800&auto=format&fit=crop" alt="Thời trang nam" loading="lazy">
+          <div class="category-info">
+            <h3>Thời Trang Nam</h3>
+            <a href="san-pham.html" class="btn btn-outline btn-sm" style="border-color: white; color: white;">Xem Bộ Sưu Tập</a>
+          </div>
+        </article>
+        <article class="category-card">
+          <img src="https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=800&auto=format&fit=crop" alt="Áo khoác & Blazer" loading="lazy">
+          <div class="category-info">
+            <h3>Áo Khoác & Blazer</h3>
+            <a href="san-pham.html" class="btn btn-outline btn-sm" style="border-color: white; color: white;">Xem Bộ Sưu Tập</a>
+          </div>
+        </article>
+        <article class="category-card">
+          <img src="https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=800&auto=format&fit=crop" alt="Phụ kiện cao cấp" loading="lazy">
+          <div class="category-info">
+            <h3>Phụ Kiện Tinh Tế</h3>
+            <a href="san-pham.html" class="btn btn-outline btn-sm" style="border-color: white; color: white;">Xem Bộ Sưu Tập</a>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. SẢN PHẨM MỚI NHẤT (CSS GRID & BOX MODEL) -->
+  <section class="section-padding" style="background-color: var(--bg-white);">
+    <div class="container">
+      <div class="section-title">
+        <h2>Sản Phẩm Nổi Bật</h2>
+        <p>Thiết kế được chọn lọc tinh tế nhất tuần</p>
+      </div>
+      <div class="product-grid">
+        <!-- Sản phẩm 1 -->
+        <article class="product-card">
+          <div class="product-thumb">
+            <span class="badge badge-sale product-badge">-15%</span>
+            <a href="chi-tiet.html">
+              <img src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=600&auto=format&fit=crop" alt="Áo sơ mi lụa trắng cao cấp" loading="lazy">
+            </a>
+          </div>
+          <div class="product-details">
+            <span class="product-category">Áo Sơ Mi</span>
+            <h3 class="product-name"><a href="chi-tiet.html">Áo Sơ Mi Lụa Dệt Tự Nhiên Dáng Suông</a></h3>
+            <div class="product-price">
+              <span class="price-current">450.000đ</span>
+              <span class="price-old">530.000đ</span>
+            </div>
+            <button class="btn-add-cart">Thêm Vào Giỏ</button>
+          </div>
+        </article>
+
+        <!-- Sản phẩm 2 -->
+        <article class="product-card">
+          <div class="product-thumb">
+            <span class="badge badge-new product-badge">Mới</span>
+            <a href="chi-tiet.html">
+              <img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=600&auto=format&fit=crop" alt="Blazer len dạ tối giản" loading="lazy">
+            </a>
+          </div>
+          <div class="product-details">
+            <span class="product-category">Áo Khoác</span>
+            <h3 class="product-name"><a href="chi-tiet.html">Áo Blazer Form Rộng Tone Màu Be Tối Giản</a></h3>
+            <div class="product-price">
+              <span class="price-current">890.000đ</span>
+            </div>
+            <button class="btn-add-cart">Thêm Vào Giỏ</button>
+          </div>
+        </article>
+
+        <!-- Sản phẩm 3 -->
+        <article class="product-card">
+          <div class="product-thumb">
+            <a href="chi-tiet.html">
+              <img src="https://images.unsplash.com/photo-1584273143981-41c073dfe8f8?q=80&w=600&auto=format&fit=crop" alt="Quần tây xếp ly cao cấp" loading="lazy">
+            </a>
+          </div>
+          <div class="product-details">
+            <span class="product-category">Quần Dài</span>
+            <h3 class="product-name"><a href="chi-tiet.html">Quần Tây Xếp Ly Ống Suông Sang Trọng</a></h3>
+            <div class="product-price">
+              <span class="price-current">520.000đ</span>
+            </div>
+            <button class="btn-add-cart">Thêm Vào Giỏ</button>
+          </div>
+        </article>
+
+        <!-- Sản phẩm 4 -->
+        <article class="product-card">
+          <div class="product-thumb">
+            <span class="badge badge-sale product-badge">-20%</span>
+            <a href="chi-tiet.html">
+              <img src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=600&auto=format&fit=crop" alt="Váy midi lụa cổ vuông" loading="lazy">
+            </a>
+          </div>
+          <div class="product-details">
+            <span class="product-category">Đầm & Váy</span>
+            <h3 class="product-name"><a href="chi-tiet.html">Đầm Xòe Midi Lụa Satin Cổ Vuông Thanh Lịch</a></h3>
+            <div class="product-price">
+              <span class="price-current">680.000đ</span>
+              <span class="price-old">850.000đ</span>
+            </div>
+            <button class="btn-add-cart">Thêm Vào Giỏ</button>
+          </div>
+        </article>
+      </div>
+
+      <div style="text-align: center; margin-top: 40px;">
+        <a href="san-pham.html" class="btn btn-outline">Xem Tất Cả Sản Phẩm ›</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. SECTION ĐA PHƯƠNG TIỆN: VIDEO LOOKBOOK & AUDIO PHONG CÁCH -->
+  <section class="media-section">
+    <div class="container">
+      <div class="section-title">
+        <h2>Lookbook & Trải Nghiệm Không Gian</h2>
+        <p>Chiêm ngưỡng phong thái thời trang qua hình ảnh chuyển động và âm nhạc</p>
+      </div>
+      <div class="media-container">
+        <!-- Video Lookbook -->
+        <div class="video-wrapper">
+          <video controls poster="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=1200&auto=format&fit=crop">
+            <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4">
+            Trình duyệt của bạn không hỗ trợ phát thẻ video HTML5.
+          </video>
+        </div>
+        <!-- Audio giới thiệu -->
+        <div class="audio-box">
+          <h3>Bản Tin Âm Nhạc Showroom</h3>
+          <p>Lắng nghe giai điệu Acoustic du dương được tuyển chọn độc quyền tại không gian mua sắm AURA Studio.</p>
+          <audio controls>
+            <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-audio/t-rex-roar.mp3" type="audio/mpeg">
+            Trình duyệt của bạn không hỗ trợ phát thẻ audio HTML5.
+          </audio>
+          <div style="margin-top: 25px; padding-top: 15px; border-top: 1px dashed var(--border-color);">
+            <strong>Thông điệp mùa thời trang:</strong>
+            <p style="font-style: italic; margin-top: 5px;">"Sự thanh lịch không nằm ở sự phô trương, mà ở việc bạn được nhớ đến như thế nào."</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. FOOTER CHÂN TRANG (FLEXBOX & GRID) -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <!-- Cột 1 -->
+      <div class="footer-col">
+        <h3>AURA FASHION</h3>
+        <p style="font-size: 0.9rem; line-height: 1.8; margin-bottom: 16px;">
+          Thương hiệu thời trang tối giản hướng đến sự tinh tế, chuẩn mực trong từng đường kim mũi chỉ và sự tôn vinh nét đẹp bền vững.
+        </p>
+        <p style="font-size: 0.85rem;">📍 Địa chỉ: 137 Nguyễn Thị Thập, Liên Chiểu, Đà Nẵng</p>
+        <p style="font-size: 0.85rem;">📞 Hotline: 0905.123.456</p>
+      </div>
+
+      <!-- Cột 2 -->
+      <div class="footer-col">
+        <h3>Liên Kết Nhanh</h3>
+        <ul class="footer-links">
+          <li><a href="index.html">Trang Chủ</a></li>
+          <li><a href="san-pham.html">Tất Cả Sản Phẩm</a></li>
+          <li><a href="gio-hang.html">Giỏ Hàng Của Bạn</a></li>
+          <li><a href="gioi-thieu.html">Về Chúng Tôi</a></li>
+          <li><a href="lien-he.html">Liên Hệ & Góp Ý</a></li>
+        </ul>
+      </div>
+
+      <!-- Cột 3 -->
+      <div class="footer-col">
+        <h3>Chính Sách</h3>
+        <ul class="footer-links">
+          <li><a href="#">Chính Sách Đổi Trả 30 Ngày</a></li>
+          <li><a href="#">Hướng Dẫn Chọn Kích Cỡ</a></li>
+          <li><a href="#">Chính Sách Bảo Mật</a></li>
+          <li><a href="#">Điều Khoản Dịch Vụ</a></li>
+          <li><a href="#">Câu Hỏi Thường Gặp</a></li>
+        </ul>
+      </div>
+
+      <!-- Cột 4 -->
+      <div class="footer-col footer-newsletter">
+        <h3>Đăng Ký Nhận Tin</h3>
+        <p>Đăng ký để nhận thông tin ưu đãi sớm nhất và mã giảm giá 10% cho đơn hàng đầu tiên.</p>
+        <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Cảm ơn bạn đã đăng ký nhận tin!');">
+          <input type="email" class="newsletter-input" placeholder="Nhập địa chỉ email của bạn..." required>
+          <button type="submit" class="newsletter-btn">Gửi</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div class="container">
+        <p>&copy; 2026 AURA FASHION STUDIO. Bài tập Assignment môn WEB1014 - FPT Polytechnic.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Javascript -->
+  <script src="js/main.js"></script>
+</body>
+</html>

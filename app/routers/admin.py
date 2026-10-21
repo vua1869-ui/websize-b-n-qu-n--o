@@ -2,6 +2,7 @@ import codecs
 import csv
 import datetime as dt
 import io
+import json
 import math
 import time
 from typing import Any, Dict, List, Optional
@@ -40,12 +41,12 @@ from app.routers.deps import (
 )
 from app.services.image_service import image_service
 from app.services.momo_service import momo_service
+from app.services.mb_paygate_service import MBPaygateError, mb_paygate_service
 from app.services.order_service import order_service
 from app.services.product_import_service import product_import_service
 from app.services.product_service import product_service
 from app.services.trend_service import trend_service
 from app.services.user_service import user_service
-from app.services.vnpay_service import vnpay_service
 
 router = APIRouter(tags=["admin"])
 
@@ -526,7 +527,7 @@ def admin_export_orders(
             sanitize_csv_cell(cust_email),
             sanitize_csv_cell(cust_addr),
             sanitize_csv_cell(cust_province),
-            sanitize_csv_cell("COD" if o.get("payment_method") == "cod" else ("VNPay" if o.get("payment_method") == "vnpay" else "Chuyển khoản QR")),
+            sanitize_csv_cell("COD" if o.get("payment_method") == "cod" else ("MoMo" if o.get("payment_method") == "momo" else "Chuyển khoản QR")),
             sanitize_csv_cell(o.get("payment_status")),
             sanitize_csv_cell(o.get("status") or o.get("order_status")),
             sanitize_csv_cell(cod_amt),
@@ -594,7 +595,7 @@ def admin_process_order_refund(
 ):
     """
     Xử lý hoàn tiền cho đơn hàng:
-    - Với MoMo/VNPay: Gọi API hoàn tiền trực tuyến khi có đủ mã giao dịch và cấu hình hợp lệ.
+    - Với MoMo: Gọi API hoàn tiền trực tuyến khi có đủ mã giao dịch và cấu hình hợp lệ.
     - Với Chuyển khoản ngân hàng / VietQR / COD hoặc khi is_manual=True: Xác nhận admin đã chuyển khoản thủ công.
     - Chống gửi lặp / hoàn tiền 2 lần (idempotency & concurrency guard).
     - Không cho hoàn tiền cho đơn chưa thanh toán; không cho hoàn quá số tiền đã thanh toán.
@@ -644,7 +645,44 @@ def admin_process_order_refund(
     refund_code = None
     refund_res = {}
 
-    if is_manual or payment_channel in ("vietqr", "qr_transfer", "bank_transfer", "cod", "cash"):
+    if payment_channel == "mb_paygate" and not is_manual:
+        try:
+            tx_payload = json.loads((tx or {}).get("payload_json") or "{}")
+        except (TypeError, ValueError):
+            tx_payload = {}
+        transaction_reference_id = tx_payload.get("transaction_reference_id")
+        pg_paytime = tx_payload.get("pg_paytime")
+        if not transaction_reference_id or not pg_paytime:
+            raise HTTPException(status_code=400, detail="Thiếu mã giao dịch hoặc ngày giao dịch MB để hoàn tiền")
+        raw_paytime = str(pg_paytime).strip()
+        trans_date = None
+        for date_format in ("%d%m%Y", "%Y%m%d", "%Y-%m-%d", "%Y-%m-%d %H:%M:%S", "%Y%m%d%H%M%S"):
+            try:
+                trans_date = dt.datetime.strptime(raw_paytime, date_format).strftime("%d%m%Y")
+                break
+            except ValueError:
+                continue
+        if not trans_date:
+            raise HTTPException(status_code=400, detail="Định dạng ngày giao dịch MB không hợp lệ")
+        try:
+            result = mb_paygate_service.refund(
+                amount=amount,
+                transaction_reference_id=transaction_reference_id,
+                trans_date=trans_date,
+                description=f"Hoan tien don hang {order_id}",
+            )
+        except MBPaygateError as exc:
+            db_service.mark_order_refund_failed(order_id, str(exc), processed_by=_admin.username)
+            raise HTTPException(status_code=502, detail=f"Lỗi gọi hoàn tiền MB Paygate: {exc}") from exc
+        error_code = str(result.get("error_code", result.get("code", "")))
+        if error_code not in ("", "0", "00", "000"):
+            message = result.get("message") or "MB Paygate từ chối yêu cầu hoàn tiền"
+            db_service.mark_order_refund_failed(order_id, message, processed_by=_admin.username)
+            raise HTTPException(status_code=502, detail=message)
+        refund_code = str(result.get("refund_reference_id") or result.get("refund_id") or f"MB-REF-{order_id}")
+        refund_res = {"success": True, "mode": "mb_paygate", "refund_trans_id": refund_code, "gateway_response": result}
+
+    elif is_manual or payment_channel in ("vietqr", "qr_transfer", "bank_transfer", "cod", "cash"):
         # Kênh thủ công (VietQR, Chuyển khoản ngân hàng, COD tiền mặt): Xác nhận admin đã chuyển tiền thủ công cho khách
         refund_code = (body.refund_trans_id if body and body.refund_trans_id else None) or f"MANUAL-REF-{int(time.time())}"
         note_msg = (body.note if body and body.note else None) or "Admin đã xác nhận chuyển khoản hoàn tiền thủ công"
@@ -663,42 +701,6 @@ def admin_process_order_refund(
             "refund_account_holder": order.get("refund_account_holder"),
             "note": note_msg,
         }
-
-    elif payment_channel == "vnpay":
-        trans_no = orig_trans_code
-        if not trans_no:
-            raise HTTPException(
-                status_code=400,
-                detail="Không thể hoàn tiền qua cổng VNPay: Đơn hàng thiếu mã giao dịch thanh toán gốc từ cổng VNPay. Vui lòng kiểm tra lại giao dịch hoặc chuyển sang hoàn tiền thủ công.",
-            )
-        if not vnpay_service.is_configured():
-            raise HTTPException(
-                status_code=400,
-                detail="Cổng thanh toán VNPay chưa được cấu hình đầy đủ (thiếu TMN Code hoặc Hash Secret). Vui lòng cấu hình cổng hoặc chọn hoàn tiền thủ công.",
-            )
-
-        trans_date = None
-        if tx and tx.get("created_at"):
-            try:
-                dt_obj = dt.datetime.fromisoformat(tx["created_at"])
-                trans_date = dt_obj.strftime("%Y%m%d%H%M%S")
-            except Exception:
-                trans_date = None
-
-        refund_res = vnpay_service.refund(
-            order_id=order_id,
-            trans_no=trans_no,
-            amount=amount,
-            trans_date=trans_date,
-            create_by=_admin.username,
-            client_ip=get_client_ip(request),
-            order_desc=f"Hoan tien don hang {order_id}",
-        )
-        if not refund_res.get("success"):
-            err_msg = refund_res.get("message") or "Cổng VNPay từ chối xử lý hoàn tiền"
-            db_service.mark_order_refund_failed(order_id, err_msg, processed_by=_admin.username)
-            raise HTTPException(status_code=400, detail=f"Lỗi hoàn tiền VNPay: {err_msg}")
-        refund_code = refund_res.get("refund_trans_id") or f"VNPAY-REF-{order_id}"
 
     elif payment_channel == "momo":
         trans_id = orig_trans_code

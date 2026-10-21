@@ -29,7 +29,6 @@ Không cần cài Node, không cần API key — AI mặc định dùng bộ lu�
 
 ## Bảo mật & Cấu hình (quan trọng)
 
-> **⚠️ CẢNH BÁO:** Nếu bạn đã clone repo này và thấy rằng `CLOUDINARY_API_SECRET` hoặc `VNPAY_HASH_SECRET` đã từng có giá trị thật trong lịch sử Git, **hãy vào dashboard Cloudinary (cloudinary.com/console → Settings → Access Keys → Regenerate) và VNPay Merchant Portal để thu hồi và tạo key mới ngay**. Key cũ có thể đã bị lộ công khai.
 
 Sao chép `.env.example` thành `.env` rồi chỉnh. Các biến chính:
 
@@ -39,7 +38,6 @@ Sao chép `.env.example` thành `.env` rồi chỉnh. Các biến chính:
 | `OLLAMA_HOST`, `OLLAMA_MODEL` | Dùng LLM chạy local qua [Ollama](https://ollama.com) |
 | `GEMINI_API_KEY`, `GEMINI_MODEL` | Dùng Google Gemini (key lấy tại aistudio.google.com/apikey) |
 | `SECRET_KEY` | Khóa ký ưu đãi combo. **Đổi khi triển khai thật.** |
-| `VNPAY_TMN_CODE`, `VNPAY_HASH_SECRET` | Thông tin cổng thanh toán VNPay (lấy tại VNPay Merchant Portal) |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Lưu ảnh (lấy tại cloudinary.com/console) |
 | `SHIPPING_FEE`, `FREE_SHIPPING_THRESHOLD`, `COMBO_DISCOUNT_PERCENT` | Phí ship, ngưỡng freeship, % giảm combo |
 
@@ -144,7 +142,7 @@ app/
     products.py           Chi tiết sản phẩm, danh mục, voucher, reviews
     ai.py                 AI Stylist Chatbot, AI tính size, phòng Live AI
     orders.py             Báo giá, tạo đơn, tra cứu vận đơn trung thực
-    payment.py            Cổng VNPay sandbox & webhook ngân hàng
+    payment.py            Webhook thanh toán ngân hàng
     auth.py               Đăng ký, đăng nhập an toàn, đổi mật khẩu, quên mật khẩu
     cart.py               Giỏ hàng cookie & đồng bộ giỏ
     admin.py              Bảng điều khiển quản trị, quản lý đơn, nhập xuất kho, báo cáo P&L
@@ -190,8 +188,7 @@ Trước khi đưa hệ thống vào vận hành chính thức (Go-Live), bắt 
   - `APP_ENV=production` & `DEBUG=false` trong file `.env`.
   - **Tắt demo data**: `DEMO_DATA=false` (hệ thống **từ chối khởi động** nếu `DEMO_DATA=true` trong production).
   - **Đổi `SECRET_KEY`**: Tạo chuỗi bảo mật ngẫu nhiên `python -c "import secrets; print(secrets.token_hex(32))"`. Hệ thống từ chối khởi động nếu dùng secret mặc định hoặc dưới 16 ký tự.
-  - **Đổi `PAYMENT_WEBHOOK_SECRET`**: Khóa bí mật webhook VNPay/Ngân hàng (tối thiểu 16 ký tự).
-  - Cập nhật `PUBLIC_BASE_URL` và `VNPAY_RETURN_URL` sang domain HTTPS thật (không dùng `127.0.0.1` hay `localhost`).
+  - **Đổi `PAYMENT_WEBHOOK_SECRET`**: Khóa bí mật webhook thanh toán ngân hàng (tối thiểu 16 ký tự).
   - Đổi mật khẩu tài khoản quản trị `admin` mặc định ngay trong trang quản trị.
 - [ ] **3. Reverse Proxy (Caddy / Nginx)**:
   - Cấu hình HTTPS tự động qua [deploy/Caddyfile](file:///c:/Users/lenk/Downloads/fashion_ai_store/deploy/Caddyfile) hoặc [deploy/nginx.conf](file:///c:/Users/lenk/Downloads/fashion_ai_store/deploy/nginx.conf).

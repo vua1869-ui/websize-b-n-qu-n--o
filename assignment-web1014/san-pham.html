@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cửa Hàng Sản Phẩm - AURA FASHION</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="container">
+      <span>Bộ sưu tập Xuân Hè 2026 - Giảm ngay 100k cho hóa đơn từ 1.000.000đ</span>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header-main">
+    <div class="container navbar">
+      <button class="hamburger" aria-label="Mở Menu">☰</button>
+      <a href="index.html" class="logo">AURA<span>.</span></a>
+      <nav class="nav-menu">
+        <a href="index.html" class="nav-link">Trang Chủ</a>
+        <a href="san-pham.html" class="nav-link active">Sản Phẩm</a>
+        <a href="chi-tiet.html" class="nav-link">Chi Tiết</a>
+        <a href="gio-hang.html" class="nav-link">Giỏ Hàng</a>
+        <a href="gioi-thieu.html" class="nav-link">Giới Thiệu</a>
+        <a href="lien-he.html" class="nav-link">Liên Hệ</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="dang-nhap.html" class="action-icon" title="Tài khoản">👤</a>
+        <a href="gio-hang.html" class="action-icon" title="Giỏ hàng">
+          🛒
+          <span class="cart-count">2</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- BANNER TRANG CỬA HÀNG -->
+  <div style="background-color: var(--bg-gray); padding: 40px 0; text-align: center; border-bottom: 1px solid var(--border-color);">
+    <div class="container">
+      <h1 style="font-family: var(--font-heading); font-size: 2.2rem; margin-bottom: 8px;">Tất Cả Sản Phẩm</h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">
+        <a href="index.html">Trang chủ</a> / <span style="color: var(--primary-color); font-weight: 600;">Cửa hàng</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- NỘI DUNG CHÍNH (SIDEBAR FILTER + GRID SẢN PHẨM) -->
+  <main class="container section-padding">
+    <div class="catalog-layout">
+      <!-- CỘT TRÁI: BỘ LỌC ĐA NĂNG (FORM FILTER) -->
+      <aside class="filter-sidebar">
+        <h3 style="font-size: 1.2rem; margin-bottom: 20px; font-family: var(--font-heading); border-bottom: 2px solid var(--primary-color); padding-bottom: 8px;">
+          Bộ Lọc Tìm Kiếm
+        </h3>
+
+        <!-- Nhóm 1: Danh mục -->
+        <div class="filter-group">
+          <h4 class="filter-title">Danh Mục</h4>
+          <ul class="filter-list">
+            <li><label><input type="checkbox" checked> Áo Sơ Mi Nam / Nữ</label></li>
+            <li><label><input type="checkbox"> Áo Thun Tối Giản</label></li>
+            <li><label><input type="checkbox"> Áo Khoác & Blazer</label></li>
+            <li><label><input type="checkbox"> Quần Tây & Kaki</label></li>
+            <li><label><input type="checkbox"> Đầm & Váy Liền</label></li>
+            <li><label><input type="checkbox"> Phụ Kiện Da Cao Cấp</label></li>
+          </ul>
+        </div>
+
+        <!-- Nhóm 2: Khoảng giá (Radio) -->
+        <div class="filter-group">
+          <h4 class="filter-title">Mức Giá (VNĐ)</h4>
+          <ul class="filter-list">
+            <li><label><input type="radio" name="price" checked> Tất cả mức giá</label></li>
+            <li><label><input type="radio" name="price"> Dưới 300.000đ</label></li>
+            <li><label><input type="radio" name="price"> 300.000đ - 600.000đ</label></li>
+            <li><label><input type="radio" name="price"> 600.000đ - 1.000.000đ</label></li>
+            <li><label><input type="radio" name="price"> Trên 1.000.000đ</label></li>
+          </ul>
+        </div>
+
+        <!-- Nhóm 3: Chọn Size -->
+        <div class="filter-group">
+          <h4 class="filter-title">Kích Thước (Size)</h4>
+          <ul class="filter-list">
+            <li><label><input type="checkbox"> Size S (Nhỏ)</label></li>
+            <li><label><input type="checkbox" checked> Size M (Tiêu chuẩn)</label></li>
+            <li><label><input type="checkbox"> Size L (Rộng)</label></li>
+            <li><label><input type="checkbox"> Size XL (Ngoại cỡ)</label></li>
+          </ul>
+        </div>
+
+        <button class="btn btn-primary" style="width: 100%;" onclick="alert('Đã cập nhật danh sách lọc!')">Áp Dụng Lọc</button>
+      </aside>
+
+      <!-- CỘT PHẢI: HEADER SẮP XẾP VÀ LƯỚI SẢN PHẨM -->
+      <section>
+        <div class="catalog-header">
+          <span>Hiển thị <strong>8</strong> trong <strong>32</strong> sản phẩm</span>
+          <div>
+            <label for="sort" style="font-size: 0.9rem; margin-right: 8px;">Sắp xếp theo:</label>
+            <select id="sort" class="sort-select">
+              <option value="popular">Bán chạy nhất</option>
+              <option value="new">Mới nhất</option>
+              <option value="price-asc">Giá: Thấp đến Cao</option>
+              <option value="price-desc">Giá: Cao đến Thấp</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Lưới sản phẩm (Grid 3 cột) -->
+        <div class="product-grid" style="grid-template-columns: repeat(3, 1fr);">
+          <!-- Sp 1 -->
+          <article class="product-card">
+            <div class="product-thumb">
+              <span class="badge badge-sale product-badge">-15%</span>
+              <a href="chi-tiet.html"><img src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=600&auto=format&fit=crop" alt="Áo sơ mi lụa"></a>
+            </div>
+            <div class="product-details">
+              <span class="product-category">Áo Sơ Mi</span>
+              <h3 class="product-name"><a href="chi-tiet.html">Áo Sơ Mi Lụa Dệt Tự Nhiên Dáng Suông</a></h3>
+              <div class="product-price">
+                <span class="price-current">450.000đ</span>
+                <span class="price-old">530.000đ</span>
+              </div>
+              <button class="btn-add-cart">Thêm Vào Giỏ</button>
+            </div>
+          </article>
+
+          <!-- Sp 2 -->
+          <article class="product-card">
+            <div class="product-thumb">
+              <span class="badge badge-new product-badge">Mới</span>
+              <a href="chi-tiet.html"><img src="https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?q=80&w=600&auto=format&fit=crop" alt="Áo Blazer Be"></a>
+            </div>
+            <div class="product-details">
+              <span class="product-category">Áo Khoác</span>
+              <h3 class="product-name"><a href="chi-tiet.html">Áo Blazer Form Rộng Tone Màu Be Tối Giản</a></h3>
+              <div class="product-price"><span class="price-current">890.000đ</span></div>
+              <button class="btn-add-cart">Thêm Vào Giỏ</button>
+            </div>
+          </article>
+
+          <!-- Sp 3 -->
+          <article class="product-card">
+            <div class="product-thumb">
+              <a href="chi-tiet.html"><img src="https://images.unsplash.com/photo-1584273143981-41c073dfe8f8?q=80&w=600&auto=format&fit=crop" alt="Quần tây xếp ly"></a>
+            </div>
+            <div class="product-details">
+              <span class="product-category">Quần Dài</span>
+              <h3 class="product-name"><a href="chi-tiet.html">Quần Tây Xếp Ly Ống Suông Sang Trọng</a></h3>
+              <div class="product-price"><span class="price-current">520.000đ</span></div>
+              <button class="btn-add-cart">Thêm Vào Giỏ</button>
+            </div>
+          </article>
+
+          <!-- Sp 4 -->
+          <article class="product-card">
+            <div class="product-thumb">
+              <span class="badge badge-sale product-badge">-20%</span>
+              <a href="chi-tiet.html"><img src="https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?q=80&w=600&auto=format&fit=crop" alt="Đầm midi lụa"></a>
+            </div>
+            <div class="product-details">
+              <span class="product-category">Đầm & Váy</span>
+              <h3 class="product-name"><a href="chi-tiet.html">Đầm Xòe Midi Lụa Satin Cổ Vuông Thanh Lịch</a></h3>
+              <div class="product-price">
+                <span class="price-current">680.000đ</span>
+                <span class="price-old">850.000đ</span>
+              </div>
+              <button class="btn-add-cart">Thêm Vào Giỏ</button>
+            </div>
+          </article>
+
+          <!-- Sp 5 -->
+          <article class="product-card">
+            <div class="product-thumb">
+              <a href="chi-tiet.html"><img src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?q=80&w=600&auto=format&fit=crop" alt="Áo thun trắng"></a>
+            </div>
+            <div class="product-details">
+              <span class="product-category">Áo Thun</span>
+              <h3 class="product-name"><a href="chi-tiet.html">Áo Thun Cotton Compact 100% Thoáng Khí</a></h3>
+              <div class="product-price"><span class="price-current">290.000đ</span></div>
+              <button class="btn-add-cart">Thêm Vào Giỏ</button>
+            </div>
+          </article>
+
+          <!-- Sp 6 -->
+          <article class="product-card">
+            <div class="product-thumb">
+              <a href="chi-tiet.html"><img src="https://images.unsplash.com/photo-1548883354-7622d03aca27?q=80&w=600&auto=format&fit=crop" alt="Áo cardigan len"></a>
+            </div>
+            <div class="product-details">
+              <span class="product-category">Áo Len</span>
+              <h3 class="product-name"><a href="chi-tiet.html">Áo Khoác Cardigan Len Mỏng Dệt Thưa Hàn Quốc</a></h3>
+              <div class="product-price"><span class="price-current">490.000đ</span></div>
+              <button class="btn-add-cart">Thêm Vào Giỏ</button>
+            </div>
+          </article>
+        </div>
+
+        <!-- Phân trang (Pagination) -->
+        <div style="display: flex; justify-content: center; gap: 8px; margin-top: 40px;">
+          <a href="#" class="btn btn-sm btn-primary">1</a>
+          <a href="#" class="btn btn-sm btn-outline">2</a>
+          <a href="#" class="btn btn-sm btn-outline">3</a>
+          <a href="#" class="btn btn-sm btn-outline">›</a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-col">
+        <h3>AURA FASHION</h3>
+        <p style="font-size: 0.9rem; line-height: 1.8;">Thương hiệu thời trang tối giản hướng đến sự tinh tế và chuẩn mực trong từng đường may.</p>
+      </div>
+      <div class="footer-col">
+        <h3>Liên Kết</h3>
+        <ul class="footer-links">
+          <li><a href="index.html">Trang Chủ</a></li>
+          <li><a href="san-pham.html">Sản Phẩm</a></li>
+          <li><a href="gio-hang.html">Giỏ Hàng</a></li>
+          <li><a href="lien-he.html">Liên Hệ</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3>Hỗ Trợ</h3>
+        <ul class="footer-links">
+          <li><a href="#">Chính Sách Đổi Trả</a></li>
+          <li><a href="#">Bảng Kích Cỡ Size</a></li>
+          <li><a href="#">Tra Cứu Đơn Hàng</a></li>
+        </ul>
+      </div>
+      <div class="footer-col footer-newsletter">
+        <h3>Đăng Ký Nhận Tin</h3>
+        <p>Nhận ngay mã giảm 10% khi đăng ký hôm nay.</p>
+        <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Đã đăng ký nhận tin!');">
+          <input type="email" class="newsletter-input" placeholder="Email của bạn..." required>
+          <button type="submit" class="newsletter-btn">Gửi</button>
+        </form>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <p>&copy; 2026 AURA FASHION STUDIO - Bài tập Assignment môn WEB1014</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

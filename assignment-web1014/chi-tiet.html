@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chi Tiết Sản Phẩm - AURA FASHION</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="container">
+      <span>Đổi trả miễn phí trong 30 ngày tại nhà • Cam kết 100% sợi dệt tự nhiên</span>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header-main">
+    <div class="container navbar">
+      <button class="hamburger" aria-label="Mở Menu">☰</button>
+      <a href="index.html" class="logo">AURA<span>.</span></a>
+      <nav class="nav-menu">
+        <a href="index.html" class="nav-link">Trang Chủ</a>
+        <a href="san-pham.html" class="nav-link">Sản Phẩm</a>
+        <a href="chi-tiet.html" class="nav-link active">Chi Tiết</a>
+        <a href="gio-hang.html" class="nav-link">Giỏ Hàng</a>
+        <a href="gioi-thieu.html" class="nav-link">Giới Thiệu</a>
+        <a href="lien-he.html" class="nav-link">Liên Hệ</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="dang-nhap.html" class="action-icon" title="Tài khoản">👤</a>
+        <a href="gio-hang.html" class="action-icon" title="Giỏ hàng">
+          🛒
+          <span class="cart-count">2</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- BREADCRUMB -->
+  <div style="background-color: var(--bg-gray); padding: 16px 0; border-bottom: 1px solid var(--border-color);">
+    <div class="container">
+      <p style="font-size: 0.9rem; color: var(--text-muted);">
+        <a href="index.html">Trang chủ</a> / <a href="san-pham.html">Áo Sơ Mi</a> / <span style="color: var(--primary-color); font-weight: 600;">Áo Sơ Mi Lụa Dệt Tự Nhiên Dáng Suông</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- NỘI DUNG CHI TIẾT SẢN PHẨM -->
+  <main class="container">
+    <div class="product-detail-layout">
+      <!-- 1. BỘ SƯU TẬP ẢNH (GALLERY) -->
+      <div class="product-gallery">
+        <div class="gallery-thumbs">
+          <img src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=600&auto=format&fit=crop" class="thumb-img active" alt="Ảnh 1">
+          <img src="https://images.unsplash.com/photo-1598033129183-c4f50c736f10?q=80&w=600&auto=format&fit=crop" class="thumb-img" alt="Ảnh 2">
+          <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?q=80&w=600&auto=format&fit=crop" class="thumb-img" alt="Ảnh 3">
+        </div>
+        <div class="gallery-main">
+          <img src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=600&auto=format&fit=crop" alt="Ảnh sản phẩm chính">
+        </div>
+      </div>
+
+      <!-- 2. THÔNG TIN & FORM ĐẶT MUA HÀNG -->
+      <div class="detail-info">
+        <span class="badge badge-sale" style="margin-bottom: 12px;">Đang Giảm Giá</span>
+        <h1>Áo Sơ Mi Lụa Dệt Tự Nhiên Dáng Suông</h1>
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+          <span style="color: #f59e0b; font-size: 1.1rem;">★★★★★</span>
+          <span style="font-size: 0.9rem; color: var(--text-muted);">(48 đánh giá của khách hàng)</span>
+        </div>
+
+        <div class="detail-price">
+          450.000đ <span style="font-size: 1rem; color: var(--text-muted); text-decoration: line-through; font-weight: normal; margin-left: 8px;">530.000đ</span>
+        </div>
+
+        <p style="color: var(--text-muted); margin-bottom: 24px; line-height: 1.7;">
+          Mẫu áo sơ mi lụa tơ tằm nhân tạo với bề mặt dệt mịn màng, thông thoáng và có độ rũ tự nhiên thanh lịch. Phom dáng suông rộng rãi mang lại cảm giác thoải mái tối đa cho ngày làm việc hay dạo phố cuối tuần.
+        </p>
+
+        <!-- FORM CHỌN BIẾN THỂ -->
+        <form onsubmit="event.preventDefault();">
+          <!-- Chọn màu sắc -->
+          <div class="form-option">
+            <label>Màu Sắc: <strong>Trắng Ngà (Off-White)</strong></label>
+            <div style="display: flex; gap: 12px; margin-top: 8px;">
+              <span style="width: 32px; height: 32px; background: #faf8f5; border: 2px solid var(--primary-color); border-radius: 50%; cursor: pointer;" title="Trắng ngà"></span>
+              <span style="width: 32px; height: 32px; background: #d7c9b8; border: 1px solid var(--border-color); border-radius: 50%; cursor: pointer;" title="Be nhạt"></span>
+              <span style="width: 32px; height: 32px; background: #111111; border: 1px solid var(--border-color); border-radius: 50%; cursor: pointer;" title="Đen tuyền"></span>
+            </div>
+          </div>
+
+          <!-- Chọn kích cỡ -->
+          <div class="form-option">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <label style="margin: 0;">Chọn Kích Cỡ (Size):</label>
+              <a href="#size-chart" style="font-size: 0.85rem; color: var(--secondary-color); text-decoration: underline;">📏 Bảng đo kích thước</a>
+            </div>
+            <div class="size-selector">
+              <button type="button" class="size-btn">S</button>
+              <button type="button" class="size-btn active">M</button>
+              <button type="button" class="size-btn">L</button>
+              <button type="button" class="size-btn">XL</button>
+            </div>
+          </div>
+
+          <!-- Chọn số lượng & Nút mua -->
+          <div class="form-option">
+            <label>Số Lượng:</label>
+            <div style="display: flex; gap: 16px; align-items: center; margin-top: 8px;">
+              <div class="quantity-box">
+                <button type="button" class="quantity-btn qty-minus">-</button>
+                <input type="text" class="quantity-input" value="1" readonly>
+                <button type="button" class="quantity-btn qty-plus">+</button>
+              </div>
+              <button type="button" class="btn btn-primary btn-add-to-cart" style="flex: 1;">Thêm Vào Giỏ Hàng</button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Thông tin vận chuyển tóm tắt -->
+        <div style="background-color: var(--bg-gray); padding: 18px; border-radius: var(--radius); margin-top: 30px; font-size: 0.9rem;">
+          <p>✔️ <strong>Giao hàng:</strong> Dự kiến nhận hàng trong 2-3 ngày</p>
+          <p>✔️ <strong>Kiểm tra:</strong> Được kiểm tra hàng trước khi thanh toán</p>
+          <p>✔️ <strong>Bảo hành:</strong> Đổi mới trong 7 ngày nếu lỗi từ nhà sản xuất</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. BẢNG THÔNG SỐ KÍCH CỠ (HTML TABLE CHUẨN MỰC THEO RUBRIC) -->
+    <section id="size-chart" style="margin-top: 60px;">
+      <div class="section-title">
+        <h2>Bảng Thông Số Kích Cỡ Chuẩn (Size Chart)</h2>
+        <p>Bảng đối chiếu kích thước chiều cao, cân nặng và thông số may</p>
+      </div>
+
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th class="text-center">Kích Cỡ</th>
+            <th>Chiều Cao Phù Hợp</th>
+            <th>Cân Nặng Chuẩn</th>
+            <th>Rộng Vai (cm)</th>
+            <th>Vòng Ngực (cm)</th>
+            <th>Dài Áo (cm)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-center"><strong>S</strong></td>
+            <td>1m55 – 1m62</td>
+            <td>45 – 53 kg</td>
+            <td>42</td>
+            <td>96</td>
+            <td>68</td>
+          </tr>
+          <tr>
+            <td class="text-center"><strong>M</strong></td>
+            <td>1m63 – 1m70</td>
+            <td>54 – 62 kg</td>
+            <td>44</td>
+            <td>100</td>
+            <td>70</td>
+          </tr>
+          <tr>
+            <td class="text-center"><strong>L</strong></td>
+            <td>1m71 – 1m77</td>
+            <td>63 – 72 kg</td>
+            <td>46</td>
+            <td>104</td>
+            <td>72</td>
+          </tr>
+          <tr>
+            <td class="text-center"><strong>XL</strong></td>
+            <td>1m78 – 1m85</td>
+            <td>73 – 82 kg</td>
+            <td>48</td>
+            <td>108</td>
+            <td>74</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-col">
+        <h3>AURA FASHION</h3>
+        <p style="font-size: 0.9rem; line-height: 1.8;">Thương hiệu thời trang tối giản hướng đến sự tinh tế và chuẩn mực trong từng đường may.</p>
+      </div>
+      <div class="footer-col">
+        <h3>Liên Kết</h3>
+        <ul class="footer-links">
+          <li><a href="index.html">Trang Chủ</a></li>
+          <li><a href="san-pham.html">Sản Phẩm</a></li>
+          <li><a href="gio-hang.html">Giỏ Hàng</a></li>
+          <li><a href="lien-he.html">Liên Hệ</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3>Hỗ Trợ</h3>
+        <ul class="footer-links">
+          <li><a href="#">Chính Sách Đổi Trả</a></li>
+          <li><a href="#">Bảng Kích Cỡ Size</a></li>
+          <li><a href="#">Tra Cứu Đơn Hàng</a></li>
+        </ul>
+      </div>
+      <div class="footer-col footer-newsletter">
+        <h3>Đăng Ký Nhận Tin</h3>
+        <p>Nhận ngay mã giảm 10% khi đăng ký hôm nay.</p>
+        <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Đã đăng ký nhận tin!');">
+          <input type="email" class="newsletter-input" placeholder="Email của bạn..." required>
+          <button type="submit" class="newsletter-btn">Gửi</button>
+        </form>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <p>&copy; 2026 AURA FASHION STUDIO - Bài tập Assignment môn WEB1014</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

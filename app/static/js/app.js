@@ -1922,6 +1922,21 @@ const App = {
     if (btn) { btn.disabled = true; btn.textContent = 'Đang xử lý...'; }
     try {
       const order = await U.api('/api/orders', { method: 'POST', body });
+      U.store.set('aura_customer', {
+        name: body.customer_name, phone: body.customer_phone, address: body.customer_address,
+        province_code: body.province_code, province: body.province_name,
+        ward_code: body.ward_code, ward: body.ward_name, specific_address: street
+      });
+      if (body.payment_method === 'vietqr' || body.payment_method === 'qr_transfer') {
+        const payRes = await U.api('/api/payment/mb-paygate/create-order', {
+          method: 'POST', body: { order_id: order.order_id, phone: body.customer_phone }
+        });
+        if (payRes && payRes.payment_url) {
+          window.location.href = payRes.payment_url;
+          return;
+        }
+        throw new Error('MB Paygate không trả về liên kết thanh toán. Vui lòng thử lại hoặc chọn COD.');
+      }
       U.store.set('aura_customer', { 
         name: body.customer_name, 
         phone: body.customer_phone, 
@@ -1935,22 +1950,6 @@ const App = {
       this.state.cart = []; this.state.voucher = ''; this.state.usePoints = 0; this.state.quote = null;
       this.saveCart();
       Modal.close('checkout-modal');
-
-      // Nếu khách chọn Thanh toán online VNPay -> Chuyển hướng sang VNPay
-      if (body.payment_method === 'vnpay') {
-        try {
-          const payRes = await U.api('/api/payment/vnpay/create-payment-url', {
-            method: 'POST',
-            body: { order_id: order.order_id }
-          });
-          if (payRes && payRes.payment_url) {
-            window.location.href = payRes.payment_url;
-            return;
-          }
-        } catch (payErr) {
-          console.error('Lỗi tạo URL thanh toán VNPay:', payErr);
-        }
-      }
 
       // Nếu khách chọn Thanh toán qua MoMo -> Chuyển hướng sang MoMo
       if (body.payment_method === 'momo') {
@@ -1990,8 +1989,7 @@ const App = {
       this._pollTimer = null;
     }
 
-    const isQr = o.payment_method === 'qr_transfer';
-    const isVNPay = o.payment_method === 'vnpay';
+    const isQr = o.payment_method === 'qr_transfer' || o.payment_method === 'vietqr';
     const isMoMo = o.payment_method === 'momo';
     const isPaid = o.payment_status === 'paid' || o.status === 'confirmed';
 
@@ -2077,10 +2075,6 @@ const App = {
             </div>
             <p class="mt-1 text-sm text-amber-700">Hệ thống tự động kiểm tra trạng thái mỗi 3 giây.</p>
             <div class="mt-2.5 pt-2 border-t border-amber-200/60 flex flex-wrap gap-2 justify-center">
-              <button type="button" data-action="pay-vnpay" data-order-id="${U.esc(o.order_id)}"
-                      class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 px-3.5 py-1.5 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
-                <span>💳 Thanh toán qua VNPay</span>
-              </button>
               <button type="button" data-action="pay-momo" data-order-id="${U.esc(o.order_id)}"
                       class="inline-flex items-center gap-1.5 rounded-lg bg-[#a50064] hover:bg-[#850050] px-3.5 py-1.5 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
                 <span>💳 Thanh toán qua MoMo</span>
@@ -2088,45 +2082,6 @@ const App = {
               <button type="button" data-action="simulate-payment" data-order-id="${U.esc(o.order_id)}"
                       class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 px-3.5 py-1.5 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
                 <span>⚡ Giả lập Chuyển khoản thành công (Test Webhook)</span>
-              </button>
-            </div>
-          `}
-        </div>
-      </div>`;
-    } else if (isVNPay) {
-      paymentHtml = `
-      <div id="vnpay-container" class="my-4 rounded-2xl border border-blue-200 bg-blue-50/50 p-4 text-left shadow-sm">
-        <div class="flex items-center justify-between border-b border-blue-100 pb-3">
-          <div class="flex items-center gap-2">
-            <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-sm">VNP</span>
-            <div>
-              <h3 class="text-sm font-bold text-blue-900 uppercase tracking-wide">Cổng thanh toán điện tử VNPay</h3>
-              <p class="text-sm text-zinc-500">ATM nội địa • QR Pay • Thẻ quốc tế Visa/Master</p>
-            </div>
-          </div>
-          <span class="rounded bg-blue-100 px-2 py-0.5 text-sm font-bold text-blue-700">VNPay Sandbox</span>
-        </div>
-
-        <div id="payment-status-box" class="mt-4 rounded-xl border ${isPaid ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-blue-200 bg-white text-blue-900'} p-3.5 text-center">
-          ${isPaid ? `
-            <div class="flex items-center justify-center gap-2 text-sm font-bold text-emerald-800">
-              <span class="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-sm">✓</span>
-              <span>ĐÃ XÁC NHẬN THANH TOÁN VNPAY THÀNH CÔNG!</span>
-            </div>
-            <p class="mt-1 text-sm text-emerald-700">Đơn hàng đã được thanh toán và đang được xử lý.</p>
-          ` : `
-            <div class="flex items-center justify-center gap-2 text-sm font-bold text-blue-800">
-              <span class="flex h-2.5 w-2.5 relative">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
-              </span>
-              <span id="payment-status-text">Đang chờ bạn hoàn tất thanh toán trên VNPay...</span>
-            </div>
-            <p class="mt-1 text-sm text-zinc-500">Nhấn nút bên dưới để chuyển sang cổng VNPay nếu trình duyệt chưa tự chuyển.</p>
-            <div class="mt-3 flex flex-wrap gap-2 justify-center">
-              <button type="button" data-action="pay-vnpay" data-order-id="${U.esc(o.order_id)}"
-                      class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 px-4 py-2 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
-                <span>💳 Thanh toán qua VNPay ngay</span>
               </button>
             </div>
           `}
@@ -2179,7 +2134,7 @@ const App = {
         <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
       </div>
       <h2 class="text-base sm:text-lg font-bold text-zinc-900" id="success-title">
-        ${isPaid ? 'Đặt hàng & Thanh toán thành công!' : (isMoMo ? 'Đã ghi nhận đơn • Vui lòng thanh toán MoMo' : (isVNPay ? 'Đã ghi nhận đơn • Vui lòng thanh toán VNPay' : (isQr ? 'Đã ghi nhận đơn • Vui lòng chuyển khoản' : 'Đặt hàng thành công!')))}
+        ${isPaid ? 'Đặt hàng & Thanh toán thành công!' : (isMoMo ? 'Đã ghi nhận đơn • Vui lòng thanh toán MoMo' : (isQr ? 'Đã ghi nhận đơn • Vui lòng chuyển khoản' : 'Đặt hàng thành công!')))}
       </h2>
       <p class="text-sm text-zinc-500 mt-0.5">Mã đơn hàng: <b class="font-mono text-brand-600">${U.esc(o.order_id)}</b></p>
       
@@ -2188,7 +2143,7 @@ const App = {
       <div class="my-3 space-y-1.5 rounded-xl border border-zinc-200 bg-zinc-50/70 p-3.5 text-left text-sm">
         <div class="flex justify-between gap-3"><span class="text-zinc-500">Người nhận</span><b class="text-right text-zinc-800">${U.esc(o.customer_name)} (${U.esc(o.customer_phone)})</b></div>
         <div class="flex justify-between gap-3"><span class="text-zinc-500">Địa chỉ giao</span><span class="text-right font-medium text-zinc-800">${U.esc(o.customer_address)}</span></div>
-        <div class="flex justify-between gap-3"><span class="text-zinc-500">Hình thức</span><b>${isMoMo ? 'Ví điện tử MoMo' : (isVNPay ? 'VNPay Sandbox' : (isQr ? 'Chuyển khoản VietQR' : 'Thanh toán khi nhận hàng (COD)'))}</b></div>
+        <div class="flex justify-between gap-3"><span class="text-zinc-500">Hình thức</span><b>${isMoMo ? 'Ví điện tử MoMo' : (isQr ? 'Chuyển khoản VietQR' : 'Thanh toán khi nhận hàng (COD)')}</b></div>
         ${this.summaryRows(q)}
       </div>
 
@@ -2201,7 +2156,7 @@ const App = {
     Modal.open('success-modal');
 
     // Bắt đầu Polling kiểm tra trạng thái thanh toán tự động nếu chưa thanh toán
-    if ((isQr || isVNPay || isMoMo) && !isPaid) {
+    if ((isQr || isMoMo) && !isPaid) {
       this._pollTimer = setInterval(async () => {
         try {
           const res = await U.api(`/api/payment/check-status/${encodeURIComponent(o.order_id)}`);
@@ -2678,25 +2633,6 @@ Object.assign(Actions, {
       App._pollTimer = null;
     }
     Modal.close(d.target);
-  },
-  'pay-vnpay': async (d, btn) => {
-    if (!d.orderId) return;
-    try {
-      if (btn) { btn.disabled = true; btn.textContent = 'Đang chuyển tới VNPay...'; }
-      U.toast('Đang tạo liên kết thanh toán VNPay...');
-      const res = await U.api('/api/payment/vnpay/create-payment-url', {
-        method: 'POST',
-        body: { order_id: d.orderId }
-      });
-      if (res && res.payment_url) {
-        window.location.href = res.payment_url;
-      } else {
-        throw new Error('Không nhận được liên kết thanh toán từ máy chủ');
-      }
-    } catch (e) {
-      U.toast(e.message || 'Lỗi khi tạo liên kết thanh toán VNPay', 'error');
-      if (btn) { btn.disabled = false; btn.textContent = '💳 Thanh toán qua VNPay'; }
-    }
   },
   'pay-momo': async (d, btn) => {
     if (!d.orderId) return;

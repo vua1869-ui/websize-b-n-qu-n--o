@@ -1075,7 +1075,7 @@ class DatabaseService:
 
         return order_id
 
-    def confirm_payment(self, order_id: str, amount: int, transaction_code: str, payment_channel: str = "vietqr") -> PaymentConfirmResult:
+    def confirm_payment(self, order_id: str, amount: int, transaction_code: str, payment_channel: str = "vietqr", payload_extra: Optional[Dict[str, Any]] = None) -> PaymentConfirmResult:
         """Xác nhận thanh toán tự động qua Webhook / IPN trong một transaction BEGIN IMMEDIATE."""
         with get_db_transaction(self.db_path) as conn:
             order = conn.execute(
@@ -1190,7 +1190,7 @@ class DatabaseService:
                     transaction_code,
                     amount,
                     payment_channel,
-                    json.dumps({"verified_at": now_str, "amount": amount}, ensure_ascii=False),
+                    json.dumps({"verified_at": now_str, "amount": amount, **(payload_extra or {})}, ensure_ascii=False),
                     now_str,
                 ),
             )
@@ -1844,7 +1844,7 @@ class DatabaseService:
         order_id: str,
         refund_tx_code: str,
         amount: int,
-        payment_channel: str = "vnpay",
+        payment_channel: str = "manual",
         payload: Optional[Dict[str, Any]] = None,
         processed_by: Optional[str] = None,
     ) -> bool:

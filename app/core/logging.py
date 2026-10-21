@@ -34,7 +34,7 @@ def mask_sensitive_data(data: Dict[str, Any]) -> Dict[str, Any]:
     """Loại bỏ hoặc che mật khẩu, token, SĐT, số tài khoản đầy đủ trước khi ghi log."""
     masked = {}
     sensitive_keys = {
-        "password", "hashed_password", "token", "secret", "vnp_hashsecret",
+        "password", "hashed_password", "token", "secret",
         "api_key", "secret_key", "confirm_password", "new_password", "old_password"
     }
     phone_keys = {"phone", "customer_phone", "sender_phone"}

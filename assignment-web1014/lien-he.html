@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liên Hệ & Góp Ý - AURA FASHION</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="container">
+      <span>Đội ngũ chăm sóc khách hàng AURA luôn sẵn sàng hỗ trợ bạn 24/7</span>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header-main">
+    <div class="container navbar">
+      <button class="hamburger" aria-label="Mở Menu">☰</button>
+      <a href="index.html" class="logo">AURA<span>.</span></a>
+      <nav class="nav-menu">
+        <a href="index.html" class="nav-link">Trang Chủ</a>
+        <a href="san-pham.html" class="nav-link">Sản Phẩm</a>
+        <a href="chi-tiet.html" class="nav-link">Chi Tiết</a>
+        <a href="gio-hang.html" class="nav-link">Giỏ Hàng</a>
+        <a href="gioi-thieu.html" class="nav-link">Giới Thiệu</a>
+        <a href="lien-he.html" class="nav-link active">Liên Hệ</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="dang-nhap.html" class="action-icon" title="Tài khoản">👤</a>
+        <a href="gio-hang.html" class="action-icon" title="Giỏ hàng">
+          🛒
+          <span class="cart-count">2</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- BANNER LIÊN HỆ -->
+  <div style="background-color: var(--bg-gray); padding: 40px 0; text-align: center; border-bottom: 1px solid var(--border-color);">
+    <div class="container">
+      <h1 style="font-family: var(--font-heading); font-size: 2.2rem; margin-bottom: 8px;">Liên Hệ Với Chúng Tôi</h1>
+      <p style="color: var(--text-muted); font-size: 0.95rem;">
+        Gửi mọi thắc mắc, phản hồi hoặc yêu cầu tư vấn phong cách trang phục
+      </p>
+    </div>
+  </div>
+
+  <main class="container section-padding">
+    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; margin-bottom: 60px;">
+      <!-- FORM GỬI GÓP Ý / LIÊN HỆ (HTML FORM) -->
+      <div class="form-card">
+        <h2 style="font-family: var(--font-heading); font-size: 1.6rem; margin-bottom: 20px;">Gửi Tin Nhắn Cho AURA</h2>
+        <form id="contactForm">
+          <div class="form-group">
+            <label>Họ và tên của bạn <span class="required">*</span></label>
+            <input type="text" class="form-control" placeholder="Ví dụ: Nguyễn Văn Thuận" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Số điện thoại <span class="required">*</span></label>
+              <input type="tel" class="form-control" placeholder="0905123456" pattern="[0-9]{10}" required>
+            </div>
+            <div class="form-group">
+              <label>Email cá nhân <span class="required">*</span></label>
+              <input type="email" class="form-control" placeholder="email@gmail.com" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Chủ đề liên hệ</label>
+            <select class="form-control">
+              <option value="tuvan">Tư vấn chọn size & phối đồ</option>
+              <option value="donhang">Tra cứu & thắc mắc đơn hàng</option>
+              <option value="doitra">Yêu cầu đổi hàng / trả hàng</option>
+              <option value="khac">Góp ý dịch vụ khác</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Nội dung chi tiết <span class="required">*</span></label>
+            <textarea class="form-control" rows="4" placeholder="Nhập câu hỏi hoặc nội dung bạn muốn gửi..." required></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 14px;">Gửi Tin Nhắn Ngay</button>
+        </form>
+      </div>
+
+      <!-- BẢNG HỆ THỐNG CỬA HÀNG & GIỜ MỞ CỬA (HTML TABLE) -->
+      <div>
+        <h2 style="font-family: var(--font-heading); font-size: 1.6rem; margin-bottom: 20px;">Hệ Thống Showroom & Giờ Phục Vụ</h2>
+        
+        <table class="custom-table" style="margin-top: 0;">
+          <thead>
+            <tr>
+              <th>Chi Nhánh Showroom</th>
+              <th>Địa Chỉ</th>
+              <th>Giờ Mở Cửa</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>AURA Hà Nội</strong></td>
+              <td>12 Quán Sứ, Hoàn Kiếm</td>
+              <td>08:30 – 21:30</td>
+            </tr>
+            <tr>
+              <td><strong>AURA Đà Nẵng</strong></td>
+              <td>137 Nguyễn Thị Thập, Liên Chiểu</td>
+              <td>08:00 – 22:00</td>
+            </tr>
+            <tr>
+              <td><strong>AURA TP.HCM</strong></td>
+              <td>245 Lê Văn Sỹ, Quận 3</td>
+              <td>09:00 – 22:00</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- BẢN ĐỒ IFRAME -->
+        <div style="margin-top: 25px; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border-color); height: 260px;">
+          <iframe 
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3833.802545934522!2d108.16738377583688!3d16.07573293926839!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x314218e6e72e1e05%3A0x4037565234ee95f0!2zVHLGsOG7nW5nIENhbyDEkeG6s25nIEZQVCBQb2x5dGVjaG5pYyDEkMOgIE7hurVuZw!5e0!3m2!1svi!2s!4v1700000000000!5m2!1svi!2s" 
+            width="100%" 
+            height="100%" 
+            style="border:0;" 
+            allowfullscreen="" 
+            loading="lazy" 
+            referrerpolicy="no-referrer-when-downgrade">
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-col">
+        <h3>AURA FASHION</h3>
+        <p style="font-size: 0.9rem; line-height: 1.8;">Thương hiệu thời trang tối giản hướng đến sự tinh tế và chuẩn mực trong từng đường may.</p>
+      </div>
+      <div class="footer-col">
+        <h3>Liên Kết</h3>
+        <ul class="footer-links">
+          <li><a href="index.html">Trang Chủ</a></li>
+          <li><a href="san-pham.html">Sản Phẩm</a></li>
+          <li><a href="gio-hang.html">Giỏ Hàng</a></li>
+          <li><a href="lien-he.html">Liên Hệ</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3>Hỗ Trợ</h3>
+        <ul class="footer-links">
+          <li><a href="#">Chính Sách Đổi Trả</a></li>
+          <li><a href="#">Bảng Kích Cỡ Size</a></li>
+          <li><a href="#">Tra Cứu Đơn Hàng</a></li>
+        </ul>
+      </div>
+      <div class="footer-col footer-newsletter">
+        <h3>Đăng Ký Nhận Tin</h3>
+        <p>Nhận ngay mã giảm 10% khi đăng ký hôm nay.</p>
+        <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Đã đăng ký nhận tin!');">
+          <input type="email" class="newsletter-input" placeholder="Email của bạn..." required>
+          <button type="submit" class="newsletter-btn">Gửi</button>
+        </form>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <p>&copy; 2026 AURA FASHION STUDIO - Bài tập Assignment môn WEB1014</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

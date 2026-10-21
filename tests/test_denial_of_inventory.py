@@ -7,7 +7,7 @@ from tests.conftest import CUSTOMER, item
 def test_denial_of_inventory_reproduction(client):
     """
     Test tái hiện lỗ hổng Denial of Inventory:
-    1. Kẻ tấn công gửi 20 đơn pending_payment (VNPay/QR) mà không thanh toán.
+    1. Kẻ tấn công gửi 20 đơn pending_payment (QR) mà không thanh toán.
        (8 đơn x 2sp + 12 đơn x 1sp = 28 sản phẩm bị giam).
     2. Kho của prod_001 bị giam trừ dần từ 32 xuống 4.
     3. Khách hàng thật vào mua 5 sản phẩm bị từ chối (409 Conflict) vì kho chỉ còn 4.
@@ -31,7 +31,7 @@ def test_denial_of_inventory_reproduction(client):
             "customer_phone": attacker_phone,
             "customer_address": "123 Fraud St, Hanoi",
             "items": [item("prod_001", qty=qty)],
-            "payment_method": "vnpay",
+            "payment_method": "qr_transfer",
         }
         res = client.post("/api/orders", json=req_body)
         assert res.status_code == 200, f"Đơn thứ {i+1} tạo thất bại: {res.text}"

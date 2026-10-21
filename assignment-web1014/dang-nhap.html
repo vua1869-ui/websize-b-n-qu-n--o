@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng Nhập Tài Khoản - AURA FASHION</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="header-main">
+    <div class="container navbar">
+      <button class="hamburger" aria-label="Mở Menu">☰</button>
+      <a href="index.html" class="logo">AURA<span>.</span></a>
+      <nav class="nav-menu">
+        <a href="index.html" class="nav-link">Trang Chủ</a>
+        <a href="san-pham.html" class="nav-link">Sản Phẩm</a>
+        <a href="chi-tiet.html" class="nav-link">Chi Tiết</a>
+        <a href="gio-hang.html" class="nav-link">Giỏ Hàng</a>
+        <a href="gioi-thieu.html" class="nav-link">Giới Thiệu</a>
+        <a href="lien-he.html" class="nav-link">Liên Hệ</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="dang-nhap.html" class="action-icon" title="Tài khoản">👤</a>
+        <a href="gio-hang.html" class="action-icon" title="Giỏ hàng">
+          🛒
+          <span class="cart-count">2</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- FORM ĐĂNG NHẬP (BOX MODEL) -->
+  <main class="container section-padding" style="display: flex; justify-content: center; align-items: center;">
+    <div class="form-card" style="width: 100%; max-width: 480px;">
+      <h2 style="font-family: var(--font-heading); font-size: 1.8rem; text-align: center; margin-bottom: 8px;">Đăng Nhập</h2>
+      <p style="text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">Chào mừng bạn quay trở lại với AURA Fashion</p>
+
+      <form onsubmit="event.preventDefault(); alert('Đăng nhập thành công!'); window.location.href='index.html';">
+        <div class="form-group">
+          <label>Email hoặc Tên đăng nhập <span class="required">*</span></label>
+          <input type="text" class="form-control" placeholder="Nhập email của bạn..." required>
+        </div>
+
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label style="margin: 0;">Mật khẩu <span class="required">*</span></label>
+            <a href="#" style="font-size: 0.8rem; color: var(--secondary-color);">Quên mật khẩu?</a>
+          </div>
+          <input type="password" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+          <input type="checkbox" id="remember" style="accent-color: var(--secondary-color);">
+          <label for="remember" style="font-size: 0.85rem; font-weight: normal; margin: 0; cursor: pointer;">Ghi nhớ đăng nhập trên thiết bị này</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 15px;">Đăng Nhập Ngay</button>
+      </form>
+
+      <p style="text-align: center; font-size: 0.9rem; margin-top: 25px; color: var(--text-muted);">
+        Chưa có tài khoản? <a href="dang-ky.html" style="color: var(--primary-color); font-weight: 600; text-decoration: underline;">Đăng ký thành viên mới</a>
+      </p>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-col">
+        <h3>AURA FASHION</h3>
+        <p style="font-size: 0.9rem; line-height: 1.8;">Thương hiệu thời trang tối giản hướng đến sự tinh tế và chuẩn mực trong từng đường may.</p>
+      </div>
+      <div class="footer-col">
+        <h3>Liên Kết</h3>
+        <ul class="footer-links">
+          <li><a href="index.html">Trang Chủ</a></li>
+          <li><a href="san-pham.html">Sản Phẩm</a></li>
+          <li><a href="gio-hang.html">Giỏ Hàng</a></li>
+          <li><a href="lien-he.html">Liên Hệ</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3>Hỗ Trợ</h3>
+        <ul class="footer-links">
+          <li><a href="#">Chính Sách Đổi Trả</a></li>
+          <li><a href="#">Bảng Kích Cỡ Size</a></li>
+          <li><a href="#">Tra Cứu Đơn Hàng</a></li>
+        </ul>
+      </div>
+      <div class="footer-col footer-newsletter">
+        <h3>Đăng Ký Nhận Tin</h3>
+        <p>Nhận ngay mã giảm 10% khi đăng ký hôm nay.</p>
+        <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Đã đăng ký nhận tin!');">
+          <input type="email" class="newsletter-input" placeholder="Email của bạn..." required>
+          <button type="submit" class="newsletter-btn">Gửi</button>
+        </form>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <p>&copy; 2026 AURA FASHION STUDIO - Bài tập Assignment môn WEB1014</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

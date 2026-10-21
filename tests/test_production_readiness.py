@@ -97,10 +97,8 @@ def test_production_rejects_demo_data():
             DEMO_DATA=True,
             SECRET_KEY="a-very-secure-random-production-secret-key-32chars",
             PAYMENT_WEBHOOK_SECRET="a-very-secure-random-webhook-secret-32chars",
-            VNPAY_HASH_SECRET="prod-vnpay-hash-secret",
             PUBLIC_BASE_URL="https://aurastudio.vn",
             DATABASE_URL="postgresql://user:pass@localhost:5432/auradb",
-            VNPAY_RETURN_URL="https://aurastudio.vn/payment/return",
             EMAIL_BACKEND="smtp",
         )
     assert "DEMO_DATA=true không được phép trong môi trường Production" in str(excinfo.value)
@@ -114,10 +112,8 @@ def test_production_rejects_default_secret_key():
             DEMO_DATA=False,
             SECRET_KEY="dev-only-change-me",
             PAYMENT_WEBHOOK_SECRET="a-very-secure-random-webhook-secret-32chars",
-            VNPAY_HASH_SECRET="prod-vnpay-hash-secret",
             PUBLIC_BASE_URL="https://aurastudio.vn",
             DATABASE_URL="postgresql://user:pass@localhost:5432/auradb",
-            VNPAY_RETURN_URL="https://aurastudio.vn/payment/return",
             EMAIL_BACKEND="smtp",
         )
     assert "SECRET_KEY chưa được đặt hoặc vẫn dùng giá trị mặc định" in str(excinfo.value)
@@ -131,10 +127,8 @@ def test_production_rejects_short_secret_key():
             DEMO_DATA=False,
             SECRET_KEY="short-secret",
             PAYMENT_WEBHOOK_SECRET="a-very-secure-random-webhook-secret-32chars",
-            VNPAY_HASH_SECRET="prod-vnpay-hash-secret",
             PUBLIC_BASE_URL="https://aurastudio.vn",
             DATABASE_URL="postgresql://user:pass@localhost:5432/auradb",
-            VNPAY_RETURN_URL="https://aurastudio.vn/payment/return",
             EMAIL_BACKEND="smtp",
         )
     assert "SECRET_KEY chưa được đặt hoặc vẫn dùng giá trị mặc định" in str(excinfo.value)

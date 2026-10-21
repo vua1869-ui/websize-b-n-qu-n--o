@@ -1,15 +1,8 @@
 """
 Test suite cho trang Xác nhận đơn hàng (/order-success/{order_id}):
 1. Đơn hàng hợp lệ (COD) hiển thị 200, mã đơn, thông tin nhận hàng, ghi chú tiền mặt COD.
-2. Đơn hàng không tồn tại -> redirect về trang chủ '/' (302).
-3. Đơn hàng đã thanh toán qua VNPay -> hiển thị badge 'Đã thanh toán thành công' màu xanh.
-4. VNPay return URL khi trình duyệt truy cập -> redirect 302 về /order-success/{order_id}.
-5. Route /tracking redirect đúng định dạng query param sang trang chủ.
-"""
-import pytest
-from app.config import settings
+2. Đơn hàng không tồn tại -> redirect về trang chủ '/' (302)."""
 from tests.conftest import CUSTOMER, item
-from tests.test_payment_vnpay import _generate_vnpay_params
 
 
 def test_order_success_valid_cod_order(client):
@@ -54,62 +47,6 @@ def test_order_success_nonexistent_order_redirects(client):
     res = client.get("/order-success/AURA-FAKE-NOTFOUND", follow_redirects=False)
     assert res.status_code == 302
     assert res.headers["location"] == "/"
-
-
-def test_order_success_vnpay_paid_order(client):
-    """Đơn hàng đã thanh toán VNPay: hiển thị badge và thông báo 'Đã thanh toán thành công'."""
-    # 1. Tạo đơn hàng VNPay
-    order_req = {
-        **CUSTOMER,
-        "payment_method": "vnpay",
-        "items": [item("prod_001", qty=1)]
-    }
-    r = client.post("/api/orders", json=order_req)
-    assert r.status_code == 200
-    order_id = r.json()["order_id"]
-    total = r.json()["quote"]["total"]
-
-    # 2. Giả lập callback thành công từ VNPay
-    vnp_params = _generate_vnpay_params(order_id=order_id, amount=total, response_code="00")
-    ret_res = client.get("/api/payment/vnpay/return", params=vnp_params, headers={"Accept": "application/json"})
-    assert ret_res.status_code == 200
-    assert ret_res.json()["payment_status"] == "paid"
-
-    # 3. Truy cập trang xác nhận đơn hàng
-    res = client.get(f"/order-success/{order_id}")
-    assert res.status_code == 200
-    html = res.text
-
-    assert order_id in html
-    assert "Đã thanh toán thành công" in html
-    assert "Cổng VNPay" in html or "VNPay" in html
-    # Không hiển thị lưu ý chuẩn bị tiền mặt COD
-    assert "Vui lòng chuẩn bị" not in html
-
-
-def test_vnpay_return_redirects_browser_to_order_success(client):
-    """Khi trình duyệt (không gửi Accept: application/json) hoàn tất VNPay -> redirect 302 về /order-success/{order_id}."""
-    order_req = {
-        **CUSTOMER,
-        "payment_method": "vnpay",
-        "items": [item("prod_001", qty=1)]
-    }
-    r = client.post("/api/orders", json=order_req)
-    assert r.status_code == 200
-    order_id = r.json()["order_id"]
-    total = r.json()["quote"]["total"]
-
-    vnp_params = _generate_vnpay_params(order_id=order_id, amount=total, response_code="00")
-    
-    # Request giả lập trình duyệt (Accept: text/html,...)
-    res = client.get(
-        "/api/payment/vnpay/return",
-        params=vnp_params,
-        headers={"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"},
-        follow_redirects=False
-    )
-    assert res.status_code == 302
-    assert res.headers["location"] == f"/order-success/{order_id}"
 
 
 def test_tracking_page_renders(client):

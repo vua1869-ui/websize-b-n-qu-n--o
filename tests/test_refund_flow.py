@@ -5,7 +5,7 @@ Kiểm thử toàn diện quy trình hoàn tiền khi khách hàng hủy đơn �
 3. Từ chối hoàn tiền với số tiền vượt quá số tiền đã thanh toán hoặc <= 0 (400).
 4. Chống hoàn tiền hai lần / idempotency (409 Conflict).
 5. Hoàn tiền chuyển khoản thủ công (VietQR / bank transfer) không giả lập tự động chuyển.
-6. MoMo / VNPay: Bắt buộc cấu hình hợp lệ và mã giao dịch gốc; xử lý thành công và thất bại rõ ràng.
+6. MoMo: Bắt buộc cấu hình hợp lệ và mã giao dịch gốc; xử lý thành công và thất bại rõ ràng.
 7. Hiển thị đúng trạng thái (refund_pending, refunded, refund_failed) cho khách hàng và admin.
 """
 import uuid
@@ -188,31 +188,6 @@ class TestRefundFlow:
         assert refund_req["refund_trans_id"] == ref_id
         assert refund_req["processed_by"] == "admin"
         assert refund_req["processed_at"] is not None
-
-    def test_vnpay_refund_missing_trans_code_or_unconfigured(self):
-        """VNPay: Báo lỗi nếu thiếu mã giao dịch gốc hoặc chưa cấu hình gateway."""
-        admin_headers = get_admin_headers()
-        req = {
-            **CUSTOMER,
-            "items": [item("prod_001", qty=1)],
-            "payment_method": "vnpay",
-        }
-        r = client.post("/api/orders", json=req)
-        assert r.status_code == 200
-        order_id = r.json()["order_id"]
-        # Đánh dấu refund_pending nhưng không có payment_transactions hay refund_requests
-        with get_db_connection(db_service.db_path) as conn:
-            conn.execute("UPDATE orders SET payment_status = 'refund_pending', order_status = 'cancelled' WHERE order_id = ?", (order_id,))
-            conn.commit()
-
-        res = client.post(
-            f"/api/admin/orders/{order_id}/process-refund",
-            headers=admin_headers,
-            json={"is_manual": False}
-        )
-        # Bị từ chối vì thiếu mã giao dịch gốc từ VNPay
-        assert res.status_code == 400
-        assert "thiếu mã giao dịch" in res.json()["detail"].lower()
 
     def test_momo_refund_failure_marks_refund_failed(self):
         """MoMo: Khi gateway phản hồi thất bại, trạng thái đơn chuyển thành refund_failed và lưu error_message."""

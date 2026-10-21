@@ -389,7 +389,7 @@
     if (refundBtn) {
       const orderId = refundBtn.dataset.orderId;
       const o = currentOrders.find(x => x.order_id === orderId);
-      const isManual = !['momo', 'vnpay'].includes(o?.payment_method);
+      const isManual = o?.payment_method !== 'momo';
       triggerRefundOrder(orderId, isManual);
       return;
     }
@@ -466,7 +466,6 @@
     // Cập nhật phương thức & trạng thái thanh toán
     const payMethodMap = {
       cod: 'Thanh toán khi nhận hàng (COD)',
-      vnpay: 'Cổng thanh toán VNPay (Sandbox / Thẻ ATM / QR)',
       momo: 'Ví điện tử MoMo (Sandbox / QR / App)',
       vietqr: 'Chuyển khoản VietQR',
       qr_transfer: 'Chuyển khoản VietQR'
@@ -486,7 +485,7 @@
     const refundBankDetails = document.getElementById("detail-refund-bank-details");
     const refundBankEmpty = document.getElementById("detail-refund-bank-empty");
 
-    const isManualMethod = ['vietqr', 'bank_transfer', 'cod', 'qr_transfer'].includes(o.payment_method);
+    const isManualMethod = ['vietqr', 'bank_transfer', 'cod', 'qr_transfer', 'vnpay'].includes(o.payment_method);
 
     if (o.payment_status === 'paid') {
       payStatusEl.textContent = 'Đã thanh toán (paid)';
@@ -517,7 +516,7 @@
         if (btnModalProcessRefund) btnModalProcessRefund.textContent = isFailed ? 'Thử lại xác nhận' : 'Xác nhận hoàn thủ công';
         if (btnModalManualRefund) btnModalManualRefund.classList.add('hidden');
       } else {
-        const gwName = o.payment_method === 'momo' ? 'MoMo' : (o.payment_method === 'vnpay' ? 'VNPay' : 'Cổng online');
+        const gwName = 'MoMo';
         if (refundDesc) refundDesc.textContent = `Hoàn tự động qua cổng ${gwName}. Nếu cổng chưa cấu hình hoặc lỗi, có thể chọn xác nhận hoàn tiền thủ công.`;
         if (btnModalProcessRefund) btnModalProcessRefund.textContent = isFailed ? `Thử lại qua ${gwName}` : `Hoàn qua ${gwName}`;
         if (btnModalManualRefund) btnModalManualRefund.classList.remove('hidden');
@@ -574,8 +573,8 @@
 
   async function triggerRefundOrder(orderId, isManual = false) {
     const o = currentOrders.find(x => x.order_id === orderId) || activeOrder;
-    const isOnline = o && (o.payment_method === 'momo' || o.payment_method === 'vnpay');
-    const channelName = isOnline ? (o.payment_method === 'momo' ? 'MoMo' : 'VNPay') : 'Chuyển khoản thủ công';
+    const isOnline = o && o.payment_method === 'momo';
+    const channelName = isOnline ? 'MoMo' : 'Chuyển khoản thủ công';
     const amountStr = o && o.quote && o.quote.total ? o.quote.total.toLocaleString('vi-VN') + 'đ' : '';
 
     const confirmMsg = isManual || !isOnline

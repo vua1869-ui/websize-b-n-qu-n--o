@@ -36,7 +36,7 @@ def test_webhook_cancelled_order_records_transaction_and_refund_pending(client):
     order_req = {
         **CUSTOMER,
         "items": [item("prod_001", qty=1)],
-        "payment_method": "vnpay",
+        "payment_method": "qr_transfer",
     }
     r = client.post("/api/orders", json=order_req)
     assert r.status_code == 200
@@ -123,7 +123,7 @@ def test_webhook_idempotent_duplicate_call(client):
     order_req = {
         **CUSTOMER,
         "items": [item("prod_001", qty=1)],
-        "payment_method": "vnpay",
+        "payment_method": "qr_transfer",
     }
     r = client.post("/api/orders", json=order_req)
     assert r.status_code == 200

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Về Chúng Tôi - AURA FASHION</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="container">
+      <span>AURA FASHION - Tinh tế trong từng đường chỉ, bền vững theo năm tháng</span>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header-main">
+    <div class="container navbar">
+      <button class="hamburger" aria-label="Mở Menu">☰</button>
+      <a href="index.html" class="logo">AURA<span>.</span></a>
+      <nav class="nav-menu">
+        <a href="index.html" class="nav-link">Trang Chủ</a>
+        <a href="san-pham.html" class="nav-link">Sản Phẩm</a>
+        <a href="chi-tiet.html" class="nav-link">Chi Tiết</a>
+        <a href="gio-hang.html" class="nav-link">Giỏ Hàng</a>
+        <a href="gioi-thieu.html" class="nav-link active">Giới Thiệu</a>
+        <a href="lien-he.html" class="nav-link">Liên Hệ</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="dang-nhap.html" class="action-icon" title="Tài khoản">👤</a>
+        <a href="gio-hang.html" class="action-icon" title="Giỏ hàng">
+          🛒
+          <span class="cart-count">2</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- BANNER GIỚI THIỆU -->
+  <div style="background-color: var(--bg-gray); padding: 50px 0; text-align: center; border-bottom: 1px solid var(--border-color);">
+    <div class="container">
+      <h1 style="font-family: var(--font-heading); font-size: 2.5rem; margin-bottom: 12px;">Câu Chuyện Thương Hiệu AURA</h1>
+      <p style="color: var(--text-muted); max-width: 650px; margin: 0 auto; line-height: 1.8;">
+        Khởi nguồn từ niềm đam mê phong cách thời trang tối giản, chúng tôi tin rằng vẻ đẹp thật sự đến từ sự giản dị và tỉ mỉ trong từng chi tiết.
+      </p>
+    </div>
+  </div>
+
+  <main class="container section-padding">
+    <!-- KHỐI 1: TẦM NHÌN & SỨ MỆNH (FLEXBOX / GRID) -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 50px; align-items: center; margin-bottom: 70px;">
+      <div>
+        <span class="badge badge-new" style="margin-bottom: 12px;">Sứ Mệnh Của Chúng Tôi</span>
+        <h2 style="font-family: var(--font-heading); font-size: 2rem; margin-bottom: 18px; line-height: 1.3;">Thời Trang Không Chỉ Để Mặc, Đó Là Phong Cách Sống</h2>
+        <p style="color: var(--text-muted); line-height: 1.8; margin-bottom: 16px;">
+          Thành lập vào năm 2024, AURA định vị trở thành điểm đến lý tưởng cho những ai trân trọng cái đẹp của sự tối giản (Minimalism) và tinh tế (Elegance). Chúng tôi từ chối các xu hướng thời trang nhanh ngắn hạn để tập trung vào những thiết kế kinh điển vượt thời gian.
+        </p>
+        <p style="color: var(--text-muted); line-height: 1.8;">
+          Mỗi tấm vải lụa, sợi cotton hay dạ len đều được tuyển chọn kỹ lưỡng từ các xưởng dệt tự nhiên, thân thiện với môi trường và mang lại cảm giác thoải mái nhất cho làn da của bạn.
+        </p>
+      </div>
+      <div style="border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-md);">
+        <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?q=80&w=800&auto=format&fit=crop" alt="Không gian cửa hàng AURA" style="width: 100%; height: 380px; object-fit: cover;">
+      </div>
+    </div>
+
+    <!-- KHỐI 2: ĐỘI NGŨ SÁNG LẬP (CSS GRID) -->
+    <section style="margin-bottom: 60px;">
+      <div class="section-title">
+        <h2>Đội Ngũ Sáng Tạo</h2>
+        <p>Những con người đứng sau vẻ đẹp thanh lịch của từng bộ trang phục</p>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
+        <div style="text-align: center; background: white; padding: 25px; border-radius: var(--radius); border: 1px solid var(--border-color);">
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop" alt="Giám đốc thiết kế" style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; margin: 0 auto 16px;">
+          <h3 style="font-size: 1.2rem; margin-bottom: 4px;">Nguyễn Thuỳ Chi</h3>
+          <p style="color: var(--secondary-color); font-weight: 600; font-size: 0.85rem; margin-bottom: 10px;">Giám Đốc Sáng Tạo</p>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">10 năm kinh nghiệm trong ngành thời trang may mặc cao cấp.</p>
+        </div>
+
+        <div style="text-align: center; background: white; padding: 25px; border-radius: var(--radius); border: 1px solid var(--border-color);">
+          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop" alt="Chuyên gia tạo mẫu" style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; margin: 0 auto 16px;">
+          <h3 style="font-size: 1.2rem; margin-bottom: 4px;">Trần Tuấn Khang</h3>
+          <p style="color: var(--secondary-color); font-weight: 600; font-size: 0.85rem; margin-bottom: 10px;">Chuyên Gia Rập & May Mẫu</p>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">Tỉ mỉ, chuẩn xác trong từng đường may và phom dáng.</p>
+        </div>
+
+        <div style="text-align: center; background: white; padding: 25px; border-radius: var(--radius); border: 1px solid var(--border-color);">
+          <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=400&auto=format&fit=crop" alt="Trải nghiệm khách hàng" style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; margin: 0 auto 16px;">
+          <h3 style="font-size: 1.2rem; margin-bottom: 4px;">Lê Thanh Thảo</h3>
+          <p style="color: var(--secondary-color); font-weight: 600; font-size: 0.85rem; margin-bottom: 10px;">Trưởng Ban Khách Hàng</p>
+          <p style="font-size: 0.85rem; color: var(--text-muted);">Luôn lắng nghe để mang đến dịch vụ hậu mãi chu đáo nhất.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- KHỐI 3: VIDEO QUY TRÌNH SẢN XUẤT (VIDEO HTML5) -->
+    <section style="background-color: var(--bg-white); padding: 40px; border-radius: var(--radius); border: 1px solid var(--border-color);">
+      <div class="section-title">
+        <h2>Quy Trình Thủ Công Tỉ Mỉ</h2>
+        <p>Chiêm ngưỡng từng công đoạn may đo tạo nên bộ trang phục AURA</p>
+      </div>
+      <div style="max-width: 800px; margin: 0 auto;">
+        <div class="video-wrapper">
+          <video controls poster="https://images.unsplash.com/photo-1520006403909-838d6b92c22e?q=80&w=1200&auto=format&fit=crop">
+            <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4">
+            Trình duyệt không hỗ trợ video HTML5.
+          </video>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-col">
+        <h3>AURA FASHION</h3>
+        <p style="font-size: 0.9rem; line-height: 1.8;">Thương hiệu thời trang tối giản hướng đến sự tinh tế và chuẩn mực trong từng đường may.</p>
+      </div>
+      <div class="footer-col">
+        <h3>Liên Kết</h3>
+        <ul class="footer-links">
+          <li><a href="index.html">Trang Chủ</a></li>
+          <li><a href="san-pham.html">Sản Phẩm</a></li>
+          <li><a href="gio-hang.html">Giỏ Hàng</a></li>
+          <li><a href="lien-he.html">Liên Hệ</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3>Hỗ Trợ</h3>
+        <ul class="footer-links">
+          <li><a href="#">Chính Sách Đổi Trả</a></li>
+          <li><a href="#">Bảng Kích Cỡ Size</a></li>
+          <li><a href="#">Tra Cứu Đơn Hàng</a></li>
+        </ul>
+      </div>
+      <div class="footer-col footer-newsletter">
+        <h3>Đăng Ký Nhận Tin</h3>
+        <p>Nhận ngay mã giảm 10% khi đăng ký hôm nay.</p>
+        <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Đã đăng ký nhận tin!');">
+          <input type="email" class="newsletter-input" placeholder="Email của bạn..." required>
+          <button type="submit" class="newsletter-btn">Gửi</button>
+        </form>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <p>&copy; 2026 AURA FASHION STUDIO - Bài tập Assignment môn WEB1014</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

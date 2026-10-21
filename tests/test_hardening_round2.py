@@ -1,6 +1,5 @@
 """
 Test Suite Round 2: Hardening toàn diện MỤC A -> MỤC E theo yêu cầu kiểm thử.
-- MỤC A: Xác nhận thanh toán kiểm tra số tiền, huỷ đơn, idempotent, VNPay return/ipn, config validator.
 - MỤC B: Tồn kho không reset khi restart, hủy đơn hoàn đủ kho/điểm/tier, bảng chuyển trạng thái 400.
 - MỤC C: Tạo đơn nguyên tử, gộp dòng trùng, hoãn cộng điểm COD/online, voucher limits & usages.
 - MỤC D: Bảo mật web (PUBLIC_BASE_URL, XSS server-side defense, token_version exclude, security headers).
@@ -21,7 +20,6 @@ from app.models.schemas import (
 from app.services.order_service import OrderError, order_service
 from app.services.product_service import product_service
 from tests.conftest import CUSTOMER, item
-from tests.test_payment_vnpay import _generate_vnpay_params
 
 
 # ==============================================================================
@@ -97,54 +95,6 @@ def test_muc_a_webhook_missing_amount_rejected_400(client):
     )
     assert r.status_code == 400
     assert "số tiền" in r.json()["detail"].lower()
-
-
-def test_muc_a_vnpay_return_malformed_amount_and_escaping(client):
-    req = {**CUSTOMER, "items": [item("prod_001", qty=1)], "payment_method": "vnpay"}
-    r = client.post("/api/orders", json=req)
-    assert r.status_code == 200
-    order_id = r.json()["order_id"]
-    total = r.json()["quote"]["total"]
-
-    # VNPay return với chuỗi vnp_Amount không phải số hợp lệ
-    params = _generate_vnpay_params(order_id=order_id, amount=total, response_code="00")
-    params["vnp_Amount"] = "invalid_string"
-    # Ký lại chữ ký sau khi sửa amount
-    import urllib.parse, hmac, hashlib
-    from app.config import settings
-    sorted_p = sorted(params.items())
-    hash_data = urllib.parse.urlencode([x for x in sorted_p if x[0] != "vnp_SecureHash"])
-    params["vnp_SecureHash"] = hmac.new(settings.VNPAY_HASH_SECRET.encode(), hash_data.encode(), hashlib.sha512).hexdigest()
-
-    # Không được văng 500, trả 400 Bad Request
-    res = client.get("/api/payment/vnpay/return", params=params)
-    assert res.status_code == 400
-
-
-def test_muc_a_vnpay_ipn_returns_04_on_amount_mismatch(client):
-    req = {**CUSTOMER, "items": [item("prod_001", qty=1)], "payment_method": "vnpay"}
-    r = client.post("/api/orders", json=req)
-    assert r.status_code == 200
-    order_id = r.json()["order_id"]
-    total = r.json()["quote"]["total"]
-
-    # Amount sai lệch
-    params = _generate_vnpay_params(order_id=order_id, amount=total + 50000, response_code="00")
-    res = client.get("/api/payment/vnpay/ipn", params=params)
-    assert res.status_code == 200
-    assert res.json()["RspCode"] == "04"
-
-
-def test_muc_a_config_validator_rejects_empty_vnpay_secret_in_prod():
-    # Settings với APP_ENV=production và VNPAY_HASH_SECRET rỗng phải raise ValueError
-    with pytest.raises(ValueError, match="VNPAY_HASH_SECRET"):
-        Settings(
-            APP_ENV="production",
-            PUBLIC_BASE_URL="https://aurastudio.vn",
-            SECRET_KEY="a"*32,
-            JWT_SECRET_KEY="b"*32,
-            VNPAY_HASH_SECRET=""
-        )
 
 
 # ==============================================================================
@@ -338,7 +288,6 @@ def test_muc_d_public_base_url_prod_validation():
             PUBLIC_BASE_URL="http://localhost:8000",
             SECRET_KEY="x"*32,
             JWT_SECRET_KEY="y"*32,
-            VNPAY_HASH_SECRET="secret"
         )
 
 

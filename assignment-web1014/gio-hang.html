@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Giỏ Hàng & Thanh Toán - AURA FASHION</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <div class="container">
+      <span>Đơn hàng của bạn đủ điều kiện được <strong>MIỄN PHÍ VẬN CHUYỂN</strong> toàn quốc!</span>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="header-main">
+    <div class="container navbar">
+      <button class="hamburger" aria-label="Mở Menu">☰</button>
+      <a href="index.html" class="logo">AURA<span>.</span></a>
+      <nav class="nav-menu">
+        <a href="index.html" class="nav-link">Trang Chủ</a>
+        <a href="san-pham.html" class="nav-link">Sản Phẩm</a>
+        <a href="chi-tiet.html" class="nav-link">Chi Tiết</a>
+        <a href="gio-hang.html" class="nav-link active">Giỏ Hàng</a>
+        <a href="gioi-thieu.html" class="nav-link">Giới Thiệu</a>
+        <a href="lien-he.html" class="nav-link">Liên Hệ</a>
+      </nav>
+      <div class="nav-actions">
+        <a href="dang-nhap.html" class="action-icon" title="Tài khoản">👤</a>
+        <a href="gio-hang.html" class="action-icon" title="Giỏ hàng">
+          🛒
+          <span class="cart-count">2</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- BANNER TIÊU ĐỀ -->
+  <div style="background-color: var(--bg-gray); padding: 30px 0; border-bottom: 1px solid var(--border-color);">
+    <div class="container">
+      <h1 style="font-family: var(--font-heading); font-size: 2rem;">Giỏ Hàng & Tiến Hành Thanh Toán</h1>
+    </div>
+  </div>
+
+  <main class="container section-padding">
+    <!-- 1. BẢNG DANH SÁCH SẢN PHẨM TRONG GIỎ (HTML TABLE) -->
+    <section>
+      <h2 style="font-family: var(--font-heading); font-size: 1.5rem; margin-bottom: 16px;">1. Danh Sách Sản Phẩm Đã Chọn</h2>
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Sản Phẩm</th>
+            <th class="text-center">Kích Cỡ</th>
+            <th class="text-right">Đơn Giá</th>
+            <th class="text-center">Số Lượng</th>
+            <th class="text-right">Thành Tiền</th>
+            <th class="text-center">Xóa</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Dòng 1 -->
+          <tr>
+            <td>
+              <div class="table-product">
+                <img src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?q=80&w=200&auto=format&fit=crop" alt="Áo sơ mi lụa">
+                <div>
+                  <h4 style="font-size: 0.95rem; margin-bottom: 4px;">Áo Sơ Mi Lụa Dệt Tự Nhiên</h4>
+                  <span style="font-size: 0.8rem; color: var(--text-muted);">Màu: Trắng ngà</span>
+                </div>
+              </div>
+            </td>
+            <td class="text-center"><strong>M</strong></td>
+            <td class="text-right">450.000đ</td>
+            <td class="text-center">
+              <input type="number" value="1" min="1" style="width: 50px; text-align: center; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px;">
+            </td>
+            <td class="text-right" style="font-weight: 700; color: var(--primary-color);">450.000đ</td>
+            <td class="text-center">
+              <button style="background: none; border: none; cursor: pointer; color: var(--accent-color); font-size: 1.1rem;" onclick="alert('Đã xóa món đồ khỏi giỏ!')">🗑️</button>
+            </td>
+          </tr>
+
+          <!-- Dòng 2 -->
+          <tr>
+            <td>
+              <div class="table-product">
+                <img src="https://images.unsplash.com/photo-1584273143981-41c073dfe8f8?q=80&w=200&auto=format&fit=crop" alt="Quần tây">
+                <div>
+                  <h4 style="font-size: 0.95rem; margin-bottom: 4px;">Quần Tây Xếp Ly Ống Suông</h4>
+                  <span style="font-size: 0.8rem; color: var(--text-muted);">Màu: Đen</span>
+                </div>
+              </div>
+            </td>
+            <td class="text-center"><strong>L</strong></td>
+            <td class="text-right">520.000đ</td>
+            <td class="text-center">
+              <input type="number" value="1" min="1" style="width: 50px; text-align: center; padding: 4px; border: 1px solid var(--border-color); border-radius: 4px;">
+            </td>
+            <td class="text-right" style="font-weight: 700; color: var(--primary-color);">520.000đ</td>
+            <td class="text-center">
+              <button style="background: none; border: none; cursor: pointer; color: var(--accent-color); font-size: 1.1rem;" onclick="alert('Đã xóa món đồ khỏi giỏ!')">🗑️</button>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr style="background-color: var(--bg-gray); font-weight: 600;">
+            <td colspan="4" class="text-right">Tổng Tiền Hàng:</td>
+            <td class="text-right" style="font-size: 1.2rem; color: var(--primary-color);">970.000đ</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </section>
+
+    <!-- 2. BIỂU MẪU ĐẶT HÀNG & PHƯƠNG THỨC THANH TOÁN (HTML FORM) -->
+    <section style="margin-top: 50px;">
+      <h2 style="font-family: var(--font-heading); font-size: 1.5rem; margin-bottom: 16px;">2. Thông Tin Giao Hàng & Thanh Toán</h2>
+      
+      <div style="display: grid; grid-template-columns: 1.4fr 0.8fr; gap: 30px;">
+        <!-- FORM NHẬP THÔNG TIN KHÁCH HÀNG -->
+        <div class="form-card">
+          <form id="checkoutForm">
+            <h3 style="font-size: 1.1rem; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+              Địa Chỉ Người Nhận
+            </h3>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Họ và tên <span class="required">*</span></label>
+                <input type="text" class="form-control" placeholder="Ví dụ: Nguyễn Văn Thuận" required>
+              </div>
+              <div class="form-group">
+                <label>Số điện thoại <span class="required">*</span></label>
+                <input type="tel" class="form-control" placeholder="Ví dụ: 0905123456" pattern="[0-9]{10}" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Email liên hệ <span class="required">*</span></label>
+                <input type="email" class="form-control" placeholder="email@gmail.com" required>
+              </div>
+              <div class="form-group">
+                <label>Tỉnh / Thành phố <span class="required">*</span></label>
+                <select class="form-control" required>
+                  <option value="">-- Chọn Tỉnh / Thành phố --</option>
+                  <option value="HN">Hà Nội</option>
+                  <option value="DN" selected>Đà Nẵng</option>
+                  <option value="HCM">TP. Hồ Chí Minh</option>
+                  <option value="CT">Cần Thơ</option>
+                  <option value="HP">Hải Phòng</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Địa chỉ nhận hàng cụ thể <span class="required">*</span></label>
+              <textarea class="form-control" rows="3" placeholder="Số nhà, ngõ, tên đường, phường/xã..." required></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Ghi chú đơn hàng (nếu có)</label>
+              <input type="text" class="form-control" placeholder="Ví dụ: Giao giờ hành chính, gọi trước khi đến...">
+            </div>
+
+            <!-- PHƯƠNG THỨC THANH TOÁN (RADIO) -->
+            <h3 style="font-size: 1.1rem; margin-top: 30px; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+              Phương Thức Thanh Toán
+            </h3>
+
+            <div class="radio-group">
+              <label class="radio-item">
+                <input type="radio" name="payment" value="cod" checked>
+                <span><strong>Thanh toán khi nhận hàng (COD):</strong> Khách nhận hàng rồi mới gửi tiền cho bưu tá.</span>
+              </label>
+              <label class="radio-item">
+                <input type="radio" name="payment" value="bank">
+                <span><strong>Chuyển khoản VietQR / Ngân hàng:</strong> Quét mã QR tiện lợi, xử lý đơn nhanh hơn.</span>
+              </label>
+            </div>
+
+            <div class="checkbox-group" style="margin-top: 25px;">
+              <label class="checkbox-item">
+                <input type="checkbox" required checked>
+                <span style="font-size: 0.85rem;">Tôi đã đọc và đồng ý với điều khoản dịch vụ & chính sách đổi trả của AURA Fashion.</span>
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 25px; padding: 14px;">
+              Hoàn Tất Đặt Hàng (970.000đ)
+            </button>
+          </form>
+        </div>
+
+        <!-- TÓM TẮT HÓA ĐƠN ĐƠN HÀNG (ASIDE BOX) -->
+        <aside class="form-card" style="height: fit-content;">
+          <h3 style="font-size: 1.1rem; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            Tóm Tắt Hóa Đơn
+          </h3>
+
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem;">
+            <span>Tạm tính (2 sản phẩm):</span>
+            <strong>970.000đ</strong>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 0.95rem;">
+            <span>Phí vận chuyển:</span>
+            <span style="color: #10b981; font-weight: 600;">Miễn phí (0đ)</span>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; margin-bottom: 16px; font-size: 0.95rem;">
+            <span>Mã giảm giá (AURANEW):</span>
+            <span style="color: var(--accent-color); font-weight: 600;">-0đ</span>
+          </div>
+
+          <div style="border-top: 2px dashed var(--border-color); padding-top: 16px; display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 25px;">
+            <span style="font-size: 1.1rem; font-weight: 600;">Tổng thanh toán:</span>
+            <span style="font-size: 1.5rem; font-weight: 700; color: var(--primary-color);">970.000đ</span>
+          </div>
+
+          <!-- Nhập mã giảm giá -->
+          <div style="display: flex; gap: 8px;">
+            <input type="text" placeholder="Mã giảm giá..." style="flex: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: var(--radius);">
+            <button type="button" class="btn btn-outline btn-sm" onclick="alert('Mã giảm giá đã được áp dụng!')">Áp Dụng</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-col">
+        <h3>AURA FASHION</h3>
+        <p style="font-size: 0.9rem; line-height: 1.8;">Thương hiệu thời trang tối giản hướng đến sự tinh tế và chuẩn mực trong từng đường may.</p>
+      </div>
+      <div class="footer-col">
+        <h3>Liên Kết</h3>
+        <ul class="footer-links">
+          <li><a href="index.html">Trang Chủ</a></li>
+          <li><a href="san-pham.html">Sản Phẩm</a></li>
+          <li><a href="gio-hang.html">Giỏ Hàng</a></li>
+          <li><a href="lien-he.html">Liên Hệ</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3>Hỗ Trợ</h3>
+        <ul class="footer-links">
+          <li><a href="#">Chính Sách Đổi Trả</a></li>
+          <li><a href="#">Bảng Kích Cỡ Size</a></li>
+          <li><a href="#">Tra Cứu Đơn Hàng</a></li>
+        </ul>
+      </div>
+      <div class="footer-col footer-newsletter">
+        <h3>Đăng Ký Nhận Tin</h3>
+        <p>Nhận ngay mã giảm 10% khi đăng ký hôm nay.</p>
+        <form class="newsletter-form" onsubmit="event.preventDefault(); alert('Đã đăng ký nhận tin!');">
+          <input type="email" class="newsletter-input" placeholder="Email của bạn..." required>
+          <button type="submit" class="newsletter-btn">Gửi</button>
+        </form>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <p>&copy; 2026 AURA FASHION STUDIO - Bài tập Assignment môn WEB1014</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

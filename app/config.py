@@ -50,14 +50,6 @@ class Settings(BaseSettings):
     # Database connection string (SQLite mặc định, chuyển sang PostgreSQL khi production)
     DATABASE_URL: str = f"sqlite:///{DEFAULT_DB_PATH}"
 
-    # ---- Cổng thanh toán VNPay Sandbox & Refund ----
-    # Lấy tại VNPay Merchant Portal (sandbox dùng được ngay, xem tài liệu VNPay)
-    VNPAY_TMN_CODE: str = ""
-    VNPAY_HASH_SECRET: str = ""  # PHẢI đặt trong .env — xem .env.example
-    VNPAY_URL: str = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-    VNPAY_RETURN_URL: str = "http://127.0.0.1:8000/api/payment/vnpay/return"
-    VNPAY_IPN_URL: str = "http://127.0.0.1:8000/api/payment/vnpay/ipn"
-    VNPAY_API_URL: str = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction"
 
     # ---- Cổng thanh toán MoMo Sandbox & Refund (MoMo v2 Gateway API) ----
     MOMO_PARTNER_CODE: str = "MOMO"
@@ -67,6 +59,16 @@ class Settings(BaseSettings):
     MOMO_REFUND_URL: str = "https://test-payment.momo.vn/v2/gateway/api/refund"
     MOMO_RETURN_URL: str = "http://127.0.0.1:8000/api/payment/momo/return"
     MOMO_IPN_URL: str = "http://127.0.0.1:8000/api/payment/momo/ipn"
+
+    # ---- MB VietQR Paygate ----
+    MB_PAYGATE_MERCHANT_ID: str = ""
+    MB_PAYGATE_ACCESS_CODE: str = ""
+    MB_PAYGATE_HASH_SECRET: str = ""
+    MB_PAYGATE_CREATE_ORDER_URL: str = "https://api-sandbox.mbbank.com.vn/private/ms/pg-paygate/paygate/v2/create-order"
+    MB_PAYGATE_REFUND_URL: str = "https://api-sandbox.mbbank.com.vn/private/ms/pg-paygate/paygate/refund/single"
+    MB_PAYGATE_RETURN_URL: str = ""
+    MB_PAYGATE_CANCEL_URL: str = ""
+    MB_PAYGATE_IPN_URL: str = ""
 
     # Domain public chính thức của hệ thống (dùng dựng link reset mật khẩu an toàn, không phụ thuộc Host header)
     PUBLIC_BASE_URL: str = "http://127.0.0.1:8000"
@@ -97,12 +99,6 @@ class Settings(BaseSettings):
             if not webhook_sec or webhook_sec in default_secrets or webhook_sec.lower().startswith("dev-"):
                 errors.append("- PAYMENT_WEBHOOK_SECRET chưa được đặt hoặc vẫn dùng giá trị mặc định dev ('dev-payment-webhook-secret').")
 
-            if not self.VNPAY_TMN_CODE or not self.VNPAY_TMN_CODE.strip():
-                errors.append("- VNPAY_TMN_CODE chưa được đặt hoặc bị rỗng. Cần cấu hình mã Terminal ID được cấp bởi VNPay.")
-
-            if not self.VNPAY_HASH_SECRET or not self.VNPAY_HASH_SECRET.strip():
-                errors.append("- VNPAY_HASH_SECRET chưa được đặt hoặc bị rỗng. Khóa rỗng cho phép kẻ tấn công giả mạo chữ ký giao dịch.")
-
             if not self.MOMO_ACCESS_KEY or not self.MOMO_ACCESS_KEY.strip():
                 errors.append("- MOMO_ACCESS_KEY chưa được đặt hoặc bị rỗng. Bắt buộc cấu hình khóa MoMo khi triển khai Production.")
 
@@ -114,14 +110,6 @@ class Settings(BaseSettings):
 
             if "sqlite" in self.DATABASE_URL.lower():
                 errors.append("- DATABASE_URL vẫn dùng SQLite. Khi triển khai Production bắt buộc sử dụng cơ sở dữ liệu như PostgreSQL.")
-
-            is_vnpay_localhost = not self.VNPAY_RETURN_URL or "127.0.0.1" in self.VNPAY_RETURN_URL or "localhost" in self.VNPAY_RETURN_URL.lower()
-            if is_vnpay_localhost:
-                errors.append("- VNPAY_RETURN_URL vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống.")
-
-            is_vnpay_ipn_localhost = not self.VNPAY_IPN_URL or "127.0.0.1" in self.VNPAY_IPN_URL or "localhost" in self.VNPAY_IPN_URL.lower()
-            if is_vnpay_ipn_localhost:
-                errors.append("- VNPAY_IPN_URL vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống để nhận IPN webhook.")
 
             is_momo_localhost = not self.MOMO_RETURN_URL or "127.0.0.1" in self.MOMO_RETURN_URL or "localhost" in self.MOMO_RETURN_URL.lower()
             if is_momo_localhost:

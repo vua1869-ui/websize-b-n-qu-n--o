@@ -256,7 +256,7 @@ class OrderService:
     # ---------- Đặt hàng ----------
     def create_order(self, req: OrderCreateRequest, user: Optional[Any] = None) -> OrderResponse:
         # 1. Validate payment_method TRƯỚC KHI xử lý bất kỳ logic trừ voucher hay lưu đơn nào
-        VALID_PAYMENT_METHODS = ['cod', 'vietqr', 'qr_transfer', 'vnpay', 'momo']
+        VALID_PAYMENT_METHODS = ['cod', 'vietqr', 'qr_transfer', 'momo']
         payment_method = str(getattr(req, "payment_method", "") or "").strip().lower()
         if payment_method not in VALID_PAYMENT_METHODS:
             raise OrderError("payment_method không hợp lệ", 400)
@@ -404,8 +404,6 @@ class OrderService:
                    f"với nội dung 'AURA {order_id}' để hệ thống tự động xác nhận đơn.")
         elif payment_method == "momo":
             msg = "Đã ghi nhận đơn. Đang chuyển hướng sang cổng thanh toán MoMo..."
-        elif payment_method == "vnpay":
-            msg = "Đã ghi nhận đơn. Đang chuyển hướng sang cổng thanh toán VNPay..."
         else:
             msg = "Đặt hàng thành công! Chúng tôi sẽ liên hệ xác nhận và giao hàng sớm nhất."
 

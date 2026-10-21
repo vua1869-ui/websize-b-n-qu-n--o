@@ -317,7 +317,7 @@ class OrderCancelRequest(BaseModel):
         return v
 
 
-VALID_PAYMENT_METHODS = ["cod", "vietqr", "qr_transfer", "vnpay", "momo"]
+VALID_PAYMENT_METHODS = ["cod", "vietqr", "qr_transfer", "momo"]
 
 
 class OrderCreateRequest(BaseModel):
@@ -963,11 +963,6 @@ class PaymentWebhookPayload(BaseModel):
     transferAmount: Optional[int] = None
     referenceCode: Optional[str] = None
 
-
-class VNPayCreatePaymentRequest(BaseModel):
-    order_id: str
-    bank_code: Optional[str] = None
-    phone: Optional[str] = None
 
 
 class AdminProcessRefundRequest(BaseModel):
