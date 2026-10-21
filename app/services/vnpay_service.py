@@ -7,7 +7,7 @@ import datetime as dt
 import hashlib
 import hmac
 import logging
-import time
+import secrets
 import urllib.parse
 from typing import Any, Dict, Optional, Tuple
 
@@ -194,6 +194,7 @@ class VNPayService:
         order_id: str,
         trans_no: str,
         amount: int,
+        paid_amount: Optional[int] = None,
         trans_date: Optional[str] = None,
         create_by: str = "admin",
         client_ip: str = "127.0.0.1",
@@ -223,11 +224,13 @@ class VNPayService:
 
         vn_tz = dt.timezone(dt.timedelta(hours=7))
         now = dt.datetime.now(vn_tz)
-        vnp_request_id = f"{order_id}_{int(time.time() * 1000)}"
+        # VNPay giới hạn RequestId tối đa 32 ký tự. Order ID cộng timestamp
+        # có thể vượt giới hạn này và bị trả về lỗi dữ liệu sai định dạng.
+        vnp_request_id = secrets.token_hex(16)
         vnp_version = "2.1.0"
         vnp_command = "refund"
         vnp_tmn_code = settings.VNPAY_TMN_CODE
-        vnp_transaction_type = "02"  # 02: Hoàn toàn phần, 03: Hoàn một phần
+        vnp_transaction_type = "02" if paid_amount is None or int(amount) >= int(paid_amount) else "03"
         vnp_txn_ref = order_id
         vnp_amount = str(int(amount) * 100)
         vnp_transaction_no = str(trans_no or "")

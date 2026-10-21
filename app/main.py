@@ -1,11 +1,7 @@
-import asyncio
-import datetime as dt
 import logging
 import os
 import uuid
 from contextlib import asynccontextmanager
-from typing import Optional
-from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -15,6 +11,9 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import settings
 from app.core.logging import request_id_ctx, setup_logging
+
+# Cấu hình log trước khi import db_service — init_db() chạy ngay lúc import module
+setup_logging()
 from app.db.database import db_service
 from app.routers import (
     admin,
@@ -38,10 +37,7 @@ from app.routers.deps import (
 )
 from app.services.order_service import OrderError
 
-# Cấu hình log và logger
-setup_logging()
 logger = logging.getLogger("aura.main")
-_last_backup_time: Optional[str] = None
 
 # Tích hợp Sentry Error Tracking qua SENTRY_DSN
 if getattr(settings, "SENTRY_DSN", None) and str(settings.SENTRY_DSN).strip():
@@ -108,102 +104,7 @@ async def lifespan(app: FastAPI):
             logger.critical(msg)
             raise RuntimeError(msg)
 
-        # Kiểm tra tài khoản admin không dùng mật khẩu mặc định
-        try:
-            from sqlalchemy import func
-
-            from app.db.models import UserDB
-            from app.db.session import get_db_session
-            from app.services.user_service import verify_password
-
-            with get_db_session() as session:
-                admin_user = session.query(UserDB).filter(func.lower(UserDB.username) == "admin").first()
-                if admin_user and admin_user.password_hash:
-                    for weak_pw in ("admin123", "user123"):
-                        if verify_password(weak_pw, admin_user.password_hash):
-                            msg = f"🚨 TỪ CHỐI KHỞI ĐỘNG (APP_ENV=production): Tài khoản 'admin' đang dùng mật khẩu mặc định nguy hiểm ('{weak_pw}'). Vui lòng đổi mật khẩu bằng scripts/reset_admin_password.py trước khi khởi chạy."
-                            logger.critical(msg)
-                            raise RuntimeError(msg)
-        except RuntimeError:
-            raise
-        except Exception as e:
-            logger.warning("Không thể kiểm tra mật khẩu admin lúc khởi động: %s", e)
-
-    # 7.3 Kiểm tra cảnh báo lệch tồn kho lúc khởi động (không chặn khởi động)
-    try:
-        from app.services.stock_reconcile import reconcile_stock
-        stk_rep = reconcile_stock(apply_fix=False)
-        if stk_rep.get("has_mismatch"):
-            logger.warning(
-                "CẢNH BÁO TỒN KHO: Phát hiện chênh lệch tồn kho giữa CSDL và RAM (%s). "
-                "Vui lòng chạy 'python scripts/reconcile_stock.py --apply' để sửa.",
-                stk_rep.get("summary"),
-            )
-    except Exception as _e:
-        logger.warning("Không thể kiểm tra đối soát tồn kho lúc khởi động: %s", _e)
-
-    # Khởi chạy các tác vụ nền định kỳ
-    bg_tasks = []
-
-    # 1.4 Tự động hủy đơn online quá hạn thanh toán
-    order_ttl = getattr(settings, "ORDER_PAYMENT_TTL_MINUTES", 30)
-    order_interval = getattr(settings, "ORDER_EXPIRY_INTERVAL_SEC", 60)
-    if order_ttl > 0 and order_interval > 0:
-        async def _expire_unpaid_loop():
-            while True:
-                try:
-                    await asyncio.sleep(order_interval)
-                    from app.services.order_service import order_service
-                    await asyncio.to_thread(order_service.expire_unpaid_orders)
-                except asyncio.CancelledError:
-                    break
-                except Exception as ex:
-                    logger.warning("Lỗi trong tác vụ nền expire_unpaid_orders: %s", ex)
-
-        task_expiry = asyncio.create_task(_expire_unpaid_loop())
-        bg_tasks.append(task_expiry)
-
-    # 10.1 Tự động sao lưu CSDL định kỳ (chỉ cho SQLite)
-    backup_interval_h = getattr(settings, "BACKUP_INTERVAL_HOURS", 0)
-    backup_keep = getattr(settings, "BACKUP_KEEP", 7)
-    db_url = getattr(settings, "DATABASE_URL", "")
-    if backup_interval_h > 0:
-        if "postgres" in db_url.lower():
-            logger.info("Cơ sở dữ liệu là PostgreSQL. Tác vụ sao lưu SQLite định kỳ được bỏ qua.")
-        else:
-            async def _backup_loop():
-                global _last_backup_time
-                while True:
-                    try:
-                        await asyncio.sleep(backup_interval_h * 3600)
-                        from scripts.backup import run_backup
-                        await asyncio.to_thread(
-                            run_backup,
-                            db_path=db_service.db_path,
-                            keep_count=backup_keep,
-                        )
-                        _last_backup_time = dt.datetime.now().isoformat(timespec="seconds")
-                        logger.info("Sao lưu CSDL tự động hoàn tất thành công lúc %s", _last_backup_time)
-                    except asyncio.CancelledError:
-                        break
-                    except Exception as ex:
-                        logger.warning("Lỗi trong tác vụ nền auto-backup: %s", ex)
-
-            task_backup = asyncio.create_task(_backup_loop())
-            bg_tasks.append(task_backup)
-
-    try:
-        yield
-    finally:
-        for t in bg_tasks:
-            t.cancel()
-        for t in bg_tasks:
-            try:
-                await t
-            except asyncio.CancelledError:
-                pass
-            except Exception:
-                pass
+    yield
 
 
 is_prod = settings.APP_ENV.strip().lower() == "production"
@@ -236,73 +137,6 @@ async def request_id_middleware(request: Request, call_next):
         request_id_ctx.reset(token)
 
 
-# CSRF Protection Middleware: Bảo vệ các API ghi dữ liệu dùng cookie aura_session
-CSRF_EXEMPT_PREFIXES = (
-    "/api/payment/webhook",
-    "/api/payment/vnpay/ipn",
-)
-
-
-def _is_csrf_exempt(path: str) -> bool:
-    if any(path.startswith(prefix) for prefix in CSRF_EXEMPT_PREFIXES):
-        return True
-    if path.startswith("/api/payment/") and (path.endswith("/return") or path.endswith("/ipn") or path.endswith("/webhook")):
-        return True
-    return False
-
-
-@app.middleware("http")
-async def csrf_protect_middleware(request: Request, call_next):
-    if request.method in ("POST", "PUT", "PATCH", "DELETE"):
-        if not _is_csrf_exempt(request.url.path):
-            session_cookie = request.cookies.get("aura_session")
-            auth_header = request.headers.get("Authorization", "").strip()
-            is_bearer = auth_header.lower().startswith("bearer ")
-
-            # Chỉ áp dụng kiểm tra Origin/Referer khi request dùng cookie xác thực và không dùng Bearer header
-            if session_cookie and not is_bearer:
-                sec_fetch_site = request.headers.get("sec-fetch-site", "").strip().lower()
-                if sec_fetch_site == "cross-site":
-                    return JSONResponse(
-                        status_code=403,
-                        content={"detail": "CSRF verification failed: cross-site request forbidden."},
-                    )
-
-                origin = request.headers.get("origin")
-                referer = request.headers.get("referer")
-                source_url = origin or referer
-                if source_url:
-                    try:
-                        source_host = urlparse(source_url).hostname or ""
-                    except Exception:
-                        source_host = ""
-
-                    source_host = source_host.lower()
-
-                    # Danh sách host hợp lệ
-                    valid_hosts = set()
-                    if request.url.hostname:
-                        valid_hosts.add(request.url.hostname.lower())
-                    host_hdr = request.headers.get("host")
-                    if host_hdr:
-                        valid_hosts.add(host_hdr.split(":")[0].lower())
-                    if settings.PUBLIC_BASE_URL:
-                        try:
-                            pub_h = urlparse(settings.PUBLIC_BASE_URL).hostname
-                            if pub_h:
-                                valid_hosts.add(pub_h.lower())
-                        except Exception:
-                            pass
-
-                    if not source_host or source_host not in valid_hosts:
-                        return JSONResponse(
-                            status_code=403,
-                            content={"detail": "CSRF verification failed: cross-origin request forbidden."},
-                        )
-
-    return await call_next(request)
-
-
 # Security headers middleware
 @app.middleware("http")
 async def security_headers_middleware(request: Request, call_next):
@@ -318,8 +152,6 @@ async def security_headers_middleware(request: Request, call_next):
         "img-src 'self' data: https://images.unsplash.com https://img.vietqr.io https://res.cloudinary.com; "
         "connect-src 'self'"
     )
-    if settings.APP_ENV.strip().lower() == "production":
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     return response
 
 
@@ -327,23 +159,20 @@ async def security_headers_middleware(request: Request, call_next):
 @app.get("/healthz", tags=["System"])
 @app.get("/health", tags=["System"])
 def health_check():
-    """Kiểm tra tính sẵn sàng của ứng dụng và kết nối cơ sở dữ liệu (Health Check qua SQLAlchemy)."""
+    """Kiểm tra tính sẵn sàng của ứng dụng và kết nối cơ sở dữ liệu (Health Check)."""
     db_ok = False
     error_msg = None
     try:
-        from sqlalchemy import text
-
-        from app.db.session import engine
-
-        if str(engine.url).startswith("sqlite"):
-            import sqlite3
-            conn_sq = sqlite3.connect(db_service.db_path, timeout=5.0)
-            conn_sq.close()
-
-        with engine.connect() as conn:
-            row = conn.execute(text("SELECT 1;")).fetchone()
+        import sqlite3
+        conn = sqlite3.connect(db_service.db_path, timeout=5.0)
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1;")
+            row = cursor.fetchone()
             if row and row[0] == 1:
                 db_ok = True
+        finally:
+            conn.close()
     except Exception as e:
         error_msg = str(e)
         logger.error("Health check DB thất bại: %s", e)
@@ -358,41 +187,11 @@ def health_check():
             },
         )
 
-    pending_count = 0
-    oldest_age_minutes = None
-    try:
-        from app.db.models import OrderDB
-        from app.db.session import get_db_session
-        from app.services.order_service import parse_order_created_at
-
-        with get_db_session() as session:
-            pending_orders = (
-                session.query(OrderDB.created_at)
-                .filter(OrderDB.order_status == "pending_payment")
-                .all()
-            )
-            pending_count = len(pending_orders)
-            if pending_orders:
-                now_dt = dt.datetime.now()
-                oldest_dt = None
-                for (cat_str,) in pending_orders:
-                    p_dt = parse_order_created_at(cat_str)
-                    if p_dt:
-                        if oldest_dt is None or p_dt < oldest_dt:
-                            oldest_dt = p_dt
-                if oldest_dt:
-                    oldest_age_minutes = round((now_dt - oldest_dt).total_seconds() / 60.0, 1)
-    except Exception as _e:
-        logger.warning("Không thể lấy thống kê đơn chờ thanh toán cho /healthz: %s", _e)
-
     return {
         "status": "ok",
         "database": "connected",
         "app_env": settings.APP_ENV,
         "version": settings.VERSION,
-        "pending_payment_count": pending_count,
-        "oldest_pending_payment_age_minutes": oldest_age_minutes,
-        "last_backup_at": _last_backup_time,
     }
 
 

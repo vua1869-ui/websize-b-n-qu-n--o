@@ -9,30 +9,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from app.core.logging import log_money_event
 
-"""
-AURA STUDIO - Database Layer & Service (app/db/database.py)
-===========================================================
-MỤC LỤC CÁC NHÓM HÀM TRONG TỆP:
-1. KẾT NỐI & KHỞI TẠO CSDL (Lines ~30-150):
-   - normalize_phone, get_db_connection, get_db_transaction, init_db
-2. QUẢN LÝ SẢN PHẨM & FLASH SALE (Lines ~150-750):
-   - get_products, get_product_by_id, add_product, update_product, delete_product, get_categories
-3. QUẢN LÝ MÃ GIẢM GIÁ / VOUCHERS (Lines ~750-850):
-   - get_voucher, get_all_vouchers, save_voucher, delete_voucher
-4. QUẢN LÝ ĐƠN HÀNG & TRA CỨU (Lines ~850-1400):
-   - create_order, get_order_by_id, get_order_by_tracking_or_id, update_order_status
-5. QUẢN LÝ THANH TOÁN & WEBHOOK (Lines ~1400-1800):
-   - confirm_payment, get_order_payment_status, process_refund
-6. ĐÁNH GIÁ SẢN PHẨM / REVIEWS (Lines ~1800-2000):
-   - get_product_reviews, add_product_review
-7. KHÁCH HÀNG THÂN THIẾT & ĐIỂM THƯỞNG AURA CLUB (Lines ~2000-2300):
-   - get_loyalty_status, add_loyalty_points, use_loyalty_points
-8. LÔ HÀNG NHẬP KHO & BÁO CÁO LÃI/LỖ (Lines ~2300-2650):
-   - create_inventory_batch, get_inventory_batches, get_profit_report
-9. THỐNG KÊ QUẢN TRỊ ADMIN (Lines ~2650-Hết):
-   - get_admin_dashboard_stats, get_admin_orders_paginated
-"""
-
 logger = logging.getLogger("aura.database")
 
 
@@ -59,11 +35,10 @@ def normalize_phone(p: Optional[str]) -> str:
     return digits
 
 
-def get_db_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
+def get_db_connection(db_path: str = DB_PATH) -> sqlite3.Connection:
     """Tạo kết nối SQLite có hỗ trợ row_factory và bật WAL mode cho hiệu năng cao."""
-    target_path = db_path or getattr(db_service, "db_path", None) or DB_PATH
-    os.makedirs(os.path.dirname(target_path), exist_ok=True)
-    conn = sqlite3.connect(target_path, timeout=20.0, check_same_thread=False)
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    conn = sqlite3.connect(db_path, timeout=20.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode = WAL;")
     conn.execute("PRAGMA synchronous = NORMAL;")
@@ -72,10 +47,9 @@ def get_db_connection(db_path: Optional[str] = None) -> sqlite3.Connection:
 
 
 @contextmanager
-def get_db_transaction(db_path: Optional[str] = None):
+def get_db_transaction(db_path: str = DB_PATH):
     """Context manager đảm bảo Transaction ACID (Rollback nếu lỗi, Commit nếu thành công)."""
-    target_path = db_path or getattr(db_service, "db_path", None) or DB_PATH
-    conn = get_db_connection(target_path)
+    conn = get_db_connection(db_path)
     try:
         conn.execute("BEGIN IMMEDIATE;")
         yield conn
@@ -87,7 +61,7 @@ def get_db_transaction(db_path: Optional[str] = None):
         conn.close()
 
 
-def get_db(db_path: Optional[str] = None) -> sqlite3.Connection:
+def get_db(db_path: str = DB_PATH) -> sqlite3.Connection:
     return get_db_connection(db_path)
 
 
@@ -341,9 +315,8 @@ CREATE VIEW IF NOT EXISTS audit_logs AS SELECT * FROM audit_log;
 """
 
 
-def init_db(db_path: Optional[str] = None):
+def init_db(db_path: str = DB_PATH):
     """Khởi tạo cấu trúc bảng SQLite và tự động import dữ liệu từ JSON nếu DB mới."""
-    target_path = db_path or getattr(db_service, "db_path", None) or DB_PATH
     try:
         from app.db.models import Base
         from app.db.session import engine
@@ -352,7 +325,7 @@ def init_db(db_path: Optional[str] = None):
         pass
 
     with _lock:
-        conn = get_db_connection(target_path)
+        conn = get_db_connection(db_path)
         try:
             conn.executescript(SCHEMA_SQL)
             conn.commit()
@@ -607,10 +580,10 @@ def _migrate_products(conn: sqlite3.Connection):
             has_m = "M" in sizes
             s_alloc = min(3, max(1, total_stock - 1)) if (has_s and has_m and total_stock > 1) else 0
 
-            for c in colors:
+            for c_idx, c in enumerate(colors):
                 c_name = c.get("name") if isinstance(c, dict) else str(c)
                 c_hex = c.get("hex", "#000000") if isinstance(c, dict) else "#000000"
-                for s in sizes:
+                for s_idx, s in enumerate(sizes):
                     if c_name == def_color_name:
                         if has_s and has_m:
                             if s == "S":
@@ -824,9 +797,9 @@ class DatabaseService:
                     has_m = "M" in sizes
                     s_alloc = min(3, max(1, total_stock - 1)) if (has_s and has_m and total_stock > 1) else 0
 
-                    for c in colors:
+                    for c_idx, c in enumerate(colors):
                         c_name = c.get("name") if isinstance(c, dict) else str(c)
-                        for s in sizes:
+                        for s_idx, s in enumerate(sizes):
                             if c_name == def_color_name:
                                 if has_s and has_m:
                                     if s == "S":
@@ -853,6 +826,71 @@ class DatabaseService:
 
     def reset_stock(self):
         return self.seed_reset_stock()
+
+    def get_voucher(self, code: str) -> Optional[Any]:
+        if not code:
+            return None
+        code = code.strip().upper()
+        conn = get_db_connection(self.db_path)
+        try:
+            row = conn.execute("SELECT * FROM vouchers WHERE code = ? AND is_active = 1;", (code,)).fetchone()
+            if not row:
+                return None
+            from app.models.schemas import Voucher
+            data = dict(row)
+            if data.get("expires_at"):
+                try:
+                    data["expires_at"] = datetime.datetime.fromisoformat(data["expires_at"])
+                except Exception:
+                    pass
+            return Voucher(**data)
+        finally:
+            conn.close()
+
+    def get_all_vouchers(self) -> List[Any]:
+        conn = get_db_connection(self.db_path)
+        try:
+            rows = conn.execute("SELECT * FROM vouchers WHERE is_active = 1;").fetchall()
+            from app.models.schemas import Voucher
+            out = []
+            for r in rows:
+                data = dict(r)
+                if data.get("expires_at"):
+                    try:
+                        data["expires_at"] = datetime.datetime.fromisoformat(data["expires_at"])
+                    except Exception:
+                        pass
+                out.append(Voucher(**data))
+            return out
+        finally:
+            conn.close()
+
+    def save_voucher(self, v: Any) -> None:
+        conn = get_db_connection(self.db_path)
+        try:
+            exp_str = v.expires_at.isoformat() if isinstance(getattr(v, "expires_at", None), datetime.datetime) else getattr(v, "expires_at", None)
+            now_str = datetime.datetime.now().isoformat()
+            code = v.code.strip().upper()
+            conn.execute(
+                """
+                INSERT INTO vouchers 
+                (code, title, kind, value, max_discount, min_order, badge, expire_in, expires_at, max_uses, max_uses_per_user, is_active, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)
+                ON CONFLICT(code) DO UPDATE SET
+                    title=excluded.title, kind=excluded.kind, value=excluded.value,
+                    max_discount=excluded.max_discount, min_order=excluded.min_order,
+                    badge=excluded.badge, expire_in=excluded.expire_in,
+                    expires_at=excluded.expires_at, max_uses=excluded.max_uses,
+                    max_uses_per_user=excluded.max_uses_per_user, is_active=1;
+                """,
+                (
+                    code, v.title, v.kind, v.value, v.max_discount, v.min_order,
+                    v.badge, v.expire_in, exp_str, v.max_uses, v.max_uses_per_user, now_str
+                )
+            )
+            conn.commit()
+        finally:
+            conn.close()
 
     def reset_vouchers(self) -> None:
         conn = get_db_connection(self.db_path)
@@ -1447,7 +1485,6 @@ class DatabaseService:
         order_id: str,
         forbid_if_shipping: bool = False,
         refund_info: Optional[Dict[str, Any]] = None,
-        only_if_unpaid_pending: bool = False,
     ) -> bool:
         """
         Hủy đơn hàng nguyên tử (ACID Transaction):
@@ -1459,7 +1496,6 @@ class DatabaseService:
         - Trừ total_spent đã cộng và tính lại tier.
         - Hoàn lượt sử dụng voucher.
         - forbid_if_shipping=True: từ chối nếu đơn đã chuyển sang shipping/completed (race guard cho khách tự huỷ).
-        - only_if_unpaid_pending=True: chỉ hủy nếu order_status == 'pending_payment' và payment_status == 'unpaid'.
         """
         # Import locally to avoid circular import; OrderError is defined in order_service
         from app.services.order_service import OrderError  # noqa: PLC0415
@@ -1469,9 +1505,6 @@ class DatabaseService:
                 return False
             if order["order_status"] == "cancelled":
                 return False
-            if only_if_unpaid_pending:
-                if order["order_status"] != "pending_payment" or order["payment_status"] != "unpaid":
-                    return False
             if forbid_if_shipping and order["order_status"] in ("shipping", "completed"):
                 raise OrderError(
                     "Đơn hàng đã chuyển sang vận chuyển, không thể hủy lúc này",
@@ -2760,17 +2793,25 @@ class DatabaseService:
         if not row:
             return None
         from app.models.schemas import Voucher
-        data = dict(row)
-        if data.get("expires_at"):
+        expires_at = None
+        if row["expires_at"]:
             try:
-                data["expires_at"] = datetime.datetime.fromisoformat(data["expires_at"])
+                expires_at = datetime.datetime.fromisoformat(row["expires_at"])
             except Exception:
                 pass
-        used = data.get("used_uses") or 0
-        data["used_uses"] = used
-        if data.get("max_uses") is not None:
-            data["remaining_uses"] = max(0, data["max_uses"] - used)
-        return Voucher(**data)
+        return Voucher(
+            code=row["code"],
+            title=row["title"],
+            kind=row["kind"],
+            value=row["value"],
+            max_discount=row["max_discount"],
+            min_order=row["min_order"],
+            badge=row["badge"],
+            expire_in=row["expire_in"],
+            expires_at=expires_at,
+            max_uses=row["max_uses"],
+            max_uses_per_user=row["max_uses_per_user"],
+        )
 
     def get_voucher(self, code: Optional[str]):
         """Lấy thông tin voucher từ CSDL SQLite."""
@@ -2779,7 +2820,7 @@ class DatabaseService:
         code = code.strip().upper()
         conn = get_db_connection(self.db_path)
         try:
-            row = conn.execute("SELECT v.*, (SELECT COUNT(*) FROM voucher_usages u WHERE u.voucher_code = v.code) AS used_uses FROM vouchers v WHERE v.code = ? AND v.is_active = 1;", (code,)).fetchone()
+            row = conn.execute("SELECT * FROM vouchers WHERE code = ? AND is_active = 1;", (code,)).fetchone()
             return self._row_to_voucher(row)
         finally:
             conn.close()
@@ -2788,7 +2829,7 @@ class DatabaseService:
         """Lấy danh sách tất cả voucher đang active từ CSDL SQLite."""
         conn = get_db_connection(self.db_path)
         try:
-            rows = conn.execute("SELECT v.*, (SELECT COUNT(*) FROM voucher_usages u WHERE u.voucher_code = v.code) AS used_uses FROM vouchers v WHERE v.is_active = 1 ORDER BY v.created_at ASC;").fetchall()
+            rows = conn.execute("SELECT * FROM vouchers WHERE is_active = 1 ORDER BY created_at ASC;").fetchall()
             return [self._row_to_voucher(r) for r in rows if r]
         finally:
             conn.close()
@@ -2850,10 +2891,6 @@ class DatabaseService:
                 (internal_note, order_id),
             )
             return cursor.rowcount > 0
-
-    def update_order_note(self, order_id: str, note: Optional[str]) -> bool:
-        """Alias cho update_order_internal_note hỗ trợ cập nhật ghi chú đơn hàng."""
-        return self.update_order_internal_note(order_id, note)
 
     def log_audit(
         self,

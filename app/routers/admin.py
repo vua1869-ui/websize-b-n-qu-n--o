@@ -687,6 +687,7 @@ def admin_process_order_refund(
             order_id=order_id,
             trans_no=trans_no,
             amount=amount,
+            paid_amount=paid_amount,
             trans_date=trans_date,
             create_by=_admin.username,
             client_ip=get_client_ip(request),
