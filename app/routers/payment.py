@@ -27,7 +27,6 @@ from app.routers.deps import (
     verify_guest_order_cookie,
     verify_order_access,
 )
-from app.services.momo_service import momo_service
 from app.services.order_service import order_service
 from app.services.vnpay_service import get_vnpay_response_message, vnpay_service
 
@@ -39,11 +38,6 @@ router = APIRouter(tags=["payment"])
 class VNPayCreatePaymentRequest(BaseModel):
     order_id: str
     bank_code: Optional[str] = None
-    phone: Optional[str] = None
-
-
-class MoMoCreatePaymentRequest(BaseModel):
-    order_id: str
     phone: Optional[str] = None
 
 
@@ -640,337 +634,6 @@ async def vnpay_ipn(request: Request):
         return {"RspCode": "00", "Message": "Confirm Success"}
 
 
-# ==========================================
-# Cổng thanh toán MoMo Sandbox & Production
-# ==========================================
-@router.post("/api/payment/momo/create-payment-url")
-def momo_create_payment_url(body: MoMoCreatePaymentRequest, request: Request):
-    order = db_service.get_order_by_id(body.order_id)
-    if not order:
-        order = order_service.get_order_by_id(body.order_id)
-    if not order:
-        raise HTTPException(status_code=404, detail="Đơn hàng không tồn tại")
-
-    # Kiểm tra quyền sở hữu đơn hàng
-    user = get_current_user_optional(request)
-    cookie_token = request.cookies.get(f"aura_order_{body.order_id}")
-    order_phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
-    has_cookie = verify_guest_order_cookie(cookie_token, body.order_id, order_phone)
-    phone_to_check = body.phone or (order_phone if has_cookie else None)
-    is_allowed, _ = verify_order_access(order, user, phone_to_check)
-    if not is_allowed:
-        raise HTTPException(status_code=403, detail="Bạn không có quyền truy cập hoặc thanh toán đơn hàng này")
-
-    amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
-
-    res = {}
-    sec = (settings.MOMO_SECRET_KEY or "").strip()
-    acc = (settings.MOMO_ACCESS_KEY or "").strip()
-    if sec and acc and "change" not in sec.lower():
-        try:
-            res = momo_service.build_payment_url(
-                order_id=body.order_id,
-                amount=amount,
-                order_desc=f"Thanh toan don hang {body.order_id}",
-            )
-        except Exception as exc:
-            logger.warning("Lỗi tạo URL thanh toán MoMo: %s", exc)
-            res = {"success": False, "message": str(exc)}
-
-    # Nếu chưa có API MoMo thật hoặc key Sandbox bị lỗi -> Fallback sang luồng thanh toán QR/giả lập MoMo nội bộ
-    if not res.get("success"):
-        mock_url = f"/api/payment/momo/mock-gateway?order_id={body.order_id}"
-        phone_num = getattr(settings, "MOMO_PHONE", "") or "0775972171"
-        qr_url = f"https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=2|99|{phone_num}|||0|0|{amount}|AURA%20{body.order_id}|transfer_myqr"
-        return {
-            "success": True,
-            "order_id": body.order_id,
-            "payment_url": mock_url,
-            "qr_code_url": qr_url,
-            "deeplink": mock_url,
-            "is_simulation": True,
-            "message": "Đang chuyển hướng sang cổng thanh toán MoMo...",
-        }
-
-    return {
-        "success": True,
-        "order_id": body.order_id,
-        "payment_url": res.get("payment_url"),
-        "qr_code_url": res.get("qr_code_url"),
-        "deeplink": res.get("deeplink"),
-    }
-
-
-@router.get("/api/payment/momo/mock-gateway", response_class=HTMLResponse)
-def momo_mock_gateway(order_id: str = Query(...)):
-    order = db_service.get_order_by_id(order_id)
-    if not order:
-        order = order_service.get_order_by_id(order_id)
-    if not order:
-        raise HTTPException(status_code=404, detail="Không tìm thấy đơn hàng")
-
-    amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
-    safe_order_id = html.escape(str(order_id))
-    amount_vnd = f"{amount:,}".replace(",", ".") + "đ"
-
-    success_url = f"/api/payment/momo/return?orderId={safe_order_id}&amount={amount}&resultCode=0&transId=MOMO-{safe_order_id}&is_simulation=true"
-    cancel_url = f"/api/payment/momo/return?orderId={safe_order_id}&amount={amount}&resultCode=1006&is_simulation=true"
-    phone_num = getattr(settings, "MOMO_PHONE", "") or "0775972171"
-    qr_src = f"https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=2|99|{phone_num}|||0|0|{amount}|AURA%20{order_id}|transfer_myqr"
-
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="vi">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Cổng Thanh Toán MoMo (Mô phỏng) • AURA STUDIO</title>
-        <style>
-            body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #fff1f2; color: #1e293b; margin: 0; padding: 20px; }}
-            .container {{ max-width: 480px; margin: 40px auto; background: #fff; border-radius: 16px; box-shadow: 0 4px 25px rgba(165, 0, 100, 0.12); overflow: hidden; border: 1px solid #fecdd3; }}
-            .header {{ background: #a50064; color: #fff; padding: 24px; text-align: center; }}
-            .header h1 {{ margin: 0 0 6px; font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }}
-            .header p {{ margin: 0; opacity: 0.9; font-size: 13px; }}
-            .qr-box {{ text-align: center; padding: 24px 20px 10px; background: #fafafa; border-bottom: 1px solid #f1f5f9; }}
-            .qr-box img {{ width: 180px; height: 180px; border-radius: 8px; border: 1px solid #e2e8f0; background: #fff; padding: 6px; }}
-            .content {{ padding: 20px 24px; }}
-            .info-row {{ display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }}
-            .info-row:last-child {{ border-bottom: none; }}
-            .label {{ color: #64748b; font-weight: 500; }}
-            .value {{ font-weight: 600; color: #0f172a; text-align: right; }}
-            .amount {{ color: #a50064; font-size: 20px; font-weight: 700; }}
-            .actions {{ padding: 20px 24px 24px; display: flex; flex-direction: column; gap: 10px; background: #fff; }}
-            .btn {{ display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none; transition: 0.2s; cursor: pointer; border: none; }}
-            .btn-primary {{ background: #a50064; color: #fff; }}
-            .btn-primary:hover {{ background: #880052; }}
-            .btn-secondary {{ background: #f1f5f9; color: #64748b; }}
-            .btn-secondary:hover {{ background: #e2e8f0; }}
-            .notice {{ margin-top: 15px; font-size: 12px; color: #94a3b8; text-align: center; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>VÍ ĐIỆN TỬ MOMO</h1>
-                <p>Cổng thanh toán MoMo QR / App (Mô phỏng nội bộ)</p>
-            </div>
-            <div class="qr-box">
-                <img src="{qr_src}" alt="MoMo QR Code" />
-                <p style="margin: 8px 0 0; font-size: 12px; color: #64748b;">Quét mã MoMo để thanh toán</p>
-            </div>
-            <div class="content">
-                <div class="info-row">
-                    <span class="label">Đơn vị nhận</span>
-                    <span class="value">AURA STUDIO</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Mã đơn hàng</span>
-                    <span class="value">{safe_order_id}</span>
-                </div>
-                <div class="info-row">
-                    <span class="label">Số tiền</span>
-                    <span class="value amount">{amount_vnd}</span>
-                </div>
-            </div>
-            <div class="actions">
-                <a href="{success_url}" class="btn btn-primary">XÁC NHẬN ĐÃ THANH TOÁN QUA MOMO</a>
-                <a href="{cancel_url}" class="btn btn-secondary">HỦY THANH TOÁN</a>
-                <div class="notice">Giao dịch mô phỏng an toàn cho kiểm thử tích hợp MoMo.</div>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content)
-
-
-@router.get("/api/payment/momo/return")
-def momo_payment_return(request: Request):
-    params = dict(request.query_params)
-    is_valid, momo_data = momo_service.verify_signature(params)
-
-    accept_header = request.headers.get("accept", "")
-    is_json_request = "application/json" in accept_header.lower()
-    is_browser_html = not is_json_request
-
-    if not is_valid:
-        if is_browser_html:
-            return _error_page(
-                title="Lỗi bảo mật thanh toán",
-                message="Chữ ký bảo mật MoMo không hợp lệ hoặc dữ liệu phản hồi bị can thiệp.",
-                status_code=400,
-                color="#e11d48",
-            )
-        raise HTTPException(status_code=400, detail="Chữ ký phản hồi MoMo không hợp lệ")
-
-    order_id = momo_data.get("orderId", "")
-    result_code = str(momo_data.get("resultCode", ""))
-    trans_id = momo_data.get("transId") or f"MOMO-{order_id}"
-
-    try:
-        amount = int(momo_data.get("amount", 0))
-    except (ValueError, TypeError):
-        amount = 0
-
-    safe_order_id = html.escape(str(order_id))
-    safe_result_code = html.escape(str(result_code))
-
-    order = db_service.get_order_by_id(order_id)
-    if not order:
-        order = order_service.get_order_by_id(order_id)
-
-    if not order:
-        if is_browser_html:
-            return _error_page(
-                title="Lỗi đơn hàng",
-                message=f"Không tìm thấy mã đơn hàng: <strong>{safe_order_id}</strong>",
-                status_code=404,
-                color="#e11d48",
-            )
-        raise HTTPException(status_code=404, detail=f"Không tìm thấy đơn hàng '{order_id}'")
-
-    order_amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
-    if amount != order_amount:
-        if is_browser_html:
-            return _error_page(
-                title="Lỗi số tiền thanh toán",
-                message=f"Số tiền thanh toán ({amount:,}đ) không khớp với giá trị đơn hàng ({order_amount:,}đ).",
-                status_code=400,
-                color="#e11d48",
-            )
-        raise HTTPException(status_code=400, detail="Số tiền thanh toán không khớp với đơn hàng")
-
-    if result_code == "0":
-        confirm_res = db_service.confirm_payment(
-            order_id=order_id,
-            amount=amount,
-            transaction_code=str(trans_id),
-            payment_channel="momo",
-        )
-        if confirm_res in ("cancelled", "refund_pending"):
-            if is_browser_html:
-                return _error_page(
-                    title="Đơn hàng đã bị hủy",
-                    message=f"Đơn hàng <strong>{safe_order_id}</strong> đã bị hủy trước đó. Hệ thống đã ghi nhận thanh toán chờ hoàn tiền cho quý khách.",
-                    status_code=200,
-                    color="#e11d48",
-                )
-            return {
-                "success": False,
-                "order_id": order_id,
-                "status": "refund_pending",
-                "message": "Đơn hàng đã bị hủy, thanh toán được ghi nhận để hoàn tiền",
-            }
-
-        if order.get("order_status") == "pending_payment" or order.get("status") == "pending_payment":
-            order_service.update_order_status(order_id, "confirmed")
-        if is_browser_html:
-            resp = RedirectResponse(url=f"/order-success/{order_id}", status_code=302)
-            phone_val = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
-            if phone_val:
-                cookie_val = sign_guest_order_cookie(order_id, phone_val)
-                resp.set_cookie(f"aura_order_{order_id}", cookie_val, httponly=True, max_age=3600, samesite="lax")
-            return resp
-        return {
-            "success": True,
-            "order_id": order_id,
-            "result_code": result_code,
-            "payment_status": "paid",
-            "order_status": "confirmed",
-            "message": "Thanh toán MoMo thành công!",
-        }
-    else:
-        if is_browser_html:
-            return _error_page(
-                title="Giao dịch chưa hoàn tất",
-                message=f"Mã đơn hàng: <strong>{safe_order_id}</strong><br>Mã phản hồi MoMo: <strong>{safe_result_code}</strong><br>Giao dịch thanh toán qua MoMo chưa thành công hoặc bạn đã hủy thao tác.",
-                status_code=200,
-                color="#d97706",
-            )
-        return {
-            "success": False,
-            "order_id": order_id,
-            "result_code": result_code,
-            "payment_status": "unpaid",
-            "order_status": "pending_payment",
-            "message": f"Giao dịch MoMo không thành công (Mã lỗi: {result_code})",
-        }
-
-
-@router.post("/api/payment/momo/ipn")
-async def momo_ipn(request: Request):
-    """
-    Webhook tiếp nhận Instant Payment Notification (IPN) từ MoMo Gateway.
-    MoMo gửi dữ liệu qua POST JSON.
-    """
-    try:
-        params = await request.json()
-    except Exception:
-        try:
-            form = await request.form()
-            params = dict(form)
-        except Exception:
-            params = dict(request.query_params)
-
-    is_valid, momo_data = momo_service.verify_signature(params)
-    if not is_valid:
-        return {"message": "Invalid signature", "resultCode": 97}
-
-    order_id = momo_data.get("orderId")
-    order = db_service.get_order_by_id(order_id)
-    if not order:
-        order = order_service.get_order_by_id(order_id)
-    if not order:
-        return {"message": "Order not found", "resultCode": 1}
-
-    order_amount = int(order.get("total_amount") or order.get("quote", {}).get("total", 0))
-    try:
-        amount = int(momo_data.get("amount", 0))
-    except (ValueError, TypeError):
-        amount = 0
-
-    if amount != order_amount:
-        return {"message": "Invalid amount", "resultCode": 4}
-
-    if order.get("payment_status") == "paid" or order.get("status") == "confirmed" or order.get("order_status") == "confirmed":
-        return {"message": "Order already confirmed", "resultCode": 0}
-
-    result_code = str(momo_data.get("resultCode", ""))
-    trans_id = momo_data.get("transId") or f"MOMO-{order_id}"
-
-    if result_code == "0":
-        confirm_res = db_service.confirm_payment(
-            order_id=order_id,
-            amount=amount,
-            transaction_code=str(trans_id),
-            payment_channel="momo",
-        )
-        if confirm_res == "already_paid":
-            return {"message": "Order already confirmed", "resultCode": 0}
-        elif confirm_res == "invalid_amount":
-            return {"message": "Invalid amount", "resultCode": 4}
-        elif confirm_res == "not_found":
-            return {"message": "Order not found", "resultCode": 1}
-        elif confirm_res in ("cancelled", "refund_pending"):
-            return {"message": "Order cancelled, payment marked for refund", "resultCode": 0}
-
-        if order.get("order_status") == "pending_payment" or order.get("status") == "pending_payment":
-            order_service.update_order_status(order_id, "confirmed")
-        return {"message": "Success", "resultCode": 0}
-    else:
-        return {"message": "Payment failed acknowledged", "resultCode": 0}
-
-
-# ==========================================
-# Ngân hàng Quân Đội (MB Bank) — Tự động nhận diện biến động thanh toán 100% qua SePay
-# ==========================================
-
-@router.get("/payment/momo/{order_id}")
-def momo_redirect_to_mbank(order_id: str):
-    """Chuyển hướng từ đường dẫn cũ sang phương thức thanh toán MB Bank tự động."""
-    return RedirectResponse(url=f"/payment/mbank/{order_id}", status_code=302)
-
-
 @router.get("/payment/mbank/{order_id}", response_class=HTMLResponse)
 def mbank_payment_page(order_id: str, request: Request):
     """Trang Chuyển khoản Ngân hàng MB Bank (Tự động xác nhận) — Polling 3s/lần và tự chuyển hướng khi SePay báo paid."""
@@ -1338,7 +1001,6 @@ def mbank_payment_page(order_id: str, request: Request):
 
 @router.get("/api/orders/{order_id}/status")
 @router.get("/api/payment/mbank/status/{order_id}")
-@router.get("/api/payment/momo/status/{order_id}")
 def get_order_payment_status_realtime(order_id: str, request: Request):
     """API kiểm tra trạng thái thanh toán đơn hàng theo thời gian thực (hỗ trợ Frontend Polling 3s/lần)."""
     order = db_service.get_order_by_id(order_id)
@@ -1361,7 +1023,6 @@ def get_order_payment_status_realtime(order_id: str, request: Request):
 
 
 @router.post("/api/orders/{order_id}/confirm-mbank")
-@router.post("/api/orders/{order_id}/confirm-momo")
 def confirm_mbank_payment(order_id: str, request: Request):
     """
     Khách bấm 'Kiểm tra trạng thái thanh toán MB Bank'.
@@ -1413,7 +1074,6 @@ def confirm_mbank_payment(order_id: str, request: Request):
 
 
 @router.post("/api/payment/mbank/simulate-pay/{order_id}")
-@router.post("/api/payment/momo/simulate-pay/{order_id}")
 def simulate_mbank_payment(order_id: str, request: Request):
     """
     Kích hoạt giả lập nhận tiền MB Bank thành công cho đơn hàng (hỗ trợ test luồng tự động).
@@ -1494,7 +1154,6 @@ def _extract_order_id_from_sepay_text(text: str) -> Optional[str]:
 
 
 @router.post("/api/payment/sepay/webhook")
-@router.post("/api/payment/momo/webhook")
 async def sepay_webhook_handler(
     request: Request,
     authorization: Optional[str] = Header(None, alias="Authorization"),

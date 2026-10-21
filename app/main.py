@@ -240,7 +240,6 @@ async def request_id_middleware(request: Request, call_next):
 CSRF_EXEMPT_PREFIXES = (
     "/api/payment/webhook",
     "/api/payment/vnpay/ipn",
-    "/api/payment/momo/ipn",
 )
 
 

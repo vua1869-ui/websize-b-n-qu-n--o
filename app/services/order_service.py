@@ -275,7 +275,7 @@ class OrderService:
     # ---------- Đặt hàng ----------
     def create_order(self, req: OrderCreateRequest, user: Optional[Any] = None) -> OrderResponse:
         # 1. Validate payment_method TRƯỚC KHI xử lý bất kỳ logic trừ voucher hay lưu đơn nào
-        VALID_PAYMENT_METHODS = ['cod', 'vietqr', 'qr_transfer', 'vnpay', 'mbank', 'banking', 'momo']
+        VALID_PAYMENT_METHODS = ['cod', 'vietqr', 'qr_transfer', 'vnpay', 'mbank', 'banking']
         payment_method = str(getattr(req, "payment_method", "") or "").strip().lower()
         if payment_method not in VALID_PAYMENT_METHODS:
             raise OrderError("payment_method không hợp lệ", 400)
@@ -518,23 +518,6 @@ class OrderService:
                 f"{_money(quote.total)} tới STK {acc_no} ({acc_name}) "
                 f"với nội dung '{transfer_content}' để hệ thống tự động xác nhận đơn."
             )
-        elif payment_method == "momo":
-            # Hỗ trợ tương thích ngược cho MoMo
-            momo_link = getattr(settings, "MOMO_PERSONAL_LINK", "") or "https://me.momo.vn/aurastudio"
-            momo_phone = getattr(settings, "MOMO_PHONE", "") or "0775972171"
-            momo_name = getattr(settings, "MOMO_NAME", "") or "AURA STUDIO"
-            momo_qr_url = getattr(settings, "MOMO_QR_IMAGE", "") or "/static/img/momo-qr.jpg"
-            qr_code_url = momo_qr_url
-            bank_info = {
-                "momo_link": momo_link,
-                "momo_qr_url": momo_qr_url,
-                "momo_phone": momo_phone,
-                "momo_name": momo_name,
-                "amount": str(quote.total),
-                "transfer_content": transfer_content,
-                "redirect_url": f"/payment/mbank/{order_id}",
-            }
-            msg = f"Đã ghi nhận đơn. Vui lòng hoàn tất thanh toán {_money(quote.total)} với nội dung '{transfer_content}'."
         elif payment_method == "vnpay":
             msg = "Đã ghi nhận đơn. Đang chuyển hướng sang cổng thanh toán VNPay..."
         else:

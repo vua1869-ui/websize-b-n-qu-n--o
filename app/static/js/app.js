@@ -1984,7 +1984,7 @@ const App = {
       }
 
       // Nếu khách chọn Chuyển khoản MB Bank -> Chuyển hướng sang trang chuyển khoản MB Bank tự động
-      if (body.payment_method === 'mbank' || body.payment_method === 'banking' || body.payment_method === 'momo') {
+      if (body.payment_method === 'mbank' || body.payment_method === 'banking') {
         const mbRedirect = order.redirect_url
           || (order.bank_info && order.bank_info.redirect_url)
           || `/payment/mbank/${encodeURIComponent(order.order_id)}`;
@@ -2018,7 +2018,6 @@ const App = {
     const isQr = o.payment_method === 'qr_transfer';
     const isVNPay = o.payment_method === 'vnpay';
     const isMBank = o.payment_method === 'mbank' || o.payment_method === 'banking';
-    const isMoMo = o.payment_method === 'momo';
     const isPaid = o.payment_status === 'paid' || o.status === 'confirmed';
 
     let paymentHtml = '';
@@ -2039,7 +2038,7 @@ const App = {
             <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600 text-white font-bold text-sm">V</span>
             <div>
               <h3 class="text-sm font-bold text-zinc-900 uppercase tracking-wide">Thanh toán VietQR chuẩn NAPAS 247</h3>
-              <p class="text-sm text-zinc-500">Mở app Ngân hàng hoặc Ví MoMo/ZaloPay quét mã</p>
+              <p class="text-sm text-zinc-500">Mở app Ngân hàng hoặc Ví ngan hang quét mã</p>
             </div>
           </div>
           <span class="rounded bg-emerald-50 px-2 py-0.5 text-sm font-bold text-emerald-700 border border-emerald-200">Tự động 24/7</span>
@@ -2107,10 +2106,6 @@ const App = {
                       class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 px-3.5 py-1.5 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
                 <span>💳 Thanh toán qua VNPay</span>
               </button>
-              <button type="button" data-action="pay-momo" data-order-id="${U.esc(o.order_id)}"
-                      class="inline-flex items-center gap-1.5 rounded-lg bg-[#a50064] hover:bg-[#850050] px-3.5 py-1.5 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
-                <span>💳 Thanh toán qua MoMo</span>
-              </button>
               <button type="button" data-action="simulate-payment" data-order-id="${U.esc(o.order_id)}"
                       class="inline-flex items-center gap-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 px-3.5 py-1.5 text-sm font-bold text-white shadow-xs transition hover:scale-[1.02] active:scale-95">
                 <span>⚡ Giả lập Chuyển khoản thành công (Test Webhook)</span>
@@ -2158,7 +2153,7 @@ const App = {
           `}
         </div>
       </div>`;
-    } else if (isMBank || isMoMo) {
+    } else if (isMBank) {
       // Lấy thông tin chuyển khoản MB Bank từ bank_info trả về từ server
       const mbInfo = o.bank_info || {};
       const mbQrUrl = o.qr_code_url || mbInfo.qr_code_url || '/static/images/MB-qr.jpg';
@@ -2275,7 +2270,7 @@ const App = {
     Modal.open('success-modal');
 
     // Bắt đầu Polling kiểm tra trạng thái thanh toán tự động nếu chưa thanh toán (cứ mỗi 3 giây)
-    if ((isQr || isVNPay || isMBank || isMoMo) && !isPaid) {
+    if ((isQr || isVNPay || isMBank) && !isPaid) {
       this._pollTimer = setInterval(async () => {
         try {
           const res = await U.api(`/api/orders/${encodeURIComponent(o.order_id)}/status`);
@@ -2795,14 +2790,6 @@ Object.assign(Actions, {
       if (btn) { btn.disabled = false; btn.textContent = '🔄 Kiểm tra trạng thái thanh toán ngay'; }
     }
   },
-  'pay-momo': async (d, btn) => {
-    if (!d.orderId) return;
-    window.location.href = `/payment/mbank/${encodeURIComponent(d.orderId)}`;
-  },
-  'confirm-momo': async (d, btn) => {
-    return App._actions['confirm-mbank'] ? App._actions['confirm-mbank'](d, btn) : null;
-  },
-
   'simulate-payment': async (d, btn) => {
     if (!d.orderId) return;
     try {

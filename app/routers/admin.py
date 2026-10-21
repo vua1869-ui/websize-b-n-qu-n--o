@@ -39,7 +39,6 @@ from app.routers.deps import (
     templates,
 )
 from app.services.image_service import image_service
-from app.services.momo_service import momo_service
 from app.services.order_service import order_service
 from app.services.product_import_service import product_import_service
 from app.services.product_service import product_service
@@ -594,7 +593,6 @@ def admin_process_order_refund(
 ):
     """
     Xử lý hoàn tiền cho đơn hàng:
-    - Với MoMo/VNPay: Gọi API hoàn tiền trực tuyến khi có đủ mã giao dịch và cấu hình hợp lệ.
     - Với Chuyển khoản ngân hàng / VietQR / COD hoặc khi is_manual=True: Xác nhận admin đã chuyển khoản thủ công.
     - Chống gửi lặp / hoàn tiền 2 lần (idempotency & concurrency guard).
     - Không cho hoàn tiền cho đơn chưa thanh toán; không cho hoàn quá số tiền đã thanh toán.
@@ -700,30 +698,6 @@ def admin_process_order_refund(
             raise HTTPException(status_code=400, detail=f"Lỗi hoàn tiền VNPay: {err_msg}")
         refund_code = refund_res.get("refund_trans_id") or f"VNPAY-REF-{order_id}"
 
-    elif payment_channel == "momo":
-        trans_id = orig_trans_code
-        if not trans_id:
-            raise HTTPException(
-                status_code=400,
-                detail="Không thể hoàn tiền qua cổng MoMo: Đơn hàng thiếu mã giao dịch thanh toán gốc từ cổng MoMo. Vui lòng kiểm tra lại giao dịch hoặc chuyển sang hoàn tiền thủ công.",
-            )
-        if not momo_service.is_configured():
-            raise HTTPException(
-                status_code=400,
-                detail="Cổng thanh toán MoMo chưa được cấu hình đầy đủ (thiếu Access Key hoặc Secret Key). Vui lòng cấu hình cổng hoặc chọn hoàn tiền thủ công.",
-            )
-
-        refund_res = momo_service.refund(
-            order_id=order_id,
-            trans_id=str(trans_id),
-            amount=amount,
-            description=f"Hoan tien don hang {order_id}",
-        )
-        if not refund_res.get("success"):
-            err_msg = refund_res.get("message") or "Cổng MoMo từ chối xử lý hoàn tiền"
-            db_service.mark_order_refund_failed(order_id, err_msg, processed_by=_admin.username)
-            raise HTTPException(status_code=400, detail=f"Lỗi hoàn tiền MoMo: {err_msg}")
-        refund_code = refund_res.get("refund_trans_id") or f"MOMO-REF-{order_id}"
 
     else:
         # Kênh khác: Hoàn tiền thủ công

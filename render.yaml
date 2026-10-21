@@ -17,14 +17,6 @@ services:
         generateValue: true
       - key: PUBLIC_BASE_URL
         sync: false
-      - key: MOMO_ACCESS_KEY
-        sync: false
-      - key: MOMO_SECRET_KEY
-        sync: false
-      - key: MOMO_RETURN_URL
-        sync: false
-      - key: MOMO_IPN_URL
-        sync: false
       - key: VNPAY_RETURN_URL
         sync: false
       - key: DATABASE_URL

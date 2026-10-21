@@ -59,24 +59,6 @@ class Settings(BaseSettings):
     VNPAY_IPN_URL: str = "http://127.0.0.1:8000/api/payment/vnpay/ipn"
     VNPAY_API_URL: str = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction"
 
-    # ---- Cổng thanh toán MoMo Sandbox & Refund (MoMo v2 Gateway API) ----
-    MOMO_PARTNER_CODE: str = "MOMO"
-    MOMO_ACCESS_KEY: str = ""  # PHẢI đặt trong .env — xem .env.example
-    MOMO_SECRET_KEY: str = ""  # PHẢI đặt trong .env — xem .env.example
-    MOMO_API_URL: str = "https://test-payment.momo.vn/v2/gateway/api/create"
-    MOMO_REFUND_URL: str = "https://test-payment.momo.vn/v2/gateway/api/refund"
-    MOMO_RETURN_URL: str = "http://127.0.0.1:8000/api/payment/momo/return"
-    MOMO_IPN_URL: str = "http://127.0.0.1:8000/api/payment/momo/ipn"
-
-    # ---- MoMo Cá Nhân (Nhận tiền thật qua QR / me.momo.vn) ----
-    # Thay thế MOMO_PERSONAL_LINK bằng link me.momo.vn của bạn trong file .env
-    MOMO_PERSONAL_LINK: str = "https://me.momo.vn/aurastudio"
-    MOMO_PHONE: str = "0775972171"      # Số điện thoại ví MoMo nhận tiền
-    MOMO_NAME: str = "AURA STUDIO"      # Tên chủ ví hiển thị cho khách
-    # Đường dẫn ảnh QR tĩnh (đặt file tại app/static/img/momo-qr.png)
-    # Nếu để trống, hệ thống tự tạo QR động từ MOMO_PERSONAL_LINK
-    MOMO_QR_IMAGE: str = "/static/img/momo-qr.jpg"
-
     # ---- Chuyển khoản Ngân hàng MB Bank (Tự động SePay) ----
     MBBANK_BANK_NAME: str = "Ngân hàng TMCP Quân Đội (MB Bank)"
     MBBANK_BANK_CODE: str = "MBBank"
@@ -122,12 +104,6 @@ class Settings(BaseSettings):
             if not self.VNPAY_HASH_SECRET or not self.VNPAY_HASH_SECRET.strip():
                 errors.append("- VNPAY_HASH_SECRET chưa được đặt hoặc bị rỗng. Khóa rỗng cho phép kẻ tấn công giả mạo chữ ký giao dịch.")
 
-            if not self.MOMO_ACCESS_KEY or not self.MOMO_ACCESS_KEY.strip():
-                errors.append("- MOMO_ACCESS_KEY chưa được đặt hoặc bị rỗng. Bắt buộc cấu hình khóa MoMo khi triển khai Production.")
-
-            if not self.MOMO_SECRET_KEY or not self.MOMO_SECRET_KEY.strip():
-                errors.append("- MOMO_SECRET_KEY chưa được đặt hoặc bị rỗng. Khóa rỗng cho phép kẻ tấn công giả mạo chữ ký giao dịch MoMo.")
-
             if not self.PUBLIC_BASE_URL or "127.0.0.1" in self.PUBLIC_BASE_URL or "localhost" in self.PUBLIC_BASE_URL.lower():
                 errors.append("- PUBLIC_BASE_URL chưa được đặt hoặc vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống.")
 
@@ -141,14 +117,6 @@ class Settings(BaseSettings):
             is_vnpay_ipn_localhost = not self.VNPAY_IPN_URL or "127.0.0.1" in self.VNPAY_IPN_URL or "localhost" in self.VNPAY_IPN_URL.lower()
             if is_vnpay_ipn_localhost:
                 errors.append("- VNPAY_IPN_URL vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống để nhận IPN webhook.")
-
-            is_momo_localhost = not self.MOMO_RETURN_URL or "127.0.0.1" in self.MOMO_RETURN_URL or "localhost" in self.MOMO_RETURN_URL.lower()
-            if is_momo_localhost:
-                errors.append("- MOMO_RETURN_URL vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống.")
-
-            is_momo_ipn_localhost = not self.MOMO_IPN_URL or "127.0.0.1" in self.MOMO_IPN_URL or "localhost" in self.MOMO_IPN_URL.lower()
-            if is_momo_ipn_localhost:
-                errors.append("- MOMO_IPN_URL vẫn trỏ về 127.0.0.1 hoặc localhost. Cần thay bằng domain chính thức của hệ thống để nhận IPN webhook.")
 
             if self.EMAIL_BACKEND == "console":
                 errors.append("- EMAIL_BACKEND không được dùng 'console' khi triển khai Production.")

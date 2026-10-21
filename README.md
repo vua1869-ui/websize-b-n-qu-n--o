@@ -195,10 +195,6 @@ uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
 | `PAYMENT_WEBHOOK_SECRET` | Chuỗi ngẫu nhiên >= 16 ký tự | Bảo vệ webhook thanh toán |
 | `PUBLIC_BASE_URL` | Domain chính thức của host (ví dụ `https://aura-studio.onrender.com`) | Bắt buộc là HTTPS thật, không dùng `localhost` |
 | `DATABASE_URL` | Chuỗi kết nối PostgreSQL (ví dụ `postgresql://user:pass@host/db`) | Dùng dịch vụ PostgreSQL miễn phí đi kèm |
-| `MOMO_ACCESS_KEY` | Key đối tác MoMo | Cấu hình thanh toán |
-| `MOMO_SECRET_KEY` | Secret đối tác MoMo | Cấu hình thanh toán |
-| `MOMO_RETURN_URL` | `https://<domain-cua-ban>/api/payment/momo/return` | Không dùng localhost |
-| `MOMO_IPN_URL` | `https://<domain-cua-ban>/api/payment/momo/ipn` | Không dùng localhost |
 | `VNPAY_RETURN_URL` | `https://<domain-cua-ban>/api/payment/vnpay/return` | Không dùng localhost |
 
 ### 3. Lưu ý quan trọng về CSDL & Ổ đĩa tạm (Ephemeral Disk)

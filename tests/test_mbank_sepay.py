@@ -45,11 +45,6 @@ def test_mbank_create_order_and_flow(client):
     assert "Copy" in page_res.text
     assert "/api/orders/" in page_res.text
 
-    # 3. Kiểm tra redirect từ link cũ /payment/momo/{order_id} sang /payment/mbank/{order_id}
-    momo_redirect = client.get(f"/payment/momo/{order_id}", follow_redirects=False)
-    assert momo_redirect.status_code == 302
-    assert momo_redirect.headers["location"] == f"/payment/mbank/{order_id}"
-
     # 4. Kiểm tra API Polling ngầm của Frontend (/api/orders/{order_id}/status) khi chưa thanh toán
     poll_res = client.get(f"/api/orders/{order_id}/status")
     assert poll_res.status_code == 200

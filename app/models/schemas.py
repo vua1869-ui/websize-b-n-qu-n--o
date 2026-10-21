@@ -319,7 +319,7 @@ class OrderCancelRequest(BaseModel):
         return v
 
 
-VALID_PAYMENT_METHODS = ["cod", "vietqr", "qr_transfer", "vnpay", "mbank", "banking", "momo"]
+VALID_PAYMENT_METHODS = ["cod", "vietqr", "qr_transfer", "vnpay", "mbank", "banking"]
 
 
 class OrderCreateRequest(BaseModel):
@@ -442,10 +442,6 @@ class OrderResponse(BaseModel):
     bank_account_number: Optional[str] = None
     bank_account_name: Optional[str] = None
     bank_name: Optional[str] = None
-    momo_link: Optional[str] = None
-    momo_qr_url: Optional[str] = None
-    momo_phone: Optional[str] = None
-    momo_name: Optional[str] = None
     redirect_url: Optional[str] = None
 
 

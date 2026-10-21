@@ -5,8 +5,7 @@ Kiểm thử toàn diện quy trình hoàn tiền khi khách hàng hủy đơn �
 3. Từ chối hoàn tiền với số tiền vượt quá số tiền đã thanh toán hoặc <= 0 (400).
 4. Chống hoàn tiền hai lần / idempotency (409 Conflict).
 5. Hoàn tiền chuyển khoản thủ công (VietQR / bank transfer) không giả lập tự động chuyển.
-6. MoMo / VNPay: Bắt buộc cấu hình hợp lệ và mã giao dịch gốc; xử lý thành công và thất bại rõ ràng.
-7. Hiển thị đúng trạng thái (refund_pending, refunded, refund_failed) cho khách hàng và admin.
+6. Hiển thị đúng trạng thái (refund_pending, refunded, refund_failed) cho khách hàng và admin.
 """
 import uuid
 import pytest
@@ -213,71 +212,6 @@ class TestRefundFlow:
         # Bị từ chối vì thiếu mã giao dịch gốc từ VNPay
         assert res.status_code == 400
         assert "thiếu mã giao dịch" in res.json()["detail"].lower()
-
-    def test_momo_refund_failure_marks_refund_failed(self):
-        """MoMo: Khi gateway phản hồi thất bại, trạng thái đơn chuyển thành refund_failed và lưu error_message."""
-        admin_headers = get_admin_headers()
-        order_id, _ = create_and_pay_order("momo", trans_code="MOMO_TRANS_FAIL")
-        client.post(f"/api/orders/{order_id}/cancel", json={
-            "order_id": order_id,
-            "phone": CUSTOMER["customer_phone"],
-            "refund_bank_name": "MoMo",
-            "refund_account_number": "0987654321",
-            "refund_account_holder": "NGUYEN VAN A",
-        })
-
-        with patch("app.routers.admin.momo_service.is_configured", return_value=True), \
-             patch("app.routers.admin.momo_service.refund", return_value={"success": False, "message": "Số dư tài khoản doanh nghiệp không đủ"}):
-
-            res = client.post(
-                f"/api/admin/orders/{order_id}/process-refund",
-                headers=admin_headers,
-                json={"is_manual": False}
-            )
-            assert res.status_code == 400
-            assert "số dư tài khoản doanh nghiệp không đủ" in res.json()["detail"].lower()
-
-        # Kiểm tra trạng thái trong DB
-        order = db_service.get_order_by_id(order_id)
-        assert order["payment_status"] == "refund_failed"
-
-        refund_req = db_service.get_refund_request(order_id)
-        assert refund_req["status"] == "failed"
-        assert "số dư tài khoản doanh nghiệp không đủ" in refund_req["error_message"].lower()
-
-    def test_momo_refund_success_flow(self):
-        """MoMo: Khi gateway hoàn tiền thành công, trạng thái chuyển sang refunded và lưu refund_trans_id."""
-        admin_headers = get_admin_headers()
-        order_id, _ = create_and_pay_order("momo", trans_code="MOMO_TRANS_OK")
-        client.post(f"/api/orders/{order_id}/cancel", json={
-            "order_id": order_id,
-            "phone": CUSTOMER["customer_phone"],
-            "refund_bank_name": "MoMo",
-            "refund_account_number": "0987654321",
-            "refund_account_holder": "NGUYEN VAN A",
-        })
-
-        success_ref_id = f"MOMO_REF_{uuid.uuid4().hex[:8]}"
-        with patch("app.routers.admin.momo_service.is_configured", return_value=True), \
-             patch("app.routers.admin.momo_service.refund", return_value={"success": True, "refund_trans_id": success_ref_id, "message": "Thành công"}):
-
-            res = client.post(
-                f"/api/admin/orders/{order_id}/process-refund",
-                headers=admin_headers,
-                json={"is_manual": False}
-            )
-            assert res.status_code == 200
-            assert res.json()["payment_status"] == "refunded"
-            assert res.json()["refund_trans_id"] == success_ref_id
-
-        order = db_service.get_order_by_id(order_id)
-        assert order["payment_status"] == "refunded"
-        assert order["refund_trans_id"] == success_ref_id
-
-        refund_req = db_service.get_refund_request(order_id)
-        assert refund_req["status"] == "success"
-        assert refund_req["refund_trans_id"] == success_ref_id
-        assert refund_req["processed_by"] == "admin"
 
     def test_status_visibility_in_tracking_and_admin(self):
         """Khách hàng và admin đều thấy chính xác trạng thái chờ hoàn tiền, thất bại và đã hoàn tiền."""

@@ -311,7 +311,7 @@
         tbody.innerHTML = stats.recent_orders.map(o => {
           const st = statusMap[o.status] || { label: o.status, bg: "bg-noir-800 text-noir-300 border-noir-600" };
           const orderTotal = o.quote?.total || o.total_amount || 0;
-          const payMethod = o.payment_method === 'cod' ? 'COD' : (o.payment_method === 'momo' ? 'MoMo' : (o.payment_method === 'vnpay' ? 'VNPay' : 'VietQR'));
+          const payMethod = o.payment_method === 'cod' ? 'COD' : (o.payment_method === 'vnpay' ? 'VNPay' : 'VietQR');
           return `
             <tr class="hover:bg-noir-800 transition">
               <td class="py-3 font-mono font-semibold text-noir-100">${esc(o.order_id)}</td>
