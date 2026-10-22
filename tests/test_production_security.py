@@ -76,3 +76,29 @@ def test_production_env_valid_config_passes():
         EMAIL_BACKEND="smtp"
     )
     assert s.APP_ENV == "production"
+
+
+async def test_production_lifespan_refuses_default_admin_password(monkeypatch):
+    """Kiểm tra lifespan từ chối khởi động khi APP_ENV=production mà tài khoản admin có mật khẩu admin123."""
+    from app.config import settings
+    from app.db.models import UserDB
+    from app.db.session import get_db_session
+    from app.main import app, lifespan
+    from app.services.user_service import hash_password
+    from sqlalchemy import func
+
+    monkeypatch.setattr(settings, "APP_ENV", "production")
+    monkeypatch.setattr(settings, "SECRET_KEY", "super_secret_key_prod_123456789")
+    monkeypatch.setattr(settings, "PAYMENT_WEBHOOK_SECRET", "super_webhook_sec_prod_123456789")
+    monkeypatch.setattr(settings, "DEMO_DATA", False)
+
+    with get_db_session() as session:
+        admin = session.query(UserDB).filter(func.lower(UserDB.username) == "admin").first()
+        if admin:
+            admin.password_hash = hash_password("admin123")
+            session.commit()
+
+    with pytest.raises(RuntimeError) as exc_info:
+        async with lifespan(app):
+            pass
+    assert "mật khẩu mặc định nguy hiểm" in str(exc_info.value)

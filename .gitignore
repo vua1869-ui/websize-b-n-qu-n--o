@@ -2,11 +2,21 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+.ruff_cache/
 node_modules/
-app/data/orders.jsonl
-app/data/aura_store.db
-app/data/users.json
 .venv/
+.vscode/
 
-app/data/aura_store.db-shm
-app/data/aura_store.db-wal
+# Project report files at root
+/*.docx
+/*.xlsx
+
+# SQLite databases & temp files
+app/data/*.db
+*.db-shm
+*.db-wal
+app/data/orders.jsonl
+app/data/users.json
+/MB-qr.jpg
+/app/static/images/MB-qr*
+/app/static/img/MB-qr.jpg

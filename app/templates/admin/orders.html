@@ -320,7 +320,7 @@
         const itemCount = lines.reduce((sum, l) => sum + (l.quantity || 1), 0);
         const total = (o.quote?.total || 0).toLocaleString("vi-VN") + "đ";
 
-        const payMethodLabel = o.payment_method === 'cod' ? 'COD' : (o.payment_method === 'momo' ? 'MoMo' : (o.payment_method === 'vnpay' ? 'VNPay' : 'VietQR'));
+        const payMethodLabel = o.payment_method === 'cod' ? 'COD' : (['mbank', 'banking'].includes(o.payment_method) ? 'MB Bank' : 'VietQR');
         let payStatusBadge = '';
         if (o.payment_status === 'paid') {
           payStatusBadge = '<span class="inline-block text-[11px] font-semibold text-emerald-400">Đã thanh toán</span>';
@@ -389,7 +389,7 @@
     if (refundBtn) {
       const orderId = refundBtn.dataset.orderId;
       const o = currentOrders.find(x => x.order_id === orderId);
-      const isManual = o?.payment_method !== 'momo';
+      const isManual = !['vietqr', 'qr_transfer'].includes(o?.payment_method);
       triggerRefundOrder(orderId, isManual);
       return;
     }
@@ -466,7 +466,8 @@
     // Cập nhật phương thức & trạng thái thanh toán
     const payMethodMap = {
       cod: 'Thanh toán khi nhận hàng (COD)',
-      momo: 'Ví điện tử MoMo (Sandbox / QR / App)',
+      mbank: 'MB Bank (Tự động xác nhận)',
+      banking: 'MB Bank (Tự động xác nhận)',
       vietqr: 'Chuyển khoản VietQR',
       qr_transfer: 'Chuyển khoản VietQR'
     };
@@ -485,7 +486,7 @@
     const refundBankDetails = document.getElementById("detail-refund-bank-details");
     const refundBankEmpty = document.getElementById("detail-refund-bank-empty");
 
-    const isManualMethod = ['vietqr', 'bank_transfer', 'cod', 'qr_transfer', 'vnpay'].includes(o.payment_method);
+    const isManualMethod = ['bank_transfer', 'cod', 'mbank', 'banking'].includes(o.payment_method);
 
     if (o.payment_status === 'paid') {
       payStatusEl.textContent = 'Đã thanh toán (paid)';
@@ -516,7 +517,7 @@
         if (btnModalProcessRefund) btnModalProcessRefund.textContent = isFailed ? 'Thử lại xác nhận' : 'Xác nhận hoàn thủ công';
         if (btnModalManualRefund) btnModalManualRefund.classList.add('hidden');
       } else {
-        const gwName = 'MoMo';
+        const gwName = 'MB Paygate';
         if (refundDesc) refundDesc.textContent = `Hoàn tự động qua cổng ${gwName}. Nếu cổng chưa cấu hình hoặc lỗi, có thể chọn xác nhận hoàn tiền thủ công.`;
         if (btnModalProcessRefund) btnModalProcessRefund.textContent = isFailed ? `Thử lại qua ${gwName}` : `Hoàn qua ${gwName}`;
         if (btnModalManualRefund) btnModalManualRefund.classList.remove('hidden');
@@ -573,8 +574,8 @@
 
   async function triggerRefundOrder(orderId, isManual = false) {
     const o = currentOrders.find(x => x.order_id === orderId) || activeOrder;
-    const isOnline = o && o.payment_method === 'momo';
-    const channelName = isOnline ? 'MoMo' : 'Chuyển khoản thủ công';
+    const isOnline = o && ['vietqr', 'qr_transfer'].includes(o.payment_method);
+    const channelName = isOnline ? 'MB Paygate' : 'Chuyển khoản thủ công';
     const amountStr = o && o.quote && o.quote.total ? o.quote.total.toLocaleString('vi-VN') + 'đ' : '';
 
     const confirmMsg = isManual || !isOnline

@@ -12,10 +12,8 @@ import logging
 import os
 import secrets
 import threading
-from typing import Any, Dict, List, Optional
-
-logger = logging.getLogger("aura.order_service")
-
+import urllib.parse
+from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import func, or_
 
@@ -31,8 +29,9 @@ from app.models.schemas import (
     QuoteLine,
     QuoteResponse,
 )
-from app.services.email_sender import get_email_sender
 from app.services.product_service import product_service
+
+logger = logging.getLogger("aura.order_service")
 
 
 class OrderError(Exception):
@@ -69,6 +68,22 @@ def make_combo_token(product_ids: List[str]) -> str:
 
 def _money(n: int) -> str:
     return f"{n:,}".replace(",", ".") + "đ"
+
+
+def parse_order_created_at(val: Optional[str]) -> Optional[datetime.datetime]:
+    """Parse ngày tạo đơn hỗ trợ cả ISO 8601 (API) và dd/mm/YYYY HH:MM (dữ liệu demo cũ)."""
+    if not val:
+        return None
+    try:
+        return datetime.datetime.fromisoformat(val)
+    except Exception:
+        pass
+    for fmt in ("%d/%m/%Y %H:%M:%S", "%d/%m/%Y %H:%M"):
+        try:
+            return datetime.datetime.strptime(val, fmt)
+        except Exception:
+            pass
+    return None
 
 
 VALID_STATUS_TRANSITIONS: Dict[str, set] = {
@@ -184,6 +199,11 @@ class OrderService:
                 if strict_voucher:
                     raise OrderError(msg, 400)
                 voucher_message = msg
+            elif v.max_uses is not None and v.used_uses >= v.max_uses:
+                msg = f"Mã {code} đã hết lượt sử dụng trên hệ thống"
+                if strict_voucher:
+                    raise OrderError(msg, 400)
+                voucher_message = f"Mã {code} đã hết lượt; đơn hàng vẫn tiếp tục không dùng mã này"
             elif after_combo < v.min_order:
                 msg = f"Mã {code} chỉ áp dụng cho đơn từ {_money(v.min_order)}"
                 if strict_voucher:
@@ -256,26 +276,117 @@ class OrderService:
     # ---------- Đặt hàng ----------
     def create_order(self, req: OrderCreateRequest, user: Optional[Any] = None) -> OrderResponse:
         # 1. Validate payment_method TRƯỚC KHI xử lý bất kỳ logic trừ voucher hay lưu đơn nào
-        VALID_PAYMENT_METHODS = ['cod', 'vietqr', 'qr_transfer', 'momo']
+        VALID_PAYMENT_METHODS = ['cod', 'vietqr', 'qr_transfer', 'mbank', 'banking']
         payment_method = str(getattr(req, "payment_method", "") or "").strip().lower()
         if payment_method not in VALID_PAYMENT_METHODS:
             raise OrderError("payment_method không hợp lệ", 400)
 
-        # 2. Báo giá lại toàn bộ phía server (chỉ tính toán, chưa trừ voucher trong DB)
+        # 2. Kiểm tra thông tin cấu hình thanh toán QR TRƯỚC build_quote và trước mọi ghi DB
+        if payment_method in ("qr_transfer", "vietqr"):
+            bank_id = getattr(settings, "BANK_ID", "")
+            bank_acc = getattr(settings, "BANK_ACCOUNT_NO", "")
+            bank_name = getattr(settings, "BANK_ACCOUNT_NAME", "")
+            if not (bank_id and bank_acc and bank_name):
+                raise OrderError("Phương thức chuyển khoản qua QR hiện chưa sẵn sàng do chưa cấu hình thông tin ngân hàng", 400)
+        if payment_method in ("mbank", "banking"):
+            if not settings.MBBANK_ACCOUNT_NUMBER.strip() or not settings.MBBANK_ACCOUNT_NAME.strip():
+                raise OrderError("Phương thức MB Bank chưa sẵn sàng do chưa cấu hình số tài khoản và tên chủ tài khoản", 400)
+
+        # 3. Kiểm tra giới hạn đơn COD đang chờ giao (chống lạm dụng COD)
+        if payment_method == "cod":
+            is_admin = bool(user and getattr(user, "role", "") == "admin")
+            max_cod_open = getattr(settings, "COD_MAX_OPEN_PER_PHONE", 3)
+            if not is_admin and max_cod_open > 0:
+                clean_phone = normalize_phone(req.customer_phone)
+                with get_db_session() as session:
+                    open_cod_orders = (
+                        session.query(OrderDB.customer_phone)
+                        .filter(
+                            OrderDB.payment_method == "cod",
+                            OrderDB.order_status.in_(["confirmed", "pending"]),
+                        )
+                        .all()
+                    )
+                    open_count = sum(1 for (ph,) in open_cod_orders if ph and normalize_phone(ph) == clean_phone)
+                    if open_count >= max_cod_open:
+                        raise OrderError(
+                            f"Số điện thoại này hiện có {open_count} đơn hàng COD đang chờ giao (tối đa {max_cod_open} đơn). "
+                            "Vui lòng thanh toán chuyển khoản QR hoặc chờ đơn hàng hiện tại được giao thành công.",
+                            429,
+                        )
+
+        # 4. Báo giá lại toàn bộ phía server (chỉ tính toán, chưa trừ voucher trong DB)
         quote = self.build_quote(
             req.items, req.voucher_code, strict_voucher=True,
             use_points=req.use_points, user=user
         )
 
-        # 3. Kiểm tra thông tin cấu hình thanh toán QR nếu khách chọn QR
-        bank_id = getattr(settings, "BANK_ID", "")
-        bank_acc = getattr(settings, "BANK_ACCOUNT_NO", "")
-        bank_name = getattr(settings, "BANK_ACCOUNT_NAME", "")
-        if payment_method in ("qr_transfer", "vietqr"):
-            if not (bank_id and bank_acc and bank_name):
-                raise OrderError("Phương thức chuyển khoản qua QR hiện chưa sẵn sàng do chưa cấu hình thông tin ngân hàng", 400)
+        now = datetime.datetime.now()
 
-        # 4. Kiểm tra tồn kho trước khi tạo đơn hàng
+        # 5. Kiểm tra giới hạn mua sản phẩm Flash Sale (chống lạm dụng Flash Sale)
+        max_flash_qty = getattr(settings, "FLASH_SALE_MAX_QTY_PER_CUSTOMER", 2)
+        if max_flash_qty > 0:
+            flash_lines = []
+            for line in quote.lines:
+                p = product_service.get_by_id(line.product_id)
+                is_flash = bool(p and getattr(p, "is_in_flash_sale", False))
+                if is_flash:
+                    flash_lines.append((line, p))
+
+            if flash_lines:
+                # 5.1 Kiểm tra số lượng trong chính đơn hiện tại
+                for line, p in flash_lines:
+                    if line.quantity > max_flash_qty:
+                        raise OrderError(
+                            f"Sản phẩm Flash Sale '{p.name}' chỉ được mua tối đa {max_flash_qty} sản phẩm cho mỗi khách hàng.",
+                            409,
+                        )
+
+                # 5.2 Kiểm tra tổng số lượng đã mua trong ngày hôm nay qua DB
+                clean_phone = normalize_phone(req.customer_phone)
+                user_id_val = getattr(user, "id", None) if user else None
+                today_date = now.date()
+
+                with get_db_session() as session:
+                    candidate_orders = (
+                        session.query(OrderDB)
+                        .filter(OrderDB.order_status != "cancelled")
+                        .all()
+                    )
+                    matching_orders = [
+                        o for o in candidate_orders
+                        if (user_id_val and o.user_id == user_id_val)
+                        or (o.customer_phone and normalize_phone(o.customer_phone) == clean_phone)
+                    ]
+
+                    already_bought_by_pid: Dict[str, int] = {}
+                    for o in matching_orders:
+                        odt = parse_order_created_at(o.created_at)
+                        if not odt or odt.date() != today_date:
+                            continue
+                        q_data = {}
+                        if o.quote_json:
+                            try:
+                                q_data = json.loads(o.quote_json)
+                            except Exception:
+                                pass
+                        lines = q_data.get("lines", [])
+                        if not lines and hasattr(o, "items") and o.items:
+                            lines = [{"product_id": it.product_id, "quantity": it.quantity} for it in o.items]
+                        for it in lines:
+                            pid_it = it.get("product_id")
+                            if pid_it:
+                                already_bought_by_pid[pid_it] = already_bought_by_pid.get(pid_it, 0) + it.get("quantity", 0)
+
+                    for line, p in flash_lines:
+                        bought = already_bought_by_pid.get(line.product_id, 0)
+                        if bought + line.quantity > max_flash_qty:
+                            raise OrderError(
+                                f"Bạn đã đạt giới hạn mua tối đa {max_flash_qty} sản phẩm Flash Sale '{p.name}' trong ngày hôm nay.",
+                                409,
+                            )
+
+        # 6. Kiểm tra tồn kho trước khi tạo đơn hàng
         needed: Dict[str, int] = {}
         for line in quote.lines:
             needed[line.product_id] = needed.get(line.product_id, 0) + line.quantity
@@ -287,7 +398,6 @@ class OrderService:
                        else f"'{p.name if p else pid}' đã hết hàng")
                 raise OrderError(msg, 409)
 
-        now = datetime.datetime.now()
         order_id = None
         for _ in range(5):
             hex_part = secrets.token_hex(6).upper()  # 12 ký tự hex an toàn ngẫu nhiên
@@ -332,8 +442,15 @@ class OrderService:
             "quote": quote.model_dump(),
         }
 
-        # 5. Tạo đơn hàng nguyên tử trong Database và đồng bộ bộ nhớ
+        # 7. Tạo đơn hàng nguyên tử trong Database và đồng bộ bộ nhớ
         with product_service._lock:
+            for pid, qty in needed.items():
+                p = product_service.get_by_id(pid)
+                if not p or p.stock < qty:
+                    msg = (f"'{p.name}' chỉ còn {p.stock} sản phẩm" if p and p.stock > 0
+                           else f"'{p.name if p else pid}' đã hết hàng")
+                    raise OrderError(msg, 409)
+
             items_payload = [
                 {
                     "product_id": line.product_id,
@@ -351,7 +468,7 @@ class OrderService:
                 items=items_payload,
                 user_id=getattr(user, "id", None) if user else None,
                 points_to_deduct=quote.points_used,
-                voucher_code=req.voucher_code
+                voucher_code=quote.voucher_code
             )
 
             # Chỉ cập nhật tồn kho bộ nhớ SAU khi CSDL commit thành công
@@ -369,41 +486,45 @@ class OrderService:
             except Exception:
                 pass
 
-        # Gửi email xác nhận đơn (không block request nếu lỗi)
-        cust_email = getattr(req, "customer_email", None)
-        if cust_email:
-            try:
-                get_email_sender().send_order_confirmation(cust_email, {
-                    "order_id": order_id,
-                    "customer_name": req.customer_name,
-                    "customer_phone": req.customer_phone,
-                    "total_amount": quote.total,
-                    "payment_method": payment_method,
-                    "quote": quote.model_dump(),
-                })
-            except Exception as _email_err:  # pragma: no cover
-                logger.warning("Gửi email xác nhận đơn thất bại: %s", _email_err)
-
         qr_code_url = None
         bank_info = None
-        if payment_method in ("qr_transfer", "vietqr"):
-            import urllib.parse
-            acc_name_quoted = urllib.parse.quote(bank_name)
-            qr_code_url = (
-                f"https://img.vietqr.io/image/{bank_id}-{bank_acc}-compact2.png"
-                f"?amount={quote.total}&addInfo=AURA%20{order_id}&accountName={acc_name_quoted}"
-            )
+        transfer_content = str(order_id).upper() if str(order_id).upper().startswith("AURA-") else f"AURA-{order_id}"
+
+        if payment_method in ("mbank", "banking", "qr_transfer", "vietqr"):
+            if payment_method in ("vietqr", "qr_transfer"):
+                b_id = getattr(settings, "BANK_ID", "MB") or "MB"
+                acc_no = getattr(settings, "BANK_ACCOUNT_NO", "0900000001") or "0900000001"
+                acc_name = getattr(settings, "BANK_ACCOUNT_NAME", "AURA STUDIO") or "AURA STUDIO"
+                bank_name = getattr(settings, "MBBANK_BANK_NAME", "") or "Ngân hàng TMCP Quân Đội (MB Bank)"
+                qr_code_url = f"https://img.vietqr.io/image/{b_id}-{acc_no}-compact2.png?amount={quote.total}&addInfo={urllib.parse.quote(transfer_content)}&accountName={urllib.parse.quote(acc_name)}"
+                redirect_url = f"/payment/mbank/{order_id}"
+            else:
+                bank_name = settings.MBBANK_BANK_NAME
+                acc_no = settings.MBBANK_ACCOUNT_NUMBER
+                acc_name = settings.MBBANK_ACCOUNT_NAME
+                b_id = settings.MBBANK_BANK_CODE
+                qr_code_url = settings.MBBANK_QR_IMAGE or (
+                    f"https://img.vietqr.io/image/{b_id}-{acc_no}-compact2.png"
+                    f"?amount={quote.total}&addInfo={urllib.parse.quote(transfer_content)}"
+                    f"&accountName={urllib.parse.quote(acc_name)}"
+                )
+                redirect_url = f"/payment/mbank/{order_id}"
+
             bank_info = {
-                "bank_name": bank_id,
-                "account_number": bank_acc,
-                "account_name": bank_name,
+                "bank_name": bank_name,
+                "bank_code": b_id,
+                "account_number": acc_no,
+                "account_name": acc_name,
                 "amount": str(quote.total),
-                "content": f"AURA {order_id}"
+                "transfer_content": transfer_content,
+                "qr_code_url": qr_code_url,
+                "redirect_url": redirect_url,
             }
-            msg = (f"Đã ghi nhận đơn. Vui lòng quét mã VietQR hoặc chuyển khoản {_money(quote.total)} "
-                   f"với nội dung 'AURA {order_id}' để hệ thống tự động xác nhận đơn.")
-        elif payment_method == "momo":
-            msg = "Đã ghi nhận đơn. Đang chuyển hướng sang cổng thanh toán MoMo..."
+            msg = (
+                f"Đã ghi nhận đơn. Vui lòng quét mã QR hoặc chuyển khoản "
+                f"{_money(quote.total)} tới STK {acc_no} ({acc_name}) "
+                f"với nội dung '{transfer_content}' để hệ thống tự động xác nhận đơn."
+            )
         else:
             msg = "Đặt hàng thành công! Chúng tôi sẽ liên hệ xác nhận và giao hàng sớm nhất."
 
@@ -416,6 +537,13 @@ class OrderService:
             customer_address=req.customer_address, payment_method=payment_method,
             created_at=now.strftime("%d/%m/%Y %H:%M"), message=msg,
             qr_code_url=qr_code_url, bank_info=bank_info,
+            success=True,
+            amount=quote.total,
+            transfer_content=transfer_content,
+            bank_account_number=bank_info.get("account_number") if bank_info else None,
+            bank_account_name=bank_info.get("account_name") if bank_info else None,
+            bank_name=bank_info.get("bank_name") if bank_info else None,
+            redirect_url=bank_info.get("redirect_url") if bank_info else None,
         )
 
     # ---------- Lưu trữ & Truy vấn Database ----------
@@ -622,6 +750,72 @@ class OrderService:
 
         refreshed = db_service.get_order_by_id(order_id)
         return refreshed or {"order_id": order_id, "order_status": "cancelled"}
+
+    def expire_unpaid_orders(
+        self,
+        ttl_minutes: Optional[int] = None,
+        now: Optional[datetime.datetime] = None,
+        batch: int = 200,
+    ) -> List[str]:
+        """Tự động hủy các đơn chuyển khoản QR quá hạn chưa thanh toán để giải phóng tồn kho kẹt."""
+        ttl = ttl_minutes if ttl_minutes is not None else getattr(settings, "ORDER_PAYMENT_TTL_MINUTES", 30)
+        if ttl <= 0:
+            return []
+
+        cur_now = now or datetime.datetime.now()
+        cutoff = cur_now - datetime.timedelta(minutes=ttl)
+
+        with get_db_session() as session:
+            candidates = (
+                session.query(OrderDB)
+                .filter(
+                    OrderDB.order_status == "pending_payment",
+                    OrderDB.payment_status == "unpaid",
+                    OrderDB.payment_method != "cod",
+                )
+                .order_by(OrderDB.created_at.asc())
+                .limit(batch * 5)
+                .all()
+            )
+            to_expire = []
+            for o in candidates:
+                dt = parse_order_created_at(o.created_at)
+                if dt is not None and dt <= cutoff:
+                    to_expire.append(o.order_id)
+                    if len(to_expire) >= batch:
+                        break
+
+        expired_ids = []
+        for oid in to_expire:
+            try:
+                with product_service._lock:
+                    cancelled = db_service.cancel_order_atomic(oid, only_if_unpaid_pending=True)
+                    if cancelled:
+                        refreshed = db_service.get_order_by_id(oid)
+                        if refreshed:
+                            try:
+                                q = refreshed.get("quote") or {}
+                                if not q and refreshed.get("quote_json"):
+                                    q = json.loads(refreshed["quote_json"])
+                                needed = {
+                                    item["product_id"]: item["quantity"]
+                                    for item in q.get("lines", [])
+                                    if "product_id" in item and "quantity" in item
+                                }
+                                if needed:
+                                    product_service.release_stock(needed)
+                            except Exception as _e:
+                                logger.warning("Lỗi hoàn kho RAM cho đơn %s: %s", oid, _e)
+
+                        note_msg = f"Tự động hủy: quá {ttl} phút chưa thanh toán"
+                        existing_note = (refreshed.get("internal_note") if refreshed else None) or ""
+                        combined_note = f"{existing_note} | {note_msg}".strip(" |") if existing_note else note_msg
+                        db_service.update_order_internal_note(oid, combined_note)
+                        expired_ids.append(oid)
+            except Exception as e:
+                logger.warning("Lỗi khi tự động hủy đơn quá hạn %s: %s", oid, e)
+
+        return expired_ids
 
     def count_orders(self) -> int:
         if self.orders_path is not None:

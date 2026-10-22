@@ -1,4 +1,5 @@
 import collections
+import hashlib
 import logging
 import threading
 import time
@@ -6,6 +7,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from fastapi import HTTPException, Request
 from fastapi.templating import Jinja2Templates
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 from app.config import settings
 from app.models.schemas import User
@@ -55,6 +57,12 @@ def safe_redirect(target: Optional[str], default: str = "/") -> str:
 # ==========================================
 # Rate Limiters & Periodic Memory Cleanup
 # ==========================================
+# LƯU Ý BẢO TRÌ & QUY MÔ HỆ THỐNG:
+# Rate limit hiện tại được lưu trong bộ nhớ RAM tiến trình (in-memory defaultdict + threading.Lock).
+# Giải pháp này hoạt động chính xác và hiệu quả cao khi chạy ứng dụng với 1 process worker (mặc định
+# trên host Render / Railway). Nếu trong tương lai mở rộng hệ thống sang multi-worker (uvicorn --workers > 1)
+# hoặc chạy cụm nhiều instance/container, rate limit phân tán bắt buộc phải chuyển sang sử dụng
+# Redis (hoặc Memcached) tập trung để tránh lệch ngưỡng giới hạn giữa các worker processes.
 _rate_limit_lock = threading.Lock()
 _login_ip_attempts: Dict[str, collections.deque] = collections.defaultdict(collections.deque)
 _login_pair_attempts: Dict[str, collections.deque] = collections.defaultdict(collections.deque)
@@ -266,6 +274,33 @@ def verify_order_access(order: Dict[str, Any], user: Optional[User], phone: Opti
             return True, False
 
     return False, False
+
+
+def _hash_order_phone(phone: str) -> str:
+    clean = normalize_phone(phone)
+    return hashlib.sha256(clean.encode("utf-8")).hexdigest()
+
+
+def sign_guest_order_cookie(order_id: str, phone: str) -> str:
+    """Tạo token HMAC itsdangerous bảo vệ cookie xác thực đơn vãng lai."""
+    s = URLSafeTimedSerializer(settings.SECRET_KEY, salt="aura-guest-order-cookie-salt")
+    return s.dumps({"oid": str(order_id), "ph": _hash_order_phone(phone)})
+
+
+def verify_guest_order_cookie(token: Optional[str], order_id: str, order_phone: str, max_age: int = 3600 * 24) -> bool:
+    """Giải mã và kiểm tra chữ ký HMAC cookie aura_order_{order_id}."""
+    if not token or not order_id or not order_phone:
+        return False
+    s = URLSafeTimedSerializer(settings.SECRET_KEY, salt="aura-guest-order-cookie-salt")
+    try:
+        data = s.loads(token, max_age=max_age)
+        if str(data.get("oid")) != str(order_id):
+            return False
+        if data.get("ph") != _hash_order_phone(order_phone):
+            return False
+        return True
+    except (BadSignature, SignatureExpired, Exception):
+        return False
 
 
 # ==========================================

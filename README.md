@@ -122,9 +122,9 @@ python -m pytest tests -q
 python -m ruff check app
 ```
 
-Hơn **182 bài test tự động** (100% pass) bao phủ:
+Hơn **290 bài test tự động** (100% pass) bao phủ:
 - **Kiến trúc & Router**: 9 module APIRouter độc lập (`pages`, `products`, `ai`, `orders`, `payment`, `auth`, `cart`, `admin`, `loyalty`).
-- **Bảo mật & Phòng chống hồi quy**: Chống IDOR kiểm tra đơn hàng, timing attack login, IP rate limit đăng ký/đăng nhập, lọc XSS server-side, bảo vệ Host header reset password, session refresh khi đổi mật khẩu, itsdangerous session serializer.
+- **Bảo mật & Phòng chống hồi quy**: Bảo vệ CSRF cho API dùng session cookie, lọc XSS server-side và client-side, chữ ký HMAC cho cookie đơn hàng vãng lai `aura_order_{order_id}`, chống IDOR kiểm tra đơn hàng, timing attack login, IP rate limit đăng ký/đăng nhập, bảo vệ Host header reset password, session refresh khi đổi mật khẩu, itsdangerous session serializer.
 - **Tính trung thực dữ liệu**: Đánh giá dựa trên đơn hàng đã giao (verified buyer), chống review ảo, script xóa demo data, phân bổ doanh thu ròng và giá vốn bình quân gia quyền (WAC) trong báo cáo P&L.
 - **Tối ưu AI Stylist**: Giới hạn ngữ cảnh 30 sản phẩm dựa trên tìm kiếm ngữ nghĩa, giới hạn concurrency semaphore fallback sang bộ luật nội bộ.
 - **AI Fashion Trend Detection**: Chuẩn hóa Google Trends bằng anchor keyword, điểm xu hướng, cache TTL và matching tồn kho.
@@ -174,9 +174,44 @@ npm run build:css        # hoặc: npm run watch:css
 # Build Docker image
 docker build -t aura-studio .
 
-# Chạy container (khuyến nghị chạy 1 worker uvicorn khi dùng CSDL SQLite cục bộ)
-docker run -d -p 8000:8000 --env-file .env aura-studio
+## Triển khai lên Host miễn phí (Render / Railway)
+
+Hệ thống đã chuẩn bị sẵn cấu hình tự động cho Render ([render.yaml](file:///c:/Users/lenk/Downloads/fashion_ai_store/render.yaml)) và Railway ([Procfile](file:///c:/Users/lenk/Downloads/fashion_ai_store/Procfile)).
+
+### 1. Lệnh khởi chạy
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
 ```
+
+### 2. Danh sách biến môi trường bắt buộc trên Host Production
+| Biến môi trường | Giá trị yêu cầu | Ghi chú |
+|---|---|---|
+| `APP_ENV` | `production` | Bật chế độ sản xuất, tự động ẩn Swagger `/docs` |
+| `DEBUG` | `false` | Tắt chế độ debug |
+| `TRUSTED_PROXY_HEADERS` | `true` | Đọc đúng IP client qua `X-Forwarded-For` từ proxy host |
+| `SECRET_KEY` | Chuỗi ngẫu nhiên >= 32 ký tự | Không dùng khóa mặc định dev |
+| `PAYMENT_WEBHOOK_SECRET` | Chuỗi ngẫu nhiên >= 16 ký tự | Bảo vệ webhook thanh toán |
+| `PUBLIC_BASE_URL` | Domain chính thức của host (ví dụ `https://aura-studio.onrender.com`) | Bắt buộc là HTTPS thật, không dùng `localhost` |
+| `DATABASE_URL` | Chuỗi kết nối PostgreSQL (ví dụ `postgresql://user:pass@host/db`) | Dùng dịch vụ PostgreSQL miễn phí đi kèm |
+
+### 3. Lưu ý quan trọng về CSDL & Ổ đĩa tạm (Ephemeral Disk)
+- Các nền tảng miễn phí (Render/Railway) không bảo toàn ổ đĩa khi restart ứng dụng (ephemeral disk). Vì vậy, **KHÔNG sử dụng SQLite cục bộ làm CSDL lưu trữ chính thức** trên production.
+- Hãy kích hoạt dịch vụ PostgreSQL miễn phí (Render PostgreSQL Free Tier / Railway Postgres) và gán biến `DATABASE_URL`. SQLAlchemy trong hệ thống sẽ tự động khởi tạo các bảng qua metadata.
+- **Tạo CSDL sạch lần đầu**: Chạy lệnh migration dữ liệu:
+  ```bash
+  python scripts/migrate_to_db.py
+  ```
+- **Tạo và đổi mật khẩu Admin**:
+  Khi deploy, thiết lập biến môi trường `ADMIN_PASSWORD` (hoặc chạy lệnh `python scripts/reset_admin_password.py`). Khi `APP_ENV=production`, hệ thống sẽ **từ chối khởi động** nếu tài khoản `admin` vẫn dùng mật khẩu mặc định `admin123` hoặc `user123`.
+
+### 4. Lưu ý về Rate Limiter & Concurrency
+- Bộ đếm giới hạn tần suất (Rate Limiter) hiện tại được tối ưu chạy trong bộ nhớ RAM tiến trình (`defaultdict` + `threading.Lock`).
+- Do đó, ứng dụng bắt buộc khởi chạy với **1 worker** (`--workers 1`).
+- Nếu trong tương lai mở rộng hệ thống lên nhiều worker hoặc nhiều instance song song, hãy chuyển bộ đếm rate limit sang Redis tập trung (xem docstring tại [app/routers/deps.py](file:///c:/Users/lenk/Downloads/fashion_ai_store/app/routers/deps.py)).
+
+### 5. Lưu ý về CSP (Content Security Policy)
+- Hiện tại, header CSP đang được đặt ở chế độ `Content-Security-Policy-Report-Only` trong [app/main.py](file:///c:/Users/lenk/Downloads/fashion_ai_store/app/main.py) để tránh chặn nhầm tài nguyên ảnh/font từ các CDN bên thứ ba (Unsplash, VietQR, Google Fonts, Cloudinary).
+- Khi đã kiểm tra ổn định trên môi trường thật và không còn cảnh báo vi phạm trong Console trình duyệt, bạn có thể chuyển sang chế độ thực thi (Enforce) bằng cách đổi tên header `Content-Security-Policy-Report-Only` thành `Content-Security-Policy`.
 
 ## Checklist Go-Live Triển Khai Thực Tế
 

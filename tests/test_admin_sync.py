@@ -169,6 +169,7 @@ class TestAdminSync:
         ]
 
         # 1. Chưa đăng nhập (không có token) -> 401
+        client.cookies.clear()
         for ep in endpoints:
             res = client.get(ep)
             assert res.status_code == 401, f"Endpoint {ep} phải trả về 401 khi chưa đăng nhập, nhưng nhận {res.status_code}"

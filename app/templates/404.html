@@ -24,11 +24,11 @@
       {{ message or "Sản phẩm hoặc đường dẫn bạn vừa truy cập không tồn tại hoặc đã được chuyển sang danh mục khác." }}
     </p>
     <div class="mt-8 flex flex-wrap items-center justify-center gap-4">
-      <a href="/" onclick="safeBack('/'); return false;" class="aura-back-btn group px-6 !py-3" aria-label="Quay lại trang chủ">
+      <a href="/" onclick="safeBack('/'); return false;" class="aura-back-btn group px-6 !py-3" aria-label="Về trang chủ">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
         </svg>
-        <span>Quay lại trang chủ</span>
+        <span>Về trang chủ</span>
       </a>
       <a href="/products" class="btn btn-outline px-8 !py-3 text-sm uppercase tracking-widest font-semibold">
         Khám phá bộ sưu tập
@@ -108,14 +108,10 @@
               <span>Thanh toán khi nhận hàng (COD)</span>
             </label>
             <label class="flex items-center gap-2 p-2 border border-[#E5E2DC] rounded-[2px] cursor-pointer hover:bg-[#FAF8F5]">
-              <input type="radio" name="payment_method" value="vietqr" class="accent-[#111111]" />
-              <span>Chuyển khoản VietQR tức thì</span>
-            </label>
-            <label class="flex items-center gap-2 p-2 border border-[#E5E2DC] rounded-[2px] cursor-pointer hover:bg-[#FAF8F5]">
-              <input type="radio" name="payment_method" value="momo" class="accent-[#111111]" />
+              <input type="radio" name="payment_method" value="mbank" class="accent-[#111111]" />
               <span class="flex items-center gap-2">
-                <span>Ví điện tử MoMo (App MoMo / QR Code)</span>
-                <span class="rounded bg-[#a50064] px-1.5 py-0.5 text-[10px] font-bold text-white tracking-wide">MoMo</span>
+                <span>Chuyển khoản Ngân hàng MB Bank (Tự động xác nhận)</span>
+                <span class="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-800 tracking-wide">MB Bank</span>
               </span>
             </label>
           </div>

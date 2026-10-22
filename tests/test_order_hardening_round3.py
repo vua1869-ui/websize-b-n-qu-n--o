@@ -301,7 +301,7 @@ class TestCustomerCancel:
                     order_id, customer_name, customer_phone, customer_address, payment_method,
                     payment_status, order_status, total_amount, subtotal, shipping_fee, discount_amount, created_at,
                     refund_bank_name, refund_account_number, refund_account_holder
-                ) VALUES (?, 'Khách Cũ', '0912345678', '456 Saigon', 'vnpay', 'refund_pending', 'cancelled', 500000, 500000, 0, 0, '2026-01-01', NULL, NULL, NULL);
+                ) VALUES (?, 'Khách Cũ', '0912345678', '456 Saigon', 'mbank', 'refund_pending', 'cancelled', 500000, 500000, 0, 0, '2026-01-01', NULL, NULL, NULL);
                 """,
                 (legacy_order_id,)
             )
@@ -328,6 +328,7 @@ class TestCustomerCancel:
         assert legacy_item["refund_account_number"] is None
 
         # Kiểm tra masking khi người dùng không phải full access tra cứu
+        client.cookies.clear()
         res_pub = client.get(f"/api/orders/{order_id}?phone=0911222333")
         assert res_pub.status_code == 200
         pub_data = res_pub.json()

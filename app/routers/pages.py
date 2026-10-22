@@ -10,9 +10,9 @@ from app.routers.deps import (
     get_current_user_optional,
     mask_address,
     mask_phone,
-    normalize_phone,
     safe_redirect,
     templates,
+    verify_guest_order_cookie,
     verify_order_access,
 )
 from app.services.order_service import order_service
@@ -153,9 +153,9 @@ def order_success_page(request: Request, order_id: str, phone: Optional[str] = Q
 
     is_allowed, is_full = verify_order_access(order, user, phone)
     if not is_allowed and not order.get("user_id"):
-        cookie_phone = request.cookies.get(f"aura_order_{order_id}")
+        cookie_token = request.cookies.get(f"aura_order_{order_id}")
         order_phone = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
-        if cookie_phone and normalize_phone(cookie_phone) == normalize_phone(order_phone):
+        if verify_guest_order_cookie(cookie_token, order_id, order_phone):
             is_allowed, is_full = True, False
 
     if not is_allowed:

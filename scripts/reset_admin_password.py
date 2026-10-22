@@ -48,11 +48,14 @@ def reset_admin_password(new_password: str) -> bool:
 
 def main():
     parser = argparse.ArgumentParser(description="Đặt lại mật khẩu cho tài khoản Admin AURA Studio")
-    parser.add_argument("--password", "-p", type=str, help="Mật khẩu mới (nếu không truyền sẽ dùng prompt getpass)")
+    parser.add_argument("--password", "-p", type=str, help="Mật khẩu mới (nếu không truyền sẽ đọc từ env ADMIN_PASSWORD hoặc prompt getpass)")
     args = parser.parse_args()
 
-    password = args.password
+    password = args.password or os.getenv("ADMIN_PASSWORD") or os.getenv("NEW_ADMIN_PASSWORD")
     if not password:
+        if not sys.stdin.isatty():
+            print("[LỖI] Môi trường không tương tác (non-interactive). Vui lòng đặt mật khẩu qua biến môi trường ADMIN_PASSWORD hoặc cờ --password.")
+            sys.exit(1)
         password = getpass.getpass("Nhập mật khẩu mới cho admin: ")
         confirm = getpass.getpass("Xác nhận lại mật khẩu mới: ")
         if password != confirm:

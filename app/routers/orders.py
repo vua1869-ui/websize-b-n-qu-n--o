@@ -1,7 +1,18 @@
+import hashlib
+import logging
 import time
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    Header,
+    HTTPException,
+    Query,
+    Request,
+    Response,
+)
 
 from app.config import settings
 from app.db.database import db_service
@@ -17,15 +28,29 @@ from app.models.schemas import (
 )
 from app.routers.deps import (
     check_public_track_rate_limit,
+    get_client_ip,
     get_current_user_optional,
     mask_address,
     mask_phone,
     require_admin,
+    sign_guest_order_cookie,
     verify_order_access,
 )
+from app.services.idempotency_service import idempotency_service
 from app.services.order_service import OrderError, order_service
 
+logger = logging.getLogger("aura.orders_router")
+
 router = APIRouter(tags=["orders"])
+
+
+def _send_order_email_background(to_email: str, order_data: dict):
+    """Tác vụ nền gửi email xác nhận đơn không làm chậm request đặt hàng."""
+    try:
+        from app.services.email_sender import get_email_sender
+        get_email_sender().send_order_confirmation(to_email, order_data)
+    except Exception as _email_err:
+        logger.warning("Gửi email xác nhận đơn thất bại (background): %s", _email_err)
 
 
 @router.post("/api/orders/quote", response_model=QuoteResponse)
@@ -35,18 +60,61 @@ def quote_order(body: QuoteRequest, request: Request):
 
 
 @router.post("/api/orders", response_model=OrderResponse)
-def create_order(body: OrderCreateRequest, request: Request, response: Response):
+def create_order(
+    body: OrderCreateRequest,
+    request: Request,
+    response: Response,
+    background_tasks: BackgroundTasks,
+    idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
+):
     user = get_current_user_optional(request)
-    created = order_service.create_order(body, user=user)
+    client_ip = get_client_ip(request)
+    scope = f"user:{user.id}" if user and getattr(user, "id", None) else f"guest:{client_ip}"
+    request_hash = hashlib.sha256(body.model_dump_json().encode("utf-8")).hexdigest()
+
+    def _do_create() -> str:
+        created_obj = order_service.create_order(body, user=user)
+        return created_obj.model_dump_json()
+
+    result_json, replayed = idempotency_service.run(
+        key=idempotency_key,
+        scope=scope,
+        request_hash=request_hash,
+        fn=_do_create,
+    )
+    created = OrderResponse.model_validate_json(result_json)
+
+    if replayed:
+        response.headers["Idempotent-Replayed"] = "true"
+
     order_id = getattr(created, "order_id", None) or (created.get("order_id") if isinstance(created, dict) else None)
     if not getattr(user, "id", None) and body.customer_phone and order_id:
+        cookie_val = sign_guest_order_cookie(order_id, body.customer_phone)
         response.set_cookie(
             key=f"aura_order_{order_id}",
-            value=body.customer_phone,
+            value=cookie_val,
             httponly=True,
             max_age=3600,
             samesite="lax",
         )
+
+    # Gửi email trong background task (Bài toán 8)
+    if not replayed and getattr(body, "customer_email", None):
+        email_data = {
+            "order_id": order_id,
+            "customer_name": body.customer_name,
+            "customer_phone": body.customer_phone,
+            "total_amount": getattr(created, "amount", 0) or (created.quote.total if created.quote else 0),
+            "payment_method": getattr(created, "payment_method", body.payment_method),
+            "quote": created.quote.model_dump() if created.quote else {},
+        }
+        import threading
+        threading.Thread(
+            target=_send_order_email_background,
+            args=(body.customer_email, email_data),
+            daemon=True,
+        ).start()
+
     return created
 
 
@@ -210,7 +278,7 @@ def get_order_invoice(order_id: str, request: Request, phone: Optional[str] = Qu
         vat_rate=vat_rate,
         vat_amount=vat_amount,
         total_amount=total,
-        payment_method="Chuyển khoản QR NAPAS 247" if order.get("payment_method") == "qr_transfer" else ("Thanh toán VNPay" if order.get("payment_method") == "vnpay" else "Thanh toán khi nhận hàng (COD)"),
+        payment_method="Chuyển khoản QR NAPAS 247" if order.get("payment_method") == "qr_transfer" else ("Thanh toán MB Bank" if order.get("payment_method") in ("mbank", "banking") else "Thanh toán khi nhận hàng (COD)"),
         payment_status="Đã thanh toán" if order.get("payment_status") == "paid" else "Chưa thanh toán (Thu hộ COD)",
         carrier=carrier,
         tracking_code=tracking_code,
@@ -237,7 +305,7 @@ def cancel_order_by_customer(order_id: str, body: OrderCancelRequest, request: R
             msg += " Số tiền thanh toán sẽ được hoàn lại trong 3-5 ngày làm việc."
         return {"success": True, "order_id": order_id, "order_status": order_status, "message": msg}
     except OrderError as e:
-        raise HTTPException(status_code=e.status_code, detail=e.message)
+        raise HTTPException(status_code=e.status_code, detail=e.message) from e
 
 
 @router.post("/api/orders/{order_id}/send-notification")

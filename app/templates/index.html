@@ -46,6 +46,14 @@
     </div>
   </section>
 
+  <section id="vouchers" class="mx-auto mt-8 w-full max-w-[1600px] px-4 sm:px-6 lg:px-10 2xl:px-16" aria-label="Săn mã giảm giá">
+    <div class="flex items-baseline justify-between border-b border-[#E5E2DC] pb-4">
+      <div><h2 class="font-sans text-2xl sm:text-3xl text-[#111111]">Săn mã giảm giá</h2>
+        <p class="mt-1 text-sm text-[#777777]">Lưu mã còn lượt để áp dụng khi thanh toán.</p></div>
+    </div>
+    <div id="vouchers-list" class="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3"></div>
+  </section>
+
   <!-- 4. KHU VỰC CHỌN LỌC 1: HOT NHẤT TUẦN (tối đa 8 sản phẩm) -->
   <section id="featured-hot" class="mx-auto mt-10 sm:mt-14 w-full max-w-[1600px] px-4 sm:px-6 lg:px-10 2xl:px-16" aria-label="Hot nhất tuần" data-section="hot-products">
     <div class="flex items-baseline justify-between border-b border-[#E5E2DC] pb-4">
@@ -217,14 +225,10 @@
               <span>Thanh toán khi nhận hàng (COD)</span>
             </label>
             <label class="flex items-center gap-2 p-2 border border-[#E5E2DC] rounded-[2px] cursor-pointer hover:bg-[#FAF8F5]">
-              <input type="radio" name="payment_method" value="vietqr" class="accent-[#111111]" />
-              <span>Chuyển khoản VietQR tức thì</span>
-            </label>
-            <label class="flex items-center gap-2 p-2 border border-[#E5E2DC] rounded-[2px] cursor-pointer hover:bg-[#FAF8F5]">
-              <input type="radio" name="payment_method" value="momo" class="accent-[#111111]" />
+              <input type="radio" name="payment_method" value="mbank" class="accent-[#111111]" />
               <span class="flex items-center gap-2">
-                <span>Ví điện tử MoMo (App MoMo / QR Code)</span>
-                <span class="rounded bg-[#a50064] px-1.5 py-0.5 text-[10px] font-bold text-white tracking-wide">MoMo</span>
+                <span>Chuyển khoản Ngân hàng MB Bank (Tự động xác nhận)</span>
+                <span class="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-bold text-blue-800 tracking-wide">MB Bank</span>
               </span>
             </label>
           </div>

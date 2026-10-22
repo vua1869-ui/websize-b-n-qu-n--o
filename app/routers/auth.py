@@ -1,4 +1,4 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response
 
 from app.config import settings
 from app.models.schemas import (
@@ -155,8 +155,8 @@ def auth_reset_password(body: ResetPasswordRequest):
 @router.get("/api/auth/orders")
 def auth_user_orders(
     user: User = Depends(get_current_user),
-    limit: int = 20,
-    offset: int = 0,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0, le=100000),
 ):
     from app.db.models import OrderDB
     from app.db.session import get_db_session

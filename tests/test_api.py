@@ -340,12 +340,22 @@ def test_live_comment_uses_real_size_and_prices(client):
 
 
 def test_no_secrets_committed():
-    import pathlib, re
+    import pathlib, re, subprocess
     root = pathlib.Path(__file__).resolve().parent.parent
-    for f in list(root.glob(".env*")) + list(root.rglob("*.py")):
-        if f.name == "test_api.py":
+    try:
+        tracked_files = subprocess.check_output(
+            ["git", "ls-files"], cwd=root, text=True, encoding="utf-8", errors="ignore"
+        ).splitlines()
+    except Exception:
+        tracked_files = []
+
+    for rel_path in tracked_files:
+        f = root / rel_path
+        if not f.is_file() or f.name == "test_api.py":
             continue
-        assert not re.search(r"AIza[0-9A-Za-z_\-]{20,}|AQ\.[A-Za-z0-9_\-]{30,}", f.read_text(encoding="utf-8", errors="ignore")), f
+        if f.suffix in (".py", ".json", ".yaml", ".yml", ".toml", ".html", ".js", ".css", ".md", ".sh", ".ps1") or f.name.startswith(".env"):
+            content = f.read_text(encoding="utf-8", errors="ignore")
+            assert not re.search(r"AIza[0-9A-Za-z_\-]{20,}|AQ\.[A-Za-z0-9_\-]{30,}", content), f"Secret found in tracked file: {rel_path}"
 
 
 # ---------- Tích hợp Ollama thật (dùng server Ollama giả để kiểm chứng giao thức) ----------

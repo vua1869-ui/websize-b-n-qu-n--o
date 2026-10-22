@@ -117,6 +117,8 @@ class Voucher(BaseModel):
     expires_at: Optional[datetime.datetime] = None
     max_uses: Optional[int] = None
     max_uses_per_user: Optional[int] = None
+    used_uses: int = 0
+    remaining_uses: Optional[int] = None
 
     @computed_field  # type: ignore[misc]
     @property
@@ -317,7 +319,7 @@ class OrderCancelRequest(BaseModel):
         return v
 
 
-VALID_PAYMENT_METHODS = ["cod", "vietqr", "qr_transfer", "momo"]
+VALID_PAYMENT_METHODS = ["cod", "vietqr", "qr_transfer", "mbank", "banking"]
 
 
 class OrderCreateRequest(BaseModel):
@@ -434,6 +436,13 @@ class OrderResponse(BaseModel):
     internal_note: Optional[str] = None
     qr_code_url: Optional[str] = None
     bank_info: Optional[Dict[str, str]] = None
+    success: bool = True
+    amount: Optional[int] = None
+    transfer_content: Optional[str] = None
+    bank_account_number: Optional[str] = None
+    bank_account_name: Optional[str] = None
+    bank_name: Optional[str] = None
+    redirect_url: Optional[str] = None
 
 
 # ==========================================
@@ -448,6 +457,15 @@ class ProductReviewCreate(BaseModel):
     purchased_size: Optional[str] = None
     purchased_color: Optional[str] = None
     fit_feedback: Optional[str] = "Vừa vặn"
+
+    @field_validator("user_name", "comment", "fit_feedback")
+    @classmethod
+    def _validate_safe_review_text(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            if "<" in v or ">" in v:
+                raise ValueError("Nội dung đánh giá không được chứa thẻ HTML hoặc ký tự < >")
+            return v.strip()
+        return None
 
 
 class ProductReviewItem(BaseModel):
@@ -964,10 +982,8 @@ class PaymentWebhookPayload(BaseModel):
     referenceCode: Optional[str] = None
 
 
-
 class AdminProcessRefundRequest(BaseModel):
     is_manual: Optional[bool] = False
     refund_trans_id: Optional[str] = None
     amount: Optional[int] = None
     note: Optional[str] = None
-
