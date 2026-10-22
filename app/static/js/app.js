@@ -122,7 +122,7 @@ const CFG = {
 const App = {
   state: {
     user: null,
-    catalog: {}, categories: [], products: [], vouchers: [], videos: [], notice: '',
+    catalog: {}, categories: [], products: [], vouchers: [], showAllVouchers: false, videos: [], notice: '',
     savedVouchers: U.store.get('aura_vouchers_v2', []),
     cart: U.store.get('aura_cart_v2', []),
     wishlist: U.store.get('aura_wishlist', []),
@@ -583,11 +583,18 @@ const App = {
   renderVouchers() {
     const el = U.$('#vouchers-list');
     if (!el) return;
+    const moreButton = U.$('#vouchers-more');
+    const visibleVouchers = this.state.showAllVouchers ? this.state.vouchers : this.state.vouchers.slice(0, 6);
+    if (moreButton) {
+      moreButton.classList.toggle('hidden', this.state.vouchers.length <= 6);
+      moreButton.textContent = this.state.showAllVouchers ? 'Thu gọn mã' : 'Xem thêm mã';
+      moreButton.setAttribute('aria-expanded', String(this.state.showAllVouchers));
+    }
     if (!this.state.vouchers.length) {
       el.innerHTML = '<p class="col-span-full py-6 text-center text-sm text-[#777777]">Hiện chưa có mã giảm giá. Bạn quay lại sau nhé.</p>';
       return;
     }
-    el.innerHTML = this.state.vouchers.map(v => {
+    el.innerHTML = visibleVouchers.map(v => {
       const saved = this.state.savedVouchers.includes(v.code);
       const soldOut = v.remaining_uses === 0;
       return `
@@ -2813,6 +2820,10 @@ Object.assign(Actions, {
   'apply-voucher': () => App.applyVoucher(),
   'use-voucher': d => { U.$('#co-voucher').value = d.code; App.applyVoucher(); },
   'claim-voucher': d => App.claimVoucher(d.code),
+  'toggle-vouchers': () => {
+    App.state.showAllVouchers = !App.state.showAllVouchers;
+    App.renderVouchers();
+  },
   video: d => App.openVideo(d.id),
   'open-live': () => Live.open(),
   'live-heart': () => Live.heart(),

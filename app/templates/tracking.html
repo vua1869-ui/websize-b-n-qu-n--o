@@ -201,10 +201,25 @@
           <strong>Lưu ý:</strong> Bạn chỉ có thể huỷ đơn trước khi đơn hàng được chuyển đi.
           Đơn đã thanh toán sẽ được hoàn tiền trong 3–5 ngày làm việc.
         </div>
+        {% if order.payment_status == 'paid' %}
+        <div class="mb-4 space-y-3 rounded-[2px] border border-blue-200 bg-blue-50 p-4">
+          <p class="text-sm text-blue-800">&#272;&#417;n n&agrave;y &#273;&atilde; thanh to&aacute;n. Vui l&ograve;ng nh&#7853;p t&agrave;i kho&#7843;n ng&acirc;n h&agrave;ng &#273;&#7875; admin ho&agrave;n ti&#7873;n.</p>
+          <label class="block text-sm font-medium text-neutral-700">Ng&acirc;n h&agrave;ng <span class="text-red-600">*</span>
+            <input id="cancel-refund-bank" type="text" maxlength="100" autocomplete="off" class="mt-1 w-full rounded border border-blue-200 bg-white px-3 py-2" placeholder="VD: MB Bank, Vietcombank" required>
+          </label>
+          <label class="block text-sm font-medium text-neutral-700">S&#7889; t&agrave;i kho&#7843;n <span class="text-red-600">*</span>
+            <input id="cancel-refund-account" type="text" maxlength="50" autocomplete="off" class="mt-1 w-full rounded border border-blue-200 bg-white px-3 py-2" required>
+          </label>
+          <label class="block text-sm font-medium text-neutral-700">T&ecirc;n ch&#7911; t&agrave;i kho&#7843;n <span class="text-red-600">*</span>
+            <input id="cancel-refund-holder" type="text" maxlength="100" autocomplete="name" class="mt-1 w-full rounded border border-blue-200 bg-white px-3 py-2" placeholder="T&ecirc;n in tr&ecirc;n t&agrave;i kho&#7843;n" required>
+          </label>
+        </div>
+        {% endif %}
         <button id="cancel-order-btn" type="button"
                 class="btn border border-red-300 text-red-700 bg-white hover:bg-red-50 text-sm"
                 data-order-id="{{ order.order_id }}"
-                data-phone="{{ searched_phone }}">
+                data-phone="{{ searched_phone }}"
+                data-paid="{{ '1' if order.payment_status == 'paid' else '0' }}">
           Huỷ đơn hàng này
         </button>
         <p id="cancel-result" class="hidden mt-3 text-sm font-medium"></p>
@@ -249,16 +264,32 @@
   if (!btn) return;
 
   btn.addEventListener('click', async function () {
-    if (!confirm('Bạn có chắc chắn muốn huỷ đơn hàng này không?')) return;
-    btn.disabled = true;
-    btn.textContent = 'Đang huỷ...';
+    if (!confirm('B\u1ea1n c\u00f3 ch\u1eafc ch\u1eafn mu\u1ed1n hu\u1ef7 \u0111\u01a1n h\u00e0ng n\u00e0y kh\u00f4ng?')) return;
     const orderId = btn.dataset.orderId;
     const phone = btn.dataset.phone;
+    const isPaid = btn.dataset.paid === '1';
+    const bankName = document.getElementById('cancel-refund-bank')?.value.trim() || '';
+    const accountNumber = document.getElementById('cancel-refund-account')?.value.trim() || '';
+    const accountHolder = document.getElementById('cancel-refund-holder')?.value.trim() || '';
+    if (isPaid && (!bankName || !accountNumber || !accountHolder)) {
+      result.textContent = 'Vui l\u00f2ng nh\u1eadp \u0111\u1ea7y \u0111\u1ee7 ng\u00e2n h\u00e0ng, s\u1ed1 t\u00e0i kho\u1ea3n v\u00e0 t\u00ean ch\u1ee7 t\u00e0i kho\u1ea3n nh\u1eadn ho\u00e0n ti\u1ec1n.';
+      result.className = 'mt-3 text-sm font-medium text-red-700';
+      result.classList.remove('hidden');
+      return;
+    }
+    btn.disabled = true;
+    btn.textContent = '\u0110ang hu\u1ef7...';
     try {
+      const payload = { phone: phone, reason: 'Kh\u00e1ch t\u1ef1 hu\u1ef7 qua trang theo d\u00f5i' };
+      if (isPaid) {
+        payload.refund_bank_name = bankName;
+        payload.refund_account_number = accountNumber;
+        payload.refund_account_holder = accountHolder;
+      }
       const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}/cancel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phone, reason: 'Khách tự huỷ qua trang theo dõi' }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (res.ok && data.success) {

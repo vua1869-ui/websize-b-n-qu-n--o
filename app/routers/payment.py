@@ -361,11 +361,12 @@ def mbank_payment_page(order_id: str, request: Request):
             ]
             has_static = any(os.path.isfile(cp) for cp in candidate_paths)
 
-    qr_img_src = html.escape(mb_qr_static) if has_static else (
+    vietqr_fallback = (
         f"https://img.vietqr.io/image/{urllib.parse.quote(bank_code)}-{urllib.parse.quote(bank_account)}"
         f"-compact2.png?amount={amount}&addInfo={urllib.parse.quote(transfer_content)}"
         f"&accountName={urllib.parse.quote(bank_owner)}"
     )
+    qr_img_src = html.escape(mb_qr_static) if has_static else html.escape(vietqr_fallback)
     is_debug = bool(settings.DEBUG)
 
     phone_val = order.get("customer_phone") or order.get("customer", {}).get("phone", "")
@@ -530,7 +531,7 @@ def mbank_payment_page(order_id: str, request: Request):
     <div class="body">
       <div class="qr-wrap">
         <img src="{qr_img_src}" alt="MB Bank QR Code" class="qr-img"
-             onerror="this.src='{vietqr_fallback}'" />
+             onerror="this.onerror=null;this.src='{html.escape(vietqr_fallback)}'" />
         <span class="qr-lbl">📱 Mở App MB Bank / Mọi ngân hàng → Quét mã → Chuyển khoản</span>
       </div>
       <table class="tbl">

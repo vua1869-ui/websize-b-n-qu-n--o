@@ -699,12 +699,15 @@
       _cancelIsPaid = false;
     }
 
-    document.getElementById('cancel-modal-close')?.addEventListener('click', closeCancelModal);
-    document.getElementById('cancel-modal-backdrop')?.addEventListener('click', closeCancelModal);
+    document.addEventListener('click', (event) => {
+      if (event.target.closest('#cancel-modal-close, #cancel-modal-backdrop')) {
+        closeCancelModal();
+      }
+    });
 
-    document.getElementById('cancel-confirm-btn')?.addEventListener('click', async () => {
-      if (!_cancelOrderId) return;
-      const btn = document.getElementById('cancel-confirm-btn');
+    document.addEventListener('click', async (event) => {
+      const btn = event.target.closest('#cancel-confirm-btn');
+      if (!btn || !_cancelOrderId) return;
 
       const phone = document.getElementById('edit_phone')?.value?.trim() || '';
       const bankName = document.getElementById('cancel-bank-name')?.value?.trim() || '';
